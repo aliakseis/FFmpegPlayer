@@ -30,6 +30,9 @@
     <ClCompile Include="videoparserunnable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ffmpeg_dxva2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audioparserunnable.h">
@@ -63,6 +66,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vqueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ffmpeg_dxva2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

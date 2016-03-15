@@ -11,6 +11,8 @@
 
 #include <boost/log/trivial.hpp>
 
+// http://stackoverflow.com/questions/34602561
+#include "ffmpeg_dxva2.h"
 
 namespace
 {
@@ -144,6 +146,14 @@ inline void call_avcodec_close(AVCodecContext** avctx)
         avcodec_close(*avctx);
         *avctx = nullptr;
     }
+}
+
+AVPixelFormat GetHwFormat(AVCodecContext *s, const AVPixelFormat *pix_fmts)
+{
+    InputStream* ist = (InputStream*)s->opaque;
+    ist->active_hwaccel_id = HWACCEL_DXVA2;
+    ist->hwaccel_pix_fmt = AV_PIX_FMT_DXVA2_VLD;
+    return ist->hwaccel_pix_fmt;
 }
 
 }  // namespace
@@ -450,17 +460,33 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     // Find the decoder for the video stream
     if (m_videoStreamNumber >= 0)
     {
-        // Multithread decoding
-        m_videoCodecContext->thread_count = 2;
-
-        m_videoCodecContext->flags2 |= CODEC_FLAG2_FAST;
-
         m_videoCodec = avcodec_find_decoder(m_videoCodecContext->codec_id);
         if (m_videoCodec == nullptr)
         {
             assert(false && "No such codec found");
             return false;  // Codec not found
         }
+
+#ifdef USE_HWACCEL
+        m_videoCodecContext->thread_count = 1;  // Multithreading is apparently not compatible with hardware decoding
+        InputStream *ist = new InputStream();
+        ist->hwaccel_id = HWACCEL_AUTO;
+        ist->hwaccel_device = "dxva2";
+        ist->dec = m_videoCodec;
+        ist->dec_ctx = m_videoCodecContext;
+        //_codecContext->coded_width = _width;
+        //_codecContext->coded_height = _height;
+
+        m_videoCodecContext->opaque = ist;
+        dxva2_init(m_videoCodecContext);
+
+        m_videoCodecContext->get_buffer2 = ist->hwaccel_get_buffer;
+        m_videoCodecContext->get_format = GetHwFormat;
+        m_videoCodecContext->thread_safe_callbacks = 1;
+#else
+        m_videoCodecContext->thread_count = 2;
+        m_videoCodecContext->flags2 |= CODEC_FLAG2_FAST;
+#endif
     }
 
     // Find audio codec
@@ -580,6 +606,11 @@ double FFmpegDecoder::volume() const { return m_audioPlayer->GetVolume(); }
 
 bool FFmpegDecoder::frameToImage(VideoFrame& videoFrameData)
 {
+    if (m_videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
+    {
+        dxva2_retrieve_data_call(m_videoCodecContext, m_videoFrame);
+    }
+
     const int width = m_videoFrame->width;
     const int height = m_videoFrame->height;
 
