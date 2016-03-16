@@ -1,4 +1,5 @@
 #include "videoparserunnable.h"
+#include "makeguard.h"
 
 bool VideoParseRunnable::getVideoPacket(AVPacket* packet)
 {
@@ -54,135 +55,148 @@ void VideoParseRunnable::operator()()
                 break;
             }
 
-            int frameFinished = 0;
+            auto packetGuard = MakeGuard(&packet, av_packet_unref);
 
-            auto res = avcodec_decode_video2(m_ffmpeg->m_videoCodecContext, m_ffmpeg->m_videoFrame,
-                                             &frameFinished, &packet);
-            av_packet_unref(&packet);
+            AVPacket copy(packet);
 
-            if (frameFinished)
+            while (copy.size > 0)
             {
-                const int64_t duration_stamp =
-                    av_frame_get_best_effort_timestamp(m_ffmpeg->m_videoFrame);
+                int frameFinished = 0;
+                const int length = avcodec_decode_video2(m_ffmpeg->m_videoCodecContext, 
+                    m_ffmpeg->m_videoFrame, &frameFinished, &copy);
 
-                if (!initialized)
+                if (length < 0)
                 {
-                    const double stamp =
-                        (duration_stamp == AV_NOPTS_VALUE)
+                    // Broken packet
+                    break;  // Simply skip frame without errors
+                }
+                copy.size -= length;
+                copy.data += length;
+
+                if (frameFinished)
+                {
+                    const int64_t duration_stamp =
+                        av_frame_get_best_effort_timestamp(m_ffmpeg->m_videoFrame);
+
+                    if (!initialized)
+                    {
+                        const double stamp =
+                            (duration_stamp == AV_NOPTS_VALUE)
                             ? 0.
                             : av_q2d(m_ffmpeg->m_videoStream->time_base) * (double)duration_stamp;
 
-                    m_ffmpeg->m_videoStartClock = GetHiResTime() - stamp;
-                }
+                        m_ffmpeg->m_videoStartClock = GetHiResTime() - stamp;
+                    }
 
-                double pts = static_cast<double>(duration_stamp);
+                    double pts = static_cast<double>(duration_stamp);
 
-                // compute the exact PTS for the picture if it is omitted in the stream
-                // pts1 is the dts of the pkt / pts of the frame
-                if (pts == AV_NOPTS_VALUE)
-                {
-                    pts = videoClock;
-                }
-                else
-                {
-                    pts *= av_q2d(m_ffmpeg->m_videoStream->time_base);
-                    videoClock = pts;
-                }
-
-                // update video clock for next frame
-                // for MPEG2, the frame can be repeated, so we update the clock accordingly
-                const double frameDelay = av_q2d(m_ffmpeg->m_videoCodecContext->time_base) *
-                                          (1. + m_ffmpeg->m_videoFrame->repeat_pict * 0.5);
-                videoClock += frameDelay;
-
-                boost::posix_time::time_duration td(boost::posix_time::pos_infin);
-                // Skipping frames
-                if (initialized)
-                {
-                    double curTime = GetHiResTime();
-                    if (m_ffmpeg->m_videoStartClock + pts <= curTime)
+                    // compute the exact PTS for the picture if it is omitted in the stream
+                    // pts1 is the dts of the pkt / pts of the frame
+                    if (pts == AV_NOPTS_VALUE)
                     {
-                        if (m_ffmpeg->m_videoStartClock + pts < curTime - 1.)
+                        pts = videoClock;
+                    }
+                    else
+                    {
+                        pts *= av_q2d(m_ffmpeg->m_videoStream->time_base);
+                        videoClock = pts;
+                    }
+
+                    // update video clock for next frame
+                    // for MPEG2, the frame can be repeated, so we update the clock accordingly
+                    const double frameDelay = av_q2d(m_ffmpeg->m_videoCodecContext->time_base) *
+                        (1. + m_ffmpeg->m_videoFrame->repeat_pict * 0.5);
+                    videoClock += frameDelay;
+
+                    boost::posix_time::time_duration td(boost::posix_time::pos_infin);
+                    // Skipping frames
+                    if (initialized)
+                    {
+                        double curTime = GetHiResTime();
+                        if (m_ffmpeg->m_videoStartClock + pts <= curTime)
                         {
-                            // adjust clock
-                            for (double v = m_ffmpeg->m_videoStartClock;
-                                 !m_ffmpeg->m_videoStartClock.compare_exchange_weak(v, v + 1.);)
+                            if (m_ffmpeg->m_videoStartClock + pts < curTime - 1.)
                             {
+                                // adjust clock
+                                for (double v = m_ffmpeg->m_videoStartClock;
+                                    !m_ffmpeg->m_videoStartClock.compare_exchange_weak(v, v + 1.);)
+                                {
+                                }
                             }
+
+                            CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
+
+                            // pause
+                            if (m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused)
+                            {
+                                break;
+                            }
+
+                            continue;
                         }
 
-                        CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
+                        td = boost::posix_time::milliseconds(
+                            int((m_ffmpeg->m_videoStartClock + pts - curTime) * 1000.) + 1);
+                    }
 
-                        // pause
-                        if (m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused)
+                    initialized = true;
+
+                    {
+                        boost::unique_lock<boost::mutex> locker(m_ffmpeg->m_videoFramesMutex);
+
+                        auto cond = [this]()
                         {
-                            break;
+                            return m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused ||
+                                m_ffmpeg->m_videoFramesQueue.m_busy < VQueue::QUEUE_SIZE;
+                        };
+
+                        if (td.is_pos_infinity())
+                        {
+                            m_ffmpeg->m_videoFramesCV.wait(locker, cond);
+                        }
+                        else if (!m_ffmpeg->m_videoFramesCV.timed_wait(locker, td, cond))
+                        {
+                            continue;
                         }
 
-                        continue;
+                        assert(m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused ||
+                            !(m_ffmpeg->m_videoFramesQueue.m_write_counter ==
+                            m_ffmpeg->m_videoFramesQueue.m_read_counter &&
+                            m_ffmpeg->m_videoFramesQueue.m_busy > 0));
                     }
 
-                    td = boost::posix_time::milliseconds(
-                        int((m_ffmpeg->m_videoStartClock + pts - curTime) * 1000.) + 1);
-                }
-
-                initialized = true;
-
-                {
-                    boost::unique_lock<boost::mutex> locker(m_ffmpeg->m_videoFramesMutex);
-
-                    auto cond = [this]()
+                    if (m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused)
                     {
-                        return m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused ||
-                            m_ffmpeg->m_videoFramesQueue.m_busy < VQueue::QUEUE_SIZE;
-                    };
-
-                    if (td.is_pos_infinity())
-                    {
-                        m_ffmpeg->m_videoFramesCV.wait(locker, cond);
+                        break;
                     }
-                    else if (!m_ffmpeg->m_videoFramesCV.timed_wait(locker, td, cond))
+
+                    m_ffmpeg->m_isVideoSeekingWhilePaused = false;
+
+                    const int wrcount = m_ffmpeg->m_videoFramesQueue.m_write_counter;
+                    VideoFrame& current_frame = m_ffmpeg->m_videoFramesQueue.m_frames[wrcount];
+                    if (!m_ffmpeg->frameToImage(current_frame))
                     {
                         continue;
                     }
 
-                    assert(m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused ||
-                           !(m_ffmpeg->m_videoFramesQueue.m_write_counter ==
-                                 m_ffmpeg->m_videoFramesQueue.m_read_counter &&
-                             m_ffmpeg->m_videoFramesQueue.m_busy > 0));
+                    current_frame.m_displayTime = m_ffmpeg->m_videoStartClock + pts;
+                    current_frame.m_duration = duration_stamp;
+
+                    m_ffmpeg->m_videoFramesQueue.m_write_counter =
+                        (m_ffmpeg->m_videoFramesQueue.m_write_counter + 1) % VQueue::QUEUE_SIZE;
+
+                    {
+                        boost::lock_guard<boost::mutex> locker(m_ffmpeg->m_videoFramesMutex);
+                        ++m_ffmpeg->m_videoFramesQueue.m_busy;
+                        assert(m_ffmpeg->m_videoFramesQueue.m_busy <= VQueue::QUEUE_SIZE);
+                    }
+                    m_ffmpeg->m_videoFramesCV.notify_all();
                 }
 
                 if (m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused)
                 {
                     break;
                 }
-
-                m_ffmpeg->m_isVideoSeekingWhilePaused = false;
-
-                const int wrcount = m_ffmpeg->m_videoFramesQueue.m_write_counter;
-                VideoFrame& current_frame = m_ffmpeg->m_videoFramesQueue.m_frames[wrcount];
-                if (!m_ffmpeg->frameToImage(current_frame))
-                {
-                    continue;
-                }
-
-                current_frame.m_displayTime = m_ffmpeg->m_videoStartClock + pts;
-                current_frame.m_duration = duration_stamp;
-
-                m_ffmpeg->m_videoFramesQueue.m_write_counter =
-                    (m_ffmpeg->m_videoFramesQueue.m_write_counter + 1) % VQueue::QUEUE_SIZE;
-
-                {
-                    boost::lock_guard<boost::mutex> locker(m_ffmpeg->m_videoFramesMutex);
-                    ++m_ffmpeg->m_videoFramesQueue.m_busy;
-                    assert(m_ffmpeg->m_videoFramesQueue.m_busy <= VQueue::QUEUE_SIZE);
-                }
-                m_ffmpeg->m_videoFramesCV.notify_all();
-            }
-
-            if (m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused)
-            {
-                break;
             }
         }
     }

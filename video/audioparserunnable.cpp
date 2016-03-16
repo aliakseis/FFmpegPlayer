@@ -158,14 +158,12 @@ bool AudioParseRunnable::handlePacket(AVPacket packet,  // uses copy
 {
     while (packet.size > 0)
     {
-        int audioDecoded(0);
-
+        int audioDecoded = 0;
         const int length = avcodec_decode_audio4(m_ffmpeg->m_audioCodecContext,
                                                  m_ffmpeg->m_audioFrame, &audioDecoded, &packet);
         if (length < 0)
         {
             // Broken packet
-            packet.size = 0;
             break;  // Simply skip frame without errors
         }
         packet.size -= length;
