@@ -11,8 +11,12 @@
 
 #include <boost/log/trivial.hpp>
 
+//#define USE_HWACCEL
+
 // http://stackoverflow.com/questions/34602561
+#ifdef USE_HWACCEL
 #include "ffmpeg_dxva2.h"
+#endif
 
 namespace
 {
@@ -148,6 +152,7 @@ inline void call_avcodec_close(AVCodecContext** avctx)
     }
 }
 
+#ifdef USE_HWACCEL
 AVPixelFormat GetHwFormat(AVCodecContext *s, const AVPixelFormat *pix_fmts)
 {
     InputStream* ist = (InputStream*)s->opaque;
@@ -155,6 +160,7 @@ AVPixelFormat GetHwFormat(AVCodecContext *s, const AVPixelFormat *pix_fmts)
     ist->hwaccel_pix_fmt = AV_PIX_FMT_DXVA2_VLD;
     return ist->hwaccel_pix_fmt;
 }
+#endif
 
 }  // namespace
 
@@ -226,6 +232,7 @@ void FFmpegDecoder::resetVariables()
     m_videoStream = nullptr;
     m_audioStream = nullptr;
 
+    m_startTime = 0;
     m_duration = 0;
 
     m_imageCovertContext = nullptr;
@@ -421,6 +428,9 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     }
     else if (m_videoStreamNumber >= 0)
     {
+        m_startTime = (m_videoStream->start_time > 0)
+            ? m_videoStream->start_time
+            : int64_t((m_formatContext->start_time / av_q2d(m_videoStream->time_base)) / 1000000LL);
         m_duration = (m_videoStream->duration > 0)
             ? m_videoStream->duration
             : int64_t((m_formatContext->duration / av_q2d(m_videoStream->time_base)) / 1000000LL);
@@ -437,6 +447,9 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     else if (m_audioStreamNumber >= 0 && m_videoStreamNumber == -1)
     {
         // Changing video -> audio duration
+        m_startTime = (m_audioStream->start_time > 0)
+            ? m_audioStream->start_time
+            : int64_t((m_formatContext->start_time / av_q2d(m_audioStream->time_base)) / 1000000LL);
         m_duration = (m_audioStream->duration > 0)
             ? m_audioStream->duration
             : int64_t((m_formatContext->duration / av_q2d(m_audioStream->time_base)) / 1000000LL);
@@ -547,7 +560,7 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     if (m_decoderListener)
     {
         m_decoderListener->fileLoaded();
-        m_decoderListener->changedFramePosition(0, m_duration);
+        m_decoderListener->changedFramePosition(m_startTime, m_startTime, m_duration + m_startTime);
     }
 
     return true;
@@ -578,7 +591,9 @@ void FFmpegDecoder::AppendFrameClock(double frame_clock)
     if (!m_mainVideoThread && m_decoderListener)
     {
         m_decoderListener->changedFramePosition(
-            int64_t((m_audioPTS + frame_clock) / av_q2d(m_audioStream->time_base)), m_duration);
+            m_startTime,
+            int64_t((m_audioPTS + frame_clock) / av_q2d(m_audioStream->time_base)), 
+            m_duration + m_startTime);
     }
 
     for (double v = m_audioPTS;
@@ -606,10 +621,12 @@ double FFmpegDecoder::volume() const { return m_audioPlayer->GetVolume(); }
 
 bool FFmpegDecoder::frameToImage(VideoFrame& videoFrameData)
 {
+#ifdef USE_HWACCEL
     if (m_videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
     {
         dxva2_retrieve_data_call(m_videoCodecContext, m_videoFrame);
     }
+#endif
 
     const int width = m_videoFrame->width;
     const int height = m_videoFrame->height;
@@ -699,14 +716,9 @@ void FFmpegDecoder::seekWhilePaused()
     }
 }
 
-bool FFmpegDecoder::seekByPercent(double percent, int64_t totalDuration)
+bool FFmpegDecoder::seekByPercent(double percent)
 {
-    if (totalDuration < 0)
-    {
-        totalDuration = m_duration;
-    }
-
-    return seekDuration(int64_t(totalDuration * percent));
+    return seekDuration(m_startTime + int64_t(m_duration * percent));
 }
 
 bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)

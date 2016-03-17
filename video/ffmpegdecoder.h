@@ -54,7 +54,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     bool openFile(const PathType& file) override;
     bool openUrl(const std::string& url) override;
     bool seekDuration(int64_t duration);
-    bool seekByPercent(double percent, int64_t totalDuration = -1) override;
+    bool seekByPercent(double percent) override;
 
     double volume() const override;
 
@@ -106,6 +106,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     boost::atomic<double> m_audioPTS;
 
     // Real duration from video stream
+    int64_t m_startTime;
     int64_t m_duration;
 
     // Basic stuff

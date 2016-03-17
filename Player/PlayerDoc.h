@@ -43,7 +43,7 @@ public:
 #endif
 
 protected:
-    void changedFramePosition(long long frame, long long total) override;
+    void changedFramePosition(long long start, long long frame, long long total) override;
 
 // Generated message map functions
 protected:
@@ -57,7 +57,7 @@ public:
     virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
 
     bool pauseResume();
-    bool seekByPercent(double percent, int64_t totalDuration = -1);
+    bool seekByPercent(double percent);
     void setVolume(double volume);
 
     bool isPlaying() const;

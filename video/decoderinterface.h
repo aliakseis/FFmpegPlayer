@@ -28,7 +28,7 @@ struct FrameDecoderListener
 {
     virtual ~FrameDecoderListener() {}
 
-    virtual void changedFramePosition(long long frame, long long total) {}
+    virtual void changedFramePosition(long long start, long long frame, long long total) {}
     virtual void decoderClosed() {}
     virtual void fileReleased() {}
     virtual void fileLoaded() {}
@@ -58,7 +58,7 @@ struct IFrameDecoder
     virtual bool pauseResume() = 0;
     virtual void setVolume(double volume) = 0;
 
-    virtual bool seekByPercent(double percent, int64_t totalDuration = -1) = 0;
+    virtual bool seekByPercent(double percent) = 0;
 
     virtual void setFrameListener(IFrameListener* listener) = 0;
     virtual void setDecoderListener(FrameDecoderListener* listener) = 0;

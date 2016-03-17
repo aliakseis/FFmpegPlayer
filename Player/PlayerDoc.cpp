@@ -174,9 +174,9 @@ void CPlayerDoc::OnCloseDocument()
 }
 
 
-void CPlayerDoc::changedFramePosition(long long frame, long long total)
+void CPlayerDoc::changedFramePosition(long long start, long long frame, long long total)
 {
-    __raise framePositionChanged(frame, total);
+    __raise framePositionChanged(frame - start, total - start);
     const double currentTime = m_frameDecoder->getDurationSecs(frame);
     m_currentTime = currentTime;
     __raise totalTimeUpdated(m_frameDecoder->getDurationSecs(total));
@@ -188,9 +188,9 @@ bool CPlayerDoc::pauseResume()
     return m_frameDecoder->pauseResume();
 }
 
-bool CPlayerDoc::seekByPercent(double percent, int64_t totalDuration)
+bool CPlayerDoc::seekByPercent(double percent)
 {
-    return m_frameDecoder->seekByPercent(percent, totalDuration);
+    return m_frameDecoder->seekByPercent(percent);
 }
 
 void CPlayerDoc::setVolume(double volume)
