@@ -71,6 +71,7 @@ END_MESSAGE_MAP()
 
 CPlayerView::CPlayerView()
     : m_frameListener(new FrameListener(this))
+    , m_aspectRatio(1.f)
 {
     // Enable D2D support for this window:
     EnableD2DSupport();
@@ -167,22 +168,21 @@ afx_msg LRESULT CPlayerView::OnDraw2D(WPARAM wParam, LPARAM lParam)
     float scaleH = rect.Height() / (float) m_sourceSize.cy;
 
     D2D1_POINT_2F offset;
-    float scale;
-    if (scaleH <= scaleW) {
-        scale = scaleH;
+    if (scaleH * m_aspectRatio <= scaleW) {
+        scaleW = scaleH * m_aspectRatio;
         offset.x = (rect.Width() -
-            (m_sourceSize.cx * scale)) / 2.0f;
+            (m_sourceSize.cx * scaleW)) / 2.0f;
         offset.y = 0.0f;
     }
     else {
-        scale = scaleW;
+        scaleH = scaleW / m_aspectRatio;
         offset.x = 0.0f;
         offset.y = (rect.Height() -
-            (m_sourceSize.cy * scale)) / 2.0f;
+            (m_sourceSize.cy * scaleH)) / 2.0f;
     }
 
     D2D1::Matrix3x2F transform =
-        D2D1::Matrix3x2F::Scale(scale, scale) *
+        D2D1::Matrix3x2F::Scale(scaleW, scaleH) *
         D2D1::Matrix3x2F::Translation(offset.x, offset.y);
 
     spContext->SetTransform(transform);
@@ -223,6 +223,8 @@ void CPlayerView::updateFrame()
     {
         return;
     }
+
+    m_aspectRatio = float(data.aspectNum) / data.aspectDen;
 
     CComQIPtr<ID2D1DeviceContext> spContext(*renderTarget);
 

@@ -15,6 +15,8 @@ struct FrameRenderingData
     uint8_t** image;
     int width; 
     int height;
+    int aspectNum;
+    int aspectDen;
 };
 
 struct IFrameListener

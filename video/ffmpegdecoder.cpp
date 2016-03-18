@@ -655,6 +655,8 @@ bool FFmpegDecoder::frameToImage(VideoFrame& videoFrameData)
         return false;
     }
 
+    videoFrameData.m_image->sample_aspect_ratio = m_videoFrame->sample_aspect_ratio;
+
     return true;
 }
 
@@ -736,6 +738,8 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
     data->image = current_frame.m_image->data;
     data->width = current_frame.m_image->width;
     data->height = current_frame.m_image->height;
+    data->aspectNum = current_frame.m_image->sample_aspect_ratio.num;
+    data->aspectDen = current_frame.m_image->sample_aspect_ratio.den;
 
     return true;
 }

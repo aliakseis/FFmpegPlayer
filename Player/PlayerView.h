@@ -58,6 +58,7 @@ protected:
 private:
     std::unique_ptr<IFrameListener> m_frameListener;
     CSize m_sourceSize;
+    float m_aspectRatio;
     CComPtr<ID2D1Effect> m_spEffect;
 };
 

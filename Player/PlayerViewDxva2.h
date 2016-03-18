@@ -52,6 +52,7 @@ private:
 private:
     std::unique_ptr<IFrameListener> m_frameListener;
     CSize m_sourceSize;
+    CSize m_aspectRatio;
 
     CCriticalSection m_csSurface;
 

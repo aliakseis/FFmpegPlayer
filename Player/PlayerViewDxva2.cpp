@@ -280,6 +280,7 @@ IMPLEMENT_DYNCREATE(CPlayerViewDxva2, CView)
 
 CPlayerViewDxva2::CPlayerViewDxva2()
 : m_frameListener(new FrameListenerDxva2(this))
+, m_aspectRatio(1, 1)
 , m_bDwmQueuing(FALSE)
 {
 }
@@ -880,12 +881,15 @@ bool CPlayerViewDxva2::ProcessVideo()
         return false;
     }
 
+    long long aspectFrameX(m_sourceSize.cx * m_aspectRatio.cx);
+    long long aspectFrameY(m_sourceSize.cy * m_aspectRatio.cy);
+
     RECT target;
-    if (m_sourceSize.cy * desc.Width > m_sourceSize.cx * desc.Height)
+    if (aspectFrameY * desc.Width > aspectFrameX * desc.Height)
     {
         target.top = 0;
         target.bottom = desc.Height;
-        LONG width = m_sourceSize.cx * desc.Height / m_sourceSize.cy;
+        LONG width = LONG(aspectFrameX * desc.Height / aspectFrameY);
         LONG offset = (desc.Width - width) / 2;
         target.left = offset;
         target.right = width + offset;
@@ -894,7 +898,7 @@ bool CPlayerViewDxva2::ProcessVideo()
     {
         target.left = 0;
         target.right = desc.Width;
-        LONG height = m_sourceSize.cy * desc.Width / m_sourceSize.cx;
+        LONG height = LONG(aspectFrameY * desc.Width / aspectFrameX);
         LONG offset = (desc.Height - height) / 2;
         target.top = offset;
         target.bottom = height + offset;
@@ -1101,6 +1105,9 @@ void CPlayerViewDxva2::updateFrame()
     }
 
     CSingleLock lock(&m_csSurface, TRUE);
+
+    m_aspectRatio.cx = data.aspectNum;
+    m_aspectRatio.cy = data.aspectDen;
 
     if (data.width != m_sourceSize.cx || data.height != m_sourceSize.cy)
     {
