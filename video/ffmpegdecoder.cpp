@@ -738,8 +738,17 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
     data->image = current_frame.m_image->data;
     data->width = current_frame.m_image->width;
     data->height = current_frame.m_image->height;
-    data->aspectNum = current_frame.m_image->sample_aspect_ratio.num;
-    data->aspectDen = current_frame.m_image->sample_aspect_ratio.den;
+    if (current_frame.m_image->sample_aspect_ratio.num != 0
+        && current_frame.m_image->sample_aspect_ratio.den != 0)
+    {
+        data->aspectNum = current_frame.m_image->sample_aspect_ratio.num;
+        data->aspectDen = current_frame.m_image->sample_aspect_ratio.den;
+    }
+    else
+    {
+        data->aspectNum = 1;
+        data->aspectDen = 1;
+    }
 
     return true;
 }
