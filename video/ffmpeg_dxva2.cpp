@@ -35,6 +35,65 @@ extern "C"
 #include "libavutil/pixfmt.h"
 }
 
+#include <emmintrin.h>
+#include <smmintrin.h>
+
+static void CopyPlane(uint8_t *dst, int dst_linesize,
+    const uint8_t *src, int src_linesize,
+    int bytewidth, int height)
+{
+    __declspec(align(64)) __m128i cache[256];
+
+    __m128i     *pLoad = (__m128i *)src;
+    __m128i     *pStore = (__m128i *)dst;
+
+    __m128i     x0, x1, x2, x3;
+
+    bytewidth = (bytewidth + 15) & ~15;
+
+    unsigned int sourceIdx = 256;
+
+    for (unsigned int y = 0; y < height; ++y)
+    {
+        for (unsigned int x = 0; x < bytewidth / 16; ++x)
+        {
+            if (sourceIdx >= 256)
+            {
+
+                _mm_mfence();
+                // LOAD ROWS OF PITCH WIDTH INTO CACHED BLOCK
+                for (unsigned int load = 0; load < 256; load += 4)
+                {
+                    x0 = _mm_stream_load_si128(pLoad + 0);
+                    x1 = _mm_stream_load_si128(pLoad + 1);
+                    x2 = _mm_stream_load_si128(pLoad + 2);
+                    x3 = _mm_stream_load_si128(pLoad + 3);
+
+                    _mm_store_si128(cache + load, x0);
+                    _mm_store_si128(cache + load + 1, x1);
+                    _mm_store_si128(cache + load + 2, x2);
+                    _mm_store_si128(cache + load + 3, x3);
+
+                    pLoad += 4;
+                }
+
+                _mm_mfence();
+
+                sourceIdx -= 256;
+            }
+
+            x0 = _mm_load_si128(cache + sourceIdx);
+            _mm_stream_si128(pStore, x0);
+            ++sourceIdx;
+            ++pStore;
+        }
+        sourceIdx += (src_linesize - bytewidth) / 16;
+        pStore += (dst_linesize - bytewidth) / 16;
+    }
+}
+
+
+
     /* define all the GUIDs used directly here,
     to avoid problems with inconsistent dxva2api.h versions in mingw-w64 and different MSVC version */
 #include <initguid.h>
