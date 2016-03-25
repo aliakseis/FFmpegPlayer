@@ -223,8 +223,10 @@ bool AudioParseRunnable::handlePacket(AVPacket packet,  // uses copy
                 m_ffmpeg->m_audioSettings.frequency /
                 m_ffmpeg->m_audioFrame->sample_rate + EXTRA_SPACE;
 
-            const size_t buffer_size = out_count * m_ffmpeg->m_audioSettings.channels *
+            const int size_multiplier = m_ffmpeg->m_audioSettings.channels *
                 av_get_bytes_per_sample(m_ffmpeg->m_audioSettings.format);
+
+            const size_t buffer_size = out_count * size_multiplier;
 
             if (resampleBuffer.size() < buffer_size)
             {
@@ -255,8 +257,7 @@ bool AudioParseRunnable::handlePacket(AVPacket packet,  // uses copy
             }
 
             write_data = out;
-            write_size = converted_size * m_ffmpeg->m_audioSettings.channels *
-                         av_get_bytes_per_sample(m_ffmpeg->m_audioSettings.format);
+            write_size = converted_size * size_multiplier;
 
             assert(write_size < buffer_size);
         }
