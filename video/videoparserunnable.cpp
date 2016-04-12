@@ -1,30 +1,12 @@
 #include "videoparserunnable.h"
 #include "makeguard.h"
 
-bool VideoParseRunnable::getVideoPacket(AVPacket* packet)
+bool VideoParseRunnable::getVideoPacket(AVPacket& packet)
 {
-    bool wasFull;
-    {
-        boost::unique_lock<boost::mutex> locker(m_ffmpeg->m_videoPacketsQueueMutex);
-
-        while (m_ffmpeg->m_videoPacketsQueue.empty())
-        {
-            if (m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused)
-            {
-                return false;
-            }
-            m_ffmpeg->m_videoPacketsQueueCV.wait(locker);
-        }
-
-        wasFull = m_ffmpeg->isVideoPacketsQueueFull();
-        *packet = m_ffmpeg->m_videoPacketsQueue.dequeue();
-    }
-    if (wasFull)
-    {
-        m_ffmpeg->m_videoPacketsQueueCV.notify_all();
-    }
-
-    return true;
+    return m_ffmpeg->m_videoPacketsQueue.pop(
+        packet,
+        [this] { return m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused; }
+    );
 }
 
 void VideoParseRunnable::operator()()
@@ -50,7 +32,7 @@ void VideoParseRunnable::operator()()
         for (;;)
         {
             AVPacket packet;
-            if (!getVideoPacket(&packet))
+            if (!getVideoPacket(packet))
             {
                 break;
             }

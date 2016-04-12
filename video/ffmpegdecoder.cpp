@@ -164,13 +164,6 @@ AVPixelFormat GetHwFormat(AVCodecContext *s, const AVPixelFormat *pix_fmts)
 
 }  // namespace
 
-enum
-{
-    MAX_QUEUE_SIZE = (15 * 1024 * 1024),
-    MAX_VIDEO_FRAMES = 200,
-    MAX_AUDIO_FRAMES = 100,
-};
-
 using boost::log::keywords::channel;
 
 boost::log::sources::channel_logger_mt<> 
@@ -687,12 +680,8 @@ bool FFmpegDecoder::seekDuration(int64_t duration)
 {
     if (m_mainParseThread && m_seekDuration.exchange(duration) == -1)
     {
-        boost::lock_guard<boost::mutex> locker(m_videoPacketsQueueMutex);
-        m_videoPacketsQueueCV.notify_all();
-    }
-    {
-        boost::lock_guard<boost::mutex> locker(m_audioPacketsQueueMutex);
-        m_audioPacketsQueueCV.notify_all();
+        m_videoPacketsQueue.notify();
+        m_audioPacketsQueue.notify();
     }
 
     return true;
@@ -782,28 +771,12 @@ bool FFmpegDecoder::pauseResume()
             boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
             m_videoFramesCV.notify_all();
         }
-        {
-            boost::lock_guard<boost::mutex> locker(m_videoPacketsQueueMutex);
-            m_videoPacketsQueueCV.notify_all();
-        }
-        {
-            boost::lock_guard<boost::mutex> locker(m_audioPacketsQueueMutex);
-            m_audioPacketsQueueCV.notify_all();
-        }
+
+        m_videoPacketsQueue.notify();
+        m_audioPacketsQueue.notify();
+
         m_pauseTimer = GetHiResTime();
     }
 
     return true;
-}
-
-bool FFmpegDecoder::isVideoPacketsQueueFull()
-{
-    return m_videoPacketsQueue.packetsSize() > MAX_QUEUE_SIZE ||
-        m_videoPacketsQueue.size() > MAX_VIDEO_FRAMES;
-}
-
-bool FFmpegDecoder::isAudioPacketsQueueFull()
-{
-    return m_audioPacketsQueue.packetsSize() > MAX_QUEUE_SIZE ||
-        m_audioPacketsQueue.size() > MAX_AUDIO_FRAMES;
 }

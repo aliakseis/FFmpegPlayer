@@ -45,12 +45,13 @@ void ParseRunnable::operator()()
                 using namespace boost;
                 // three ifs to separate locks
                 if (m_ffmpeg->m_decoderListener
-                        && (lock_guard<mutex>(m_ffmpeg->m_videoPacketsQueueMutex), m_ffmpeg->m_videoPacketsQueue.empty()))
-                    if (lock_guard<mutex>(m_ffmpeg->m_audioPacketsQueueMutex), m_ffmpeg->m_audioPacketsQueue.empty())
-                        if (lock_guard<mutex>(m_ffmpeg->m_videoFramesMutex), m_ffmpeg->m_videoFramesQueue.m_busy == 0)
-                        {
-                            m_ffmpeg->m_decoderListener->onEndOfStream();
-                        }
+                    && m_ffmpeg->m_videoPacketsQueue.empty()
+                    && m_ffmpeg->m_audioPacketsQueue.empty()
+                    && (lock_guard<mutex>(m_ffmpeg->m_videoFramesMutex)
+                        , m_ffmpeg->m_videoFramesQueue.m_busy == 0))
+                {
+                    m_ffmpeg->m_decoderListener->onEndOfStream();
+                }
 
                 this_thread::sleep_for(chrono::milliseconds(10));
             }
@@ -74,44 +75,18 @@ void ParseRunnable::dispatchPacket(AVPacket& packet)
 
     if (packet.stream_index == m_ffmpeg->m_videoStreamNumber)
     { 
-        bool wasEmpty;
+        if (!m_ffmpeg->m_videoPacketsQueue.push(
+            packet, [this] { return m_ffmpeg->m_seekDuration >= 0; }))
         {
-            boost::unique_lock<boost::mutex> locker(m_ffmpeg->m_videoPacketsQueueMutex);
-            while (m_ffmpeg->isVideoPacketsQueueFull())
-            {
-                if (m_ffmpeg->m_seekDuration >= 0)
-                {
-                    return; // guard frees packet
-                }
-                m_ffmpeg->m_videoPacketsQueueCV.wait(locker);
-            }
-            wasEmpty = m_ffmpeg->m_videoPacketsQueue.empty();
-            m_ffmpeg->m_videoPacketsQueue.enqueue(packet);
-        }
-        if (wasEmpty)
-        {
-            m_ffmpeg->m_videoPacketsQueueCV.notify_all();
+            return; // guard frees packet
         }
     }
     else if (packet.stream_index == m_ffmpeg->m_audioStreamNumber)
     { 
-        bool wasEmpty;
+        if (!m_ffmpeg->m_audioPacketsQueue.push(
+            packet, [this] { return m_ffmpeg->m_seekDuration >= 0; }))
         {
-            boost::unique_lock<boost::mutex> locker(m_ffmpeg->m_audioPacketsQueueMutex);
-            while (m_ffmpeg->isAudioPacketsQueueFull())
-            {
-                if (m_ffmpeg->m_seekDuration >= 0)
-                {
-                    return; // guard frees packet
-                }
-                m_ffmpeg->m_audioPacketsQueueCV.wait(locker);
-            }
-            wasEmpty = m_ffmpeg->m_audioPacketsQueue.empty();
-            m_ffmpeg->m_audioPacketsQueue.enqueue(packet);
-        }
-        if (wasEmpty)
-        {
-            m_ffmpeg->m_audioPacketsQueueCV.notify_all();
+            return; // guard frees packet
         }
     }
     else

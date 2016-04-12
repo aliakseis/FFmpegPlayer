@@ -6,30 +6,12 @@
 #include <functional>
 #include <memory>
 
-bool AudioParseRunnable::getAudioPacket(AVPacket* packet)
+bool AudioParseRunnable::getAudioPacket(AVPacket& packet)
 {
-    bool wasFull;
-    {
-        boost::unique_lock<boost::mutex> locker(m_ffmpeg->m_audioPacketsQueueMutex);
-
-        while (m_ffmpeg->m_audioPacketsQueue.empty())
-        {
-            if (m_ffmpeg->m_isPaused && !m_ffmpeg->m_isAudioSeekingWhilePaused)
-            {
-                return false;
-            }
-            m_ffmpeg->m_audioPacketsQueueCV.wait(locker);
-        }
-
-        wasFull = m_ffmpeg->isAudioPacketsQueueFull();
-        *packet = m_ffmpeg->m_audioPacketsQueue.dequeue();
-    }
-    if (wasFull)
-    {
-        m_ffmpeg->m_audioPacketsQueueCV.notify_all();
-    }
-
-    return true;
+    return m_ffmpeg->m_audioPacketsQueue.pop(
+        packet,
+        [this] { return m_ffmpeg->m_isPaused && !m_ffmpeg->m_isAudioSeekingWhilePaused; }
+    );
 }
 
 void AudioParseRunnable::operator()()
@@ -91,7 +73,7 @@ void AudioParseRunnable::operator()()
 
             for (;;)
             {
-                if (!getAudioPacket(&packet))
+                if (!getAudioPacket(packet))
                 {
                     break;
                 }

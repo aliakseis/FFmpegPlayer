@@ -9,7 +9,7 @@ class AudioParseRunnable
 {
     FFmpegDecoder* m_ffmpeg;
 
-    bool getAudioPacket(AVPacket* packet);
+    bool getAudioPacket(AVPacket& packet);
     bool handlePacket(AVPacket packet, std::vector<uint8_t>& resampleBuffer);
 
 public:

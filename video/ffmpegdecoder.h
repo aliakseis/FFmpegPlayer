@@ -147,14 +147,14 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     AVPixelFormat m_pixelFormat;
 
     // Video and audio queues
-    FQueue m_videoPacketsQueue;
-    FQueue m_audioPacketsQueue;
-
-    boost::mutex m_videoPacketsQueueMutex;
-    boost::condition_variable m_videoPacketsQueueCV;
-
-    boost::mutex m_audioPacketsQueueMutex;
-    boost::condition_variable m_audioPacketsQueueCV;
+    enum
+    {
+        MAX_QUEUE_SIZE = (15 * 1024 * 1024),
+        MAX_VIDEO_FRAMES = 200,
+        MAX_AUDIO_FRAMES = 100,
+    };
+    FQueue<MAX_QUEUE_SIZE, MAX_VIDEO_FRAMES> m_videoPacketsQueue;
+    FQueue<MAX_QUEUE_SIZE, MAX_AUDIO_FRAMES> m_audioPacketsQueue;
 
     VQueue m_videoFramesQueue;
 
@@ -184,7 +184,4 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     bool openDecoder(const PathType& file, const std::string& url, bool isFile);
 
     void seekWhilePaused();
-
-    bool isVideoPacketsQueueFull();
-    bool isAudioPacketsQueueFull();
 };
