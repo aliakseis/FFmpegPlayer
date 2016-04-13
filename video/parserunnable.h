@@ -6,10 +6,7 @@ class ParseRunnable
 {
     FFmpegDecoder* m_ffmpeg;
 
-    bool m_readerEOF;
-
-    bool readFrame(AVPacket* packet);
-    void sendSeekPacket();
+    void seek();
     void fixDuration();
 
     void dispatchPacket(AVPacket& packet);
@@ -19,8 +16,7 @@ class ParseRunnable
 
 public:
     explicit ParseRunnable(FFmpegDecoder* parent) :
-        m_ffmpeg(parent),
-        m_readerEOF(false)
+        m_ffmpeg(parent)
     {}
     void operator() ();
 };

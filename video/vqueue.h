@@ -15,6 +15,8 @@ struct VQueue
                m_busy(0)
     {
     }
+    VQueue(const VQueue&) = delete;
+    VQueue& operator=(const VQueue&) = delete;
 
     void clear()
     {

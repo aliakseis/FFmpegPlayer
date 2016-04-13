@@ -1,14 +1,6 @@
 #include "videoparserunnable.h"
 #include "makeguard.h"
 
-bool VideoParseRunnable::getVideoPacket(AVPacket& packet)
-{
-    return m_ffmpeg->m_videoPacketsQueue.pop(
-        packet,
-        [this] { return m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused; }
-    );
-}
-
 void VideoParseRunnable::operator()()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Video thread started";
@@ -32,7 +24,8 @@ void VideoParseRunnable::operator()()
         for (;;)
         {
             AVPacket packet;
-            if (!getVideoPacket(packet))
+            if (!m_ffmpeg->m_videoPacketsQueue.pop(packet,
+                [this] { return m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused; }))
             {
                 break;
             }

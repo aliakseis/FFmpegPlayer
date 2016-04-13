@@ -51,12 +51,14 @@ void DisplayRunnable::operator()()
         }
 
         // It's time to display converted frame
-        if (m_ffmpeg->m_decoderListener && current_frame->m_duration != AV_NOPTS_VALUE)
+        if (m_ffmpeg->m_decoderListener && current_frame->m_duration != AV_NOPTS_VALUE &&
+            m_ffmpeg->m_seekDuration == -1)
+        {
             m_ffmpeg->m_decoderListener->changedFramePosition(
                 m_ffmpeg->m_startTime,
-                current_frame->m_duration, 
+                current_frame->m_duration,
                 m_ffmpeg->m_duration + m_ffmpeg->m_startTime);
-
+        }
         if (m_ffmpeg->m_frameListener)
         {
             m_ffmpeg->m_frameListener->drawFrame();

@@ -6,14 +6,6 @@
 #include <functional>
 #include <memory>
 
-bool AudioParseRunnable::getAudioPacket(AVPacket& packet)
-{
-    return m_ffmpeg->m_audioPacketsQueue.pop(
-        packet,
-        [this] { return m_ffmpeg->m_isPaused && !m_ffmpeg->m_isAudioSeekingWhilePaused; }
-    );
-}
-
 void AudioParseRunnable::operator()()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Audio thread started";
@@ -73,7 +65,8 @@ void AudioParseRunnable::operator()()
 
             for (;;)
             {
-                if (!getAudioPacket(packet))
+                if (!m_ffmpeg->m_audioPacketsQueue.pop(packet,
+                    [this] { return m_ffmpeg->m_isPaused && !m_ffmpeg->m_isAudioSeekingWhilePaused; }))
                 {
                     break;
                 }

@@ -3,13 +3,6 @@
 #include "audioparserunnable.h"
 #include "makeguard.h"
 
-bool ParseRunnable::readFrame(AVPacket* packet)
-{
-    const int ret = av_read_frame(m_ffmpeg->m_formatContext, packet);
-    m_readerEOF = ret == AVERROR_EOF;
-    return ret >= 0;
-}
-
 void ParseRunnable::operator()()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Parse thread started";
@@ -29,13 +22,12 @@ void ParseRunnable::operator()()
             return;
         }
 
-        // seeking
-        sendSeekPacket();
+        seek();
 
-        if (readFrame(&packet))
+        const int readStatus = av_read_frame(m_ffmpeg->m_formatContext, &packet);
+        if (readStatus >= 0)
         {
             dispatchPacket(packet);
-
             eof = false;
         }
         else
@@ -43,7 +35,6 @@ void ParseRunnable::operator()()
             if (eof)
             {
                 using namespace boost;
-                // three ifs to separate locks
                 if (m_ffmpeg->m_decoderListener
                     && m_ffmpeg->m_videoPacketsQueue.empty()
                     && m_ffmpeg->m_audioPacketsQueue.empty()
@@ -55,7 +46,7 @@ void ParseRunnable::operator()()
 
                 this_thread::sleep_for(chrono::milliseconds(10));
             }
-            eof = m_readerEOF;
+            eof = readStatus == AVERROR_EOF;
         }
 
         // Continue packet reading
@@ -125,7 +116,7 @@ void ParseRunnable::startVideoThread()
     }
 }
 
-void ParseRunnable::sendSeekPacket()
+void ParseRunnable::seek()
 {
     const int64_t seekDuration = m_ffmpeg->m_seekDuration.exchange(-1);
     if (seekDuration < 0)
