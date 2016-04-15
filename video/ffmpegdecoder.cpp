@@ -581,7 +581,7 @@ void FFmpegDecoder::play(bool isPaused)
 
 void FFmpegDecoder::AppendFrameClock(double frame_clock)
 {
-    if (!m_mainVideoThread && m_decoderListener)
+    if (!m_mainVideoThread && m_decoderListener && m_seekDuration == -1)
     {
         m_decoderListener->changedFramePosition(
             m_startTime,
