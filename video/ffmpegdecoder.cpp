@@ -2,8 +2,6 @@
 #include <limits.h>
 #include <stdint.h>
 
-#include "parserunnable.h"
-#include "displayrunnable.h"
 #include "makeguard.h"
 
 #include <boost/chrono.hpp>
@@ -573,8 +571,8 @@ void FFmpegDecoder::play(bool isPaused)
     if (!m_mainParseThread)
     {
         m_isPlaying = true;
-        m_mainParseThread.reset(new boost::thread(ParseRunnable(this)));
-        m_mainDisplayThread.reset(new boost::thread(DisplayRunnable(this)));
+        m_mainParseThread.reset(new boost::thread(&FFmpegDecoder::parseRunnable, this));
+        m_mainDisplayThread.reset(new boost::thread(&FFmpegDecoder::displayRunnable, this));
         CHANNEL_LOG(ffmpeg_opening) << "Playing";
     }
 }

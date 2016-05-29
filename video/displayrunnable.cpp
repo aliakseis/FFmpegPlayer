@@ -1,36 +1,36 @@
-#include "displayrunnable.h"
+#include "ffmpegdecoder.h"
 
-void DisplayRunnable::operator()()
+void FFmpegDecoder::displayRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Displaying thread started";
 
     for (;;)
     {
         {
-            boost::unique_lock<boost::mutex> locker(m_ffmpeg->m_videoFramesMutex);
-            m_ffmpeg->m_videoFramesCV.wait(locker, [this]()
+            boost::unique_lock<boost::mutex> locker(m_videoFramesMutex);
+            m_videoFramesCV.wait(locker, [this]()
                                      {
-                                         return !m_ffmpeg->m_frameDisplayingRequested &&
-                                                m_ffmpeg->m_videoFramesQueue.canPop();
+                                         return !m_frameDisplayingRequested &&
+                                                m_videoFramesQueue.canPop();
                                      });
         }
 
-        VideoFrame& current_frame = m_ffmpeg->m_videoFramesQueue.front();
+        VideoFrame& current_frame = m_videoFramesQueue.front();
 
         // Frame skip
-        if (!m_ffmpeg->m_videoFramesQueue.canPush() && current_frame.m_displayTime < GetHiResTime())
+        if (!m_videoFramesQueue.canPush() && current_frame.m_displayTime < GetHiResTime())
         {
             CHANNEL_LOG(ffmpeg_threads) << __FUNCTION__ << " Framedrop";
-            m_ffmpeg->finishedDisplayingFrame();
+            finishedDisplayingFrame();
             continue;
         }
 
-        m_ffmpeg->m_frameDisplayingRequested = true;
+        m_frameDisplayingRequested = true;
 
         // Possibly give it time to render frame
-        if (m_ffmpeg->m_frameListener)
+        if (m_frameListener)
         {
-            m_ffmpeg->m_frameListener->updateFrame();
+            m_frameListener->updateFrame();
         }
 
         for (;;)
@@ -50,21 +50,21 @@ void DisplayRunnable::operator()()
         }
 
         // It's time to display converted frame
-        if (m_ffmpeg->m_decoderListener && current_frame.m_duration != AV_NOPTS_VALUE &&
-            m_ffmpeg->m_seekDuration == -1)
+        if (m_decoderListener && current_frame.m_duration != AV_NOPTS_VALUE &&
+            m_seekDuration == -1)
         {
-            m_ffmpeg->m_decoderListener->changedFramePosition(
-                m_ffmpeg->m_startTime,
+            m_decoderListener->changedFramePosition(
+                m_startTime,
                 current_frame.m_duration,
-                m_ffmpeg->m_duration + m_ffmpeg->m_startTime);
+                m_duration + m_startTime);
         }
-        if (m_ffmpeg->m_frameListener)
+        if (m_frameListener)
         {
-            m_ffmpeg->m_frameListener->drawFrame();
+            m_frameListener->drawFrame();
         }
         else
         {
-            m_ffmpeg->finishedDisplayingFrame();
+            finishedDisplayingFrame();
         }
     }
 }

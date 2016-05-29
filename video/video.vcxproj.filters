@@ -35,13 +35,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="audioparserunnable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="audioplayer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="displayrunnable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ffmpegdecoder.h">
@@ -56,13 +50,7 @@
     <ClInclude Include="makeguard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="parserunnable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="videoframe.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="videoparserunnable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vqueue.h">

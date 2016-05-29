@@ -84,10 +84,29 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
    private:
     // Threads
-    friend class ParseRunnable;
-    friend class AudioParseRunnable;
-    friend class VideoParseRunnable;
-    friend class DisplayRunnable;
+    void parseRunnable();
+    void audioParseRunnable();
+    void videoParseRunnable();
+    void displayRunnable();
+
+    void dispatchPacket(AVPacket& packet);
+    void startAudioThread();
+    void startVideoThread();
+    void seek();
+    void fixDuration();
+    bool handlePacket(AVPacket packet,  // uses copy
+        std::vector<uint8_t>& resampleBuffer);
+
+    // IAudioPlayerCallback
+    void AppendFrameClock(double frame_clock) override;
+
+    void resetVariables();
+    void closeProcessing();
+    bool frameToImage(VideoFrame& videoFrameData);
+
+    bool openDecoder(const PathType& file, const std::string& url, bool isFile);
+
+    void seekWhilePaused();
 
     // Frame display listener
     IFrameListener* m_frameListener;
@@ -173,15 +192,4 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     // Audio
     std::unique_ptr<IAudioPlayer> m_audioPlayer;
-
-    // IAudioPlayerCallback
-    void AppendFrameClock(double frame_clock) override;
-
-    void resetVariables();
-    void closeProcessing();
-    bool frameToImage(VideoFrame& videoFrameData);
-
-    bool openDecoder(const PathType& file, const std::string& url, bool isFile);
-
-    void seekWhilePaused();
 };

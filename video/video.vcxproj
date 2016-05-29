@@ -89,17 +89,13 @@
     <ClCompile Include="videoparserunnable.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="audioparserunnable.h" />
     <ClInclude Include="audioplayer.h" />
-    <ClInclude Include="displayrunnable.h" />
     <ClInclude Include="ffmpegdecoder.h" />
     <ClInclude Include="ffmpeg_dxva2.h" />
     <ClInclude Include="fqueue.h" />
     <ClInclude Include="decoderinterface.h" />
     <ClInclude Include="makeguard.h" />
-    <ClInclude Include="parserunnable.h" />
     <ClInclude Include="videoframe.h" />
-    <ClInclude Include="videoparserunnable.h" />
     <ClInclude Include="vqueue.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

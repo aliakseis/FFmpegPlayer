@@ -1,9 +1,7 @@
-#include "parserunnable.h"
-#include "videoparserunnable.h"
-#include "audioparserunnable.h"
+#include "ffmpegdecoder.h"
 #include "makeguard.h"
 
-void ParseRunnable::operator()()
+void FFmpegDecoder::parseRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Parse thread started";
     AVPacket packet;
@@ -24,7 +22,7 @@ void ParseRunnable::operator()()
 
         seek();
 
-        const int readStatus = av_read_frame(m_ffmpeg->m_formatContext, &packet);
+        const int readStatus = av_read_frame(m_formatContext, &packet);
         if (readStatus >= 0)
         {
             dispatchPacket(packet);
@@ -35,13 +33,12 @@ void ParseRunnable::operator()()
             if (eof)
             {
                 using namespace boost;
-                if (m_ffmpeg->m_decoderListener
-                    && m_ffmpeg->m_videoPacketsQueue.empty()
-                    && m_ffmpeg->m_audioPacketsQueue.empty()
-                    && (lock_guard<mutex>(m_ffmpeg->m_videoFramesMutex)
-                        , !m_ffmpeg->m_videoFramesQueue.canPop()))
+                if (m_decoderListener
+                    && m_videoPacketsQueue.empty()
+                    && m_audioPacketsQueue.empty()
+                    && (lock_guard<mutex>(m_videoFramesMutex), !m_videoFramesQueue.canPop()))
                 {
-                    m_ffmpeg->m_decoderListener->onEndOfStream();
+                    m_decoderListener->onEndOfStream();
                 }
 
                 this_thread::sleep_for(chrono::milliseconds(10));
@@ -55,34 +52,32 @@ void ParseRunnable::operator()()
     CHANNEL_LOG(ffmpeg_threads) << "Decoding ended";
 }
 
-void ParseRunnable::dispatchPacket(AVPacket& packet)
+void FFmpegDecoder::dispatchPacket(AVPacket& packet)
 {
     auto guard = MakeGuard(&packet, av_packet_unref);
 
-    if (m_ffmpeg->m_seekDuration >= 0)
+    if (m_seekDuration >= 0)
     {
         return; // guard frees packet
     }
 
-    if (packet.stream_index == m_ffmpeg->m_videoStreamNumber)
+    if (packet.stream_index == m_videoStreamNumber)
     { 
-        if (!m_ffmpeg->m_videoPacketsQueue.push(
-            packet, [this] { return m_ffmpeg->m_seekDuration >= 0; }))
+        if (!m_videoPacketsQueue.push(packet, [this] { return m_seekDuration >= 0; }))
         {
             return; // guard frees packet
         }
     }
-    else if (packet.stream_index == m_ffmpeg->m_audioStreamNumber)
+    else if (packet.stream_index == m_audioStreamNumber)
     { 
-        if (!m_ffmpeg->m_audioPacketsQueue.push(
-            packet, [this] { return m_ffmpeg->m_seekDuration >= 0; }))
+        if (!m_audioPacketsQueue.push(packet, [this] { return m_seekDuration >= 0; }))
         {
             return; // guard frees packet
         }
     }
     else
     {
-        //auto codec = m_ffmpeg->m_formatContext->streams[packet.stream_index]->codec;
+        //auto codec = m_formatContext->streams[packet.stream_index]->codec;
         //if (codec->codec_type == AVMEDIA_TYPE_SUBTITLE)
         //{
         //    AVSubtitle subtitle {};
@@ -100,102 +95,102 @@ void ParseRunnable::dispatchPacket(AVPacket& packet)
     guard.release();
 }
 
-void ParseRunnable::startAudioThread()
+void FFmpegDecoder::startAudioThread()
 {
-    if (m_ffmpeg->m_audioStreamNumber >= 0)
+    if (m_audioStreamNumber >= 0)
     {
-        m_ffmpeg->m_mainAudioThread.reset(new boost::thread(AudioParseRunnable(m_ffmpeg)));
+        m_mainAudioThread.reset(new boost::thread(&FFmpegDecoder::audioParseRunnable, this));
     }
 }
 
-void ParseRunnable::startVideoThread()
+void FFmpegDecoder::startVideoThread()
 {
-    if (m_ffmpeg->m_videoStreamNumber >= 0)
+    if (m_videoStreamNumber >= 0)
     {
-        m_ffmpeg->m_mainVideoThread.reset(new boost::thread(VideoParseRunnable(m_ffmpeg)));
+        m_mainVideoThread.reset(new boost::thread(&FFmpegDecoder::videoParseRunnable, this));
     }
 }
 
-void ParseRunnable::seek()
+void FFmpegDecoder::seek()
 {
-    const int64_t seekDuration = m_ffmpeg->m_seekDuration.exchange(-1);
+    const int64_t seekDuration = m_seekDuration.exchange(-1);
     if (seekDuration < 0)
     {
         return;
     }
 
-    const bool hasVideo = m_ffmpeg->m_mainVideoThread != nullptr;
+    const bool hasVideo = m_mainVideoThread != nullptr;
 
-    if (avformat_seek_file(m_ffmpeg->m_formatContext, hasVideo ? m_ffmpeg->m_videoStreamNumber
-                                                               : m_ffmpeg->m_audioStreamNumber,
+    if (avformat_seek_file(m_formatContext, 
+                           hasVideo ? m_videoStreamNumber : m_audioStreamNumber,
                            0, seekDuration, seekDuration, AVSEEK_FLAG_FRAME) < 0)
     {
         CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
         return;
     }
 
-    const bool hasAudio = m_ffmpeg->m_mainAudioThread != nullptr;
+    const bool hasAudio = m_mainAudioThread != nullptr;
 
     if (hasVideo)
     {
-        m_ffmpeg->m_mainVideoThread->interrupt();
+        m_mainVideoThread->interrupt();
     }
     if (hasAudio)
     {
-        m_ffmpeg->m_mainAudioThread->interrupt();
+        m_mainAudioThread->interrupt();
     }
 
     if (hasVideo)
     {
-        m_ffmpeg->m_mainVideoThread->join();
+        m_mainVideoThread->join();
     }
     if (hasAudio)
     {
-        m_ffmpeg->m_mainAudioThread->join();
+        m_mainAudioThread->join();
     }
 
     // Reset stuff
-    m_ffmpeg->m_videoPacketsQueue.clear();
-    m_ffmpeg->m_audioPacketsQueue.clear();
+    m_videoPacketsQueue.clear();
+    m_audioPacketsQueue.clear();
 
     const auto currentTime = GetHiResTime();
     if (hasVideo)
     {
-        if (m_ffmpeg->m_videoCodecContext)
-            avcodec_flush_buffers(m_ffmpeg->m_videoCodecContext);
-        m_ffmpeg->m_videoFramesQueue.setDisplayTime(currentTime);
+        if (m_videoCodecContext)
+            avcodec_flush_buffers(m_videoCodecContext);
+        m_videoFramesQueue.setDisplayTime(currentTime);
     }
     if (hasAudio)
     {
-        if (m_ffmpeg->m_audioCodecContext)
-            avcodec_flush_buffers(m_ffmpeg->m_audioCodecContext);
-        m_ffmpeg->m_audioPlayer->WaveOutReset();
+        if (m_audioCodecContext)
+            avcodec_flush_buffers(m_audioCodecContext);
+        m_audioPlayer->WaveOutReset();
     }
 
-    m_ffmpeg->seekWhilePaused();
+    seekWhilePaused();
 
     // Restart
     startAudioThread();
     startVideoThread();
 }
 
-void ParseRunnable::fixDuration()
+void FFmpegDecoder::fixDuration()
 {
     AVPacket packet;
-    if (m_ffmpeg->m_duration <= 0)
+    if (m_duration <= 0)
     {
-        m_ffmpeg->m_duration = 0;
-        while (av_read_frame(m_ffmpeg->m_formatContext, &packet) >= 0)
+        m_duration = 0;
+        while (av_read_frame(m_formatContext, &packet) >= 0)
         {
-            if (packet.stream_index == m_ffmpeg->m_videoStreamNumber)
+            if (packet.stream_index == m_videoStreamNumber)
             {
                 if (packet.pts != AV_NOPTS_VALUE)
                 {
-                    m_ffmpeg->m_duration = packet.pts;
+                    m_duration = packet.pts;
                 }
                 else if (packet.dts != AV_NOPTS_VALUE)
                 {
-                    m_ffmpeg->m_duration = packet.dts;
+                    m_duration = packet.dts;
                 }
             }
             av_packet_unref(&packet);
@@ -207,7 +202,7 @@ void ParseRunnable::fixDuration()
             }
         }
 
-        if (avformat_seek_file(m_ffmpeg->m_formatContext, m_ffmpeg->m_videoStreamNumber, 0, 0, 0,
+        if (avformat_seek_file(m_formatContext, m_videoStreamNumber, 0, 0, 0,
                                AVSEEK_FLAG_FRAME) < 0)
         {
             CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
