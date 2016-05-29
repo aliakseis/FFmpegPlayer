@@ -39,7 +39,7 @@ void ParseRunnable::operator()()
                     && m_ffmpeg->m_videoPacketsQueue.empty()
                     && m_ffmpeg->m_audioPacketsQueue.empty()
                     && (lock_guard<mutex>(m_ffmpeg->m_videoFramesMutex)
-                        , m_ffmpeg->m_videoFramesQueue.m_busy == 0))
+                        , !m_ffmpeg->m_videoFramesQueue.canPop()))
                 {
                     m_ffmpeg->m_decoderListener->onEndOfStream();
                 }

@@ -666,11 +666,7 @@ void FFmpegDecoder::finishedDisplayingFrame()
 {
     {
         boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
-        --m_videoFramesQueue.m_busy;
-        assert(m_videoFramesQueue.m_busy >= 0);
-        // avoiding assert in VideoParseRunnable
-        m_videoFramesQueue.m_read_counter =
-            (m_videoFramesQueue.m_read_counter + 1) % VQueue::QUEUE_SIZE;
+        m_videoFramesQueue.popFront();
         m_frameDisplayingRequested = false;
     }
     m_videoFramesCV.notify_all();
@@ -719,7 +715,7 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
         return false;
     }
 
-    VideoFrame &current_frame = m_videoFramesQueue.m_frames[m_videoFramesQueue.m_read_counter];
+    VideoFrame &current_frame = m_videoFramesQueue.front();
     if (!current_frame.m_image->data)
     {
         return false;

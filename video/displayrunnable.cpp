@@ -11,15 +11,14 @@ void DisplayRunnable::operator()()
             m_ffmpeg->m_videoFramesCV.wait(locker, [this]()
                                      {
                                          return !m_ffmpeg->m_frameDisplayingRequested &&
-                                                m_ffmpeg->m_videoFramesQueue.m_busy != 0;
+                                                m_ffmpeg->m_videoFramesQueue.canPop();
                                      });
         }
 
-        VideoFrame* current_frame =
-            &m_ffmpeg->m_videoFramesQueue.m_frames[m_ffmpeg->m_videoFramesQueue.m_read_counter];
+        VideoFrame& current_frame = m_ffmpeg->m_videoFramesQueue.front();
 
         // Frame skip
-        if (m_ffmpeg->m_videoFramesQueue.m_busy > 1 && current_frame->m_displayTime < GetHiResTime())
+        if (!m_ffmpeg->m_videoFramesQueue.canPush() && current_frame.m_displayTime < GetHiResTime())
         {
             CHANNEL_LOG(ffmpeg_threads) << __FUNCTION__ << " Framedrop";
             m_ffmpeg->finishedDisplayingFrame();
@@ -37,7 +36,7 @@ void DisplayRunnable::operator()()
         for (;;)
         {
             double current_time = GetHiResTime();
-            double delay = current_frame->m_displayTime - current_time;
+            double delay = current_frame.m_displayTime - current_time;
             if (delay < 0.005)
                 break;
             if (delay > 3.)
@@ -51,12 +50,12 @@ void DisplayRunnable::operator()()
         }
 
         // It's time to display converted frame
-        if (m_ffmpeg->m_decoderListener && current_frame->m_duration != AV_NOPTS_VALUE &&
+        if (m_ffmpeg->m_decoderListener && current_frame.m_duration != AV_NOPTS_VALUE &&
             m_ffmpeg->m_seekDuration == -1)
         {
             m_ffmpeg->m_decoderListener->changedFramePosition(
                 m_ffmpeg->m_startTime,
-                current_frame->m_duration,
+                current_frame.m_duration,
                 m_ffmpeg->m_duration + m_ffmpeg->m_startTime);
         }
         if (m_ffmpeg->m_frameListener)

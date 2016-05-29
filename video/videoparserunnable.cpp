@@ -122,7 +122,7 @@ void VideoParseRunnable::operator()()
                         auto cond = [this]()
                         {
                             return m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused ||
-                                m_ffmpeg->m_videoFramesQueue.m_busy < VQueue::QUEUE_SIZE;
+                                m_ffmpeg->m_videoFramesQueue.canPush();
                         };
 
                         if (td.is_pos_infinity())
@@ -133,11 +133,6 @@ void VideoParseRunnable::operator()()
                         {
                             continue;
                         }
-
-                        assert(m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused ||
-                            !(m_ffmpeg->m_videoFramesQueue.m_write_counter ==
-                            m_ffmpeg->m_videoFramesQueue.m_read_counter &&
-                            m_ffmpeg->m_videoFramesQueue.m_busy > 0));
                     }
 
                     if (m_ffmpeg->m_isPaused && !m_ffmpeg->m_isVideoSeekingWhilePaused)
@@ -147,8 +142,7 @@ void VideoParseRunnable::operator()()
 
                     m_ffmpeg->m_isVideoSeekingWhilePaused = false;
 
-                    const int wrcount = m_ffmpeg->m_videoFramesQueue.m_write_counter;
-                    VideoFrame& current_frame = m_ffmpeg->m_videoFramesQueue.m_frames[wrcount];
+                    VideoFrame& current_frame = m_ffmpeg->m_videoFramesQueue.back();
                     if (!m_ffmpeg->frameToImage(current_frame))
                     {
                         continue;
@@ -157,13 +151,9 @@ void VideoParseRunnable::operator()()
                     current_frame.m_displayTime = m_ffmpeg->m_videoStartClock + pts;
                     current_frame.m_duration = duration_stamp;
 
-                    m_ffmpeg->m_videoFramesQueue.m_write_counter =
-                        (m_ffmpeg->m_videoFramesQueue.m_write_counter + 1) % VQueue::QUEUE_SIZE;
-
                     {
                         boost::lock_guard<boost::mutex> locker(m_ffmpeg->m_videoFramesMutex);
-                        ++m_ffmpeg->m_videoFramesQueue.m_busy;
-                        assert(m_ffmpeg->m_videoFramesQueue.m_busy <= VQueue::QUEUE_SIZE);
+                        m_ffmpeg->m_videoFramesQueue.pushBack();
                     }
                     m_ffmpeg->m_videoFramesCV.notify_all();
                 }
