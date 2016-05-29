@@ -19,18 +19,23 @@ extern "C" {
 #include <boost/log/sources/channel_logger.hpp>
 #include <boost/log/common.hpp>
 
-extern boost::log::sources::channel_logger_mt<> 
-    channel_logger_ffmpeg_audio,
-    channel_logger_ffmpeg_closing, 
-    channel_logger_ffmpeg_opening, 
-    channel_logger_ffmpeg_pause,
-    channel_logger_ffmpeg_readpacket, 
-    channel_logger_ffmpeg_seek, 
-    channel_logger_ffmpeg_sync,
-    channel_logger_ffmpeg_threads, 
-    channel_logger_ffmpeg_volume;
+namespace channel_logger
+{
 
-#define CHANNEL_LOG(channel) BOOST_LOG(channel_logger_##channel)
+extern boost::log::sources::channel_logger_mt<> 
+    ffmpeg_audio,
+    ffmpeg_closing, 
+    ffmpeg_opening, 
+    ffmpeg_pause,
+    ffmpeg_readpacket, 
+    ffmpeg_seek, 
+    ffmpeg_sync,
+    ffmpeg_threads, 
+    ffmpeg_volume;
+
+} // namespace channel_logger
+
+#define CHANNEL_LOG(channel) BOOST_LOG(::channel_logger::channel)
 
 #include "fqueue.h"
 #include "videoframe.h"

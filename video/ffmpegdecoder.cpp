@@ -162,18 +162,23 @@ AVPixelFormat GetHwFormat(AVCodecContext *s, const AVPixelFormat *pix_fmts)
 
 }  // namespace
 
+namespace channel_logger
+{
+
 using boost::log::keywords::channel;
 
 boost::log::sources::channel_logger_mt<> 
-    channel_logger_ffmpeg_audio(channel = "ffmpeg_audio"),
-    channel_logger_ffmpeg_closing(channel = "ffmpeg_closing"),
-    channel_logger_ffmpeg_opening(channel = "ffmpeg_opening"),
-    channel_logger_ffmpeg_pause(channel = "ffmpeg_pause"),
-    channel_logger_ffmpeg_readpacket(channel = "ffmpeg_readpacket"),
-    channel_logger_ffmpeg_seek(channel = "ffmpeg_seek"),
-    channel_logger_ffmpeg_sync(channel = "ffmpeg_sync"),
-    channel_logger_ffmpeg_threads(channel = "ffmpeg_threads"),
-    channel_logger_ffmpeg_volume(channel = "ffmpeg_volume");
+    ffmpeg_audio(channel = "ffmpeg_audio"),
+    ffmpeg_closing(channel = "ffmpeg_closing"),
+    ffmpeg_opening(channel = "ffmpeg_opening"),
+    ffmpeg_pause(channel = "ffmpeg_pause"),
+    ffmpeg_readpacket(channel = "ffmpeg_readpacket"),
+    ffmpeg_seek(channel = "ffmpeg_seek"),
+    ffmpeg_sync(channel = "ffmpeg_sync"),
+    ffmpeg_threads(channel = "ffmpeg_threads"),
+    ffmpeg_volume(channel = "ffmpeg_volume");
+
+} // namespace channel_logger
 
 double GetHiResTime()
 {
