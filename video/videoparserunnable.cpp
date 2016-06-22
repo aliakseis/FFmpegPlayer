@@ -157,11 +157,11 @@ void FFmpegDecoder::videoParseRunnable()
                     }
                     m_videoFramesCV.notify_all();
                 }
+            }
 
-                if (m_isPaused && !m_isVideoSeekingWhilePaused)
-                {
-                    break;
-                }
+            if (m_isPaused && !m_isVideoSeekingWhilePaused)
+            {
+                break;
             }
         }
     }
