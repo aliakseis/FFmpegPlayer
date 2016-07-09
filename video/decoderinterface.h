@@ -13,6 +13,7 @@ typedef std::string PathType;
 struct FrameRenderingData
 {
     uint8_t** image;
+    const int* pitch;
     int width; 
     int height;
     int aspectNum;

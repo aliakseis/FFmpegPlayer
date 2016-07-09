@@ -4,7 +4,7 @@ struct VideoFrame
 {
     double m_displayTime;
     int64_t m_duration;
-    AVFrame* const m_image;
+    AVFrame* m_image;
 
     VideoFrame() 
         : m_displayTime(0)
@@ -13,7 +13,7 @@ struct VideoFrame
     {}
     ~VideoFrame()
     {
-        av_frame_free(const_cast<AVFrame**>(&m_image));
+        av_frame_free(&m_image);
     }
 
     VideoFrame(const VideoFrame&) = delete;

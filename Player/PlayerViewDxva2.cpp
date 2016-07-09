@@ -20,6 +20,8 @@
 #define new DEBUG_NEW
 #endif
 
+#define CONVERT_FROM_YUV420P
+
 namespace {
 
 //
@@ -223,11 +225,11 @@ DXVA2_AYUVSample16 GetBackgroundColor()
 }
 
 
-void DrawText(BYTE* buffer, int width, int height, const WCHAR* text)
+void DrawText(BYTE* buffer, int width, int height, int stride, const WCHAR* text)
 {
     using namespace Gdiplus;
 
-    Bitmap bitmap(width, height, width * 2, PixelFormat16bppRGB565, buffer);
+    Bitmap bitmap(width, height, stride, PixelFormat16bppRGB565, buffer);
 
     Graphics graphics(&bitmap);
 
@@ -1085,7 +1087,13 @@ int CPlayerViewDxva2::OnCreate(LPCREATESTRUCT lpCreateStruct)
         return -1;
 
     GetDocument()->getFrameDecoder()->setFrameListener(m_frameListener.get());
-    GetDocument()->getFrameDecoder()->SetFrameFormat(IFrameDecoder::PIX_FMT_YUYV422);
+    GetDocument()->getFrameDecoder()->SetFrameFormat(IFrameDecoder::
+#ifdef CONVERT_FROM_YUV420P
+        PIX_FMT_YUV420P
+#else
+        PIX_FMT_YUYV422
+#endif
+        );
 
     return 0;
 }
@@ -1096,12 +1104,6 @@ void CPlayerViewDxva2::updateFrame()
     if (!GetDocument()->getFrameDecoder()->getFrameRenderingData(&data))
     {
         return;
-    }
-
-    auto subtitle = GetDocument()->getSubtitle();
-    if (!subtitle.empty())
-    {
-        DrawText(data.image[0], data.width, data.height, CA2W(subtitle.c_str(), CP_UTF8));
     }
 
     CSingleLock lock(&m_csSurface, TRUE);
@@ -1124,10 +1126,37 @@ void CPlayerViewDxva2::updateFrame()
         return;
     }
 
+#ifdef CONVERT_FROM_YUV420P
+    const unsigned int width = data.width / 2;
+    for (unsigned int i = 0; i < data.height / 2; ++i)
+    {
+        uint32_t* const origin0 = (uint32_t*)((char*)lr.pBits + lr.Pitch * 2 * i);
+        uint32_t* const origin1 = (uint32_t*)((char*)lr.pBits + lr.Pitch * (2 * i + 1));
+
+        const uint8_t* const src00 = data.image[0] + data.pitch[0] * 2 * i;
+        const uint8_t* const src01 = data.image[0] + data.pitch[0] * (2 * i + 1);
+        const uint8_t* const src1 = data.image[1] + data.pitch[1] * i;
+        const uint8_t* const src2 = data.image[2] + data.pitch[2] * i;
+
+        for (unsigned int j = 0; j < width; ++j)
+        {
+            const uint32_t uv = (src1[j] << 8) | (src2[j] << 24);
+            origin0[j] = uv | src00[j * 2] | (src00[j * 2 + 1] << 16);
+            origin1[j] = uv | src01[j * 2] | (src01[j * 2 + 1] << 16);
+        }
+    }
+#else
     const size_t lineSize = (size_t)min(lr.Pitch, data.width * 2);
     for (int i = 0; i < data.height; ++i)
     {
         memcpy((BYTE*)lr.pBits + lr.Pitch * i, data.image[0] + data.width * 2 * i, lineSize);
+    }
+#endif
+
+    auto subtitle = GetDocument()->getSubtitle();
+    if (!subtitle.empty())
+    {
+        DrawText((BYTE*)lr.pBits, data.width, data.height, lr.Pitch, CA2W(subtitle.c_str(), CP_UTF8));
     }
 
     hr = m_pMainStream->UnlockRect();

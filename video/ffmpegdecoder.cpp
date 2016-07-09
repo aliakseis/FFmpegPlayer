@@ -498,6 +498,8 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
 #endif
     }
 
+    m_videoCodecContext->refcounted_frames = 1;
+
     // Find audio codec
     if (m_audioStreamNumber >= 0)
     {
@@ -624,34 +626,41 @@ bool FFmpegDecoder::frameToImage(VideoFrame& videoFrameData)
     }
 #endif
 
-    const int width = m_videoFrame->width;
-    const int height = m_videoFrame->height;
-
-    videoFrameData.realloc(m_pixelFormat, width, height);
-
-    // Prepare image conversion
-    m_imageCovertContext =
-        sws_getCachedContext(m_imageCovertContext, m_videoFrame->width, m_videoFrame->height,
-                             (AVPixelFormat)m_videoFrame->format, width, height, m_pixelFormat,
-                             0, nullptr, nullptr, nullptr);
-
-    assert(m_imageCovertContext != nullptr);
-
-    if (m_imageCovertContext == nullptr)
+    if (m_videoFrame->format == m_pixelFormat)
     {
-        return false;
+        std::swap(m_videoFrame, videoFrameData.m_image);
     }
-
-    // Doing conversion
-    if (sws_scale(m_imageCovertContext, m_videoFrame->data, m_videoFrame->linesize, 0,
-        m_videoFrame->height, videoFrameData.m_image->data, videoFrameData.m_image->linesize) <= 0)
+    else
     {
-        assert(false && "sws_scale failed");
-        BOOST_LOG_TRIVIAL(error) << "sws_scale failed";
-        return false;
-    }
+        const int width = m_videoFrame->width;
+        const int height = m_videoFrame->height;
 
-    videoFrameData.m_image->sample_aspect_ratio = m_videoFrame->sample_aspect_ratio;
+        videoFrameData.realloc(m_pixelFormat, width, height);
+
+        // Prepare image conversion
+        m_imageCovertContext =
+            sws_getCachedContext(m_imageCovertContext, m_videoFrame->width, m_videoFrame->height,
+            (AVPixelFormat)m_videoFrame->format, width, height, m_pixelFormat,
+            0, nullptr, nullptr, nullptr);
+
+        assert(m_imageCovertContext != nullptr);
+
+        if (m_imageCovertContext == nullptr)
+        {
+            return false;
+        }
+
+        // Doing conversion
+        if (sws_scale(m_imageCovertContext, m_videoFrame->data, m_videoFrame->linesize, 0,
+            m_videoFrame->height, videoFrameData.m_image->data, videoFrameData.m_image->linesize) <= 0)
+        {
+            assert(false && "sws_scale failed");
+            BOOST_LOG_TRIVIAL(error) << "sws_scale failed";
+            return false;
+        }
+
+        videoFrameData.m_image->sample_aspect_ratio = m_videoFrame->sample_aspect_ratio;
+    }
 
     return true;
 }
@@ -724,6 +733,7 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
         return false;
     }
     data->image = current_frame.m_image->data;
+    data->pitch = current_frame.m_image->linesize;
     data->width = current_frame.m_image->width;
     data->height = current_frame.m_image->height;
     if (current_frame.m_image->sample_aspect_ratio.num != 0

@@ -255,11 +255,11 @@ void CPlayerView::updateFrame()
         props.colorContext = nullptr;
 
         CComPtr<ID2D1Bitmap1> yBitmap;
-        HRESULT hr = spContext->CreateBitmap({ m_sourceSize.cx, m_sourceSize.cy }, data.image[0], m_sourceSize.cx, props, &yBitmap);
+        HRESULT hr = spContext->CreateBitmap({ m_sourceSize.cx, m_sourceSize.cy }, data.image[0], data.pitch[0], props, &yBitmap);
         CComPtr<ID2D1Bitmap1> uBitmap;
-        hr = spContext->CreateBitmap({ m_sourceSize.cx / 2, m_sourceSize.cy / 2 }, data.image[1], m_sourceSize.cx / 2, props, &uBitmap);
+        hr = spContext->CreateBitmap({ m_sourceSize.cx / 2, m_sourceSize.cy / 2 }, data.image[1], data.pitch[1], props, &uBitmap);
         CComPtr<ID2D1Bitmap1> vBitmap;
-        hr = spContext->CreateBitmap({ m_sourceSize.cx / 2, m_sourceSize.cy / 2 }, data.image[2], m_sourceSize.cx / 2, props, &vBitmap);
+        hr = spContext->CreateBitmap({ m_sourceSize.cx / 2, m_sourceSize.cy / 2 }, data.image[2], data.pitch[2], props, &vBitmap);
 
         m_spEffect->SetInput(0, yBitmap);
         m_spEffect->SetInput(1, uBitmap);
@@ -271,19 +271,19 @@ void CPlayerView::updateFrame()
             D2D1_RECT_U destRect = D2D1::RectU(0, 0, m_sourceSize.cx, m_sourceSize.cy);
             CComPtr<ID2D1Bitmap1> yBitmap;
             m_spEffect->GetInput(0, (ID2D1Image**)&yBitmap);
-            HRESULT hr = yBitmap->CopyFromMemory(&destRect, data.image[0], m_sourceSize.cx);
+            HRESULT hr = yBitmap->CopyFromMemory(&destRect, data.image[0], data.pitch[0]);
         }
         {
             D2D1_RECT_U destRect = D2D1::RectU(0, 0, m_sourceSize.cx / 2, m_sourceSize.cy / 2);
             CComPtr<ID2D1Bitmap1> yBitmap;
             m_spEffect->GetInput(1, (ID2D1Image**)&yBitmap);
-            HRESULT hr = yBitmap->CopyFromMemory(&destRect, data.image[1], m_sourceSize.cx / 2);
+            HRESULT hr = yBitmap->CopyFromMemory(&destRect, data.image[1], data.pitch[1]);
         }
         {
             D2D1_RECT_U destRect = D2D1::RectU(0, 0, m_sourceSize.cx / 2, m_sourceSize.cy / 2);
             CComPtr<ID2D1Bitmap1> yBitmap;
             m_spEffect->GetInput(2, (ID2D1Image**)&yBitmap);
-            HRESULT hr = yBitmap->CopyFromMemory(&destRect, data.image[2], m_sourceSize.cx / 2);
+            HRESULT hr = yBitmap->CopyFromMemory(&destRect, data.image[2], data.pitch[2]);
         }
     }
 
