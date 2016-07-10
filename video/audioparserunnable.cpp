@@ -54,7 +54,7 @@ void FFmpegDecoder::audioParseRunnable()
                 {
                     av_packet_unref(&packet);
                 }
-                else if (!handlePacket(packet, resampleBuffer))
+                else if (!handleAudioPacket(packet, resampleBuffer))
                 {
                     av_packet_unref(&packet);
                     break;
@@ -102,7 +102,7 @@ void FFmpegDecoder::audioParseRunnable()
                     break;
                 }
 
-                const bool handled = handlePacket(packet, resampleBuffer);
+                const bool handled = handleAudioPacket(packet, resampleBuffer);
                 av_packet_unref(&packet);
 
                 if (!handled || m_isPaused && !m_isAudioSeekingWhilePaused)
@@ -126,8 +126,9 @@ void FFmpegDecoder::audioParseRunnable()
     }
 }
 
-bool FFmpegDecoder::handlePacket(AVPacket packet,  // uses copy
-                                std::vector<uint8_t>& resampleBuffer)
+bool FFmpegDecoder::handleAudioPacket(
+    AVPacket packet,  // uses copy
+    std::vector<uint8_t>& resampleBuffer)
 {
     while (packet.size > 0)
     {

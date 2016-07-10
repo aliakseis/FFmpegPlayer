@@ -99,8 +99,13 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     void startVideoThread();
     void seek();
     void fixDuration();
-    bool handlePacket(AVPacket packet,  // uses copy
+    bool handleAudioPacket(
+        AVPacket packet,  // uses copy
         std::vector<uint8_t>& resampleBuffer);
+    void handleVideoPacket(
+        AVPacket packet,  // uses copy
+        double& videoClock,
+        bool& initialized);
 
     // IAudioPlayerCallback
     void AppendFrameClock(double frame_clock) override;
