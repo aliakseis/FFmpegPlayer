@@ -7,7 +7,6 @@ class CPlayerDoc;
 
 // CDialogBarPlayerControl
 
-[event_receiver(native)]
 class CDialogBarPlayerControl
     : public CResizeDialog<CPaneDialog>
 {
@@ -23,9 +22,7 @@ public:
     // NOTE: the ClassWizard will add data members here
     //}}AFX_DATA
 
-
     void setDocument(CPlayerDoc* pDoc);
-
 
     // Overrides
     // ClassWizard generated virtual function overrides

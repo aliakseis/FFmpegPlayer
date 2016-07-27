@@ -2,15 +2,17 @@
 // PlayerDoc.h : interface of the CPlayerDoc class
 //
 
-
 #pragma once
+
+#pragma warning(disable:4996)
 
 #include <memory>
 #include <atomic>
 
+#include <boost/signals2/signal.hpp>
+
 #include "decoderinterface.h"
 
-[event_source(native)]
 class CPlayerDoc : public CDocument, public FrameDecoderListener
 {
 protected: // create from serialization only
@@ -64,9 +66,9 @@ public:
     bool isPaused() const;
     double soundVolume() const;
 
-    __event void framePositionChanged(long long frame, long long total);
-    __event void totalTimeUpdated(double secs);
-    __event void currentTimeUpdated(double secs);
+    boost::signals2::signal<void(long long, long long)> framePositionChanged;
+    boost::signals2::signal<void(double)> totalTimeUpdated;
+    boost::signals2::signal<void(double)> currentTimeUpdated;
 
     std::string getSubtitle();
 

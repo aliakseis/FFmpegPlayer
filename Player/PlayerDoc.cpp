@@ -176,11 +176,11 @@ void CPlayerDoc::OnCloseDocument()
 
 void CPlayerDoc::changedFramePosition(long long start, long long frame, long long total)
 {
-    __raise framePositionChanged(frame - start, total - start);
+    framePositionChanged(frame - start, total - start);
     const double currentTime = m_frameDecoder->getDurationSecs(frame);
     m_currentTime = currentTime;
-    __raise totalTimeUpdated(m_frameDecoder->getDurationSecs(total));
-    __raise currentTimeUpdated(currentTime);
+    totalTimeUpdated(m_frameDecoder->getDurationSecs(total));
+    currentTimeUpdated(currentTime);
 }
 
 bool CPlayerDoc::pauseResume()

@@ -7,6 +7,7 @@
 
 #include "MainFrm.h"
 #include "PlayerDoc.h"
+#include "MakeDelegate.h"
 
 #include <string>
 #include <sstream>
@@ -83,9 +84,9 @@ CDialogBarPlayerControl::~CDialogBarPlayerControl()
 {
     if (m_pDoc)
     {
-        __unhook(&CPlayerDoc::framePositionChanged, m_pDoc, &CDialogBarPlayerControl::onFramePositionChanged);
-        __unhook(&CPlayerDoc::totalTimeUpdated, m_pDoc, &CDialogBarPlayerControl::onTotalTimeUpdated);
-        __unhook(&CPlayerDoc::currentTimeUpdated, m_pDoc, &CDialogBarPlayerControl::onCurrentTimeUpdated);
+        m_pDoc->framePositionChanged.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onFramePositionChanged, this));
+        m_pDoc->totalTimeUpdated.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onTotalTimeUpdated, this));
+        m_pDoc->currentTimeUpdated.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onCurrentTimeUpdated, this));
     }
 }
 
@@ -160,9 +161,9 @@ void CDialogBarPlayerControl::setDocument(CPlayerDoc* pDoc)
 
     m_volumeSlider.SetPos(int(RANGE_MAX * pDoc->soundVolume()));
 
-    __hook(&CPlayerDoc::framePositionChanged, m_pDoc, &CDialogBarPlayerControl::onFramePositionChanged);
-    __hook(&CPlayerDoc::totalTimeUpdated, m_pDoc, &CDialogBarPlayerControl::onTotalTimeUpdated);
-    __hook(&CPlayerDoc::currentTimeUpdated, m_pDoc, &CDialogBarPlayerControl::onCurrentTimeUpdated);
+    m_pDoc->framePositionChanged.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onFramePositionChanged, this));
+    m_pDoc->totalTimeUpdated.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onTotalTimeUpdated, this));
+    m_pDoc->currentTimeUpdated.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onCurrentTimeUpdated, this));
 }
 
 void CDialogBarPlayerControl::onFramePositionChanged(long long frame, long long total)
