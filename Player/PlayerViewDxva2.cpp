@@ -1130,13 +1130,13 @@ void CPlayerViewDxva2::updateFrame()
     const unsigned int width = data.width / 2;
     for (unsigned int i = 0; i < data.height / 2; ++i)
     {
-        uint32_t* const origin0 = (uint32_t*)((char*)lr.pBits + lr.Pitch * 2 * i);
-        uint32_t* const origin1 = (uint32_t*)((char*)lr.pBits + lr.Pitch * (2 * i + 1));
+        uint32_t* const __restrict origin0 = (uint32_t*)((char*)lr.pBits + lr.Pitch * 2 * i);
+        uint32_t* const __restrict origin1 = (uint32_t*)((char*)lr.pBits + lr.Pitch * (2 * i + 1));
 
-        const uint8_t* const src00 = data.image[0] + data.pitch[0] * 2 * i;
-        const uint8_t* const src01 = data.image[0] + data.pitch[0] * (2 * i + 1);
-        const uint8_t* const src1 = data.image[1] + data.pitch[1] * i;
-        const uint8_t* const src2 = data.image[2] + data.pitch[2] * i;
+        const uint8_t* const __restrict src00 = data.image[0] + data.pitch[0] * 2 * i;
+        const uint8_t* const __restrict src01 = data.image[0] + data.pitch[0] * (2 * i + 1);
+        const uint8_t* const __restrict src1 = data.image[1] + data.pitch[1] * i;
+        const uint8_t* const __restrict src2 = data.image[2] + data.pitch[2] * i;
 
         for (unsigned int j = 0; j < width; ++j)
         {
