@@ -253,6 +253,67 @@ void DrawText(BYTE* buffer, int width, int height, int stride, const WCHAR* text
     graphics.DrawString(text, length, &font, PointF(left, top), &whiteBrush);
 }
 
+void SimdCopyAndConvert(
+    __m128i* const __restrict origin0,
+    __m128i* const __restrict origin1,
+    const __m128i* const __restrict src00,
+    const __m128i* const __restrict src01,
+    const __m64* const __restrict src0,
+    const __m64* const __restrict src1,
+    size_t count)
+{
+    for (size_t i = 0; i < count; ++i)
+    {
+        __m128i uv = _mm_unpacklo_epi8(
+            _mm_movpi64_epi64(src0[i]),
+            _mm_movpi64_epi64(src1[i]));
+        _mm_stream_si128(origin0 + i * 2, _mm_unpacklo_epi8(src00[i], uv));
+        _mm_stream_si128(origin0 + i * 2 + 1, _mm_unpackhi_epi8(src00[i], uv));
+        _mm_stream_si128(origin1 + i * 2, _mm_unpacklo_epi8(src01[i], uv));
+        _mm_stream_si128(origin1 + i * 2 + 1, _mm_unpackhi_epi8(src01[i], uv));
+    }
+    _mm_empty();
+}
+
+void CopyAndConvert(
+    uint32_t* __restrict origin0,
+    uint32_t* __restrict origin1,
+    const uint8_t* __restrict src00,
+    const uint8_t* __restrict src01,
+    const uint8_t* __restrict src0,
+    const uint8_t* __restrict src1,
+    size_t count)
+{
+    {
+        const auto simdCount = count / 8;
+
+        SimdCopyAndConvert(
+            (__m128i*) origin0,
+            (__m128i*) origin1,
+            (const __m128i*) src00,
+            (const __m128i*) src01,
+            (const __m64*) src0,
+            (const __m64*) src1,
+            simdCount);
+
+        origin0 += simdCount * 8;
+        origin1 += simdCount * 8;
+        src00 += simdCount * 16;
+        src01 += simdCount * 16;
+        src0 += simdCount * 8;
+        src1 += simdCount * 8;
+
+        count -= simdCount * 8;
+    }
+
+    for (unsigned int j = 0; j < count; ++j)
+    {
+        const uint32_t uv = (src0[j] << 8) | (src1[j] << 24);
+        origin0[j] = uv | src00[j * 2] | (src00[j * 2 + 1] << 16);
+        origin1[j] = uv | src01[j * 2] | (src01[j * 2 + 1] << 16);
+    }
+}
+
 } // namespace
 
 
@@ -1127,23 +1188,16 @@ void CPlayerViewDxva2::updateFrame()
     }
 
 #ifdef CONVERT_FROM_YUV420P
-    const unsigned int width = data.width / 2;
-    for (unsigned int i = 0; i < data.height / 2; ++i)
+    for (int i = 0; i < data.height / 2; ++i)
     {
-        uint32_t* const __restrict origin0 = (uint32_t*)((char*)lr.pBits + lr.Pitch * 2 * i);
-        uint32_t* const __restrict origin1 = (uint32_t*)((char*)lr.pBits + lr.Pitch * (2 * i + 1));
-
-        const uint8_t* const __restrict src00 = data.image[0] + data.pitch[0] * 2 * i;
-        const uint8_t* const __restrict src01 = data.image[0] + data.pitch[0] * (2 * i + 1);
-        const uint8_t* const __restrict src1 = data.image[1] + data.pitch[1] * i;
-        const uint8_t* const __restrict src2 = data.image[2] + data.pitch[2] * i;
-
-        for (unsigned int j = 0; j < width; ++j)
-        {
-            const uint32_t uv = (src1[j] << 8) | (src2[j] << 24);
-            origin0[j] = uv | src00[j * 2] | (src00[j * 2 + 1] << 16);
-            origin1[j] = uv | src01[j * 2] | (src01[j * 2 + 1] << 16);
-        }
+        CopyAndConvert(
+            (uint32_t*)((char*)lr.pBits + lr.Pitch * 2 * i),
+            (uint32_t*)((char*)lr.pBits + lr.Pitch * (2 * i + 1)),
+            data.image[0] + data.pitch[0] * 2 * i,
+            data.image[0] + data.pitch[0] * (2 * i + 1),
+            data.image[1] + data.pitch[1] * i,
+            data.image[2] + data.pitch[2] * i,
+            data.width / 2);
     }
 #else
     const size_t lineSize = (size_t)min(lr.Pitch, data.width * 2);

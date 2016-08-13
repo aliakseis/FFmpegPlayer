@@ -31,7 +31,7 @@ struct VideoFrame
             m_image->format = pix_fmt;
             m_image->width = width;
             m_image->height = height;
-            av_frame_get_buffer(m_image, 1);
+            av_frame_get_buffer(m_image, 16);
         }
     }
 };
