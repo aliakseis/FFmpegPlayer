@@ -284,6 +284,9 @@ void CopyAndConvert(
     const uint8_t* __restrict src1,
     size_t count)
 {
+    if (!((intptr_t(origin0) & 7) || (intptr_t(origin1) & 7)
+        || (intptr_t(src00) & 15) || (intptr_t(src01) & 15)
+        || (intptr_t(src0) & 15) || (intptr_t(src1) & 15)))
     {
         const auto simdCount = count / 8;
 
