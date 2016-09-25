@@ -50,6 +50,7 @@ const UINT VIDEO_REQUIED_OP = DXVA2_VideoProcess_YUV2RGB |
 
 const D3DFORMAT VIDEO_RENDER_TARGET_FORMAT = D3DFMT_X8R8G8B8;
 const D3DFORMAT VIDEO_MAIN_FORMAT = D3DFMT_YUY2;
+//const D3DFORMAT VIDEO_MAIN_FORMAT = (D3DFORMAT)MAKEFOURCC('I', 'M', 'C', '3');
 
 const UINT BACK_BUFFER_COUNT = 1;
 const UINT SUB_STREAM_COUNT = 0;
@@ -147,12 +148,12 @@ BOOL InitializeModule()
     return TRUE;
 }
 
-D3DPRESENT_PARAMETERS GetD3dPresentParams(HWND hWnd)
+D3DPRESENT_PARAMETERS GetD3dPresentParams(HWND hWnd, const CSize& backBufferSize)
 {
     D3DPRESENT_PARAMETERS D3DPP = { 0 };
 
-    D3DPP.BackBufferWidth = 0;
-    D3DPP.BackBufferHeight = 0;
+    D3DPP.BackBufferWidth = backBufferSize.cx;
+    D3DPP.BackBufferHeight = backBufferSize.cy;
 
     D3DPP.BackBufferFormat = VIDEO_RENDER_TARGET_FORMAT;
     D3DPP.BackBufferCount = BACK_BUFFER_COUNT;
@@ -333,6 +334,7 @@ private:
     void drawFrame() override
     {
         m_playerView->ProcessVideo();
+        //m_playerView->Invalidate();
         m_playerView->GetDocument()->getFrameDecoder()->finishedDisplayingFrame();
     }
 
@@ -373,7 +375,7 @@ bool CPlayerViewDxva2::InitializeD3D9()
         return false;
     }
 
-    auto D3DPP = GetD3dPresentParams(*this);
+    auto D3DPP = GetD3dPresentParams(*this, m_sourceSize);
 
     //
     // First try to create a hardware D3D9 device.
@@ -419,10 +421,11 @@ bool CPlayerViewDxva2::InitializeD3D9()
         return false;
     }
 
+
     return true;
 }
 
-bool CPlayerViewDxva2::CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW)
+bool CPlayerViewDxva2::CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool createSurface)
 {
     //
     // Query the supported render target format.
@@ -517,21 +520,24 @@ bool CPlayerViewDxva2::CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW)
     //
     // Create a main stream surface.
     //
-    hr = m_pDXVAVPS->CreateSurface(
-        m_sourceSize.cx,
-        m_sourceSize.cy,
-        0,
-        VIDEO_MAIN_FORMAT,
-        g_VPCaps.InputPool,
-        0,
-        DXVA2_VideoSoftwareRenderTarget,
-        &m_pMainStream,
-        NULL);
-
-    if (FAILED(hr))
+    if (createSurface)
     {
-        TRACE("CreateSurface(MainStream) failed with error 0x%x.\n", hr);
-        return false;
+        hr = m_pDXVAVPS->CreateSurface(
+            m_sourceSize.cx,
+            m_sourceSize.cy,
+            0,
+            VIDEO_MAIN_FORMAT,
+            g_VPCaps.InputPool,
+            0,
+            DXVA2_VideoSoftwareRenderTarget,
+            &m_pMainStream,
+            NULL);
+
+        if (FAILED(hr))
+        {
+            TRACE("CreateSurface(MainStream) failed with error 0x%x.\n", hr);
+            return false;
+        }
     }
 
     //
@@ -624,7 +630,7 @@ bool CPlayerViewDxva2::CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW)
 }
 
 
-bool CPlayerViewDxva2::InitializeDXVA2()
+bool CPlayerViewDxva2::InitializeDXVA2(bool createSurface)
 {
     //
     // Retrieve a back buffer as the video render target.
@@ -675,7 +681,7 @@ bool CPlayerViewDxva2::InitializeDXVA2()
     bool created = false;
     for (UINT i = 0; i < count; ++i)
     {
-        if (CreateDXVA2VPDevice(guids[i], FALSE))
+        if (CreateDXVA2VPDevice(guids[i], false, createSurface))
         {
             created = true;
             break;
@@ -685,7 +691,7 @@ bool CPlayerViewDxva2::InitializeDXVA2()
     {
         for (UINT i = 0; i < count; ++i)
         {
-            if (CreateDXVA2VPDevice(guids[i], TRUE))
+            if (CreateDXVA2VPDevice(guids[i], true, createSurface))
             {
                 created = true;
                 break;
@@ -806,27 +812,27 @@ bool CPlayerViewDxva2::EnableDwmQueuing()
 
 bool CPlayerViewDxva2::ResetDevice(bool resizeSource)
 {
-    std::vector<BYTE> buffer;
-    size_t lineSizeFrom = 0;
+    //std::vector<BYTE> buffer;
+    //size_t lineSizeFrom = 0;
 
     bool fullInitialization = true;
 
     if (m_pD3DD9)
     {
-        D3DLOCKED_RECT lrFrom;
-        HRESULT hr = m_pMainStream->LockRect(&lrFrom, NULL, D3DLOCK_READONLY | D3DLOCK_NOSYSLOCK);
-        if (SUCCEEDED(hr) && !resizeSource)
-        {
-            lineSizeFrom = (size_t)min(lrFrom.Pitch, m_sourceSize.cx * 2);
+        //D3DLOCKED_RECT lrFrom;
+        //HRESULT hr = m_pMainStream->LockRect(&lrFrom, NULL, D3DLOCK_READONLY | D3DLOCK_NOSYSLOCK);
+        //if (SUCCEEDED(hr) && !resizeSource)
+        //{
+        //    lineSizeFrom = (size_t)min(lrFrom.Pitch, m_sourceSize.cx * 2);
 
-            buffer.resize(lineSizeFrom * m_sourceSize.cy);
-            for (int i = 0; i < m_sourceSize.cy; ++i)
-            {
-                memcpy(&buffer[lineSizeFrom * i], (BYTE*)lrFrom.pBits + lrFrom.Pitch * i, lineSizeFrom);
-            }
+        //    buffer.resize(lineSizeFrom * m_sourceSize.cy);
+        //    for (int i = 0; i < m_sourceSize.cy; ++i)
+        //    {
+        //        memcpy(&buffer[lineSizeFrom * i], (BYTE*)lrFrom.pBits + lrFrom.Pitch * i, lineSizeFrom);
+        //    }
 
-            hr = m_pMainStream->UnlockRect();
-        }
+        //    hr = m_pMainStream->UnlockRect();
+        //}
 
         //
         // Destroy DXVA2 device because it may be holding any D3D9 resources.
@@ -836,16 +842,16 @@ bool CPlayerViewDxva2::ResetDevice(bool resizeSource)
         //
         // Reset will change the parameters, so use a copy instead.
         //
-        auto d3dpp = GetD3dPresentParams(*this);
+        auto d3dpp = GetD3dPresentParams(*this, m_sourceSize);
 
-        hr = m_pD3DD9->Reset(&d3dpp);
+        HRESULT hr = m_pD3DD9->Reset(&d3dpp);
 
         if (FAILED(hr))
         {
             TRACE("Reset failed with error 0x%x.\n", hr);
         }
 
-        if (SUCCEEDED(hr) && InitializeDXVA2())
+        if (SUCCEEDED(hr) && InitializeDXVA2(true))
         {
             fullInitialization = false;
         }
@@ -860,27 +866,27 @@ bool CPlayerViewDxva2::ResetDevice(bool resizeSource)
         }
     }
 
-    if (fullInitialization && (!InitializeD3D9() || !InitializeDXVA2()))
+    if (fullInitialization && (!InitializeD3D9() || !InitializeDXVA2(true)))
     {
         return false;
     }
 
-    if (!buffer.empty())
-    {
-        D3DLOCKED_RECT lrTo;
-        HRESULT hr = m_pMainStream->LockRect(&lrTo, NULL, D3DLOCK_NOSYSLOCK);
-        if (SUCCEEDED(hr))
-        {
-            const size_t lineSize = min(lineSizeFrom, (size_t)lrTo.Pitch);
+    //if (!buffer.empty())
+    //{
+    //    D3DLOCKED_RECT lrTo;
+    //    HRESULT hr = m_pMainStream->LockRect(&lrTo, NULL, D3DLOCK_NOSYSLOCK);
+    //    if (SUCCEEDED(hr))
+    //    {
+    //        const size_t lineSize = min(lineSizeFrom, (size_t)lrTo.Pitch);
 
-            for (int i = 0; i < m_sourceSize.cy; ++i)
-            {
-                memcpy((BYTE*)lrTo.pBits + lrTo.Pitch * i, &buffer[lineSizeFrom * i], lineSize);
-            }
+    //        for (int i = 0; i < m_sourceSize.cy; ++i)
+    //        {
+    //            memcpy((BYTE*)lrTo.pBits + lrTo.Pitch * i, &buffer[lineSizeFrom * i], lineSize);
+    //        }
 
-            hr = m_pMainStream->UnlockRect();
-        }
-    }
+    //        hr = m_pMainStream->UnlockRect();
+    //    }
+    //}
 
     return true;
 }
@@ -898,30 +904,33 @@ bool CPlayerViewDxva2::ProcessVideo()
 
     CSingleLock lock(&m_csSurface, TRUE);
 
+    CRect desc;
+    GetClientRect(&desc);
 
-    D3DSURFACE_DESC desc;
-    HRESULT hr = m_pD3DRT->GetDesc(&desc);
-    {
-        CRect client;
-        GetClientRect(&client);
+    //D3DSURFACE_DESC desc;
+    //HRESULT hr = m_pD3DRT->GetDesc(&desc);
 
-        if (IsRectEmpty(&client))
-        {
-            return true;
-        }
+    //{
+    //    CRect client;
+    //    GetClientRect(&client);
 
-        if (desc.Width != client.Width() || desc.Height != client.Height())
-        {
-            ResetDevice(false);
-        }
+    //    if (IsRectEmpty(&client))
+    //    {
+    //        return true;
+    //    }
 
-        hr = m_pD3DRT->GetDesc(&desc);
-    }
+    //    if (desc.Width != client.Width() || desc.Height != client.Height())
+    //    {
+    //        ResetDevice(false);
+    //    }
+
+    //    hr = m_pD3DRT->GetDesc(&desc);
+    //}
 
     //
     // Check the current status of D3D9 device.
     //
-    hr = m_pD3DD9->TestCooperativeLevel();
+    HRESULT hr = m_pD3DD9->TestCooperativeLevel();
     switch (hr)
     {
     case D3D_OK:
@@ -938,7 +947,7 @@ bool CPlayerViewDxva2::ProcessVideo()
         {
             return false;
         }
-        hr = m_pD3DRT->GetDesc(&desc);
+        //hr = m_pD3DRT->GetDesc(&desc);
 
         break;
 
@@ -951,21 +960,21 @@ bool CPlayerViewDxva2::ProcessVideo()
     long long aspectFrameY(m_sourceSize.cy * m_aspectRatio.cy);
 
     RECT target;
-    if (aspectFrameY * desc.Width > aspectFrameX * desc.Height)
+    if (aspectFrameY * desc.Width() > aspectFrameX * desc.Height())
     {
         target.top = 0;
-        target.bottom = desc.Height;
-        LONG width = LONG(aspectFrameX * desc.Height / aspectFrameY);
-        LONG offset = (desc.Width - width) / 2;
+        target.bottom = desc.Height();
+        LONG width = LONG(aspectFrameX * desc.Height() / aspectFrameY);
+        LONG offset = (desc.Width() - width) / 2;
         target.left = offset;
         target.right = width + offset;
     }
     else
     {
         target.left = 0;
-        target.right = desc.Width;
-        LONG height = LONG(aspectFrameY * desc.Width / aspectFrameX);
-        LONG offset = (desc.Height - height) / 2;
+        target.right = desc.Width();
+        LONG height = LONG(aspectFrameY * desc.Width() / aspectFrameX);
+        LONG offset = (desc.Height() - height) / 2;
         target.top = offset;
         target.bottom = height + offset;
     }
@@ -1053,7 +1062,7 @@ bool CPlayerViewDxva2::ProcessVideo()
     // DXVA2_VideoProcess_PlanarAlpha
     samples[0].PlanarAlpha = DXVA2FloatToFixed(1.f);
 
-
+#if 0
     hr = m_pD3DD9->ColorFill(m_pD3DRT, NULL, D3DCOLOR_XRGB(0, 0, 0));
     if (FAILED(hr))
     {
@@ -1069,13 +1078,25 @@ bool CPlayerViewDxva2::ProcessVideo()
     {
         TRACE("VideoProcessBlt failed with error 0x%x.\n", hr);
     }
+#endif
 
     //
     // Re-enable DWM queuing if it is not enabled.
     //
-    EnableDwmQueuing();
+    //EnableDwmQueuing();
 
-    hr = m_pD3DD9->Present(NULL, NULL, NULL, NULL);
+    //D3DRECT clearRect{ target.left, target.top, target.right, target.bottom };
+    //D3DRECT clearRect{ 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+    //hr = m_pD3DD9->Clear(1, &clearRect, D3DCLEAR_TARGET, 0, 0, 0);
+
+    //samples[0].SrcRect.left -= 20;
+    //samples[0].SrcRect.top -= 20;
+    //samples[0].SrcRect.right += 20;
+    //samples[0].SrcRect.bottom += 20;
+
+    //m_pD3DD9->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 255, 0), 1.0f, 0);
+
+    hr = m_pD3DD9->Present(&samples[0].SrcRect, &target, GetSafeHwnd(), NULL);
     if (FAILED(hr))
     {
         TRACE("Present failed with error 0x%x.\n", hr);
@@ -1182,45 +1203,193 @@ void CPlayerViewDxva2::updateFrame()
         ResetDevice(true);
     }
 
-    D3DLOCKED_RECT lr;
-    HRESULT hr = m_pMainStream->LockRect(&lr, NULL, D3DLOCK_NOSYSLOCK);
-    if (FAILED(hr))
+#if 1
+    if (data.d3d9device && data.d3d9device != m_pD3DD9)
     {
-        TRACE("LockRect failed with error 0x%x.\n", hr);
-        return;
+        DestroyDXVA2();
+        DestroyD3D9();
+
+        m_pD3DD9 = data.d3d9device;
+        m_pD3D9.Release();
+
+        //if (FAILED(m_pD3DD9->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &m_pD3DRT)))
+        //    return;
+
+        InitializeDXVA2(false);
     }
 
-#ifdef CONVERT_FROM_YUV420P
-    for (int i = 0; i < data.height / 2; ++i)
+#if 0
+    if (data.surface)
     {
-        CopyAndConvert(
-            (uint32_t*)((char*)lr.pBits + lr.Pitch * 2 * i),
-            (uint32_t*)((char*)lr.pBits + lr.Pitch * (2 * i + 1)),
-            data.image[0] + data.pitch[0] * 2 * i,
-            data.image[0] + data.pitch[0] * (2 * i + 1),
-            data.image[1] + data.pitch[1] * i,
-            data.image[2] + data.pitch[2] * i,
-            data.width / 2);
-    }
-#else
-    const size_t lineSize = (size_t)min(lr.Pitch, data.width * 2);
-    for (int i = 0; i < data.height; ++i)
-    {
-        memcpy((BYTE*)lr.pBits + lr.Pitch * i, data.image[0] + data.width * 2 * i, lineSize);
+        D3DSURFACE_DESC    surfaceDesc;
+        IDirect3DSurface9_GetDesc(data.surface, &surfaceDesc);
+
+        D3DSURFACE_DESC    destDesc;
+        IDirect3DSurface9_GetDesc(m_pD3DRT, &destDesc);
+
+        const RECT rect{ 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+        HRESULT hr = m_pD3DD9->StretchRect(data.surface, &rect, m_pD3DRT, &rect, D3DTEXF_NONE);
+        //HRESULT hr = m_pD3DD9->StretchRect(data.surface, &rect, m_pD3DRT, NULL, D3DTEXF_NONE);
+        //HRESULT hr = m_pD3DD9->UpdateSurface(data.surface, NULL, m_pD3DRT, NULL);
+        if (FAILED(hr))
+        {
+            TRACE("StretchRect failed with error 0x%x.\n", hr);
+        }
+        return;
     }
 #endif
 
+#endif
+
+    if (!data.surface)
+    {
+        D3DLOCKED_RECT lr;
+        HRESULT hr = m_pMainStream->LockRect(&lr, NULL, D3DLOCK_NOSYSLOCK);
+        if (FAILED(hr))
+        {
+            TRACE("LockRect failed with error 0x%x.\n", hr);
+            return;
+        }
+
+#ifdef CONVERT_FROM_YUV420P
+        for (int i = 0; i < data.height / 2; ++i)
+        {
+            CopyAndConvert(
+                (uint32_t*)((char*)lr.pBits + lr.Pitch * 2 * i),
+                (uint32_t*)((char*)lr.pBits + lr.Pitch * (2 * i + 1)),
+                data.image[0] + data.pitch[0] * 2 * i,
+                data.image[0] + data.pitch[0] * (2 * i + 1),
+                data.image[1] + data.pitch[1] * i,
+                data.image[2] + data.pitch[2] * i,
+                data.width / 2);
+        }
+#else
+        const size_t lineSize = (size_t)min(lr.Pitch, data.width * 2);
+        for (int i = 0; i < data.height; ++i)
+        {
+            memcpy((BYTE*)lr.pBits + lr.Pitch * i, data.image[0] + data.width * 2 * i, lineSize);
+        }
+#endif
+
+#if 0
     auto subtitle = GetDocument()->getSubtitle();
     if (!subtitle.empty())
     {
         DrawText((BYTE*)lr.pBits, data.width, data.height, lr.Pitch, CA2W(subtitle.c_str(), CP_UTF8));
     }
+#endif
 
-    hr = m_pMainStream->UnlockRect();
+        hr = m_pMainStream->UnlockRect();
+        if (FAILED(hr))
+        {
+            TRACE("UnlockRect failed with error 0x%x.\n", hr);
+        }
+    }
+
+    DXVA2_VideoProcessBltParams blt = { 0 };
+    DXVA2_VideoSample samples[1] = { 0 };
+
+    LONGLONG start_100ns = 0;// frame * LONGLONG(VIDEO_100NSPF);
+    LONGLONG end_100ns = 0;// start_100ns + LONGLONG(VIDEO_100NSPF);
+
+    //
+    // Initialize VPBlt parameters.
+    //
+    blt.TargetFrame = start_100ns;
+    blt.TargetRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };//target;
+
+    // DXVA2_VideoProcess_Constriction
+    blt.ConstrictionSize.cx = m_sourceSize.cx;// target.right - target.left;
+    blt.ConstrictionSize.cy = m_sourceSize.cy;// target.bottom - target.top;
+
+    blt.BackgroundColor = GetBackgroundColor();
+
+    // DXVA2_VideoProcess_YUV2RGBExtended
+    blt.DestFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_Unknown;
+    blt.DestFormat.NominalRange = DXVA2_NominalRange_Unknown;
+    blt.DestFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_Unknown;
+    blt.DestFormat.VideoLighting = DXVA2_VideoLighting_dim;
+    blt.DestFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+    blt.DestFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+
+    blt.DestFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+
+    // DXVA2_ProcAmp_Brightness
+    blt.ProcAmpValues.Brightness.ll = m_ProcAmpValues[0];
+    // DXVA2_ProcAmp_Contrast
+    blt.ProcAmpValues.Contrast.ll = m_ProcAmpValues[1];
+    // DXVA2_ProcAmp_Hue
+    blt.ProcAmpValues.Hue.ll = m_ProcAmpValues[2];
+    // DXVA2_ProcAmp_Saturation
+    blt.ProcAmpValues.Saturation.ll = m_ProcAmpValues[3];
+
+    // DXVA2_VideoProcess_AlphaBlend
+    blt.Alpha = DXVA2_Fixed32OpaqueAlpha();
+
+    // DXVA2_VideoProcess_NoiseFilter
+    blt.NoiseFilterLuma.Level.ll = m_NFilterValues[0];
+    blt.NoiseFilterLuma.Threshold.ll = m_NFilterValues[1];
+    blt.NoiseFilterLuma.Radius.ll = m_NFilterValues[2];
+    blt.NoiseFilterChroma.Level.ll = m_NFilterValues[3];
+    blt.NoiseFilterChroma.Threshold.ll = m_NFilterValues[4];
+    blt.NoiseFilterChroma.Radius.ll = m_NFilterValues[5];
+
+    // DXVA2_VideoProcess_DetailFilter
+    blt.DetailFilterLuma.Level.ll = m_DFilterValues[0];
+    blt.DetailFilterLuma.Threshold.ll = m_DFilterValues[1];
+    blt.DetailFilterLuma.Radius.ll = m_DFilterValues[2];
+    blt.DetailFilterChroma.Level.ll = m_DFilterValues[3];
+    blt.DetailFilterChroma.Threshold.ll = m_DFilterValues[4];
+    blt.DetailFilterChroma.Radius.ll = m_DFilterValues[5];
+
+    //
+    // Initialize main stream video sample.
+    //
+    samples[0].Start = start_100ns;
+    samples[0].End = end_100ns;
+
+    // DXVA2_VideoProcess_YUV2RGBExtended
+    samples[0].SampleFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_MPEG2;
+    samples[0].SampleFormat.NominalRange = DXVA2_NominalRange_16_235;
+    samples[0].SampleFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_BT601;
+    samples[0].SampleFormat.VideoLighting = DXVA2_VideoLighting_dim;
+    samples[0].SampleFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+    samples[0].SampleFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+
+    samples[0].SampleFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+
+    samples[0].SrcSurface = data.surface ? data.surface : m_pMainStream;
+
+    // DXVA2_VideoProcess_SubRects
+    samples[0].SrcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+
+    // DXVA2_VideoProcess_StretchX, Y
+    samples[0].DstRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy }; //target;
+
+    // DXVA2_VideoProcess_PlanarAlpha
+    samples[0].PlanarAlpha = DXVA2FloatToFixed(1.f);
+
+#if 1
+    HRESULT hr = m_pD3DD9->ColorFill(m_pD3DRT, NULL, D3DCOLOR_XRGB(0, 0, 0));
     if (FAILED(hr))
     {
-        TRACE("UnlockRect failed with error 0x%x.\n", hr);
+        TRACE("ColorFill failed with error 0x%x.\n", hr);
     }
+
+    hr = m_pDXVAVPD->VideoProcessBlt(m_pD3DRT,
+        &blt,
+        samples,
+        SUB_STREAM_COUNT + 1,
+        NULL);
+    if (FAILED(hr))
+    {
+        TRACE("VideoProcessBlt failed with error 0x%x.\n", hr);
+    }
+#endif
+
+
+
+
 }
 
 

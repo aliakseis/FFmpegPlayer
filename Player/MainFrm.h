@@ -53,6 +53,7 @@ protected:
 
 public:
     afx_msg void OnFullScreen();
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 
 

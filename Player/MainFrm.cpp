@@ -19,6 +19,7 @@ IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_CREATE()
     ON_COMMAND(IDC_FULL_SCREEN, &CMainFrame::OnFullScreen)
+    ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -188,4 +189,22 @@ void CMainFrame::OnFullScreen()
             pFrame->ShowWindow(SW_HIDE);
         }
     }
+}
+
+
+BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
+{
+    // Save old brush
+    CGdiObject* pOldBrush = pDC->SelectStockObject(BLACK_BRUSH);
+
+    CRect rect;
+    pDC->GetClipBox(&rect);     // Erase the area needed
+
+    pDC->PatBlt(rect.left, rect.top, rect.Width(), rect.Height(),
+        PATCOPY);
+    pDC->SelectObject(pOldBrush);
+
+    //return TRUE;
+
+    return CFrameWndEx::OnEraseBkgnd(pDC);
 }

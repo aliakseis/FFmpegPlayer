@@ -63,10 +63,14 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
                 // LOAD ROWS OF PITCH WIDTH INTO CACHED BLOCK
                 for (unsigned int load = 0; load < 256; load += 4)
                 {
-                    x0 = _mm_stream_load_si128(pLoad + 0);
-                    x1 = _mm_stream_load_si128(pLoad + 1);
-                    x2 = _mm_stream_load_si128(pLoad + 2);
-                    x3 = _mm_stream_load_si128(pLoad + 3);
+                    //x0 = _mm_stream_load_si128(pLoad + 0);
+                    //x1 = _mm_stream_load_si128(pLoad + 1);
+                    //x2 = _mm_stream_load_si128(pLoad + 2);
+                    //x3 = _mm_stream_load_si128(pLoad + 3);
+                    x0 = _mm_load_si128(pLoad + 0);
+                    x1 = _mm_load_si128(pLoad + 1);
+                    x2 = _mm_load_si128(pLoad + 2);
+                    x3 = _mm_load_si128(pLoad + 3);
 
                     _mm_store_si128(cache + load, x0);
                     _mm_store_si128(cache + load + 1, x1);
@@ -367,14 +371,14 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
             uint8_t* pU = (uint8_t*)LockedRect.pBits + (((frame->height + 15) & ~15) * LockedRect.Pitch);
             uint8_t* pV = (uint8_t*)LockedRect.pBits + (((((frame->height * 3) / 2) + 15) & ~15) * LockedRect.Pitch);
 
-            av_image_copy_plane(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
+            CopyPlane(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
                 (uint8_t*)LockedRect.pBits,
                 LockedRect.Pitch, frame->width, frame->height);
 
-            av_image_copy_plane(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
+            CopyPlane(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
                 pU, LockedRect.Pitch, frame->width / 2, frame->height / 2);
 
-            av_image_copy_plane(ctx->tmp_frame->data[2], ctx->tmp_frame->linesize[2],
+            CopyPlane(ctx->tmp_frame->data[2], ctx->tmp_frame->linesize[2],
                 pV, LockedRect.Pitch, frame->width / 2, frame->height / 2);
         }
 
@@ -454,12 +458,19 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
         d3dpp.Windowed = TRUE;
         d3dpp.BackBufferWidth = 640;
         d3dpp.BackBufferHeight = 480;
-        d3dpp.BackBufferCount = 0;
-        d3dpp.BackBufferFormat = d3ddm.Format;
+        d3dpp.BackBufferCount = 1;
+        d3dpp.BackBufferFormat = D3DFMT_X8R8G8B8;// d3ddm.Format;
         d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
         d3dpp.Flags = D3DPRESENTFLAG_VIDEO;
 
-        hr = IDirect3D9_CreateDevice(ctx->d3d9, adapter, D3DDEVTYPE_HAL, GetDesktopWindow(),
+        d3dpp.BackBufferWidth = 0;
+        d3dpp.BackBufferHeight = 0;
+        d3dpp.Windowed = TRUE;//g_bWindowed;
+        d3dpp.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
+        d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+
+
+        hr = IDirect3D9_CreateDevice(ctx->d3d9, adapter, D3DDEVTYPE_HAL, GetDesktopWindow(),//(HWND)windowHandle,
             D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE,
             &d3dpp, &ctx->d3d9device);
         if (FAILED(hr)) {
@@ -641,7 +652,8 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
             surface_alignment = 16;
 
         /* 4 base work surfaces */
-        ctx->num_surfaces = 4;
+        //ctx->num_surfaces = 4;
+        ctx->num_surfaces = 4 + 2;
 
         /* add surfaces based on number of possible refs */
         if (s->codec_id == AV_CODEC_ID_H264 || s->codec_id == AV_CODEC_ID_HEVC)
@@ -744,4 +756,11 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
     int dxva2_retrieve_data_call(AVCodecContext *s, AVFrame *frame)
     {
         return dxva2_retrieve_data(s, frame);
+    }
+
+    IDirect3DDevice9* get_device(AVCodecContext *s)
+    {
+        InputStream  *ist = (InputStream *)s->opaque;
+        DXVA2Context *ctx = (DXVA2Context *)ist->hwaccel_ctx;
+        return ctx->d3d9device;
     }

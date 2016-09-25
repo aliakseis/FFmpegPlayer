@@ -41,11 +41,11 @@ protected:
     DECLARE_MESSAGE_MAP()
 private:
     bool InitializeD3D9();
-    bool InitializeDXVA2();
+    bool InitializeDXVA2(bool createSurface);
     void DestroyDXVA2();
     void DestroyD3D9();
     bool EnableDwmQueuing();
-    bool CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW);
+    bool CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool createSurface);
     bool ResetDevice(bool resizeSource);
     bool ProcessVideo();
 

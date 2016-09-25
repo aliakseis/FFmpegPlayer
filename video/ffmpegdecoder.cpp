@@ -9,7 +9,7 @@
 
 #include <boost/log/trivial.hpp>
 
-//#define USE_HWACCEL
+#define USE_HWACCEL
 
 // http://stackoverflow.com/questions/34602561
 #ifdef USE_HWACCEL
@@ -487,11 +487,21 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         //_codecContext->coded_height = _height;
 
         m_videoCodecContext->opaque = ist;
-        dxva2_init(m_videoCodecContext);
+        if (dxva2_init(m_videoCodecContext) >= 0)
+        {
 
-        m_videoCodecContext->get_buffer2 = ist->hwaccel_get_buffer;
-        m_videoCodecContext->get_format = GetHwFormat;
-        m_videoCodecContext->thread_safe_callbacks = 1;
+            m_videoCodecContext->get_buffer2 = ist->hwaccel_get_buffer;
+            m_videoCodecContext->get_format = GetHwFormat;
+            m_videoCodecContext->thread_safe_callbacks = 1;
+        }
+        else
+        {
+            delete ist;
+            m_videoCodecContext->opaque = nullptr;
+
+            m_videoCodecContext->thread_count = 2;
+            m_videoCodecContext->flags2 |= CODEC_FLAG2_FAST;
+        }
 #else
         m_videoCodecContext->thread_count = 2;
         m_videoCodecContext->flags2 |= CODEC_FLAG2_FAST;
@@ -622,11 +632,12 @@ bool FFmpegDecoder::frameToImage(VideoFrame& videoFrameData)
 #ifdef USE_HWACCEL
     if (m_videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
     {
-        dxva2_retrieve_data_call(m_videoCodecContext, m_videoFrame);
+        //dxva2_retrieve_data_call(m_videoCodecContext, m_videoFrame);
     }
 #endif
 
-    if (m_videoFrame->format == m_pixelFormat)
+    if (m_videoFrame->format == m_pixelFormat
+        || m_videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
     {
         std::swap(m_videoFrame, videoFrameData.m_image);
     }
@@ -678,6 +689,13 @@ void FFmpegDecoder::finishedDisplayingFrame()
 {
     {
         boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
+
+        VideoFrame &current_frame = m_videoFramesQueue.front();
+        if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
+        {
+            av_frame_unref(current_frame.m_image);
+        }
+
         m_videoFramesQueue.popFront();
         m_frameDisplayingRequested = false;
     }
@@ -746,6 +764,12 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
     {
         data->aspectNum = 1;
         data->aspectDen = 1;
+    }
+
+    if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
+    {
+        data->d3d9device = get_device(m_videoCodecContext);
+        data->surface = (IDirect3DSurface9*)current_frame.m_image->data[3];
     }
 
     return true;
