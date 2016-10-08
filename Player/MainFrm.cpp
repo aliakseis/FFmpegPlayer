@@ -7,6 +7,7 @@
 
 #include "MainFrm.h"
 #include "PlayerDoc.h"
+#include "IEraseableArea.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -181,6 +182,7 @@ public:
 
 void CMainFrame::OnFullScreen()
 {
+    //ModifyStyle(WS_OVERLAPPEDWINDOW, 0, 0);
     ShowFullScreen();
     if (CMFCToolBar* toolBar = static_cast<FullScreenMgrAccsssor&>(m_Impl).GetFullScreenBar())
     {
@@ -194,6 +196,7 @@ void CMainFrame::OnFullScreen()
 
 BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
 {
+#if 0
     // Save old brush
     CGdiObject* pOldBrush = pDC->SelectStockObject(BLACK_BRUSH);
 
@@ -205,6 +208,14 @@ BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
     pDC->SelectObject(pOldBrush);
 
     //return TRUE;
+#endif
+    CWnd* pWnd = GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE);
+    if (IEraseableArea* pEraseableArea = dynamic_cast<IEraseableArea*>(pWnd))
+    {
+        pEraseableArea->OnErase(this, pDC);
+    }
 
-    return CFrameWndEx::OnEraseBkgnd(pDC);
+    return TRUE;
+
+    //return CFrameWndEx::OnEraseBkgnd(pDC);
 }

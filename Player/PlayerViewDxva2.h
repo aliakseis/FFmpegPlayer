@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IEraseableArea.h"
+
 #include <memory>
 
 struct IFrameListener;
@@ -14,7 +16,7 @@ class CPlayerDoc;
 
 // CPlayerViewDxva2 view
 
-class CPlayerViewDxva2 : public CView
+class CPlayerViewDxva2 : public CView, public IEraseableArea
 {
     friend class FrameListenerDxva2;
 
@@ -37,6 +39,8 @@ public:
 
     void updateFrame();
 
+    void OnErase(CWnd* pInitiator, CDC* pDC) override;
+
 protected:
     DECLARE_MESSAGE_MAP()
 private:
@@ -48,6 +52,8 @@ private:
     bool CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool createSurface);
     bool ResetDevice(bool resizeSource);
     bool ProcessVideo();
+
+    CRect GetTargetRect();
 
 private:
     std::unique_ptr<IFrameListener> m_frameListener;

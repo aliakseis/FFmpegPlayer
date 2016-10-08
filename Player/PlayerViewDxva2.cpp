@@ -892,6 +892,37 @@ bool CPlayerViewDxva2::ResetDevice(bool resizeSource)
 }
 
 
+CRect CPlayerViewDxva2::GetTargetRect()
+{
+    CRect desc;
+    GetClientRect(&desc);
+
+    long long aspectFrameX(m_sourceSize.cx * m_aspectRatio.cx);
+    long long aspectFrameY(m_sourceSize.cy * m_aspectRatio.cy);
+
+    CRect target;
+    if (aspectFrameY * desc.Width() > aspectFrameX * desc.Height())
+    {
+        target.top = 0;
+        target.bottom = desc.Height();
+        LONG width = LONG(aspectFrameX * desc.Height() / aspectFrameY);
+        LONG offset = (desc.Width() - width) / 2;
+        target.left = offset;
+        target.right = width + offset;
+    }
+    else
+    {
+        target.left = 0;
+        target.right = desc.Width();
+        LONG height = LONG(aspectFrameY * desc.Width() / aspectFrameX);
+        LONG offset = (desc.Height() - height) / 2;
+        target.top = offset;
+        target.bottom = height + offset;
+    }
+
+    return target;
+}
+
 
 // CPlayerViewDxva2 drawing
 
@@ -904,8 +935,6 @@ bool CPlayerViewDxva2::ProcessVideo()
 
     CSingleLock lock(&m_csSurface, TRUE);
 
-    CRect desc;
-    GetClientRect(&desc);
 
     //D3DSURFACE_DESC desc;
     //HRESULT hr = m_pD3DRT->GetDesc(&desc);
@@ -956,29 +985,8 @@ bool CPlayerViewDxva2::ProcessVideo()
         return false;
     }
 
-    long long aspectFrameX(m_sourceSize.cx * m_aspectRatio.cx);
-    long long aspectFrameY(m_sourceSize.cy * m_aspectRatio.cy);
 
-    RECT target;
-    if (aspectFrameY * desc.Width() > aspectFrameX * desc.Height())
-    {
-        target.top = 0;
-        target.bottom = desc.Height();
-        LONG width = LONG(aspectFrameX * desc.Height() / aspectFrameY);
-        LONG offset = (desc.Width() - width) / 2;
-        target.left = offset;
-        target.right = width + offset;
-    }
-    else
-    {
-        target.left = 0;
-        target.right = desc.Width();
-        LONG height = LONG(aspectFrameY * desc.Width() / aspectFrameX);
-        LONG offset = (desc.Height() - height) / 2;
-        target.top = offset;
-        target.bottom = height + offset;
-    }
-
+#if 0
     DXVA2_VideoProcessBltParams blt = { 0 };
     DXVA2_VideoSample samples[1] = { 0 };
 
@@ -1061,6 +1069,7 @@ bool CPlayerViewDxva2::ProcessVideo()
 
     // DXVA2_VideoProcess_PlanarAlpha
     samples[0].PlanarAlpha = DXVA2FloatToFixed(1.f);
+#endif
 
 #if 0
     hr = m_pD3DD9->ColorFill(m_pD3DRT, NULL, D3DCOLOR_XRGB(0, 0, 0));
@@ -1096,7 +1105,9 @@ bool CPlayerViewDxva2::ProcessVideo()
 
     //m_pD3DD9->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 255, 0), 1.0f, 0);
 
-    hr = m_pD3DD9->Present(&samples[0].SrcRect, &target, GetSafeHwnd(), NULL);
+    RECT srcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+    CRect target = GetTargetRect();
+    hr = m_pD3DD9->Present(&srcRect, &target, GetSafeHwnd(), NULL);
     if (FAILED(hr))
     {
         TRACE("Present failed with error 0x%x.\n", hr);
@@ -1370,13 +1381,13 @@ void CPlayerViewDxva2::updateFrame()
     samples[0].PlanarAlpha = DXVA2FloatToFixed(1.f);
 
 #if 1
-    HRESULT hr = m_pD3DD9->ColorFill(m_pD3DRT, NULL, D3DCOLOR_XRGB(0, 0, 0));
-    if (FAILED(hr))
-    {
-        TRACE("ColorFill failed with error 0x%x.\n", hr);
-    }
+    //HRESULT hr = m_pD3DD9->ColorFill(m_pD3DRT, NULL, D3DCOLOR_XRGB(0, 0, 0));
+    //if (FAILED(hr))
+    //{
+    //    TRACE("ColorFill failed with error 0x%x.\n", hr);
+    //}
 
-    hr = m_pDXVAVPD->VideoProcessBlt(m_pD3DRT,
+    HRESULT hr = m_pDXVAVPD->VideoProcessBlt(m_pD3DRT,
         &blt,
         samples,
         SUB_STREAM_COUNT + 1,
@@ -1408,4 +1419,31 @@ BOOL CPlayerViewDxva2::OnEraseBkgnd(CDC* pDC)
         pDC->SelectObject(pOldBrush);
     }
     return TRUE;
+}
+
+void CPlayerViewDxva2::OnErase(CWnd* pInitiator, CDC* pDC)
+{
+    if (!!m_pD3DD9)
+    {
+        CSingleLock lock(&m_csSurface, TRUE);
+
+        CRect clientRect;
+        GetClientRect(&clientRect);
+        CRect targetRect = GetTargetRect();
+        MapWindowPoints(pInitiator, &clientRect);
+        MapWindowPoints(pInitiator, &targetRect);
+
+        CRgn clientRgn;
+        VERIFY(clientRgn.CreateRectRgnIndirect(&clientRect));
+        CRgn targetRgn;
+        VERIFY(targetRgn.CreateRectRgnIndirect(&targetRect));
+        CRgn combined;
+        VERIFY(combined.CreateRectRgnIndirect(&clientRect));
+        int result = combined.CombineRgn(&clientRgn, &targetRgn, RGN_DIFF);
+
+        // Save old brush
+        CGdiObject* pOldBrush = pDC->SelectStockObject(BLACK_BRUSH);
+        pDC->PaintRgn(&combined);
+        pDC->SelectObject(pOldBrush);
+    }
 }

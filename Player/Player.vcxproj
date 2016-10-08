@@ -121,6 +121,7 @@
     <ClInclude Include="AudioPlayerWasapi.h" />
     <ClInclude Include="DialogBarPlayerControl.h" />
     <ClInclude Include="I420Effect.h" />
+    <ClInclude Include="IEraseableArea.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="MakeDelegate.h" />
     <ClInclude Include="Player.h" />
