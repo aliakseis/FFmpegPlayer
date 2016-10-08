@@ -21,6 +21,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_CREATE()
     ON_COMMAND(IDC_FULL_SCREEN, &CMainFrame::OnFullScreen)
     ON_WM_ERASEBKGND()
+    ON_WM_WINDOWPOSCHANGED()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -34,6 +35,7 @@ static UINT indicators[] =
 // CMainFrame construction/destruction
 
 CMainFrame::CMainFrame()
+    : m_bFullScreen(FALSE)
 {
     // TODO: add member initialization code here
 }
@@ -182,7 +184,6 @@ public:
 
 void CMainFrame::OnFullScreen()
 {
-    //ModifyStyle(WS_OVERLAPPEDWINDOW, 0, 0);
     ShowFullScreen();
     if (CMFCToolBar* toolBar = static_cast<FullScreenMgrAccsssor&>(m_Impl).GetFullScreenBar())
     {
@@ -218,4 +219,18 @@ BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
     return TRUE;
 
     //return CFrameWndEx::OnEraseBkgnd(pDC);
+}
+
+
+void CMainFrame::OnWindowPosChanged(WINDOWPOS* lpwndpos)
+{
+    CFrameWndEx::OnWindowPosChanged(lpwndpos);
+
+    // message handler code here
+    if (IsFullScreen() && !m_bFullScreen)
+        ModifyStyle(WS_OVERLAPPEDWINDOW, 0, 0);
+    else if (!IsFullScreen() && m_bFullScreen)
+        ModifyStyle(0, WS_OVERLAPPEDWINDOW, 0);
+
+    m_bFullScreen = IsFullScreen();
 }

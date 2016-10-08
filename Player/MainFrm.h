@@ -46,6 +46,8 @@ protected:  // control bar embedded members
     CMFCStatusBar        m_wndStatusBar;
     CDialogBarPlayerControl m_wndPlayerControl;
 
+    BOOL            m_bFullScreen;
+
 // Generated message map functions
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -54,6 +56,7 @@ protected:
 public:
     afx_msg void OnFullScreen();
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg void OnWindowPosChanged(WINDOWPOS* lpwndpos);
 };
 
 
