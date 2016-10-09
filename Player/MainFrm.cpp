@@ -22,6 +22,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(IDC_FULL_SCREEN, &CMainFrame::OnFullScreen)
     ON_WM_ERASEBKGND()
     ON_WM_WINDOWPOSCHANGED()
+    ON_WM_NCPAINT()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -184,6 +185,7 @@ public:
 
 void CMainFrame::OnFullScreen()
 {
+    ModifyStyle(WS_OVERLAPPEDWINDOW, 0, SWP_FRAMECHANGED);
     ShowFullScreen();
     if (CMFCToolBar* toolBar = static_cast<FullScreenMgrAccsssor&>(m_Impl).GetFullScreenBar())
     {
@@ -213,7 +215,7 @@ BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
     CWnd* pWnd = GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE);
     if (IEraseableArea* pEraseableArea = dynamic_cast<IEraseableArea*>(pWnd))
     {
-        pEraseableArea->OnErase(this, pDC);
+        pEraseableArea->OnErase(this, pDC, IsFullScreen());
     }
 
     return TRUE;
@@ -224,13 +226,31 @@ BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
 
 void CMainFrame::OnWindowPosChanged(WINDOWPOS* lpwndpos)
 {
+    //if (IsFullScreen() && !m_bFullScreen)
+    //{
+    //    lpwndpos->x--;
+    //    lpwndpos->y--;
+    //    lpwndpos->cx += 2;
+    //    lpwndpos->cy += 2;
+    //}
+
+
     CFrameWndEx::OnWindowPosChanged(lpwndpos);
 
     // message handler code here
-    if (IsFullScreen() && !m_bFullScreen)
-        ModifyStyle(WS_OVERLAPPEDWINDOW, 0, 0);
-    else if (!IsFullScreen() && m_bFullScreen)
+    //if (IsFullScreen() && !m_bFullScreen)
+    //    ModifyStyle(WS_OVERLAPPEDWINDOW, 0, 0);
+    if (!IsFullScreen() && m_bFullScreen)
         ModifyStyle(0, WS_OVERLAPPEDWINDOW, 0);
 
     m_bFullScreen = IsFullScreen();
+}
+
+
+void CMainFrame::OnNcPaint()
+{
+    // TODO: Add your message handler code here
+    // Do not call CFrameWndEx::OnNcPaint() for painting messages
+    if (!IsFullScreen())
+        Default();
 }

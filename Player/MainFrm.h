@@ -57,6 +57,7 @@ public:
     afx_msg void OnFullScreen();
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnWindowPosChanged(WINDOWPOS* lpwndpos);
+    afx_msg void OnNcPaint();
 };
 
 

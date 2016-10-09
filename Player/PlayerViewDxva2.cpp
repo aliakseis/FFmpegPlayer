@@ -8,11 +8,12 @@
 
 #include "decoderinterface.h"
 
+#include "D3DFont.h"
+
 #include <initguid.h>
 #include <d3d9.h>
 #include <dxva2api.h>
 
-#include <Gdiplus.h>
 
 #include <vector>
 
@@ -226,33 +227,33 @@ DXVA2_AYUVSample16 GetBackgroundColor()
 }
 
 
-void DrawText(BYTE* buffer, int width, int height, int stride, const WCHAR* text)
-{
-    using namespace Gdiplus;
-
-    Bitmap bitmap(width, height, stride, PixelFormat16bppRGB565, buffer);
-
-    Graphics graphics(&bitmap);
-
-    graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
-
-    const int fontSize = max(width / 50, 9);
-    Gdiplus::Font font(L"MS Sans Serif", (REAL) fontSize);
-
-    const auto length = wcslen(text);
-    RectF boundingBox;
-
-    graphics.MeasureString(text, length, &font, PointF(0, 0), &boundingBox);
-
-    const auto left = (width - boundingBox.Width) / 2;
-    const auto top = height - boundingBox.Height - fontSize / 2;
-
-    SolidBrush blackBrush(Color(0x7F, 0xE0, 0));
-    SolidBrush whiteBrush(Color(0x7F, 0xFF, 0xFF));
-
-    graphics.DrawString(text, length, &font, PointF(left + 1, top + 1), &blackBrush);
-    graphics.DrawString(text, length, &font, PointF(left, top), &whiteBrush);
-}
+//void DrawText(BYTE* buffer, int width, int height, int stride, const WCHAR* text)
+//{
+//    using namespace Gdiplus;
+//
+//    Bitmap bitmap(width, height, stride, PixelFormat32bppARGB, buffer);
+//
+//    Graphics graphics(&bitmap);
+//
+//    graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
+//
+//    const int fontSize = max(width / 50, 9);
+//    Gdiplus::Font font(L"MS Sans Serif", (REAL) fontSize);
+//
+//    const auto length = wcslen(text);
+//    RectF boundingBox;
+//
+//    graphics.MeasureString(text, length, &font, PointF(0, 0), &boundingBox);
+//
+//    const auto left = (width - boundingBox.Width) / 2;
+//    const auto top = height - boundingBox.Height - fontSize / 2;
+//
+//    SolidBrush blackBrush(Color(0x7F, 0xE0, 0));
+//    SolidBrush whiteBrush(Color(0x7F, 0xFF, 0xFF));
+//
+//    graphics.DrawString(text, length, &font, PointF(left + 1, top + 1), &blackBrush);
+//    graphics.DrawString(text, length, &font, PointF(left, top), &whiteBrush);
+//}
 
 void SimdCopyAndConvert(
     __m128i* const __restrict origin0,
@@ -707,11 +708,23 @@ bool CPlayerViewDxva2::InitializeDXVA2(bool createSurface)
         return false;
     }
 
+    m_subtitleFont = std::make_unique<CD3DFont>(
+        _T("MS Sans Serif"),
+        max(m_sourceSize.cx / 50, 9));
+    m_subtitleFont->InitDeviceObjects(m_pD3DD9);
+    m_subtitleFont->RestoreDeviceObjects();
     return true;
 }
 
 void CPlayerViewDxva2::DestroyDXVA2()
 {
+    if (m_subtitleFont)
+    {
+        m_subtitleFont->InvalidateDeviceObjects();
+        m_subtitleFont->DeleteDeviceObjects();
+        m_subtitleFont.reset();
+    }
+
     m_pMainStream.Release();
     m_pDXVAVPD.Release();
     m_pDXVAVPS.Release();
@@ -1207,12 +1220,6 @@ void CPlayerViewDxva2::updateFrame()
     m_aspectRatio.cx = data.aspectNum;
     m_aspectRatio.cy = data.aspectDen;
 
-    if (data.width != m_sourceSize.cx || data.height != m_sourceSize.cy)
-    {
-        m_sourceSize.cx = data.width;
-        m_sourceSize.cy = data.height;
-        ResetDevice(true);
-    }
 
 #if 1
     if (data.d3d9device && data.d3d9device != m_pD3DD9)
@@ -1227,6 +1234,12 @@ void CPlayerViewDxva2::updateFrame()
         //    return;
 
         InitializeDXVA2(false);
+    }
+    else if (!m_pD3D9 || data.width != m_sourceSize.cx || data.height != m_sourceSize.cy)
+    {
+        m_sourceSize.cx = data.width;
+        m_sourceSize.cy = data.height;
+        ResetDevice(true);
     }
 
 #if 0
@@ -1398,8 +1411,41 @@ void CPlayerViewDxva2::updateFrame()
     }
 #endif
 
+    auto subtitle = GetDocument()->getSubtitle();
+    if (!subtitle.empty())
+    {
+        const auto& convertedSubtitle = CA2T(subtitle.c_str(), CP_UTF8);
+        hr = m_pD3DD9->BeginScene();
+        CSize boundingBox;
+        m_subtitleFont->GetTextExtent(convertedSubtitle, &boundingBox);
+        const auto left = (m_sourceSize.cx - boundingBox.cx) / 2;
+        const auto top = m_sourceSize.cy - boundingBox.cy - 2;
+        m_subtitleFont->DrawText(left + 1, top + 1, D3DCOLOR_XRGB(0, 0, 0), convertedSubtitle);
+        m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
+        hr = m_pD3DD9->EndScene();
+    }
 
+#if 0
+    auto subtitle = GetDocument()->getSubtitle();
+    if (!subtitle.empty())
+    {
+        D3DLOCKED_RECT lr;
+        HRESULT hr = m_pD3DRT->LockRect(&lr, NULL, 0);// D3DLOCK_NOSYSLOCK);
+        if (FAILED(hr))
+        {
+            TRACE("LockRect failed with error 0x%x.\n", hr);
+            return;
+        }
 
+        DrawText((BYTE*)lr.pBits, data.width, data.height, lr.Pitch, CA2W(subtitle.c_str(), CP_UTF8));
+
+        hr = m_pD3DRT->UnlockRect();
+        if (FAILED(hr))
+        {
+            TRACE("UnlockRect failed with error 0x%x.\n", hr);
+        }
+    }
+#endif
 
 }
 
@@ -1421,24 +1467,32 @@ BOOL CPlayerViewDxva2::OnEraseBkgnd(CDC* pDC)
     return TRUE;
 }
 
-void CPlayerViewDxva2::OnErase(CWnd* pInitiator, CDC* pDC)
+void CPlayerViewDxva2::OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen)
 {
     if (!!m_pD3DD9)
     {
         CSingleLock lock(&m_csSurface, TRUE);
 
-        CRect clientRect;
-        GetClientRect(&clientRect);
+        CRect rect;
+        if (isFullScreen)
+        {
+            pDC->GetClipBox(&rect);     // Erase the area needed
+        }
+        else
+        {
+            GetClientRect(&rect);
+            MapWindowPoints(pInitiator, &rect);
+        }
         CRect targetRect = GetTargetRect();
-        MapWindowPoints(pInitiator, &clientRect);
+        targetRect.DeflateRect(1, 1);
         MapWindowPoints(pInitiator, &targetRect);
 
         CRgn clientRgn;
-        VERIFY(clientRgn.CreateRectRgnIndirect(&clientRect));
+        VERIFY(clientRgn.CreateRectRgnIndirect(&rect));
         CRgn targetRgn;
         VERIFY(targetRgn.CreateRectRgnIndirect(&targetRect));
         CRgn combined;
-        VERIFY(combined.CreateRectRgnIndirect(&clientRect));
+        VERIFY(combined.CreateRectRgnIndirect(&rect));
         int result = combined.CombineRgn(&clientRgn, &targetRgn, RGN_DIFF);
 
         // Save old brush

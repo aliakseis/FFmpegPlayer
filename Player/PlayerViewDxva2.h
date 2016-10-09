@@ -12,6 +12,8 @@ struct IDirect3DSurface9;
 struct IDirectXVideoProcessorService;
 struct IDirectXVideoProcessor;
 
+class CD3DFont;
+
 class CPlayerDoc;
 
 // CPlayerViewDxva2 view
@@ -39,7 +41,7 @@ public:
 
     void updateFrame();
 
-    void OnErase(CWnd* pInitiator, CDC* pDC) override;
+    void OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen) override;
 
 protected:
     DECLARE_MESSAGE_MAP()
@@ -74,6 +76,8 @@ private:
     LONG m_ProcAmpValues[4];
     LONG m_NFilterValues[6];
     LONG m_DFilterValues[6];
+
+    std::unique_ptr<CD3DFont> m_subtitleFont;
 
 public:
     afx_msg void OnPaint();
