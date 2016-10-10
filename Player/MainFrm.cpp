@@ -199,19 +199,6 @@ void CMainFrame::OnFullScreen()
 
 BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
 {
-#if 0
-    // Save old brush
-    CGdiObject* pOldBrush = pDC->SelectStockObject(BLACK_BRUSH);
-
-    CRect rect;
-    pDC->GetClipBox(&rect);     // Erase the area needed
-
-    pDC->PatBlt(rect.left, rect.top, rect.Width(), rect.Height(),
-        PATCOPY);
-    pDC->SelectObject(pOldBrush);
-
-    //return TRUE;
-#endif
     CWnd* pWnd = GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE);
     if (IEraseableArea* pEraseableArea = dynamic_cast<IEraseableArea*>(pWnd))
     {
@@ -219,27 +206,14 @@ BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
     }
 
     return TRUE;
-
-    //return CFrameWndEx::OnEraseBkgnd(pDC);
 }
 
 
 void CMainFrame::OnWindowPosChanged(WINDOWPOS* lpwndpos)
 {
-    //if (IsFullScreen() && !m_bFullScreen)
-    //{
-    //    lpwndpos->x--;
-    //    lpwndpos->y--;
-    //    lpwndpos->cx += 2;
-    //    lpwndpos->cy += 2;
-    //}
-
-
     CFrameWndEx::OnWindowPosChanged(lpwndpos);
 
     // message handler code here
-    //if (IsFullScreen() && !m_bFullScreen)
-    //    ModifyStyle(WS_OVERLAPPEDWINDOW, 0, 0);
     if (!IsFullScreen() && m_bFullScreen)
         ModifyStyle(0, WS_OVERLAPPEDWINDOW, 0);
 
@@ -249,8 +223,6 @@ void CMainFrame::OnWindowPosChanged(WINDOWPOS* lpwndpos)
 
 void CMainFrame::OnNcPaint()
 {
-    // TODO: Add your message handler code here
-    // Do not call CFrameWndEx::OnNcPaint() for painting messages
     if (!IsFullScreen())
         Default();
 }

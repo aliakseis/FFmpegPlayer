@@ -61,12 +61,8 @@ const UINT VIDEO_FPS = 60;
 
 
 HMODULE g_hRgb9rastDLL = NULL;
-HMODULE g_hDwmApiDLL = NULL;
 
 PVOID g_pfnD3D9GetSWInfo = NULL;
-PVOID g_pfnDwmIsCompositionEnabled = NULL;
-PVOID g_pfnDwmGetCompositionTimingInfo = NULL;
-PVOID g_pfnDwmSetPresentParameters = NULL;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -109,41 +105,6 @@ BOOL InitializeModule()
             TRACE("GetProcAddress(D3D9GetSWInfo) failed with error %d.\n", GetLastError());
             return FALSE;
         }
-    }
-
-    g_hDwmApiDLL = LoadLibrary(TEXT("dwmapi.dll"));
-
-    if (!g_hDwmApiDLL)
-    {
-        TRACE("LoadLibrary(dwmapi.dll) failed with error %d.\n", GetLastError());
-        return TRUE;
-    }
-
-    g_pfnDwmIsCompositionEnabled = GetProcAddress(g_hDwmApiDLL, "DwmIsCompositionEnabled");
-
-    if (!g_pfnDwmIsCompositionEnabled)
-    {
-        TRACE("GetProcAddress(DwmIsCompositionEnabled) failed with error %d.\n",
-              GetLastError());
-        return FALSE;
-    }
-
-    g_pfnDwmGetCompositionTimingInfo = GetProcAddress(g_hDwmApiDLL, "DwmGetCompositionTimingInfo");
-
-    if (!g_pfnDwmGetCompositionTimingInfo)
-    {
-        TRACE("GetProcAddress(DwmGetCompositionTimingInfo) failed with error %d.\n",
-              GetLastError());
-        return FALSE;
-    }
-
-    g_pfnDwmSetPresentParameters = GetProcAddress(g_hDwmApiDLL, "DwmSetPresentParameters");
-
-    if (!g_pfnDwmSetPresentParameters)
-    {
-        TRACE("GetProcAddress(DwmSetPresentParameters) failed with error %d.\n",
-              GetLastError());
-        return FALSE;
     }
 
     return TRUE;
@@ -226,34 +187,6 @@ DXVA2_AYUVSample16 GetBackgroundColor()
     return color;
 }
 
-
-//void DrawText(BYTE* buffer, int width, int height, int stride, const WCHAR* text)
-//{
-//    using namespace Gdiplus;
-//
-//    Bitmap bitmap(width, height, stride, PixelFormat32bppARGB, buffer);
-//
-//    Graphics graphics(&bitmap);
-//
-//    graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
-//
-//    const int fontSize = max(width / 50, 9);
-//    Gdiplus::Font font(L"MS Sans Serif", (REAL) fontSize);
-//
-//    const auto length = wcslen(text);
-//    RectF boundingBox;
-//
-//    graphics.MeasureString(text, length, &font, PointF(0, 0), &boundingBox);
-//
-//    const auto left = (width - boundingBox.Width) / 2;
-//    const auto top = height - boundingBox.Height - fontSize / 2;
-//
-//    SolidBrush blackBrush(Color(0x7F, 0xE0, 0));
-//    SolidBrush whiteBrush(Color(0x7F, 0xFF, 0xFF));
-//
-//    graphics.DrawString(text, length, &font, PointF(left + 1, top + 1), &blackBrush);
-//    graphics.DrawString(text, length, &font, PointF(left, top), &whiteBrush);
-//}
 
 void SimdCopyAndConvert(
     __m128i* const __restrict origin0,
@@ -738,115 +671,12 @@ void CPlayerViewDxva2::DestroyD3D9()
 }
 
 
-bool CPlayerViewDxva2::EnableDwmQueuing()
+bool CPlayerViewDxva2::ResetDevice()
 {
-    //
-    // DWM is not available.
-    //
-    if (!g_hDwmApiDLL)
-    {
-        return true;
-    }
-
-    //
-    // Check to see if DWM is currently enabled.
-    //
-    BOOL bDWM = FALSE;
-
-    HRESULT hr = ((PFNDWMISCOMPOSITIONENABLED)g_pfnDwmIsCompositionEnabled)(&bDWM);
-
-    if (FAILED(hr))
-    {
-        TRACE("DwmIsCompositionEnabled failed with error 0x%x.\n", hr);
-        return false;
-    }
-
-    //
-    // DWM queuing is disabled when DWM is disabled.
-    //
-    if (!bDWM)
-    {
-        m_bDwmQueuing = FALSE;
-        return true;
-    }
-
-    //
-    // DWM queuing is enabled already.
-    //
-    if (m_bDwmQueuing)
-    {
-        return true;
-    }
-
-    //
-    // Retrieve DWM refresh count of the last vsync.
-    //
-    DWM_TIMING_INFO dwmti = { 0 };
-
-    dwmti.cbSize = sizeof(dwmti);
-
-    hr = ((PFNDWMGETCOMPOSITIONTIMINGINFO)g_pfnDwmGetCompositionTimingInfo)(NULL, &dwmti);
-
-    if (FAILED(hr))
-    {
-        TRACE("DwmGetCompositionTimingInfo failed with error 0x%x.\n", hr);
-        return false;
-    }
-
-    //
-    // Enable DWM queuing from the next refresh.
-    //
-    DWM_PRESENT_PARAMETERS dwmpp = { 0 };
-
-    dwmpp.cbSize = sizeof(dwmpp);
-    dwmpp.fQueue = TRUE;
-    dwmpp.cRefreshStart = dwmti.cRefresh + 1;
-    dwmpp.cBuffer = DWM_BUFFER_COUNT;
-    dwmpp.fUseSourceRate = FALSE;
-    dwmpp.cRefreshesPerFrame = 1;
-    dwmpp.eSampling = DWM_SOURCE_FRAME_SAMPLING_POINT;
-
-    hr = ((PFNDWMSETPRESENTPARAMETERS)g_pfnDwmSetPresentParameters)(m_hWnd, &dwmpp);
-
-    if (FAILED(hr))
-    {
-        TRACE("DwmSetPresentParameters failed with error 0x%x.\n", hr);
-        return false;
-    }
-
-    //
-    // DWM queuing is enabled.
-    //
-    m_bDwmQueuing = TRUE;
-
-    return true;
-}
-
-
-bool CPlayerViewDxva2::ResetDevice(bool resizeSource)
-{
-    //std::vector<BYTE> buffer;
-    //size_t lineSizeFrom = 0;
-
     bool fullInitialization = true;
 
     if (m_pD3DD9)
     {
-        //D3DLOCKED_RECT lrFrom;
-        //HRESULT hr = m_pMainStream->LockRect(&lrFrom, NULL, D3DLOCK_READONLY | D3DLOCK_NOSYSLOCK);
-        //if (SUCCEEDED(hr) && !resizeSource)
-        //{
-        //    lineSizeFrom = (size_t)min(lrFrom.Pitch, m_sourceSize.cx * 2);
-
-        //    buffer.resize(lineSizeFrom * m_sourceSize.cy);
-        //    for (int i = 0; i < m_sourceSize.cy; ++i)
-        //    {
-        //        memcpy(&buffer[lineSizeFrom * i], (BYTE*)lrFrom.pBits + lrFrom.Pitch * i, lineSizeFrom);
-        //    }
-
-        //    hr = m_pMainStream->UnlockRect();
-        //}
-
         //
         // Destroy DXVA2 device because it may be holding any D3D9 resources.
         //
@@ -883,23 +713,6 @@ bool CPlayerViewDxva2::ResetDevice(bool resizeSource)
     {
         return false;
     }
-
-    //if (!buffer.empty())
-    //{
-    //    D3DLOCKED_RECT lrTo;
-    //    HRESULT hr = m_pMainStream->LockRect(&lrTo, NULL, D3DLOCK_NOSYSLOCK);
-    //    if (SUCCEEDED(hr))
-    //    {
-    //        const size_t lineSize = min(lineSizeFrom, (size_t)lrTo.Pitch);
-
-    //        for (int i = 0; i < m_sourceSize.cy; ++i)
-    //        {
-    //            memcpy((BYTE*)lrTo.pBits + lrTo.Pitch * i, &buffer[lineSizeFrom * i], lineSize);
-    //        }
-
-    //        hr = m_pMainStream->UnlockRect();
-    //    }
-    //}
 
     return true;
 }
@@ -948,27 +761,6 @@ bool CPlayerViewDxva2::ProcessVideo()
 
     CSingleLock lock(&m_csSurface, TRUE);
 
-
-    //D3DSURFACE_DESC desc;
-    //HRESULT hr = m_pD3DRT->GetDesc(&desc);
-
-    //{
-    //    CRect client;
-    //    GetClientRect(&client);
-
-    //    if (IsRectEmpty(&client))
-    //    {
-    //        return true;
-    //    }
-
-    //    if (desc.Width != client.Width() || desc.Height != client.Height())
-    //    {
-    //        ResetDevice(false);
-    //    }
-
-    //    hr = m_pD3DRT->GetDesc(&desc);
-    //}
-
     //
     // Check the current status of D3D9 device.
     //
@@ -985,11 +777,10 @@ bool CPlayerViewDxva2::ProcessVideo()
     case D3DERR_DEVICENOTRESET:
         TRACE("TestCooperativeLevel returned D3DERR_DEVICENOTRESET.\n");
 
-        if (!ResetDevice(false))
+        if (!ResetDevice())
         {
             return false;
         }
-        //hr = m_pD3DRT->GetDesc(&desc);
 
         break;
 
@@ -997,126 +788,6 @@ bool CPlayerViewDxva2::ProcessVideo()
         TRACE("TestCooperativeLevel failed with error 0x%x.\n", hr);
         return false;
     }
-
-
-#if 0
-    DXVA2_VideoProcessBltParams blt = { 0 };
-    DXVA2_VideoSample samples[1] = { 0 };
-
-    LONGLONG start_100ns = 0;// frame * LONGLONG(VIDEO_100NSPF);
-    LONGLONG end_100ns = 0;// start_100ns + LONGLONG(VIDEO_100NSPF);
-
-    //
-    // Initialize VPBlt parameters.
-    //
-    blt.TargetFrame = start_100ns;
-    blt.TargetRect = target;
-
-    // DXVA2_VideoProcess_Constriction
-    blt.ConstrictionSize.cx = target.right - target.left;
-    blt.ConstrictionSize.cy = target.bottom - target.top;
-
-    blt.BackgroundColor = GetBackgroundColor();
-
-    // DXVA2_VideoProcess_YUV2RGBExtended
-    blt.DestFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_Unknown;
-    blt.DestFormat.NominalRange = DXVA2_NominalRange_Unknown;
-    blt.DestFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_Unknown;
-    blt.DestFormat.VideoLighting = DXVA2_VideoLighting_dim;
-    blt.DestFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
-    blt.DestFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
-
-    blt.DestFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
-
-    // DXVA2_ProcAmp_Brightness
-    blt.ProcAmpValues.Brightness.ll = m_ProcAmpValues[0];
-    // DXVA2_ProcAmp_Contrast
-    blt.ProcAmpValues.Contrast.ll = m_ProcAmpValues[1];
-    // DXVA2_ProcAmp_Hue
-    blt.ProcAmpValues.Hue.ll = m_ProcAmpValues[2];
-    // DXVA2_ProcAmp_Saturation
-    blt.ProcAmpValues.Saturation.ll = m_ProcAmpValues[3];
-
-    // DXVA2_VideoProcess_AlphaBlend
-    blt.Alpha = DXVA2_Fixed32OpaqueAlpha();
-
-    // DXVA2_VideoProcess_NoiseFilter
-    blt.NoiseFilterLuma.Level.ll = m_NFilterValues[0];
-    blt.NoiseFilterLuma.Threshold.ll = m_NFilterValues[1];
-    blt.NoiseFilterLuma.Radius.ll = m_NFilterValues[2];
-    blt.NoiseFilterChroma.Level.ll = m_NFilterValues[3];
-    blt.NoiseFilterChroma.Threshold.ll = m_NFilterValues[4];
-    blt.NoiseFilterChroma.Radius.ll = m_NFilterValues[5];
-
-    // DXVA2_VideoProcess_DetailFilter
-    blt.DetailFilterLuma.Level.ll = m_DFilterValues[0];
-    blt.DetailFilterLuma.Threshold.ll = m_DFilterValues[1];
-    blt.DetailFilterLuma.Radius.ll = m_DFilterValues[2];
-    blt.DetailFilterChroma.Level.ll = m_DFilterValues[3];
-    blt.DetailFilterChroma.Threshold.ll = m_DFilterValues[4];
-    blt.DetailFilterChroma.Radius.ll = m_DFilterValues[5];
-
-    //
-    // Initialize main stream video sample.
-    //
-    samples[0].Start = start_100ns;
-    samples[0].End = end_100ns;
-
-    // DXVA2_VideoProcess_YUV2RGBExtended
-    samples[0].SampleFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_MPEG2;
-    samples[0].SampleFormat.NominalRange = DXVA2_NominalRange_16_235;
-    samples[0].SampleFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_BT601;
-    samples[0].SampleFormat.VideoLighting = DXVA2_VideoLighting_dim;
-    samples[0].SampleFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
-    samples[0].SampleFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
-
-    samples[0].SampleFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
-
-    samples[0].SrcSurface = m_pMainStream;
-
-    // DXVA2_VideoProcess_SubRects
-    samples[0].SrcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
-
-    // DXVA2_VideoProcess_StretchX, Y
-    samples[0].DstRect = target;
-
-    // DXVA2_VideoProcess_PlanarAlpha
-    samples[0].PlanarAlpha = DXVA2FloatToFixed(1.f);
-#endif
-
-#if 0
-    hr = m_pD3DD9->ColorFill(m_pD3DRT, NULL, D3DCOLOR_XRGB(0, 0, 0));
-    if (FAILED(hr))
-    {
-        TRACE("ColorFill failed with error 0x%x.\n", hr);
-    }
-
-    hr = m_pDXVAVPD->VideoProcessBlt(m_pD3DRT,
-        &blt,
-        samples,
-        SUB_STREAM_COUNT + 1,
-        NULL);
-    if (FAILED(hr))
-    {
-        TRACE("VideoProcessBlt failed with error 0x%x.\n", hr);
-    }
-#endif
-
-    //
-    // Re-enable DWM queuing if it is not enabled.
-    //
-    //EnableDwmQueuing();
-
-    //D3DRECT clearRect{ target.left, target.top, target.right, target.bottom };
-    //D3DRECT clearRect{ 0, 0, m_sourceSize.cx, m_sourceSize.cy };
-    //hr = m_pD3DD9->Clear(1, &clearRect, D3DCLEAR_TARGET, 0, 0, 0);
-
-    //samples[0].SrcRect.left -= 20;
-    //samples[0].SrcRect.top -= 20;
-    //samples[0].SrcRect.right += 20;
-    //samples[0].SrcRect.bottom += 20;
-
-    //m_pD3DD9->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 255, 0), 1.0f, 0);
 
     RECT srcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
     CRect target = GetTargetRect();
@@ -1220,50 +891,28 @@ void CPlayerViewDxva2::updateFrame()
     m_aspectRatio.cx = data.aspectNum;
     m_aspectRatio.cy = data.aspectDen;
 
-
-#if 1
-    if (data.d3d9device && data.d3d9device != m_pD3DD9)
+    if (data.d3d9device)
     {
-        DestroyDXVA2();
-        DestroyD3D9();
+        if (data.d3d9device != m_pD3DD9)
+        {
+            m_sourceSize.cx = data.width;
+            m_sourceSize.cy = data.height;
 
-        m_pD3DD9 = data.d3d9device;
-        m_pD3D9.Release();
+            DestroyDXVA2();
+            DestroyD3D9();
 
-        //if (FAILED(m_pD3DD9->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &m_pD3DRT)))
-        //    return;
+            m_pD3DD9 = data.d3d9device;
+            m_pD3D9.Release();
 
-        InitializeDXVA2(false);
+            InitializeDXVA2(false);
+        }
     }
     else if (!m_pD3D9 || data.width != m_sourceSize.cx || data.height != m_sourceSize.cy)
     {
         m_sourceSize.cx = data.width;
         m_sourceSize.cy = data.height;
-        ResetDevice(true);
+        ResetDevice();
     }
-
-#if 0
-    if (data.surface)
-    {
-        D3DSURFACE_DESC    surfaceDesc;
-        IDirect3DSurface9_GetDesc(data.surface, &surfaceDesc);
-
-        D3DSURFACE_DESC    destDesc;
-        IDirect3DSurface9_GetDesc(m_pD3DRT, &destDesc);
-
-        const RECT rect{ 0, 0, m_sourceSize.cx, m_sourceSize.cy };
-        HRESULT hr = m_pD3DD9->StretchRect(data.surface, &rect, m_pD3DRT, &rect, D3DTEXF_NONE);
-        //HRESULT hr = m_pD3DD9->StretchRect(data.surface, &rect, m_pD3DRT, NULL, D3DTEXF_NONE);
-        //HRESULT hr = m_pD3DD9->UpdateSurface(data.surface, NULL, m_pD3DRT, NULL);
-        if (FAILED(hr))
-        {
-            TRACE("StretchRect failed with error 0x%x.\n", hr);
-        }
-        return;
-    }
-#endif
-
-#endif
 
     if (!data.surface)
     {
@@ -1295,14 +944,6 @@ void CPlayerViewDxva2::updateFrame()
         }
 #endif
 
-#if 0
-    auto subtitle = GetDocument()->getSubtitle();
-    if (!subtitle.empty())
-    {
-        DrawText((BYTE*)lr.pBits, data.width, data.height, lr.Pitch, CA2W(subtitle.c_str(), CP_UTF8));
-    }
-#endif
-
         hr = m_pMainStream->UnlockRect();
         if (FAILED(hr))
         {
@@ -1323,8 +964,8 @@ void CPlayerViewDxva2::updateFrame()
     blt.TargetRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };//target;
 
     // DXVA2_VideoProcess_Constriction
-    blt.ConstrictionSize.cx = m_sourceSize.cx;// target.right - target.left;
-    blt.ConstrictionSize.cy = m_sourceSize.cy;// target.bottom - target.top;
+    blt.ConstrictionSize.cx = m_sourceSize.cx;
+    blt.ConstrictionSize.cy = m_sourceSize.cy;
 
     blt.BackgroundColor = GetBackgroundColor();
 
@@ -1393,13 +1034,6 @@ void CPlayerViewDxva2::updateFrame()
     // DXVA2_VideoProcess_PlanarAlpha
     samples[0].PlanarAlpha = DXVA2FloatToFixed(1.f);
 
-#if 1
-    //HRESULT hr = m_pD3DD9->ColorFill(m_pD3DRT, NULL, D3DCOLOR_XRGB(0, 0, 0));
-    //if (FAILED(hr))
-    //{
-    //    TRACE("ColorFill failed with error 0x%x.\n", hr);
-    //}
-
     HRESULT hr = m_pDXVAVPD->VideoProcessBlt(m_pD3DRT,
         &blt,
         samples,
@@ -1409,7 +1043,6 @@ void CPlayerViewDxva2::updateFrame()
     {
         TRACE("VideoProcessBlt failed with error 0x%x.\n", hr);
     }
-#endif
 
     auto subtitle = GetDocument()->getSubtitle();
     if (!subtitle.empty())
@@ -1424,29 +1057,6 @@ void CPlayerViewDxva2::updateFrame()
         m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
         hr = m_pD3DD9->EndScene();
     }
-
-#if 0
-    auto subtitle = GetDocument()->getSubtitle();
-    if (!subtitle.empty())
-    {
-        D3DLOCKED_RECT lr;
-        HRESULT hr = m_pD3DRT->LockRect(&lr, NULL, 0);// D3DLOCK_NOSYSLOCK);
-        if (FAILED(hr))
-        {
-            TRACE("LockRect failed with error 0x%x.\n", hr);
-            return;
-        }
-
-        DrawText((BYTE*)lr.pBits, data.width, data.height, lr.Pitch, CA2W(subtitle.c_str(), CP_UTF8));
-
-        hr = m_pD3DRT->UnlockRect();
-        if (FAILED(hr))
-        {
-            TRACE("UnlockRect failed with error 0x%x.\n", hr);
-        }
-    }
-#endif
-
 }
 
 
