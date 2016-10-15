@@ -70,8 +70,6 @@ private:
     CComPtr<IDirect3DSurface9> m_pMainStream;
     CComPtr<IDirectXVideoProcessor> m_pDXVAVPD;
 
-    BOOL m_bDwmQueuing;
-
     LONG m_ProcAmpValues[4];
     LONG m_NFilterValues[6];
     LONG m_DFilterValues[6];
@@ -83,4 +81,5 @@ public:
     virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
 };

@@ -283,7 +283,6 @@ IMPLEMENT_DYNCREATE(CPlayerViewDxva2, CView)
 CPlayerViewDxva2::CPlayerViewDxva2()
 : m_frameListener(new FrameListenerDxva2(this))
 , m_aspectRatio(1, 1)
-, m_bDwmQueuing(FALSE)
 {
 }
 
@@ -1110,4 +1109,21 @@ void CPlayerViewDxva2::OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen)
         pDC->PaintRgn(&combined);
         pDC->SelectObject(pOldBrush);
     }
+}
+
+
+void CPlayerViewDxva2::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+{
+    if (lHint == UPDATE_HINT_CLOSING)
+    {
+        {
+            CSingleLock lock(&m_csSurface, TRUE);
+            DestroyDXVA2();
+            DestroyD3D9();
+            m_sourceSize = {};
+        }
+        RedrawWindow();
+    }
+
+    __super::OnUpdate(pSender, lHint, pHint);
 }

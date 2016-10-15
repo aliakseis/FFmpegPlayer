@@ -312,6 +312,12 @@ void FFmpegDecoder::closeProcessing()
     // Free the YUV frame
     av_frame_free(&m_videoFrame);
 
+    if (m_videoCodecContext)
+    {
+        delete (InputStream*)m_videoCodecContext->opaque;
+        m_videoCodecContext->opaque = nullptr;
+    }
+
     // Close the codec
     call_avcodec_close(&m_videoCodecContext);
 
@@ -483,13 +489,10 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         ist->hwaccel_device = "dxva2";
         ist->dec = m_videoCodec;
         ist->dec_ctx = m_videoCodecContext;
-        //_codecContext->coded_width = _width;
-        //_codecContext->coded_height = _height;
 
         m_videoCodecContext->opaque = ist;
         if (dxva2_init(m_videoCodecContext) >= 0)
         {
-
             m_videoCodecContext->get_buffer2 = ist->hwaccel_get_buffer;
             m_videoCodecContext->get_format = GetHwFormat;
             m_videoCodecContext->thread_safe_callbacks = 1;
@@ -629,13 +632,6 @@ double FFmpegDecoder::volume() const { return m_audioPlayer->GetVolume(); }
 
 bool FFmpegDecoder::frameToImage(VideoFrame& videoFrameData)
 {
-#ifdef USE_HWACCEL
-    if (m_videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
-    {
-        //dxva2_retrieve_data_call(m_videoCodecContext, m_videoFrame);
-    }
-#endif
-
     if (m_videoFrame->format == m_pixelFormat
         || m_videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
     {
@@ -766,11 +762,13 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
         data->aspectDen = 1;
     }
 
+#ifdef USE_HWACCEL
     if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
     {
         data->d3d9device = get_device(m_videoCodecContext);
         data->surface = (IDirect3DSurface9*)current_frame.m_image->data[3];
     }
+#endif
 
     return true;
 }
