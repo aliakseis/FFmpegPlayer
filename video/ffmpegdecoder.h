@@ -112,7 +112,6 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     void resetVariables();
     void closeProcessing();
-    bool frameToImage(VideoFrame& videoFrameData);
 
     bool openDecoder(const PathType& file, const std::string& url, bool isFile);
 

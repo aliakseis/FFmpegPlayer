@@ -1,6 +1,59 @@
 #include "ffmpegdecoder.h"
 #include "makeguard.h"
 
+#include <boost/log/trivial.hpp>
+
+namespace {
+
+bool frameToImage(
+    VideoFrame& videoFrameData, 
+    AVFrame*& m_videoFrame,
+    SwsContext*& m_imageCovertContext,
+    AVPixelFormat m_pixelFormat)
+{
+    if (m_videoFrame->format == m_pixelFormat
+        || m_videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
+    {
+        std::swap(m_videoFrame, videoFrameData.m_image);
+    }
+    else
+    {
+        const int width = m_videoFrame->width;
+        const int height = m_videoFrame->height;
+
+        videoFrameData.realloc(m_pixelFormat, width, height);
+
+        // Prepare image conversion
+        m_imageCovertContext =
+            sws_getCachedContext(m_imageCovertContext, m_videoFrame->width, m_videoFrame->height,
+            (AVPixelFormat)m_videoFrame->format, width, height, m_pixelFormat,
+            0, nullptr, nullptr, nullptr);
+
+        assert(m_imageCovertContext != nullptr);
+
+        if (m_imageCovertContext == nullptr)
+        {
+            return false;
+        }
+
+        // Doing conversion
+        if (sws_scale(m_imageCovertContext, m_videoFrame->data, m_videoFrame->linesize, 0,
+            m_videoFrame->height, videoFrameData.m_image->data, videoFrameData.m_image->linesize) <= 0)
+        {
+            assert(false && "sws_scale failed");
+            BOOST_LOG_TRIVIAL(error) << "sws_scale failed";
+            return false;
+        }
+
+        videoFrameData.m_image->sample_aspect_ratio = m_videoFrame->sample_aspect_ratio;
+    }
+
+    return true;
+}
+
+
+} // namespace
+
 void FFmpegDecoder::videoParseRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Video thread started";
@@ -148,7 +201,7 @@ void FFmpegDecoder::handleVideoPacket(
         m_isVideoSeekingWhilePaused = false;
 
         VideoFrame& current_frame = m_videoFramesQueue.back();
-        if (!frameToImage(current_frame))
+        if (!frameToImage(current_frame, m_videoFrame, m_imageCovertContext, m_pixelFormat))
         {
             continue;
         }
