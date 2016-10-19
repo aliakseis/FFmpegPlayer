@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IEraseableArea.h"
+
 #include <memory>
 
 struct IFrameListener;
@@ -10,11 +12,13 @@ struct IDirect3DSurface9;
 struct IDirectXVideoProcessorService;
 struct IDirectXVideoProcessor;
 
+class CD3DFont;
+
 class CPlayerDoc;
 
 // CPlayerViewDxva2 view
 
-class CPlayerViewDxva2 : public CView
+class CPlayerViewDxva2 : public CView, public IEraseableArea
 {
     friend class FrameListenerDxva2;
 
@@ -37,17 +41,20 @@ public:
 
     void updateFrame();
 
+    void OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen) override;
+
 protected:
     DECLARE_MESSAGE_MAP()
 private:
     bool InitializeD3D9();
-    bool InitializeDXVA2();
+    bool InitializeDXVA2(bool createSurface);
     void DestroyDXVA2();
     void DestroyD3D9();
-    bool EnableDwmQueuing();
-    bool CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW);
-    bool ResetDevice(bool resizeSource);
+    bool CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool createSurface);
+    bool ResetDevice();
     bool ProcessVideo();
+
+    CRect GetTargetRect();
 
 private:
     std::unique_ptr<IFrameListener> m_frameListener;
@@ -63,15 +70,16 @@ private:
     CComPtr<IDirect3DSurface9> m_pMainStream;
     CComPtr<IDirectXVideoProcessor> m_pDXVAVPD;
 
-    BOOL m_bDwmQueuing;
-
     LONG m_ProcAmpValues[4];
     LONG m_NFilterValues[6];
     LONG m_DFilterValues[6];
+
+    std::unique_ptr<CD3DFont> m_subtitleFont;
 
 public:
     afx_msg void OnPaint();
     virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
 };

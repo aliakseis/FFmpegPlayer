@@ -9,7 +9,7 @@
 
 #include <boost/log/trivial.hpp>
 
-//#define USE_HWACCEL
+#define USE_HWACCEL
 
 // http://stackoverflow.com/questions/34602561
 #ifdef USE_HWACCEL
@@ -312,6 +312,12 @@ void FFmpegDecoder::closeProcessing()
     // Free the YUV frame
     av_frame_free(&m_videoFrame);
 
+    if (m_videoCodecContext)
+    {
+        delete (InputStream*)m_videoCodecContext->opaque;
+        m_videoCodecContext->opaque = nullptr;
+    }
+
     // Close the codec
     call_avcodec_close(&m_videoCodecContext);
 
@@ -483,15 +489,22 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         ist->hwaccel_device = "dxva2";
         ist->dec = m_videoCodec;
         ist->dec_ctx = m_videoCodecContext;
-        //_codecContext->coded_width = _width;
-        //_codecContext->coded_height = _height;
 
         m_videoCodecContext->opaque = ist;
-        dxva2_init(m_videoCodecContext);
+        if (dxva2_init(m_videoCodecContext) >= 0)
+        {
+            m_videoCodecContext->get_buffer2 = ist->hwaccel_get_buffer;
+            m_videoCodecContext->get_format = GetHwFormat;
+            m_videoCodecContext->thread_safe_callbacks = 1;
+        }
+        else
+        {
+            delete ist;
+            m_videoCodecContext->opaque = nullptr;
 
-        m_videoCodecContext->get_buffer2 = ist->hwaccel_get_buffer;
-        m_videoCodecContext->get_format = GetHwFormat;
-        m_videoCodecContext->thread_safe_callbacks = 1;
+            m_videoCodecContext->thread_count = 2;
+            m_videoCodecContext->flags2 |= CODEC_FLAG2_FAST;
+        }
 #else
         m_videoCodecContext->thread_count = 2;
         m_videoCodecContext->flags2 |= CODEC_FLAG2_FAST;
@@ -617,54 +630,6 @@ void FFmpegDecoder::setVolume(double volume)
 
 double FFmpegDecoder::volume() const { return m_audioPlayer->GetVolume(); }
 
-bool FFmpegDecoder::frameToImage(VideoFrame& videoFrameData)
-{
-#ifdef USE_HWACCEL
-    if (m_videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
-    {
-        dxva2_retrieve_data_call(m_videoCodecContext, m_videoFrame);
-    }
-#endif
-
-    if (m_videoFrame->format == m_pixelFormat)
-    {
-        std::swap(m_videoFrame, videoFrameData.m_image);
-    }
-    else
-    {
-        const int width = m_videoFrame->width;
-        const int height = m_videoFrame->height;
-
-        videoFrameData.realloc(m_pixelFormat, width, height);
-
-        // Prepare image conversion
-        m_imageCovertContext =
-            sws_getCachedContext(m_imageCovertContext, m_videoFrame->width, m_videoFrame->height,
-            (AVPixelFormat)m_videoFrame->format, width, height, m_pixelFormat,
-            0, nullptr, nullptr, nullptr);
-
-        assert(m_imageCovertContext != nullptr);
-
-        if (m_imageCovertContext == nullptr)
-        {
-            return false;
-        }
-
-        // Doing conversion
-        if (sws_scale(m_imageCovertContext, m_videoFrame->data, m_videoFrame->linesize, 0,
-            m_videoFrame->height, videoFrameData.m_image->data, videoFrameData.m_image->linesize) <= 0)
-        {
-            assert(false && "sws_scale failed");
-            BOOST_LOG_TRIVIAL(error) << "sws_scale failed";
-            return false;
-        }
-
-        videoFrameData.m_image->sample_aspect_ratio = m_videoFrame->sample_aspect_ratio;
-    }
-
-    return true;
-}
-
 void FFmpegDecoder::SetFrameFormat(FrameFormat format)
 { 
     static_assert(PIX_FMT_YUV420P == AV_PIX_FMT_YUV420P, "FrameFormat and AVPixelFormat values must coincide.");
@@ -678,6 +643,13 @@ void FFmpegDecoder::finishedDisplayingFrame()
 {
     {
         boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
+
+        VideoFrame &current_frame = m_videoFramesQueue.front();
+        if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
+        {
+            av_frame_unref(current_frame.m_image);
+        }
+
         m_videoFramesQueue.popFront();
         m_frameDisplayingRequested = false;
     }
@@ -747,6 +719,14 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
         data->aspectNum = 1;
         data->aspectDen = 1;
     }
+
+#ifdef USE_HWACCEL
+    if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
+    {
+        data->d3d9device = get_device(m_videoCodecContext);
+        data->surface = (IDirect3DSurface9*)current_frame.m_image->data[3];
+    }
+#endif
 
     return true;
 }

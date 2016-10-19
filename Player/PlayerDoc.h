@@ -13,6 +13,8 @@
 
 #include "decoderinterface.h"
 
+enum { UPDATE_HINT_CLOSING = 1 };
+
 class CPlayerDoc : public CDocument, public FrameDecoderListener
 {
 protected: // create from serialization only

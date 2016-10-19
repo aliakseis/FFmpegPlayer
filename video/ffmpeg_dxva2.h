@@ -144,4 +144,6 @@ typedef struct InputStream {
 int dxva2_init(AVCodecContext *s);
 int dxva2_retrieve_data_call(AVCodecContext *s, AVFrame *frame);
 
+IDirect3DDevice9* get_device(AVCodecContext *s);
+
 #endif /* FFMPEG_DXVA2_H */

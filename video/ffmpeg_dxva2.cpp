@@ -221,15 +221,12 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
             dxva2_destroy_decoder(s);
 
         if (ctx->decoder_service)
-            //IDirectXVideoDecoderService_Release(ctx->decoder_service);
             ctx->decoder_service->Release();
 
         if (ctx->d3d9devmgr && ctx->deviceHandle != INVALID_HANDLE_VALUE)
-            //IDirect3DDeviceManager9_CloseDeviceHandle(ctx->d3d9devmgr, ctx->deviceHandle);
             ctx->d3d9devmgr->CloseDeviceHandle(ctx->deviceHandle);
 
         if (ctx->d3d9devmgr)
-            //IDirect3DDeviceManager9_Release(ctx->d3d9devmgr);
             ctx->d3d9devmgr->Release();
 
         if (ctx->d3d9device)
@@ -263,7 +260,6 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
             }
         }
         IDirect3DSurface9_Release(w->surface);
-        //IDirectXVideoDecoder_Release(w->decoder);
         w->decoder->Release();
         av_free(w);
     }
@@ -307,7 +303,6 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
         w->surface = surface;
         IDirect3DSurface9_AddRef(w->surface);
         w->decoder = ctx->decoder;
-        //IDirectXVideoDecoder_AddRef(w->decoder);
         w->decoder->AddRef();
 
         ctx->surface_infos[i].used = 1;
@@ -452,12 +447,17 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
 
         IDirect3D9_GetAdapterDisplayMode(ctx->d3d9, adapter, &d3ddm);
         d3dpp.Windowed = TRUE;
-        d3dpp.BackBufferWidth = 640;
-        d3dpp.BackBufferHeight = 480;
-        d3dpp.BackBufferCount = 0;
-        d3dpp.BackBufferFormat = d3ddm.Format;
+        d3dpp.BackBufferWidth = (s->width > 0)? s->width : 1920;
+        d3dpp.BackBufferHeight = (s->height > 0) ? s->height : 1080;
+        d3dpp.BackBufferCount = 1;
+        d3dpp.BackBufferFormat = D3DFMT_X8R8G8B8;// d3ddm.Format;
         d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
         d3dpp.Flags = D3DPRESENTFLAG_VIDEO;
+
+        d3dpp.Windowed = TRUE;
+        d3dpp.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
+        d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+
 
         hr = IDirect3D9_CreateDevice(ctx->d3d9, adapter, D3DDEVTYPE_HAL, GetDesktopWindow(),
             D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE,
@@ -473,21 +473,18 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
             goto fail;
         }
 
-        //hr = IDirect3DDeviceManager9_ResetDevice(ctx->d3d9devmgr, ctx->d3d9device, resetToken);
         hr = ctx->d3d9devmgr->ResetDevice(ctx->d3d9device, resetToken);
         if (FAILED(hr)) {
             av_log(NULL, loglevel, "Failed to bind Direct3D device to device manager\n");
             goto fail;
         }
 
-        //hr = IDirect3DDeviceManager9_OpenDeviceHandle(ctx->d3d9devmgr, &ctx->deviceHandle);
         hr = ctx->d3d9devmgr->OpenDeviceHandle(&ctx->deviceHandle);
         if (FAILED(hr)) {
             av_log(NULL, loglevel, "Failed to open device handle\n");
             goto fail;
         }
 
-        //hr = IDirect3DDeviceManager9_GetVideoService(ctx->d3d9devmgr, ctx->deviceHandle, &IID_IDirectXVideoDecoderService, (void **)&ctx->decoder_service);
         hr = ctx->d3d9devmgr->GetVideoService(ctx->deviceHandle, IID_IDirectXVideoDecoderService, (void **)&ctx->decoder_service);
         if (FAILED(hr)) {
             av_log(NULL, loglevel, "Failed to create IDirectXVideoDecoderService\n");
@@ -521,7 +518,6 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
         HRESULT hr;
         int i;
 
-        //hr = IDirectXVideoDecoderService_GetDecoderConfigurations(ctx->decoder_service, device_guid, desc, NULL, &cfg_count, &cfg_list);
         hr = ctx->decoder_service->GetDecoderConfigurations(*device_guid, desc, NULL, &cfg_count, &cfg_list);
         if (FAILED(hr)) {
             av_log(NULL, loglevel, "Unable to retrieve decoder configurations\n");
@@ -572,7 +568,6 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
         int surface_alignment;
         int ret;
 
-        //hr = IDirectXVideoDecoderService_GetDecoderDeviceGuids(ctx->decoder_service, &guid_count, &guid_list);
         hr = ctx->decoder_service->GetDecoderDeviceGuids(&guid_count, &guid_list);
         if (FAILED(hr)) {
             av_log(NULL, loglevel, "Failed to retrieve decoder device GUIDs\n");
@@ -593,7 +588,6 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
             if (j == guid_count)
                 continue;
 
-            //hr = IDirectXVideoDecoderService_GetDecoderRenderTargets(ctx->decoder_service, mode->guid, &target_count, &target_list);
             hr = ctx->decoder_service->GetDecoderRenderTargets(*mode->guid, &target_count, &target_list);
             if (FAILED(hr)) {
                 continue;
@@ -641,7 +635,8 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
             surface_alignment = 16;
 
         /* 4 base work surfaces */
-        ctx->num_surfaces = 4;
+        //ctx->num_surfaces = 4;
+        ctx->num_surfaces = 4 + 2; // two video queue elements
 
         /* add surfaces based on number of possible refs */
         if (s->codec_id == AV_CODEC_ID_H264 || s->codec_id == AV_CODEC_ID_HEVC)
@@ -663,13 +658,6 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
             goto fail;
         }
 
-        /*hr = IDirectXVideoDecoderService_CreateSurface(ctx->decoder_service,
-            FFALIGN(s->coded_width, surface_alignment),
-            FFALIGN(s->coded_height, surface_alignment),
-            ctx->num_surfaces - 1,
-            target_format, D3DPOOL_DEFAULT, 0,
-            DXVA2_VideoDecoderRenderTarget,
-            ctx->surfaces, NULL);*/
         hr = ctx->decoder_service->CreateSurface(FFALIGN(s->coded_width, surface_alignment),
             FFALIGN(s->coded_height, surface_alignment),
             ctx->num_surfaces - 1,
@@ -681,9 +669,6 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
             goto fail;
         }
 
-        /*hr = IDirectXVideoDecoderService_CreateVideoDecoder(ctx->decoder_service, &device_guid,
-            &desc, &config, ctx->surfaces,
-            ctx->num_surfaces, &ctx->decoder);*/
         hr = ctx->decoder_service->CreateVideoDecoder(device_guid,
             &desc, &config, ctx->surfaces,
             ctx->num_surfaces, &ctx->decoder);
@@ -744,4 +729,11 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
     int dxva2_retrieve_data_call(AVCodecContext *s, AVFrame *frame)
     {
         return dxva2_retrieve_data(s, frame);
+    }
+
+    IDirect3DDevice9* get_device(AVCodecContext *s)
+    {
+        InputStream  *ist = (InputStream *)s->opaque;
+        DXVA2Context *ctx = (DXVA2Context *)ist->hwaccel_ctx;
+        return ctx->d3d9device;
     }

@@ -10,14 +10,20 @@ typedef std::wstring PathType;
 typedef std::string PathType;
 #endif
 
+struct IDirect3DDevice9;
+struct IDirect3DSurface9;
+
 struct FrameRenderingData
 {
-    uint8_t** image;
-    const int* pitch;
+    uint8_t** image{};
+    const int* pitch{};
     int width; 
     int height;
     int aspectNum;
     int aspectDen;
+
+    IDirect3DDevice9* d3d9device{};
+    IDirect3DSurface9* surface{};
 };
 
 struct IFrameListener

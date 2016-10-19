@@ -157,6 +157,8 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
     if (!CDocument::OnOpenDocument(lpszPathName))
         return FALSE;
 
+    m_frameDecoder->close();
+    UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
     if (m_frameDecoder->openFile(lpszPathName))
     {
         OpenSubRipFile(lpszPathName);

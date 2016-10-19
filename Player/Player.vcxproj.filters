@@ -60,6 +60,18 @@
     <ClInclude Include="MakeDelegate.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IEraseableArea.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFONT.H">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DUTIL.H">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DXUTIL.H">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Player.cpp">
@@ -93,6 +105,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AudioPlayerWasapi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFONT.CPP">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DUTIL.CPP">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DXUTIL.CPP">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

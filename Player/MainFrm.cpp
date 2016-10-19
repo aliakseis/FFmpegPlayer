@@ -7,6 +7,7 @@
 
 #include "MainFrm.h"
 #include "PlayerDoc.h"
+#include "IEraseableArea.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -19,6 +20,9 @@ IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_CREATE()
     ON_COMMAND(IDC_FULL_SCREEN, &CMainFrame::OnFullScreen)
+    ON_WM_ERASEBKGND()
+    ON_WM_WINDOWPOSCHANGED()
+    ON_WM_NCPAINT()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -32,6 +36,7 @@ static UINT indicators[] =
 // CMainFrame construction/destruction
 
 CMainFrame::CMainFrame()
+    : m_bFullScreen(FALSE)
 {
     // TODO: add member initialization code here
 }
@@ -180,6 +185,7 @@ public:
 
 void CMainFrame::OnFullScreen()
 {
+    ModifyStyle(WS_OVERLAPPEDWINDOW, 0, SWP_FRAMECHANGED);
     ShowFullScreen();
     if (CMFCToolBar* toolBar = static_cast<FullScreenMgrAccsssor&>(m_Impl).GetFullScreenBar())
     {
@@ -188,4 +194,35 @@ void CMainFrame::OnFullScreen()
             pFrame->ShowWindow(SW_HIDE);
         }
     }
+}
+
+
+BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
+{
+    CWnd* pWnd = GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE);
+    if (IEraseableArea* pEraseableArea = dynamic_cast<IEraseableArea*>(pWnd))
+    {
+        pEraseableArea->OnErase(this, pDC, IsFullScreen());
+    }
+
+    return TRUE;
+}
+
+
+void CMainFrame::OnWindowPosChanged(WINDOWPOS* lpwndpos)
+{
+    CFrameWndEx::OnWindowPosChanged(lpwndpos);
+
+    // message handler code here
+    if (!IsFullScreen() && m_bFullScreen)
+        ModifyStyle(0, WS_OVERLAPPEDWINDOW, 0);
+
+    m_bFullScreen = IsFullScreen();
+}
+
+
+void CMainFrame::OnNcPaint()
+{
+    if (!IsFullScreen())
+        Default();
 }
