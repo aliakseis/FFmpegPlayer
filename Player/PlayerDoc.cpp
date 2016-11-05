@@ -50,6 +50,9 @@ CPlayerDoc::CPlayerDoc()
 
 CPlayerDoc::~CPlayerDoc()
 {
+    ASSERT(framePositionChanged.empty());
+    ASSERT(totalTimeUpdated.empty());
+    ASSERT(currentTimeUpdated.empty());
 }
 
 BOOL CPlayerDoc::OnNewDocument()
