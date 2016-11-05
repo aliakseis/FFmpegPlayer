@@ -85,9 +85,8 @@ void FFmpegDecoder::videoParseRunnable()
 
             auto packetGuard = MakeGuard(&packet, av_packet_unref);
 
-            handleVideoPacket(packet, videoClock, initialized);
-
-            if (m_isPaused && !m_isVideoSeekingWhilePaused)
+            if (!handleVideoPacket(packet, videoClock, initialized)
+                || m_isPaused && !m_isVideoSeekingWhilePaused)
             {
                 break;
             }
@@ -95,30 +94,17 @@ void FFmpegDecoder::videoParseRunnable()
     }
 }
 
-void FFmpegDecoder::handleVideoPacket(
-    AVPacket packet,  // uses copy
+bool FFmpegDecoder::handleVideoPacket(
+    const AVPacket& packet,
     double& videoClock,
     bool& initialized)
 {
-    while (packet.size > 0)
+    const int ret = avcodec_send_packet(m_videoCodecContext, &packet);
+    if (ret < 0)
+        return false;
+
+    while (avcodec_receive_frame(m_videoCodecContext, m_videoFrame) == 0)
     {
-        int frameFinished = 0;
-        const int length = avcodec_decode_video2(m_videoCodecContext,
-            m_videoFrame, &frameFinished, &packet);
-
-        if (length < 0)
-        {
-            // Broken packet
-            break;  // Simply skip frame without errors
-        }
-        packet.size -= length;
-        packet.data += length;
-
-        if (!frameFinished)
-        {
-            continue;
-        }
-
         const int64_t duration_stamp =
             av_frame_get_best_effort_timestamp(m_videoFrame);
 
@@ -215,4 +201,6 @@ void FFmpegDecoder::handleVideoPacket(
         }
         m_videoFramesCV.notify_all();
     }
+
+    return true;
 }

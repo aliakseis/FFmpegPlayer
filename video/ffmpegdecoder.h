@@ -100,10 +100,10 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     void seek();
     void fixDuration();
     bool handleAudioPacket(
-        AVPacket packet,  // uses copy
+        const AVPacket& packet,
         std::vector<uint8_t>& resampleBuffer);
-    void handleVideoPacket(
-        AVPacket packet,  // uses copy
+    bool handleVideoPacket(
+        const AVPacket& packet,
         double& videoClock,
         bool& initialized);
 

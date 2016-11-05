@@ -447,8 +447,8 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
 
         IDirect3D9_GetAdapterDisplayMode(ctx->d3d9, adapter, &d3ddm);
         d3dpp.Windowed = TRUE;
-        d3dpp.BackBufferWidth = (s->width > 0)? s->width : 1920;
-        d3dpp.BackBufferHeight = (s->height > 0) ? s->height : 1080;
+        d3dpp.BackBufferWidth = s->coded_width;
+        d3dpp.BackBufferHeight = s->coded_height;
         d3dpp.BackBufferCount = 1;
         d3dpp.BackBufferFormat = D3DFMT_X8R8G8B8;// d3ddm.Format;
         d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;

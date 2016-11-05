@@ -127,23 +127,16 @@ void FFmpegDecoder::audioParseRunnable()
 }
 
 bool FFmpegDecoder::handleAudioPacket(
-    AVPacket packet,  // uses copy
+    const AVPacket& packet,
     std::vector<uint8_t>& resampleBuffer)
 {
-    while (packet.size > 0)
-    {
-        int audioDecoded = 0;
-        const int length = avcodec_decode_audio4(m_audioCodecContext,
-                                                 m_audioFrame, &audioDecoded, &packet);
-        if (length < 0)
-        {
-            // Broken packet
-            break;  // Simply skip frame without errors
-        }
-        packet.size -= length;
-        packet.data += length;
+    const int ret = avcodec_send_packet(m_audioCodecContext, &packet);
+    if (ret < 0)
+        return false;
 
-        if (!audioDecoded || m_audioFrame->nb_samples <= 0)
+    while (avcodec_receive_frame(m_audioCodecContext, m_audioFrame) == 0)
+    {
+        if (m_audioFrame->nb_samples <= 0)
         {
             continue;
         }

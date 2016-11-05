@@ -312,11 +312,13 @@ void FFmpegDecoder::closeProcessing()
     // Free the YUV frame
     av_frame_free(&m_videoFrame);
 
+#ifdef USE_HWACCEL
     if (m_videoCodecContext)
     {
         delete (InputStream*)m_videoCodecContext->opaque;
         m_videoCodecContext->opaque = nullptr;
     }
+#endif
 
     // Close the codec
     call_avcodec_close(&m_videoCodecContext);
@@ -412,7 +414,7 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     m_audioStreamNumber = -1;
     for (unsigned i = m_formatContext->nb_streams; i--;)
     {
-        switch (m_formatContext->streams[i]->codec->codec_type)
+        switch (m_formatContext->streams[i]->codecpar->codec_type)
         {
         case AVMEDIA_TYPE_VIDEO:
             m_videoStream = m_formatContext->streams[i];
@@ -457,16 +459,27 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
             : int64_t((m_formatContext->duration / av_q2d(m_audioStream->time_base)) / 1000000LL);
     }
 
-    // Get a pointer to the codec context for the video stream
     if (m_videoStreamNumber >= 0)
     {
         CHANNEL_LOG(ffmpeg_opening) << "Video steam number: " << m_videoStreamNumber;
-        m_videoCodecContext = m_formatContext->streams[m_videoStreamNumber]->codec;
+        m_videoCodecContext = avcodec_alloc_context3(nullptr);
+        if (!m_videoCodecContext)
+            return false;
+        if (avcodec_parameters_to_context(
+                m_videoCodecContext,
+                m_formatContext->streams[m_videoStreamNumber]->codecpar) < 0)
+            return false;
     }
     if (m_audioStreamNumber >= 0)
     {
         CHANNEL_LOG(ffmpeg_opening) << "Audio steam number: " << m_audioStreamNumber;
-        m_audioCodecContext = m_formatContext->streams[m_audioStreamNumber]->codec;
+        m_audioCodecContext = avcodec_alloc_context3(nullptr);
+        if (!m_audioCodecContext)
+            return false;
+        if (avcodec_parameters_to_context(
+                m_audioCodecContext,
+                m_formatContext->streams[m_audioStreamNumber]->codecpar) < 0)
+            return false;
     }
 
     auto videoCodecContextGuard = MakeGuard(&m_videoCodecContext, call_avcodec_close);
@@ -483,6 +496,9 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         }
 
 #ifdef USE_HWACCEL
+        m_videoCodecContext->coded_width = m_videoCodecContext->width;
+        m_videoCodecContext->coded_height = m_videoCodecContext->height;
+
         m_videoCodecContext->thread_count = 1;  // Multithreading is apparently not compatible with hardware decoding
         InputStream *ist = new InputStream();
         ist->hwaccel_id = HWACCEL_AUTO;
