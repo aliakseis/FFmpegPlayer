@@ -135,13 +135,15 @@ bool FFmpegDecoder::handleAudioPacket(
         // Close the audio codec
         avcodec_close(m_audioCodecContext);
 
-        // TODO check error
         m_audioStream = m_formatContext->streams[packet.stream_index];
-        avcodec_parameters_to_context(
+        if (avcodec_parameters_to_context(
             m_audioCodecContext,
-            m_formatContext->streams[packet.stream_index]->codecpar);
-        m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id);
-        avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr);
+            m_formatContext->streams[packet.stream_index]->codecpar) < 0
+            || (m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id)) == nullptr
+            || avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr) < 0)
+        {
+            return false;
+        }
     }
 
     const int ret = avcodec_send_packet(m_audioCodecContext, &packet);
