@@ -142,15 +142,6 @@ void MyIOContext::initAVFormatContext(AVFormatContext *pCtx)
 
 //////////////////////////////////////////////////////////////////////////////
 
-inline void call_avcodec_close(AVCodecContext** avctx)
-{
-    if (*avctx != nullptr)
-    {
-        avcodec_close(*avctx);
-        *avctx = nullptr;
-    }
-}
-
 #ifdef USE_HWACCEL
 AVPixelFormat GetHwFormat(AVCodecContext *s, const AVPixelFormat *pix_fmts)
 {
@@ -324,10 +315,10 @@ void FFmpegDecoder::closeProcessing()
 #endif
 
     // Close the codec
-    call_avcodec_close(&m_videoCodecContext);
+    avcodec_free_context(&m_videoCodecContext);
 
     // Close the audio codec
-    call_avcodec_close(&m_audioCodecContext);
+    avcodec_free_context(&m_audioCodecContext);
 
     bool isFileReallyClosed = false;
 
@@ -487,8 +478,8 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
             return false;
     }
 
-    auto videoCodecContextGuard = MakeGuard(&m_videoCodecContext, call_avcodec_close);
-    auto audioCodecContextGuard = MakeGuard(&m_audioCodecContext, call_avcodec_close);
+    auto videoCodecContextGuard = MakeGuard(&m_videoCodecContext, avcodec_free_context);
+    auto audioCodecContextGuard = MakeGuard(&m_audioCodecContext, avcodec_free_context);
 
     // Find the decoder for the video stream
     if (m_videoStreamNumber >= 0)
