@@ -6,6 +6,7 @@
 
 #include <boost/chrono.hpp>
 #include <utility>
+#include <algorithm>
 
 #include <boost/log/trivial.hpp>
 
@@ -246,6 +247,8 @@ void FFmpegDecoder::resetVariables()
 
     m_isPlaying = false;
 
+    m_audioIndices.clear();
+
     CHANNEL_LOG(ffmpeg_closing) << "Variables reset";
 }
 
@@ -421,11 +424,13 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
             m_videoStreamNumber = i;
             break;
         case AVMEDIA_TYPE_AUDIO:
+            m_audioIndices.push_back(i);
             m_audioStream = m_formatContext->streams[i];
             m_audioStreamNumber = i;
             break;
         }
     }
+    std::reverse(m_audioIndices.begin(), m_audioIndices.end());
     if (m_videoStreamNumber == -1)
     {
         CHANNEL_LOG(ffmpeg_opening) << "Can't find video stream";
@@ -784,4 +789,23 @@ bool FFmpegDecoder::pauseResume()
     }
 
     return true;
+}
+
+int FFmpegDecoder::getNumAudioTracks() const
+{
+    return m_audioIndices.size();
+}
+
+int FFmpegDecoder::getAudioTrack() const
+{
+    const int audioStreamNumber = m_audioStreamNumber;
+    return (audioStreamNumber < 0)
+        ? -1 
+        : std::find(m_audioIndices.begin(), m_audioIndices.end(), audioStreamNumber) - m_audioIndices.begin();
+}
+
+void FFmpegDecoder::setAudioTrack(int idx)
+{
+    if (idx >= 0 && idx < m_audioIndices.size())
+        m_audioStreamNumber = m_audioIndices[idx];
 }

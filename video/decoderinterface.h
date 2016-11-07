@@ -80,6 +80,10 @@ struct IFrameDecoder
     virtual bool isPaused() const = 0;
     virtual double volume() const = 0;
     virtual double getDurationSecs(int64_t duration) const = 0;
+
+    virtual int getNumAudioTracks() const = 0;
+    virtual int getAudioTrack() const = 0;
+    virtual void setAudioTrack(int idx) = 0;
 };
 
 struct IAudioPlayer;

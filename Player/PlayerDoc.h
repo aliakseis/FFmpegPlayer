@@ -51,6 +51,8 @@ protected:
 
 // Generated message map functions
 protected:
+    afx_msg void OnAudioTrack(UINT id);
+    afx_msg void OnUpdateAudioTrack(CCmdUI* pCmdUI);
     DECLARE_MESSAGE_MAP()
 
 #ifdef SHARED_HANDLERS

@@ -15,6 +15,7 @@ extern "C" {
 #include <boost/thread/thread.hpp>
 #include <boost/atomic.hpp>
 #include <memory>
+#include <vector>
 
 #include <boost/log/sources/channel_logger.hpp>
 #include <boost/log/common.hpp>
@@ -87,6 +88,10 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     bool pauseResume() override;
     void setVolume(double volume) override;
 
+    int getNumAudioTracks() const override;
+    int getAudioTrack() const override;
+    void setAudioTrack(int idx) override;
+
    private:
     // Threads
     void parseRunnable();
@@ -154,7 +159,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     AVCodec* m_audioCodec;
     AVCodecContext* m_audioCodecContext;
     AVStream* m_audioStream;
-    int m_audioStreamNumber;
+    boost::atomic<int> m_audioStreamNumber;
     SwrContext* m_audioSwrContext;
 
     struct AudioParams
@@ -201,4 +206,6 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     // Audio
     std::unique_ptr<IAudioPlayer> m_audioPlayer;
+
+    std::vector<int> m_audioIndices;
 };

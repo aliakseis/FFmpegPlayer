@@ -136,13 +136,15 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
-    POPUP "&Edit"
+    POPUP "Audio"
     BEGIN
-        MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
-        MENUITEM SEPARATOR
-        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
-        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
-        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+        POPUP "Audio Track"
+        BEGIN
+            MENUITEM "Track 1",                     ID_TRACK1
+            MENUITEM "Track 2",                     ID_TRACK2
+            MENUITEM "Track 3",                     ID_TRACK3
+            MENUITEM "Track 4",                     ID_TRACK4
+        END
     END
     POPUP "&View"
     BEGIN

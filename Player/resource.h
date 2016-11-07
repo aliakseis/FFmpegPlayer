@@ -23,13 +23,17 @@
 #define IDC_CURRENT_TIME                1004
 #define IDC_TOTAL_TIME                  1005
 #define IDC_FULL_SCREEN                 1006
+#define ID_TRACK1                      32771
+#define ID_TRACK2                      32772
+#define ID_TRACK3                      32773
+#define ID_TRACK4                      32774
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        316
-#define _APS_NEXT_COMMAND_VALUE         32771
+#define _APS_NEXT_COMMAND_VALUE         32775
 #define _APS_NEXT_CONTROL_VALUE         1005
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

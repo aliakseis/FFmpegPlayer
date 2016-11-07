@@ -152,6 +152,21 @@
     <Image Include="..\..\..\Users\LX\Downloads\full_screen.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\pause.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\play.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\audio.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\audio_off.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\full_screen.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="I420Effect_PS.hlsl" />

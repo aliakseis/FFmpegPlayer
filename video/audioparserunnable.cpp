@@ -130,6 +130,20 @@ bool FFmpegDecoder::handleAudioPacket(
     const AVPacket& packet,
     std::vector<uint8_t>& resampleBuffer)
 {
+    if (packet.stream_index != m_audioStream->index)
+    {
+        // Close the audio codec
+        avcodec_close(m_audioCodecContext);
+
+        // TODO check error
+        m_audioStream = m_formatContext->streams[packet.stream_index];
+        avcodec_parameters_to_context(
+            m_audioCodecContext,
+            m_formatContext->streams[packet.stream_index]->codecpar);
+        m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id);
+        avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr);
+    }
+
     const int ret = avcodec_send_packet(m_audioCodecContext, &packet);
     if (ret < 0)
         return false;

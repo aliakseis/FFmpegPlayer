@@ -34,6 +34,8 @@ class CPlayerDoc::SubtitlesMap : public boost::icl::interval_map<double, std::st
 IMPLEMENT_DYNCREATE(CPlayerDoc, CDocument)
 
 BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
+    ON_COMMAND_RANGE(ID_TRACK1, ID_TRACK4, OnAudioTrack)
+    ON_UPDATE_COMMAND_UI_RANGE(ID_TRACK1, ID_TRACK4, OnUpdateAudioTrack)
 END_MESSAGE_MAP()
 
 
@@ -287,4 +289,16 @@ std::string CPlayerDoc::getSubtitle()
         }
     }
     return result;
+}
+
+void CPlayerDoc::OnAudioTrack(UINT id)
+{
+    m_frameDecoder->setAudioTrack(id - ID_TRACK1);
+}
+
+void CPlayerDoc::OnUpdateAudioTrack(CCmdUI* pCmdUI)
+{
+    const int idx = pCmdUI->m_nID - ID_TRACK1;
+    pCmdUI->Enable(idx < m_frameDecoder->getNumAudioTracks());
+    pCmdUI->SetCheck(idx == m_frameDecoder->getAudioTrack());
 }
