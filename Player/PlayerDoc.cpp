@@ -159,8 +159,8 @@ void CPlayerDoc::Dump(CDumpContext& dc) const
 
 BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
-    if (!CDocument::OnOpenDocument(lpszPathName))
-        return FALSE;
+    //if (!CDocument::OnOpenDocument(lpszPathName))
+    //    return FALSE;
 
     m_frameDecoder->close();
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
@@ -168,9 +168,10 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
     {
         OpenSubRipFile(lpszPathName);
         m_frameDecoder->play();
+        return TRUE;
     }
 
-    return TRUE;
+    return FALSE;
 }
 
 void CPlayerDoc::OnCloseDocument()
