@@ -116,9 +116,7 @@
     <ClInclude Include="AudioPlayerImpl.h" />
     <ClInclude Include="AudioPlayerWasapi.h" />
     <ClInclude Include="D3DFONT.H" />
-    <ClInclude Include="D3DUTIL.H" />
     <ClInclude Include="DialogBarPlayerControl.h" />
-    <ClInclude Include="DXUTIL.H" />
     <ClInclude Include="I420Effect.h" />
     <ClInclude Include="IEraseableArea.h" />
     <ClInclude Include="MainFrm.h" />
@@ -136,9 +134,7 @@
     <ClCompile Include="AudioPlayerImpl.cpp" />
     <ClCompile Include="AudioPlayerWasapi.cpp" />
     <ClCompile Include="D3DFONT.CPP" />
-    <ClCompile Include="D3DUTIL.CPP" />
     <ClCompile Include="DialogBarPlayerControl.cpp" />
-    <ClCompile Include="DXUTIL.CPP" />
     <ClCompile Include="I420Effect.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Player.cpp" />

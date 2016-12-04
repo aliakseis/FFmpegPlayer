@@ -4,15 +4,18 @@
 // Desc: Texture-based font class
 //-----------------------------------------------------------------------------
 #include "stdafx.h"
+#ifndef STRICT
 #define STRICT
+#endif
 #include <stdio.h>
 #include <tchar.h>
 //#include <D3DX9.h>
 #include "D3DFont.h"
-#include "D3DUtil.h"
-#include "DXUtil.h"
+//#include "D3DUtil.h"
+//#include "DXUtil.h"
 
 
+#define SAFE_RELEASE(p)      { if(p) { (p)->Release(); (p)=NULL; } }
 
 
 //-----------------------------------------------------------------------------
