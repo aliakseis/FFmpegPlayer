@@ -23,6 +23,35 @@
 #define new DEBUG_NEW
 #endif
 
+namespace {
+
+//Use IDWriteTextLayout to get the text size
+HRESULT GetTextSize(const WCHAR* text, IDWriteTextFormat* pTextFormat, const SIZE& sourceSize, D2D1_SIZE_F& size)
+{
+    HRESULT hr = S_OK;
+    CComPtr<IDWriteTextLayout> pTextLayout;
+    // Create a text layout
+    auto len = wcslen(text);
+    if (len > 0 && text[len - 1] == L'\n')
+        --len;
+    hr = AfxGetD2DState()->GetWriteFactory()->CreateTextLayout(
+        text, 
+        len,
+        pTextFormat, 
+        sourceSize.cx, 
+        sourceSize.cy, 
+        &pTextLayout);
+    if (SUCCEEDED(hr))
+    {
+        //Gets the text size
+        DWRITE_TEXT_METRICS textMetrics;
+        hr = pTextLayout->GetMetrics(&textMetrics);
+        size = D2D1::SizeF(textMetrics.width, textMetrics.height);
+    }
+    return hr;
+}
+
+} // namespace
 
 class FrameListener : public IFrameListener
 {
@@ -193,6 +222,49 @@ afx_msg LRESULT CPlayerView::OnDraw2D(WPARAM wParam, LPARAM lParam)
             //D2D1_INTERPOLATION_MODE_CUBIC
             D2D1_INTERPOLATION_MODE_LINEAR
             );
+    }
+
+    auto subtitle = GetDocument()->getSubtitle();
+    if (!subtitle.empty())
+    {
+        const auto& convertedSubtitle = CA2T(subtitle.c_str(), CP_UTF8);
+        CComPtr<IDWriteTextFormat> pTextFormat;
+        if (SUCCEEDED(AfxGetD2DState()->GetWriteFactory()->CreateTextFormat(
+            L"MS Sans Serif",
+            NULL,
+            DWRITE_FONT_WEIGHT_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL,
+            max(m_sourceSize.cx / 50, 9),
+            L"", //locale
+            &pTextFormat)))
+        {
+            D2D1_SIZE_F boundingBox;
+            if (SUCCEEDED(GetTextSize(convertedSubtitle, pTextFormat, m_sourceSize, boundingBox)))
+            {
+                const auto left = (m_sourceSize.cx - boundingBox.width) / 2;
+                const auto top = m_sourceSize.cy - boundingBox.height - 2;
+
+                CComPtr<ID2D1SolidColorBrush> pBlackBrush;
+                CComPtr<ID2D1SolidColorBrush> pWhiteBrush;
+                if (SUCCEEDED(spContext->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black, 1.0f), &pBlackBrush)) &&
+                    SUCCEEDED(spContext->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &pWhiteBrush)))
+                {
+                    spContext->DrawText(
+                        convertedSubtitle,
+                        wcslen(convertedSubtitle),
+                        pTextFormat,
+                        D2D1::RectF(left + 1, top + 1, left + 1 + boundingBox.width, top + 1 + boundingBox.height),
+                        pBlackBrush);
+                    spContext->DrawText(
+                        convertedSubtitle,
+                        wcslen(convertedSubtitle),
+                        pTextFormat,
+                        D2D1::RectF(left, top, left + boundingBox.width, top + boundingBox.height),
+                        pWhiteBrush);
+                }
+            }
+        }
     }
 
     return TRUE;
