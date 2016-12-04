@@ -152,6 +152,15 @@ AVPixelFormat GetHwFormat(AVCodecContext *s, const AVPixelFormat *pix_fmts)
 }
 #endif
 
+inline void Shutdown(const std::unique_ptr<boost::thread>& th)
+{
+    if (th)
+    {
+        th->interrupt();
+        th->join();
+    }
+}
+
 }  // namespace
 
 namespace channel_logger
@@ -248,26 +257,10 @@ void FFmpegDecoder::close()
     CHANNEL_LOG(ffmpeg_closing) << "Start file closing";
 
     CHANNEL_LOG(ffmpeg_closing) << "Aborting threads";
-    if (m_mainParseThread)  // controls other threads, hence stop first
-    {
-        m_mainParseThread->interrupt();
-        m_mainParseThread->join();
-    }
-    if (m_mainVideoThread)
-    {
-        m_mainVideoThread->interrupt();
-        m_mainVideoThread->join();
-    }
-    if (m_mainAudioThread)
-    {
-        m_mainAudioThread->interrupt();
-        m_mainAudioThread->join();
-    }
-    if (m_mainDisplayThread)
-    {
-        m_mainDisplayThread->interrupt();
-        m_mainDisplayThread->join();
-    }
+    Shutdown(m_mainParseThread);  // controls other threads, hence stop first
+    Shutdown(m_mainVideoThread);
+    Shutdown(m_mainAudioThread);
+    Shutdown(m_mainDisplayThread);
 
     m_audioPlayer->Close();
 
