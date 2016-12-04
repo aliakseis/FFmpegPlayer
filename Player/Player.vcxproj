@@ -158,11 +158,6 @@
     <None Include="res\Player.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\Users\LX\Downloads\audio.ico" />
-    <Image Include="..\..\..\Users\LX\Downloads\audio_off.ico" />
-    <Image Include="..\..\..\Users\LX\Downloads\full_screen.ico" />
-    <Image Include="..\..\..\Users\LX\Downloads\pause.ico" />
-    <Image Include="..\..\..\Users\LX\Downloads\play.ico" />
     <Image Include="res\audio.ico" />
     <Image Include="res\audio_off.ico" />
     <Image Include="res\full_screen.ico" />

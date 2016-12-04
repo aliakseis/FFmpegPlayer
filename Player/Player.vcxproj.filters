@@ -137,21 +137,6 @@
     <Image Include="res\Toolbar.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\..\..\Users\LX\Downloads\pause.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Users\LX\Downloads\play.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Users\LX\Downloads\audio.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Users\LX\Downloads\audio_off.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Users\LX\Downloads\full_screen.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="res\pause.ico">
       <Filter>Resource Files</Filter>
     </Image>
