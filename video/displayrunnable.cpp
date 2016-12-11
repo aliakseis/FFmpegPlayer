@@ -50,13 +50,16 @@ void FFmpegDecoder::displayRunnable()
         }
 
         // It's time to display converted frame
-        if (m_decoderListener && current_frame.m_duration != AV_NOPTS_VALUE &&
-            m_seekDuration == -1)
+        if (current_frame.m_duration != AV_NOPTS_VALUE)
         {
-            m_decoderListener->changedFramePosition(
-                m_startTime,
-                current_frame.m_duration,
-                m_duration + m_startTime);
+            m_currentTime = current_frame.m_duration = current_frame.m_duration;
+            if (m_decoderListener && m_seekDuration == -1)
+            {
+                m_decoderListener->changedFramePosition(
+                    m_startTime,
+                    current_frame.m_duration,
+                    m_duration + m_startTime);
+            }
         }
         if (m_frameListener)
         {

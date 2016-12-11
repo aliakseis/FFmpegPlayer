@@ -69,6 +69,8 @@ struct IFrameDecoder
 
     virtual bool seekByPercent(double percent) = 0;
 
+    virtual void videoReset() = 0;
+
     virtual void setFrameListener(IFrameListener* listener) = 0;
     virtual void setDecoderListener(FrameDecoderListener* listener) = 0;
     virtual bool getFrameRenderingData(FrameRenderingData* data) = 0;

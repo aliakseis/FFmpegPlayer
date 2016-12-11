@@ -62,6 +62,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     bool seekDuration(int64_t duration);
     bool seekByPercent(double percent) override;
 
+    void videoReset() override;
+
     double volume() const override;
 
     inline bool isPlaying() const override { return m_isPlaying; }
@@ -102,7 +104,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     void dispatchPacket(AVPacket& packet);
     void startAudioThread();
     void startVideoThread();
-    void seek();
+    //void seek();
+    bool resetDecoding(int64_t seekDuration, bool resetVideo);
     void fixDuration();
     bool handleAudioPacket(
         const AVPacket& packet,
@@ -119,6 +122,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     void closeProcessing();
 
     bool openDecoder(const PathType& file, const std::string& url, bool isFile);
+
+    bool resetVideoProcessing();
 
     void seekWhilePaused();
 
@@ -140,12 +145,16 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     // Real duration from video stream
     int64_t m_startTime;
+    boost::atomic_int64_t m_currentTime;
     int64_t m_duration;
 
     // Basic stuff
     AVFormatContext* m_formatContext;
 
     boost::atomic_int64_t m_seekDuration;
+    boost::atomic_int64_t m_videoResetDuration;
+
+    boost::atomic_bool m_videoResetting;
 
     // Video Stuff
     boost::atomic<double> m_videoStartClock;

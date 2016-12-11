@@ -20,7 +20,18 @@ void FFmpegDecoder::parseRunnable()
             return;
         }
 
-        seek();
+        int64_t seekDuration = m_seekDuration.exchange(-1);
+        if (seekDuration >= 0)
+        {
+            if (!resetDecoding(seekDuration, false))
+                return;
+        }
+        seekDuration = m_videoResetDuration.exchange(-1);
+        if (seekDuration >= 0)
+        {
+            if (!resetDecoding(seekDuration, true))
+                return;
+        }
 
         const int readStatus = av_read_frame(m_formatContext, &packet);
         if (readStatus >= 0)
@@ -56,21 +67,21 @@ void FFmpegDecoder::dispatchPacket(AVPacket& packet)
 {
     auto guard = MakeGuard(&packet, av_packet_unref);
 
-    if (m_seekDuration >= 0)
+    if (m_seekDuration >= 0 || m_videoResetDuration >= 0)
     {
         return; // guard frees packet
     }
 
     if (packet.stream_index == m_videoStreamNumber)
     { 
-        if (!m_videoPacketsQueue.push(packet, [this] { return m_seekDuration >= 0; }))
+        if (!m_videoPacketsQueue.push(packet, [this] { return m_seekDuration >= 0 || m_videoResetDuration >= 0; }))
         {
             return; // guard frees packet
         }
     }
     else if (packet.stream_index == m_audioStreamNumber)
     { 
-        if (!m_audioPacketsQueue.push(packet, [this] { return m_seekDuration >= 0; }))
+        if (!m_audioPacketsQueue.push(packet, [this] { return m_seekDuration >= 0 || m_videoResetDuration >= 0; }))
         {
             return; // guard frees packet
         }
@@ -111,14 +122,8 @@ void FFmpegDecoder::startVideoThread()
     }
 }
 
-void FFmpegDecoder::seek()
+bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 {
-    const int64_t seekDuration = m_seekDuration.exchange(-1);
-    if (seekDuration < 0)
-    {
-        return;
-    }
-
     const bool hasVideo = m_mainVideoThread != nullptr;
 
     if (avformat_seek_file(m_formatContext, 
@@ -126,7 +131,7 @@ void FFmpegDecoder::seek()
                            0, seekDuration, seekDuration, AVSEEK_FLAG_FRAME) < 0)
     {
         CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
-        return;
+        return false;
     }
 
     const bool hasAudio = m_mainAudioThread != nullptr;
@@ -153,6 +158,23 @@ void FFmpegDecoder::seek()
     m_videoPacketsQueue.clear();
     m_audioPacketsQueue.clear();
 
+    if (resetVideo)
+    {
+        m_mainDisplayThread->interrupt();
+        m_mainDisplayThread->join();
+
+        // Free videoFrames
+        m_videoFramesQueue.clear();
+
+        m_videoResetting = false;
+        m_frameDisplayingRequested = false;
+
+        if (!resetVideoProcessing())
+            return false;
+
+        m_mainDisplayThread.reset(new boost::thread(&FFmpegDecoder::displayRunnable, this));
+    }
+
     const auto currentTime = GetHiResTime();
     if (hasVideo)
     {
@@ -172,6 +194,8 @@ void FFmpegDecoder::seek()
     // Restart
     startAudioThread();
     startVideoThread();
+
+    return true;
 }
 
 void FFmpegDecoder::fixDuration()

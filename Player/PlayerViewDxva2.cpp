@@ -776,7 +776,14 @@ bool CPlayerViewDxva2::ProcessVideo()
     case D3DERR_DEVICENOTRESET:
         TRACE("TestCooperativeLevel returned D3DERR_DEVICENOTRESET.\n");
 
-        if (!ResetDevice())
+        if (!m_pD3D9)
+        {
+            DestroyDXVA2();
+            DestroyD3D9();
+            GetDocument()->getFrameDecoder()->videoReset();
+            return false;
+        }
+        else if (!ResetDevice())
         {
             return false;
         }
@@ -879,13 +886,13 @@ int CPlayerViewDxva2::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CPlayerViewDxva2::updateFrame()
 {
+    CSingleLock lock(&m_csSurface, TRUE);
+
     FrameRenderingData data;
     if (!GetDocument()->getFrameDecoder()->getFrameRenderingData(&data))
     {
         return;
     }
-
-    CSingleLock lock(&m_csSurface, TRUE);
 
     m_aspectRatio.cx = data.aspectNum;
     m_aspectRatio.cy = data.aspectDen;

@@ -230,6 +230,7 @@ void FFmpegDecoder::resetVariables()
     m_audioStream = nullptr;
 
     m_startTime = 0;
+    m_currentTime = 0;
     m_duration = 0;
 
     m_imageCovertContext = nullptr;
@@ -241,6 +242,9 @@ void FFmpegDecoder::resetVariables()
     m_isPaused = false;
 
     m_seekDuration = -1;
+    m_videoResetDuration = -1;
+
+    m_videoResetting = false;
 
     m_isAudioSeekingWhilePaused = false;
     m_isVideoSeekingWhilePaused = false;
@@ -448,17 +452,8 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
             : int64_t((m_formatContext->duration / av_q2d(m_audioStream->time_base)) / 1000000LL);
     }
 
-    if (m_videoStreamNumber >= 0)
-    {
-        CHANNEL_LOG(ffmpeg_opening) << "Video steam number: " << m_videoStreamNumber;
-        m_videoCodecContext = avcodec_alloc_context3(nullptr);
-        if (!m_videoCodecContext)
-            return false;
-        if (avcodec_parameters_to_context(
-                m_videoCodecContext,
-                m_formatContext->streams[m_videoStreamNumber]->codecpar) < 0)
-            return false;
-    }
+    resetVideoProcessing();
+
     if (m_audioStreamNumber >= 0)
     {
         CHANNEL_LOG(ffmpeg_opening) << "Audio steam number: " << m_audioStreamNumber;
@@ -471,12 +466,81 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
             return false;
     }
 
-    auto videoCodecContextGuard = MakeGuard(&m_videoCodecContext, avcodec_free_context);
     auto audioCodecContextGuard = MakeGuard(&m_audioCodecContext, avcodec_free_context);
+
+    // Find audio codec
+    if (m_audioStreamNumber >= 0)
+    {
+        m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id);
+        if (m_audioCodec == nullptr)
+        {
+            assert(false && "No such codec found");
+            return false;  // Codec not found
+        }
+    }
+
+    // Open audio codec
+    if (m_audioStreamNumber >= 0)
+    {
+        if (avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr) < 0)
+        {
+            assert(false && "Error on codec opening");
+            return false;  // Could not open codec
+        }
+    }
+
+    m_audioCurrentPref = m_audioSettings;
+
+    if (m_audioStreamNumber >= 0 
+            && !m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
+                m_audioSettings.frequency, m_audioSettings.channels))
+    {
+        return false;
+    }
+
+    m_videoFrame = av_frame_alloc();
+    m_audioFrame = av_frame_alloc();
+
+    audioCodecContextGuard.release();
+    formatContextGuard.release();
+    ioCtx.release();
+
+    if (m_decoderListener)
+    {
+        m_decoderListener->fileLoaded();
+        m_decoderListener->changedFramePosition(m_startTime, m_startTime, m_duration + m_startTime);
+    }
+
+    return true;
+}
+
+bool FFmpegDecoder::resetVideoProcessing()
+{
+#ifdef USE_HWACCEL
+    if (m_videoCodecContext)
+    {
+        delete (InputStream*)m_videoCodecContext->opaque;
+        m_videoCodecContext->opaque = nullptr;
+    }
+#endif
+
+    // Close the codec
+    avcodec_free_context(&m_videoCodecContext);
+
+    auto videoCodecContextGuard = MakeGuard(&m_videoCodecContext, avcodec_free_context);
 
     // Find the decoder for the video stream
     if (m_videoStreamNumber >= 0)
     {
+        CHANNEL_LOG(ffmpeg_opening) << "Video steam number: " << m_videoStreamNumber;
+        m_videoCodecContext = avcodec_alloc_context3(nullptr);
+        if (!m_videoCodecContext)
+            return false;
+        if (avcodec_parameters_to_context(
+            m_videoCodecContext,
+            m_formatContext->streams[m_videoStreamNumber]->codecpar) < 0)
+            return false;
+
         m_videoCodec = avcodec_find_decoder(m_videoCodecContext->codec_id);
         if (m_videoCodec == nullptr)
         {
@@ -514,24 +578,10 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         m_videoCodecContext->thread_count = 2;
         m_videoCodecContext->flags2 |= CODEC_FLAG2_FAST;
 #endif
-    }
 
-    m_videoCodecContext->refcounted_frames = 1;
-
-    // Find audio codec
-    if (m_audioStreamNumber >= 0)
-    {
-        m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id);
-        if (m_audioCodec == nullptr)
-        {
-            assert(false && "No such codec found");
-            return false;  // Codec not found
-        }
-    }
+        m_videoCodecContext->refcounted_frames = 1;
 
     // Open codec
-    if (m_videoStreamNumber >= 0)
-    {
         if (avcodec_open2(m_videoCodecContext, m_videoCodec, nullptr) < 0)
         {
             assert(false && "Error on codec opening");
@@ -546,38 +596,7 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         }
     }
 
-    // Open audio codec
-    if (m_audioStreamNumber >= 0)
-    {
-        if (avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr) < 0)
-        {
-            assert(false && "Error on codec opening");
-            return false;  // Could not open codec
-        }
-    }
-
-    m_audioCurrentPref = m_audioSettings;
-
-    if (m_audioStreamNumber >= 0 
-            && !m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
-                m_audioSettings.frequency, m_audioSettings.channels))
-    {
-        return false;
-    }
-
-    m_videoFrame = av_frame_alloc();
-    m_audioFrame = av_frame_alloc();
-
-    audioCodecContextGuard.release();
     videoCodecContextGuard.release();
-    formatContextGuard.release();
-    ioCtx.release();
-
-    if (m_decoderListener)
-    {
-        m_decoderListener->fileLoaded();
-        m_decoderListener->changedFramePosition(m_startTime, m_startTime, m_duration + m_startTime);
-    }
 
     return true;
 }
@@ -672,6 +691,16 @@ bool FFmpegDecoder::seekDuration(int64_t duration)
     return true;
 }
 
+void FFmpegDecoder::videoReset()
+{
+    m_videoResetting = true;
+    if (m_mainParseThread && m_videoResetDuration.exchange(m_currentTime) == -1)
+    {
+        m_videoPacketsQueue.notify();
+        m_audioPacketsQueue.notify();
+    }
+}
+
 void FFmpegDecoder::seekWhilePaused()
 {
     if (m_isPaused)
@@ -699,7 +728,7 @@ bool FFmpegDecoder::seekByPercent(double percent)
 
 bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
 {
-    if (!m_frameDisplayingRequested || m_mainParseThread == nullptr)
+    if (!m_frameDisplayingRequested || m_mainParseThread == nullptr || m_videoResetting)
     {
         return false;
     }
