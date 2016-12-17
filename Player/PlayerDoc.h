@@ -60,7 +60,8 @@ protected:
     void SetSearchContent(const CString& value);
 #endif // SHARED_HANDLERS
 public:
-    virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+    BOOL OnOpenDocument(LPCTSTR lpszPathName) override;
+    BOOL OnSaveDocument(LPCTSTR) override { return FALSE; }
 
     bool pauseResume();
     bool seekByPercent(double percent);
