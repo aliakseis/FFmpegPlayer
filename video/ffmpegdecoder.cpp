@@ -419,18 +419,16 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         }
     }
     std::reverse(m_audioIndices.begin(), m_audioIndices.end());
+
+    AVStream* timeStream = nullptr;
+
     if (m_videoStreamNumber == -1)
     {
         CHANNEL_LOG(ffmpeg_opening) << "Can't find video stream";
     }
-    else if (m_videoStreamNumber >= 0)
+    else
     {
-        m_startTime = (m_videoStream->start_time > 0)
-            ? m_videoStream->start_time
-            : int64_t((m_formatContext->start_time / av_q2d(m_videoStream->time_base)) / 1000000LL);
-        m_duration = (m_videoStream->duration > 0)
-            ? m_videoStream->duration
-            : int64_t((m_formatContext->duration / av_q2d(m_videoStream->time_base)) / 1000000LL);
+        timeStream = m_videoStream;
     }
 
     if (m_audioStreamNumber == -1)
@@ -441,16 +439,18 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
             return false; // no multimedia
         }
     }
-    else if (m_audioStreamNumber >= 0 && m_videoStreamNumber == -1)
+    else if (m_videoStreamNumber == -1)
     {
         // Changing video -> audio duration
-        m_startTime = (m_audioStream->start_time > 0)
-            ? m_audioStream->start_time
-            : int64_t((m_formatContext->start_time / av_q2d(m_audioStream->time_base)) / 1000000LL);
-        m_duration = (m_audioStream->duration > 0)
-            ? m_audioStream->duration
-            : int64_t((m_formatContext->duration / av_q2d(m_audioStream->time_base)) / 1000000LL);
+        timeStream = m_audioStream;
     }
+
+    m_startTime = (timeStream->start_time > 0)
+        ? timeStream->start_time
+        : int64_t((m_formatContext->start_time / av_q2d(timeStream->time_base)) / 1000000LL);
+    m_duration = (timeStream->duration > 0)
+        ? timeStream->duration
+        : int64_t((m_formatContext->duration / av_q2d(timeStream->time_base)) / 1000000LL);
 
     resetVideoProcessing();
 
