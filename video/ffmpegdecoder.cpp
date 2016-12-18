@@ -241,8 +241,8 @@ void FFmpegDecoder::resetVariables()
 
     m_isPaused = false;
 
-    m_seekDuration = -1;
-    m_videoResetDuration = -1;
+    m_seekDuration = AV_NOPTS_VALUE;
+    m_videoResetDuration = AV_NOPTS_VALUE;
 
     m_videoResetting = false;
 
@@ -623,7 +623,7 @@ void FFmpegDecoder::play(bool isPaused)
 
 void FFmpegDecoder::AppendFrameClock(double frame_clock)
 {
-    if (!m_mainVideoThread && m_decoderListener && m_seekDuration == -1)
+    if (!m_mainVideoThread && m_decoderListener && m_seekDuration == AV_NOPTS_VALUE)
     {
         m_decoderListener->changedFramePosition(
             m_startTime,
@@ -682,7 +682,7 @@ void FFmpegDecoder::finishedDisplayingFrame()
 
 bool FFmpegDecoder::seekDuration(int64_t duration)
 {
-    if (m_mainParseThread && m_seekDuration.exchange(duration) == -1)
+    if (m_mainParseThread && m_seekDuration.exchange(duration) == AV_NOPTS_VALUE)
     {
         m_videoPacketsQueue.notify();
         m_audioPacketsQueue.notify();
@@ -694,7 +694,7 @@ bool FFmpegDecoder::seekDuration(int64_t duration)
 void FFmpegDecoder::videoReset()
 {
     m_videoResetting = true;
-    if (m_mainParseThread && m_videoResetDuration.exchange(m_currentTime) == -1)
+    if (m_mainParseThread && m_videoResetDuration.exchange(m_currentTime) == AV_NOPTS_VALUE)
     {
         m_videoPacketsQueue.notify();
         m_audioPacketsQueue.notify();

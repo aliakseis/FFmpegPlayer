@@ -20,14 +20,14 @@ void FFmpegDecoder::parseRunnable()
             return;
         }
 
-        int64_t seekDuration = m_seekDuration.exchange(-1);
-        if (seekDuration >= 0)
+        int64_t seekDuration = m_seekDuration.exchange(AV_NOPTS_VALUE);
+        if (seekDuration != AV_NOPTS_VALUE)
         {
             if (!resetDecoding(seekDuration, false))
                 return;
         }
-        seekDuration = m_videoResetDuration.exchange(-1);
-        if (seekDuration >= 0)
+        seekDuration = m_videoResetDuration.exchange(AV_NOPTS_VALUE);
+        if (seekDuration != AV_NOPTS_VALUE)
         {
             if (!resetDecoding(seekDuration, true))
                 return;
@@ -67,21 +67,26 @@ void FFmpegDecoder::dispatchPacket(AVPacket& packet)
 {
     auto guard = MakeGuard(&packet, av_packet_unref);
 
-    if (m_seekDuration >= 0 || m_videoResetDuration >= 0)
+    auto seekLambda = [this]
+    {
+        return m_seekDuration != AV_NOPTS_VALUE || m_videoResetDuration != AV_NOPTS_VALUE;
+    };
+
+    if (seekLambda())
     {
         return; // guard frees packet
     }
 
     if (packet.stream_index == m_videoStreamNumber)
     { 
-        if (!m_videoPacketsQueue.push(packet, [this] { return m_seekDuration >= 0 || m_videoResetDuration >= 0; }))
+        if (!m_videoPacketsQueue.push(packet, seekLambda))
         {
             return; // guard frees packet
         }
     }
     else if (packet.stream_index == m_audioStreamNumber)
     { 
-        if (!m_audioPacketsQueue.push(packet, [this] { return m_seekDuration >= 0 || m_videoResetDuration >= 0; }))
+        if (!m_audioPacketsQueue.push(packet, seekLambda))
         {
             return; // guard frees packet
         }

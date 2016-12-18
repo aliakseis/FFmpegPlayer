@@ -53,7 +53,7 @@ void FFmpegDecoder::displayRunnable()
         if (current_frame.m_duration != AV_NOPTS_VALUE)
         {
             m_currentTime = current_frame.m_duration = current_frame.m_duration;
-            if (m_decoderListener && m_seekDuration == -1)
+            if (m_decoderListener && m_seekDuration == AV_NOPTS_VALUE)
             {
                 m_decoderListener->changedFramePosition(
                     m_startTime,
