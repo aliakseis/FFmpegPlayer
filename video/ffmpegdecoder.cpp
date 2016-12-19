@@ -142,6 +142,20 @@ void MyIOContext::initAVFormatContext(AVFormatContext *pCtx)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void FreeVideoCodecContext(AVCodecContext*& videoCodecContext)
+{
+#ifdef USE_HWACCEL
+    if (videoCodecContext)
+    {
+        delete (InputStream*)videoCodecContext->opaque;
+        videoCodecContext->opaque = nullptr;
+    }
+#endif
+
+    // Close the codec
+    avcodec_free_context(&videoCodecContext);
+}
+
 #ifdef USE_HWACCEL
 AVPixelFormat GetHwFormat(AVCodecContext *s, const AVPixelFormat *pix_fmts)
 {
@@ -303,16 +317,7 @@ void FFmpegDecoder::closeProcessing()
     // Free the YUV frame
     av_frame_free(&m_videoFrame);
 
-#ifdef USE_HWACCEL
-    if (m_videoCodecContext)
-    {
-        delete (InputStream*)m_videoCodecContext->opaque;
-        m_videoCodecContext->opaque = nullptr;
-    }
-#endif
-
-    // Close the codec
-    avcodec_free_context(&m_videoCodecContext);
+    FreeVideoCodecContext(m_videoCodecContext);
 
     // Close the audio codec
     avcodec_free_context(&m_audioCodecContext);
@@ -516,16 +521,7 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
 
 bool FFmpegDecoder::resetVideoProcessing()
 {
-#ifdef USE_HWACCEL
-    if (m_videoCodecContext)
-    {
-        delete (InputStream*)m_videoCodecContext->opaque;
-        m_videoCodecContext->opaque = nullptr;
-    }
-#endif
-
-    // Close the codec
-    avcodec_free_context(&m_videoCodecContext);
+    FreeVideoCodecContext(m_videoCodecContext);
 
     auto videoCodecContextGuard = MakeGuard(&m_videoCodecContext, avcodec_free_context);
 
