@@ -50,15 +50,12 @@ void FFmpegDecoder::audioParseRunnable()
             if (handlePacketPostponed)
             {
                 handlePacketPostponed = false;
-                if (m_isAudioSeekingWhilePaused)
+                if (!m_isAudioSeekingWhilePaused)
                 {
-                    av_packet_unref(&packet);
+                    // ignore result for the first time
+                    handleAudioPacket(packet, resampleBuffer);
                 }
-                else if (!handleAudioPacket(packet, resampleBuffer))
-                {
-                    av_packet_unref(&packet);
-                    break;
-                }
+                av_packet_unref(&packet);
             }
 
             for (;;)

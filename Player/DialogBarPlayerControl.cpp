@@ -237,8 +237,11 @@ void CDialogBarPlayerControl::OnUpdatePlayPause(CCmdUI *pCmdUI)
     if (m_pDoc)
     {
         pCmdUI->Enable(m_pDoc->isPlaying());
-        static_cast<CButton*>(pCmdUI->m_pOther)->SetIcon(
-            m_pDoc->isPaused() ? m_hPlay : m_hPause);
+        if (pCmdUI->m_pOther)
+        {
+            static_cast<CButton*>(pCmdUI->m_pOther)->SetIcon(
+                m_pDoc->isPaused() ? m_hPlay : m_hPause);
+        }
     }
 }
 
@@ -247,8 +250,11 @@ void CDialogBarPlayerControl::OnUpdateAudioOnOff(CCmdUI *pCmdUI)
     if (m_pDoc)
     {
         pCmdUI->Enable(m_pDoc->isPlaying());
-        static_cast<CButton*>(pCmdUI->m_pOther)->SetIcon(
-            (m_volumeSlider.GetPos() > 0) ? m_hAudio : m_hAudioOff);
+        if (pCmdUI->m_pOther)
+        {
+            static_cast<CButton*>(pCmdUI->m_pOther)->SetIcon(
+                (m_volumeSlider.GetPos() > 0) ? m_hAudio : m_hAudioOff);
+        }
     }
 
 }

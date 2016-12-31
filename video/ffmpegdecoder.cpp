@@ -699,22 +699,18 @@ void FFmpegDecoder::videoReset()
 
 void FFmpegDecoder::seekWhilePaused()
 {
-    if (m_isPaused)
+    const bool paused = m_isPaused;
+    if (paused)
     {
         for (double v = m_videoStartClock;
              !m_videoStartClock.compare_exchange_weak(v, v + GetHiResTime() - m_pauseTimer);)
         {
         }
         m_pauseTimer = GetHiResTime();
+    }
 
-        m_isAudioSeekingWhilePaused = true;
-        m_isVideoSeekingWhilePaused = true;
-    }
-    else
-    {
-        m_isAudioSeekingWhilePaused = false;
-        m_isVideoSeekingWhilePaused = false;
-    }
+    m_isAudioSeekingWhilePaused = paused;
+    m_isVideoSeekingWhilePaused = paused;
 }
 
 bool FFmpegDecoder::seekByPercent(double percent)
