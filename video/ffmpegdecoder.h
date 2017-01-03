@@ -215,6 +215,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     // Audio
     std::unique_ptr<IAudioPlayer> m_audioPlayer;
+    bool m_audioPaused;
 
     std::vector<int> m_audioIndices;
 };

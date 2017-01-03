@@ -265,6 +265,7 @@ void FFmpegDecoder::resetVariables()
 
     m_isPlaying = false;
 
+    m_audioPaused = false;
     m_audioIndices.clear();
 
     CHANNEL_LOG(ffmpeg_closing) << "Variables reset";

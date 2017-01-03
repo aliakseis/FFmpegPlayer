@@ -13,7 +13,6 @@ void FFmpegDecoder::audioParseRunnable()
 
     bool initialized = false;
     bool handlePacketPostponed = false;
-    bool aPauseDisabled = false;
 
     m_audioPlayer->InitializeThread();
     auto deinitializeThread = MakeGuard(
@@ -28,8 +27,11 @@ void FFmpegDecoder::audioParseRunnable()
         {
             if (m_isPaused && !m_isAudioSeekingWhilePaused)
             {
-                m_audioPlayer->WaveOutPause();
-                aPauseDisabled = true;
+                if (!m_audioPaused)
+                {
+                    m_audioPlayer->WaveOutPause();
+                }
+                m_audioPaused = true;
 
                 boost::this_thread::interruption_point();
 
@@ -41,10 +43,10 @@ void FFmpegDecoder::audioParseRunnable()
                 continue;
             }
 
-            if (aPauseDisabled && !m_isAudioSeekingWhilePaused)
+            if (m_audioPaused && !m_isAudioSeekingWhilePaused)
             {
                 m_audioPlayer->WaveOutRestart();
-                aPauseDisabled = false;
+                m_audioPaused = false;
             }
 
             if (handlePacketPostponed)
