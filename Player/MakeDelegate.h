@@ -2,6 +2,8 @@
 
 // http://blog.coldflake.com/posts/C++-delegates-on-steroids/
 
+#include <utility>
+
 template<typename return_type, typename... params>
 struct DelegateScope
 {
@@ -12,9 +14,14 @@ struct DelegateScope
         Delegate(T* callee)
             : fpCallee(callee)
         {}
-        return_type operator()(params... xs) const
+        //return_type operator()(params... xs) const
+        //{
+        //    return (fpCallee->*TMethod)(xs...);
+        //}
+        template <typename... Args>
+        return_type operator()(Args&&... xs) const
         {
-            return (fpCallee->*TMethod)(xs...);
+            return (fpCallee->*TMethod)(std::forward<Args>(xs)...);
         }
 
         bool operator == (const Delegate& other) const

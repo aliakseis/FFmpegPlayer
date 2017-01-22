@@ -4,6 +4,7 @@
 //
 
 #include <map>
+#include <utility>
 
 namespace ResizingDialogHelpers
 {
