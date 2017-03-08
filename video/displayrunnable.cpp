@@ -39,9 +39,9 @@ void FFmpegDecoder::displayRunnable()
             double delay = current_frame.m_displayTime - current_time;
             if (delay < 0.005)
                 break;
-            if (delay > 3.)
+            if (delay > 0.1)
             {
-                boost::this_thread::sleep_for(boost::chrono::milliseconds(3000));
+                boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
                 continue;
             }
 
