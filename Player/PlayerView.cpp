@@ -327,11 +327,17 @@ void CPlayerView::updateFrame()
         props.colorContext = nullptr;
 
         CComPtr<ID2D1Bitmap1> yBitmap;
-        HRESULT hr = spContext->CreateBitmap({ m_sourceSize.cx, m_sourceSize.cy }, data.image[0], data.pitch[0], props, &yBitmap);
+        HRESULT hr = spContext->CreateBitmap(
+            { static_cast<UINT32>(m_sourceSize.cx), static_cast<UINT32>(m_sourceSize.cy) },
+            data.image[0], data.pitch[0], props, &yBitmap);
         CComPtr<ID2D1Bitmap1> uBitmap;
-        hr = spContext->CreateBitmap({ m_sourceSize.cx / 2, m_sourceSize.cy / 2 }, data.image[1], data.pitch[1], props, &uBitmap);
+        hr = spContext->CreateBitmap(
+            { static_cast<UINT32>(m_sourceSize.cx / 2), static_cast<UINT32>(m_sourceSize.cy / 2) },
+            data.image[1], data.pitch[1], props, &uBitmap);
         CComPtr<ID2D1Bitmap1> vBitmap;
-        hr = spContext->CreateBitmap({ m_sourceSize.cx / 2, m_sourceSize.cy / 2 }, data.image[2], data.pitch[2], props, &vBitmap);
+        hr = spContext->CreateBitmap(
+            { static_cast<UINT32>(m_sourceSize.cx / 2), static_cast<UINT32>(m_sourceSize.cy / 2) },
+            data.image[2], data.pitch[2], props, &vBitmap);
 
         m_spEffect->SetInput(0, yBitmap);
         m_spEffect->SetInput(1, uBitmap);

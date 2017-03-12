@@ -2,7 +2,7 @@
 
 #include "audioplayer.h"
 
-#include <mmeapi.h>
+#include <mmsystem.h>
 
 class AudioPlayerImpl :
     public IAudioPlayer

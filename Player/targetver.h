@@ -7,9 +7,9 @@
 
 #include <WinSDKVer.h>
 
-#define _WIN32_WINNT  _WIN32_WINNT_WINXP
-#define NTDDI_VERSION NTDDI_WINXP
-#define WINVER        _WIN32_WINNT_WINXP
-#define _WIN32_IE     _WIN32_IE_WINXP
+#define _WIN32_WINNT  _WIN32_WINNT_WIN6
+#define NTDDI_VERSION NTDDI_WIN6
+#define WINVER        _WIN32_WINNT_WIN6
+#define _WIN32_IE     _WIN32_IE_WIN6
 
 #include <SDKDDKVer.h>

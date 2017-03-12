@@ -218,3 +218,5 @@ pip-log.txt
 ipch/
 ffmpeg/
 Player/I420Effect_PS.h
+Player.VC.db
+Player.VC.VC.opendb
