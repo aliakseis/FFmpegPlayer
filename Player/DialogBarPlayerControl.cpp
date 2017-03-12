@@ -14,9 +14,6 @@
 #include <iomanip>
 
 
-using ResizingDialogHelpers::CoordinateStrategy;
-using ResizingDialogHelpers::CoordFactor;
-
 using std::setfill;
 using std::setw;
 
@@ -108,15 +105,16 @@ BEGIN_MESSAGE_MAP(CDialogBarPlayerControl, CPaneDialog)
     ON_BN_CLICKED(IDC_PLAY_PAUSE, &CDialogBarPlayerControl::OnClickedPlayPause)
     ON_BN_CLICKED(IDC_AUDIO_ON_OFF, &CDialogBarPlayerControl::OnClickedAudioOnOff)
     ON_MESSAGE(WM_SET_TIME, &CDialogBarPlayerControl::OnSetTime)
+    ON_MESSAGE(WM_INITDIALOG, &CDialogBarPlayerControl::HandleInitDialog)
 END_MESSAGE_MAP()
 
 
 
 // CDialogBarPlayerControl message handlers
 
-BOOL CDialogBarPlayerControl::OnInitDialog()
+LRESULT CDialogBarPlayerControl::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 {
-    __super::OnInitDialog();
+    __super::HandleInitDialog(wParam, lParam);
 
     m_hPlay = LoadIcon(IDI_PLAY);
     m_hPause = LoadIcon(IDI_PAUSE);
@@ -132,26 +130,7 @@ BOOL CDialogBarPlayerControl::OnInitDialog()
     m_volumeSlider.SetRange(0, RANGE_MAX);
     m_volumeSlider.SetPos(RANGE_MAX);
 
-    // Resizing
-    CRect rect;
-    GetWindowRect(rect);
-    m_strategyMinMax.SetWindowMinSize(rect.Size());
-
-    CoordinateStrategy st0 = CoordFactor(0.0);
-    CoordinateStrategy st1 = CoordFactor(0.5);
-    CoordinateStrategy st2 = CoordFactor(1.0);
-
-    VERIFY(m_strategyResizing.AddChildInfo(IDC_PLAY_PAUSE, st0, st1, st0, st1));
-    VERIFY(m_strategyResizing.AddChildInfo(IDC_CURRENT_TIME, st0, st1, st0, st1));
-    VERIFY(m_strategyResizing.AddChildInfo(IDC_PROGRESS_SLIDER, st0, st1, st2, st1));
-    VERIFY(m_strategyResizing.AddChildInfo(IDC_AUDIO_ON_OFF, st2, st1, st2, st1));
-    VERIFY(m_strategyResizing.AddChildInfo(IDC_TOTAL_TIME, st2, st1, st2, st1));
-    VERIFY(m_strategyResizing.AddChildInfo(IDC_VOLUME_SLIDER, st2, st1, st2, st1));
-    VERIFY(m_strategyResizing.AddChildInfo(IDC_FULL_SCREEN, st2, st1, st2, st1));
-
-    m_strategyResizing.RefreshChildSizes();
-
-    return TRUE;  // return TRUE  unless you set the focus to a control
+    return TRUE;
 }
 
 void CDialogBarPlayerControl::setDocument(CPlayerDoc* pDoc)

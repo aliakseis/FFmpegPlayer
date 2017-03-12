@@ -80,12 +80,19 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "res\\Player.ico"
+
 IDR_PlayerTYPE          ICON                    "res\\PlayerDoc.ico"
+
 IDI_PAUSE               ICON                    "res\\pause.ico"
+
 IDI_PLAY                ICON                    "res\\play.ico"
+
 IDI_AUDIO               ICON                    "res\\audio.ico"
+
 IDI_AUDIO_OFF           ICON                    "res\\audio_off.ico"
+
 IDI_FULL_SCREEN         ICON                    "res\\full_screen.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -93,6 +100,7 @@ IDI_FULL_SCREEN         ICON                    "res\\full_screen.ico"
 //
 
 IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -199,17 +207,17 @@ BEGIN
     LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,42,38,114,8
 END
 
-IDD_DIALOGBAR_PLAYER_CONTROL DIALOGEX 0, 0, 372, 36
+IDD_DIALOGBAR_PLAYER_CONTROL DIALOGEX 0, 0, 372, 22
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
-    CONTROL         "",IDC_PROGRESS_SLIDER,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,80,11,103,15
-    PUSHBUTTON      "",IDC_PLAY_PAUSE,5,7,26,22,BS_ICON
-    PUSHBUTTON      "",IDC_AUDIO_ON_OFF,229,7,26,22,BS_ICON
-    CONTROL         "",IDC_VOLUME_SLIDER,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,259,11,74,15
-    LTEXT           "",IDC_CURRENT_TIME,41,13,34,8
-    LTEXT           "",IDC_TOTAL_TIME,188,13,34,8
-    PUSHBUTTON      "",IDC_FULL_SCREEN,339,7,26,22,BS_ICON
+    CONTROL         "",IDC_PROGRESS_SLIDER,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,80,4,103,15
+    PUSHBUTTON      "",IDC_PLAY_PAUSE,5,0,26,22,BS_ICON
+    PUSHBUTTON      "",IDC_AUDIO_ON_OFF,229,0,26,22,BS_ICON
+    CONTROL         "",IDC_VOLUME_SLIDER,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,259,4,74,15
+    LTEXT           "",IDC_CURRENT_TIME,41,6,34,8
+    LTEXT           "",IDC_TOTAL_TIME,188,6,34,8
+    PUSHBUTTON      "",IDC_FULL_SCREEN,339,0,26,22,BS_ICON
 END
 
 
@@ -273,10 +281,27 @@ BEGIN
         LEFTMARGIN, 6
         RIGHTMARGIN, 365
         TOPMARGIN, 7
-        BOTTOMMARGIN, 29
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_DIALOGBAR_PLAYER_CONTROL AFX_DIALOG_LAYOUT
+BEGIN
+    0,
+    0, 50, 100, 0,
+    0, 50, 0, 0,
+    100, 50, 0, 0,
+    100, 50, 0, 0,
+    0, 50, 0, 0,
+    100, 50, 0, 0,
+    100, 50, 0, 0
+END
 
 
 /////////////////////////////////////////////////////////////////////////////

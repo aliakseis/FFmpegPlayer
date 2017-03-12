@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ResizingDialog.h"
 #include "afxcmn.h"
 
 class CPlayerDoc;
@@ -8,7 +7,7 @@ class CPlayerDoc;
 // CDialogBarPlayerControl
 
 class CDialogBarPlayerControl
-    : public CResizeDialog<CPaneDialog>
+    : public CPaneDialog
 {
     DECLARE_DYNAMIC(CDialogBarPlayerControl)
 
@@ -33,14 +32,13 @@ protected:
 
     int GetCaptionHeight() const override { return 0; }
 
-    virtual BOOL OnInitDialog();
-
     void onFramePositionChanged(long long frame, long long total);
     void onTotalTimeUpdated(double secs);
     void onCurrentTimeUpdated(double secs);
 
 protected:
     DECLARE_MESSAGE_MAP()
+    afx_msg LRESULT HandleInitDialog(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnSetTime(WPARAM wParam, LPARAM lParam);
 public:
 
