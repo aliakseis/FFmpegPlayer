@@ -9,6 +9,7 @@
 #include "PlayerDoc.h"
 #include "MakeDelegate.h"
 
+#include <algorithm>
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -55,6 +56,21 @@ HICON LoadIcon(int idr)
         LR_DEFAULTCOLOR);
 }
 
+double GetValueByMouseClick(CWnd* pDlg, CSliderCtrl* pSliderCtrl)
+{
+    CRect   rectClient, rectChannel, rectThumb;
+    pDlg->GetClientRect(rectClient);
+    pSliderCtrl->GetChannelRect(rectChannel);
+    pSliderCtrl->GetThumbRect(rectThumb);
+    rectChannel.DeflateRect(rectThumb.Width() / 2, 0);
+    CPoint mousePt(AfxGetCurrentMessage()->pt);
+    pSliderCtrl->ScreenToClient(&mousePt);
+    return std::clamp(
+        double(mousePt.x - rectClient.left - rectChannel.left) /
+        (rectChannel.right - rectChannel.left),
+        0., 1.);
+}
+
 }
 
 
@@ -72,7 +88,7 @@ CDialogBarPlayerControl::CDialogBarPlayerControl()
 , m_savedVolume(0)
 , m_oldTotalTime(-1) // unset
 , m_oldCurrentTime(-1) // unset
-, m_seeking(false)
+, m_tracking(false)
 {
     SetMinSize(CSize(500, 40));
 }
@@ -127,8 +143,10 @@ LRESULT CDialogBarPlayerControl::HandleInitDialog(WPARAM wParam, LPARAM lParam)
     static_cast<CButton*>(GetDlgItem(IDC_FULL_SCREEN))->SetIcon(m_hFullScreen);
 
     m_progressSlider.SetRange(0, RANGE_MAX);
+    m_progressSlider.SetPageSize(0);
     m_volumeSlider.SetRange(0, RANGE_MAX);
     m_volumeSlider.SetPos(RANGE_MAX);
+    m_volumeSlider.SetPageSize(0);
 
     return TRUE;
 }
@@ -147,7 +165,7 @@ void CDialogBarPlayerControl::setDocument(CPlayerDoc* pDoc)
 
 void CDialogBarPlayerControl::onFramePositionChanged(long long frame, long long total)
 {
-    if (!m_seeking)
+    if (!m_tracking)
     {
         ASSERT(total > 0);
         const int pos = int((frame * RANGE_MAX) / total);
@@ -189,21 +207,35 @@ void CDialogBarPlayerControl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pSc
     {
         if (static_cast<CWnd*>(pScrollBar) == &m_progressSlider)
         {
-            for (int id : { SB_THUMBTRACK, SB_PAGELEFT, SB_PAGERIGHT})
-                if (nSBCode == id)
-                {
-                    m_pDoc->seekByPercent(m_progressSlider.GetPos() / double(RANGE_MAX));
-                    m_seeking = true;
-                    break;
-                }
-            if (nSBCode == SB_ENDSCROLL)
+            switch (nSBCode)
             {
-                m_seeking = false;
+                case SB_PAGELEFT: 
+                case SB_PAGERIGHT:
+                    m_pDoc->seekByPercent(GetValueByMouseClick(this, &m_progressSlider));
+                    break;
+
+                case SB_THUMBTRACK:
+                    m_pDoc->seekByPercent(m_progressSlider.GetPos() / double(RANGE_MAX));
+                    m_tracking = true;
+                    break;
+
+                case SB_ENDSCROLL:
+                    m_tracking = false;
+                    break;
             }
         }
         else if (static_cast<CWnd*>(pScrollBar) == &m_volumeSlider)
         {
-            m_pDoc->setVolume(m_volumeSlider.GetPos() / double(RANGE_MAX));
+            if (nSBCode == SB_PAGELEFT || nSBCode == SB_PAGERIGHT)
+            {
+                const double valueByMouseClick = GetValueByMouseClick(this, &m_volumeSlider);
+                m_volumeSlider.SetPos(int(valueByMouseClick * RANGE_MAX));
+                m_pDoc->setVolume(valueByMouseClick);
+            }
+            else
+            {
+                m_pDoc->setVolume(m_volumeSlider.GetPos() / double(RANGE_MAX));
+            }
         }
     }
 

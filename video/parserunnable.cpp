@@ -200,6 +200,11 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
     startAudioThread();
     startVideoThread();
 
+    if (m_decoderListener)
+    {
+        m_decoderListener->changedFramePosition(m_startTime, seekDuration, m_duration + m_startTime);
+    }
+
     return true;
 }
 
