@@ -163,29 +163,25 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
     m_videoPacketsQueue.clear();
     m_audioPacketsQueue.clear();
 
-    if (resetVideo)
-    {
-        m_mainDisplayThread->interrupt();
-        m_mainDisplayThread->join();
+    m_mainDisplayThread->interrupt();
+    m_mainDisplayThread->join();
 
-        // Free videoFrames
-        m_videoFramesQueue.clear();
+    // Free videoFrames
+    m_videoFramesQueue.clear();
 
-        m_videoResetting = false;
-        m_frameDisplayingRequested = false;
+    m_videoResetting = false;
+    m_frameDisplayingRequested = false;
 
-        if (!resetVideoProcessing())
-            return false;
+    if (resetVideo && !resetVideoProcessing())
+        return false;
 
-        m_mainDisplayThread.reset(new boost::thread(&FFmpegDecoder::displayRunnable, this));
-    }
+    m_mainDisplayThread.reset(new boost::thread(&FFmpegDecoder::displayRunnable, this));
 
     const auto currentTime = GetHiResTime();
     if (hasVideo)
     {
         if (m_videoCodecContext)
             avcodec_flush_buffers(m_videoCodecContext);
-        m_videoFramesQueue.setDisplayTime(currentTime);
     }
     if (hasAudio)
     {
@@ -194,16 +190,16 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
         m_audioPlayer->WaveOutReset();
     }
 
+    if (m_decoderListener)
+    {
+        m_decoderListener->changedFramePosition(m_startTime, seekDuration, m_duration + m_startTime);
+    }
+
     seekWhilePaused();
 
     // Restart
     startAudioThread();
     startVideoThread();
-
-    if (m_decoderListener)
-    {
-        m_decoderListener->changedFramePosition(m_startTime, seekDuration, m_duration + m_startTime);
-    }
 
     return true;
 }

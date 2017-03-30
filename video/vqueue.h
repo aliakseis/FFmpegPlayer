@@ -27,14 +27,6 @@ public:
         m_busy = 0;
     }
 
-    void setDisplayTime(double displayTime)
-    {
-        for (auto& frame : m_frames)
-        {
-            frame.m_displayTime = displayTime;
-        }
-    }
-
     bool canPush() const { return m_busy < QUEUE_SIZE; }
     VideoFrame& back() { return m_frames[m_write_counter]; }
     void pushBack()
