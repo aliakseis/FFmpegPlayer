@@ -192,7 +192,7 @@ bool FFmpegDecoder::handleVideoPacket(
             continue;
         }
 
-        current_frame.m_displayTime = m_videoStartClock + pts;
+        current_frame.m_pts = pts;
         current_frame.m_duration = duration_stamp;
 
         {

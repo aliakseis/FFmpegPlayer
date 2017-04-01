@@ -18,7 +18,8 @@ void FFmpegDecoder::displayRunnable()
         VideoFrame& current_frame = m_videoFramesQueue.front();
 
         // Frame skip
-        if (!m_videoFramesQueue.canPush() && current_frame.m_displayTime < GetHiResTime())
+        if (!m_videoFramesQueue.canPush() 
+            && m_videoStartClock + current_frame.m_pts < GetHiResTime())
         {
             CHANNEL_LOG(ffmpeg_threads) << __FUNCTION__ << " Framedrop";
             finishedDisplayingFrame();
@@ -35,8 +36,7 @@ void FFmpegDecoder::displayRunnable()
 
         for (;;)
         {
-            double current_time = GetHiResTime();
-            double delay = current_frame.m_displayTime - current_time;
+            const double delay = m_videoStartClock + current_frame.m_pts - GetHiResTime();
             if (delay < 0.005)
                 break;
             if (delay > 0.1)

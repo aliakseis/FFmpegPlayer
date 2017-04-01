@@ -2,12 +2,12 @@
 
 struct VideoFrame
 {
-    double m_displayTime;
+    double m_pts;
     int64_t m_duration;
     AVFrame* m_image;
 
     VideoFrame() 
-        : m_displayTime(0)
+        : m_pts(0)
         , m_duration(0)
         , m_image(av_frame_alloc()) 
     {}
