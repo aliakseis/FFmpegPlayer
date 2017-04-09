@@ -13,6 +13,8 @@
 #include "AudioPlayerImpl.h"
 #include "AudioPlayerWasapi.h"
 
+#include "DialogOpenURL.h"
+
 #include <propkey.h>
 #include <memory>
 
@@ -62,8 +64,23 @@ BOOL CPlayerDoc::OnNewDocument()
     if (!CDocument::OnNewDocument())
         return FALSE;
 
-    // TODO: add reinitialization code here
     // (SDI documents will reuse this document)
+
+    if (AfxGetApp()->m_pMainWnd) // false if the document is being initialized for the first time
+    {
+        CDialogOpenURL dlg;
+        if (dlg.DoModal() == IDOK && !dlg.m_URL.IsEmpty())
+        {
+            m_frameDecoder->close();
+            UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+            const std::string url(CT2A(dlg.m_URL, CP_UTF8));
+            if (m_frameDecoder->openUrl(url))
+            {
+                m_frameDecoder->play();
+            }
+
+        }
+    }
 
     return TRUE;
 }

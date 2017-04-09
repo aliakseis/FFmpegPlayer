@@ -95,6 +95,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     void setAudioTrack(int idx) override;
 
    private:
+    class IOContext;
+
     // Threads
     void parseRunnable();
     void audioParseRunnable();
@@ -218,4 +220,6 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     bool m_audioPaused;
 
     std::vector<int> m_audioIndices;
+
+    std::unique_ptr<IOContext> m_ioCtx;
 };
