@@ -73,7 +73,7 @@ BOOL CPlayerDoc::OnNewDocument()
         {
             m_frameDecoder->close();
             UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
-            const std::string url(CT2A(dlg.m_URL, CP_UTF8));
+            const std::string url(dlg.m_URL.GetString(), dlg.m_URL.GetString() + dlg.m_URL.GetLength());
             if (m_frameDecoder->openUrl(url))
             {
                 m_frameDecoder->play();

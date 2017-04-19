@@ -73,14 +73,14 @@ IFACEMETHODIMP I420Effect::Initialize(
     return S_OK;
 }
 
-IFACEMETHODIMP I420Effect::PrepareForRender(D2D1_CHANGE_TYPE changeType)
+IFACEMETHODIMP I420Effect::PrepareForRender(D2D1_CHANGE_TYPE /*changeType*/)
 {
     return S_OK;
 }
 
 // SetGraph is only called when the number of inputs changes. This never happens as we publish this effect
 // as a single input effect.
-IFACEMETHODIMP I420Effect::SetGraph(_In_ ID2D1TransformGraph* pGraph)
+IFACEMETHODIMP I420Effect::SetGraph(_In_ ID2D1TransformGraph* /*pGraph*/)
 {
     return E_NOTIMPL;
 }
@@ -108,7 +108,7 @@ IFACEMETHODIMP I420Effect::SetDrawInfo(_In_ ID2D1DrawInfo* pDrawInfo)
 // we want to request an expanded region to account for pixels that the ripple
 // may need outside of the bounds of the destination.
 IFACEMETHODIMP I420Effect::MapOutputRectToInputRects(
-    _In_ const D2D1_RECT_L* pOutputRect,
+    _In_ const D2D1_RECT_L* /*pOutputRect*/,
     _Out_writes_(inputRectCount) D2D1_RECT_L* pInputRects,
     UINT32 inputRectCount
     ) const
@@ -124,8 +124,8 @@ IFACEMETHODIMP I420Effect::MapOutputRectToInputRects(
 
 IFACEMETHODIMP I420Effect::MapInputRectsToOutputRect(
     _In_reads_(inputRectCount) CONST D2D1_RECT_L* pInputRects,
-    _In_reads_(inputRectCount) CONST D2D1_RECT_L* pInputOpaqueSubRects,
-    UINT32 inputRectCount,
+    _In_reads_(inputRectCount) CONST D2D1_RECT_L* /*pInputOpaqueSubRects*/,
+    UINT32 /*inputRectCount*/,
     _Out_ D2D1_RECT_L* pOutputRect,
     _Out_ D2D1_RECT_L* pOutputOpaqueSubRect
     )
@@ -149,8 +149,8 @@ IFACEMETHODIMP I420Effect::MapInputRectsToOutputRect(
 }
 
 IFACEMETHODIMP I420Effect::MapInvalidRect(
-    UINT32 inputIndex,
-    D2D1_RECT_L invalidInputRect,
+    UINT32 /*inputIndex*/,
+    D2D1_RECT_L /*invalidInputRect*/,
     _Out_ D2D1_RECT_L* pInvalidOutputRect
     ) const
 {

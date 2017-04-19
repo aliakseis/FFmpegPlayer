@@ -807,7 +807,7 @@ bool CPlayerViewDxva2::ProcessVideo()
 }
 
 
-void CPlayerViewDxva2::OnDraw(CDC* pDC)
+void CPlayerViewDxva2::OnDraw(CDC* /*pDC*/)
 {
     //CDocument* pDoc = GetDocument();
     // TODO: add draw code here
@@ -1109,7 +1109,7 @@ void CPlayerViewDxva2::OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen)
         VERIFY(targetRgn.CreateRectRgnIndirect(&targetRect));
         CRgn combined;
         VERIFY(combined.CreateRectRgnIndirect(&rect));
-        int result = combined.CombineRgn(&clientRgn, &targetRgn, RGN_DIFF);
+        VERIFY(combined.CombineRgn(&clientRgn, &targetRgn, RGN_DIFF) != ERROR);
 
         // Save old brush
         CGdiObject* pOldBrush = pDC->SelectStockObject(BLACK_BRUSH);
