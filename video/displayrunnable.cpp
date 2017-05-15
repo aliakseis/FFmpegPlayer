@@ -15,7 +15,7 @@ void FFmpegDecoder::displayRunnable()
                                      });
         }
 
-        VideoFrame& current_frame = m_videoFramesQueue.front();
+        const VideoFrame& current_frame = m_videoFramesQueue.front();
 
         // Frame skip
         if (!m_videoFramesQueue.canPush() 
@@ -52,7 +52,7 @@ void FFmpegDecoder::displayRunnable()
         // It's time to display converted frame
         if (current_frame.m_duration != AV_NOPTS_VALUE)
         {
-            m_currentTime = current_frame.m_duration = current_frame.m_duration;
+            m_currentTime = current_frame.m_duration;
             if (m_decoderListener && m_seekDuration == AV_NOPTS_VALUE)
             {
                 m_decoderListener->changedFramePosition(
