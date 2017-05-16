@@ -129,6 +129,8 @@ void FFmpegDecoder::startVideoThread()
 
 bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 {
+    CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " resetVideo=" << resetVideo;
+
     const bool hasVideo = m_mainVideoThread != nullptr;
 
     if (avformat_seek_file(m_formatContext, 
