@@ -167,8 +167,8 @@ void CDialogBarPlayerControl::onFramePositionChanged(long long frame, long long 
 {
     if (!m_tracking)
     {
-        ASSERT(total > 0);
-        const int pos = int((frame * RANGE_MAX) / total);
+        ASSERT(total >= 0);
+        const int pos = (total > 0)? int((frame * RANGE_MAX) / total) : 0;
         m_progressSlider.SendNotifyMessage(TBM_SETPOS, TRUE, pos);
     }
 }

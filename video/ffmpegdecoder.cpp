@@ -454,10 +454,12 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
 
     m_startTime = (timeStream->start_time > 0)
         ? timeStream->start_time
-        : int64_t((m_formatContext->start_time / av_q2d(timeStream->time_base)) / 1000000LL);
+        : ((m_formatContext->start_time == AV_NOPTS_VALUE)? 0 
+			: int64_t((m_formatContext->start_time / av_q2d(timeStream->time_base)) / 1000000LL));
     m_duration = (timeStream->duration > 0)
         ? timeStream->duration
-        : int64_t((m_formatContext->duration / av_q2d(timeStream->time_base)) / 1000000LL);
+        : ((m_formatContext->duration == AV_NOPTS_VALUE)? 0 
+			: int64_t((m_formatContext->duration / av_q2d(timeStream->time_base)) / 1000000LL));
 
     resetVideoProcessing();
 
