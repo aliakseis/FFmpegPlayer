@@ -165,8 +165,12 @@ HRESULT CD3DFont::InitDeviceObjects( LPDIRECT3DDEVICE9 pd3dDevice )
                           FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
                           CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY,
                           VARIABLE_PITCH, m_strFontName );
-    if( NULL==hFont )
+    if (NULL == hFont)
+    {
+        DeleteObject(hbmBitmap);
+        DeleteDC(hDC);
         return E_FAIL;
+    }
 
     HGDIOBJ hbmOld = SelectObject( hDC, hbmBitmap );
     HGDIOBJ hFontOld = SelectObject( hDC, hFont );
@@ -212,15 +216,13 @@ HRESULT CD3DFont::InitDeviceObjects( LPDIRECT3DDEVICE9 pd3dDevice )
     D3DLOCKED_RECT d3dlr;
     m_pTexture->LockRect( 0, &d3dlr, 0, 0 );
     BYTE* pDstRow = (BYTE*)d3dlr.pBits;
-    WORD* pDst16;
-    BYTE bAlpha; // 4-bit measure of pixel intensity
 
     for( y=0; y < m_dwTexHeight; y++ )
     {
-        pDst16 = (WORD*)pDstRow;
+        WORD* pDst16 = (WORD*)pDstRow;
         for( x=0; x < m_dwTexWidth; x++ )
         {
-            bAlpha = (BYTE)((pBitmapBits[m_dwTexWidth*y + x] & 0xff) >> 4);
+            BYTE bAlpha = (BYTE)((pBitmapBits[m_dwTexWidth*y + x] & 0xff) >> 4); // 4-bit measure of pixel intensity
             if (bAlpha > 0)
             {
                 *pDst16++ = (WORD) ((bAlpha << 12) | 0x0fff);

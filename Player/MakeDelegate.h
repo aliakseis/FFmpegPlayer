@@ -11,7 +11,7 @@ struct DelegateScope
     class Delegate
     {
     public:
-        Delegate(T* callee)
+        explicit Delegate(T* callee)
             : fpCallee(callee)
         {}
         //return_type operator()(params... xs) const

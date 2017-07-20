@@ -221,7 +221,7 @@ void CALLBACK AudioPlayerImpl::waveOutProc(HWAVEOUT, UINT uMsg, DWORD dwInstance
     if (uMsg == WOM_DONE)
     {
         // pointer to free block counter
-        AudioPlayerImpl* waveArgs = (AudioPlayerImpl*)dwInstance;
+        AudioPlayerImpl* waveArgs = reinterpret_cast<AudioPlayerImpl*>(dwInstance);
 
         if (0 == InterlockedIncrement(&waveArgs->m_waveFreeBlockCount))
         {

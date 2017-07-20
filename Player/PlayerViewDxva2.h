@@ -70,9 +70,9 @@ private:
     CComPtr<IDirect3DSurface9> m_pMainStream;
     CComPtr<IDirectXVideoProcessor> m_pDXVAVPD;
 
-    LONG m_ProcAmpValues[4];
-    LONG m_NFilterValues[6];
-    LONG m_DFilterValues[6];
+    LONG m_ProcAmpValues[4] {};
+    LONG m_NFilterValues[6] {};
+    LONG m_DFilterValues[6] {};
 
     std::unique_ptr<CD3DFont> m_subtitleFont;
 

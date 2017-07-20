@@ -258,7 +258,7 @@ void CopyAndConvert(
 class FrameListenerDxva2 : public IFrameListener
 {
 public:
-    FrameListenerDxva2(CPlayerViewDxva2* playerView) : m_playerView(playerView) {}
+    explicit FrameListenerDxva2(CPlayerViewDxva2* playerView) : m_playerView(playerView) {}
 
 private:
     void updateFrame() override
@@ -833,7 +833,7 @@ void CPlayerViewDxva2::Dump(CDumpContext& dc) const
 CPlayerDoc* CPlayerViewDxva2::GetDocument() const
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CPlayerDoc)));
-    return (CPlayerDoc*)m_pDocument;
+    return static_cast<CPlayerDoc*>(m_pDocument);
 }
 
 
@@ -1055,13 +1055,16 @@ void CPlayerViewDxva2::updateFrame()
     {
         const auto& convertedSubtitle = CA2T(subtitle.c_str(), CP_UTF8);
         hr = m_pD3DD9->BeginScene();
-        CSize boundingBox;
-        m_subtitleFont->GetTextExtent(convertedSubtitle, &boundingBox);
-        const auto left = (m_sourceSize.cx - boundingBox.cx) / 2;
-        const auto top = m_sourceSize.cy - boundingBox.cy - 2;
-        m_subtitleFont->DrawText(left + 1, top + 1, D3DCOLOR_XRGB(0, 0, 0), convertedSubtitle);
-        m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
-        hr = m_pD3DD9->EndScene();
+        if (SUCCEEDED(hr))
+        {
+            CSize boundingBox;
+            m_subtitleFont->GetTextExtent(convertedSubtitle, &boundingBox);
+            const auto left = (m_sourceSize.cx - boundingBox.cx) / 2;
+            const auto top = m_sourceSize.cy - boundingBox.cy - 2;
+            m_subtitleFont->DrawText(left + 1, top + 1, D3DCOLOR_XRGB(0, 0, 0), convertedSubtitle);
+            m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
+            m_pD3DD9->EndScene();
+        }
     }
 }
 

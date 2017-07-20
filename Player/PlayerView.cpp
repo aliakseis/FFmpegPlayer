@@ -56,7 +56,7 @@ HRESULT GetTextSize(const WCHAR* text, IDWriteTextFormat* pTextFormat, const SIZ
 class FrameListener : public IFrameListener
 {
 public:
-    FrameListener(CPlayerView* playerView) : m_playerView(playerView) {}
+    explicit FrameListener(CPlayerView* playerView) : m_playerView(playerView) {}
 
 private:
     void updateFrame() override
@@ -164,18 +164,18 @@ void CPlayerView::Dump(CDumpContext& dc) const
 {
     CView::Dump(dc);
 }
+#endif //_DEBUG
 
-CPlayerDoc* CPlayerView::GetDocument() const // non-debug version is inline
+CPlayerDoc* CPlayerView::GetDocument() const
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CPlayerDoc)));
-    return (CPlayerDoc*)m_pDocument;
+    return static_cast<CPlayerDoc*>(m_pDocument);
 }
-#endif //_DEBUG
 
 
 // CPlayerView message handlers
 
-afx_msg LRESULT CPlayerView::OnDraw2D(WPARAM wParam, LPARAM lParam)
+afx_msg LRESULT CPlayerView::OnDraw2D(WPARAM, LPARAM lParam)
 {
 
     CHwndRenderTarget* pRenderTarget = (CHwndRenderTarget*)lParam;
@@ -308,6 +308,11 @@ void CPlayerView::updateFrame()
         if (!m_spEffect)
         {
             HRESULT hr = spContext->CreateEffect(CLSID_CustomI420Effect, &m_spEffect);
+            if (FAILED(hr))
+            {
+                UnlockRenderTarget();
+                return;
+            }
         }
 
         float dpiX;

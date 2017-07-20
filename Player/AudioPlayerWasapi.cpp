@@ -261,6 +261,8 @@ bool AudioPlayerWasapi::Open(int bytesPerSample, int samplesPerSec, int channels
     WAVEFORMATPCMEX format_ = {};
 
     HRESULT hr = CoreAudioUtil::GetSharedModeMixFormat(audio_client, &format_);
+    if (FAILED(hr))
+        return false;
 
     // Begin with the WAVEFORMATEX structure that specifies the basic format.
     WAVEFORMATEX* format = &format_.Format;

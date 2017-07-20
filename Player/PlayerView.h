@@ -62,8 +62,3 @@ private:
     CComPtr<ID2D1Effect> m_spEffect;
 };
 
-#ifndef _DEBUG  // debug version in PlayerView.cpp
-inline CPlayerDoc* CPlayerView::GetDocument() const
-   { return reinterpret_cast<CPlayerDoc*>(m_pDocument); }
-#endif
-

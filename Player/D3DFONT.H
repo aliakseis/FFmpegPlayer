@@ -36,10 +36,10 @@ class CD3DFont
     LPDIRECT3DDEVICE9       m_pd3dDevice; // A D3DDevice used for rendering
     LPDIRECT3DTEXTURE9      m_pTexture;   // The d3d texture for this font
     LPDIRECT3DVERTEXBUFFER9 m_pVB;        // VertexBuffer for rendering text
-    DWORD   m_dwTexWidth;                 // Texture dimensions
-    DWORD   m_dwTexHeight;
-    FLOAT   m_fTextScale;
-    FLOAT   m_fTexCoords[128-32][4];
+    DWORD   m_dwTexWidth {};                 // Texture dimensions
+    DWORD   m_dwTexHeight {};
+    FLOAT   m_fTextScale {};
+    FLOAT   m_fTexCoords[128 - 32][4] {};
     DWORD   m_dwSpacing;                  // Character pixel spacing per side
 
     // Stateblocks for setting and restoring render states

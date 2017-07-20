@@ -8,7 +8,7 @@ class CDialogOpenURL : public CDialog
 	DECLARE_DYNAMIC(CDialogOpenURL)
 
 public:
-	CDialogOpenURL(CWnd* pParent = NULL);   // standard constructor
+	explicit CDialogOpenURL(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CDialogOpenURL();
 
 // Dialog Data
