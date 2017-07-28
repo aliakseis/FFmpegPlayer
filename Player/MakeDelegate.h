@@ -43,7 +43,7 @@ template<typename T, typename return_type, typename... params>
 struct DelegateMaker
 {
     template<return_type(T::*foo)(params...)>
-    inline static auto Bind(T* o) -> decltype(DelegateScope<return_type, params...>::Delegate<T, foo>(o))
+    inline static auto Bind(T* o)
     {
         return DelegateScope<return_type, params...>::Delegate<T, foo>(o);
     }
