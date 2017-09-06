@@ -879,7 +879,7 @@ int CPlayerViewDxva2::OnCreate(LPCREATESTRUCT lpCreateStruct)
 #else
         PIX_FMT_YUYV422
 #endif
-        );
+        , true);
 
     return 0;
 }

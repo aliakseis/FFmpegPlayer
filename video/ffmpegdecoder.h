@@ -55,7 +55,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     FFmpegDecoder(const FFmpegDecoder&) = delete;
     FFmpegDecoder& operator=(const FFmpegDecoder&) = delete;
 
-    void SetFrameFormat(FrameFormat format) override;
+    void SetFrameFormat(FrameFormat format, bool allowDirect3dData) override;
 
     bool openFile(const PathType& file) override;
     bool openUrl(const std::string& url) override;
@@ -129,6 +129,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     void seekWhilePaused();
 
+    void handleDirect3dData(AVFrame* videoFrame);
+
     // Frame display listener
     IFrameListener* m_frameListener;
 
@@ -189,6 +191,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     AVFrame* m_videoFrame;
     SwsContext* m_imageCovertContext;
     AVPixelFormat m_pixelFormat;
+    bool m_allowDirect3dData;
 
     // Video and audio queues
     enum

@@ -187,6 +187,7 @@ bool FFmpegDecoder::handleVideoPacket(
         m_isVideoSeekingWhilePaused = false;
 
         VideoFrame& current_frame = m_videoFramesQueue.back();
+        handleDirect3dData(m_videoFrame);
         if (!frameToImage(current_frame, m_videoFrame, m_imageCovertContext, m_pixelFormat))
         {
             continue;

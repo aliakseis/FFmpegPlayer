@@ -59,7 +59,7 @@ struct IFrameDecoder
 
     virtual ~IFrameDecoder() {}
 
-    virtual void SetFrameFormat(FrameFormat format) = 0;
+    virtual void SetFrameFormat(FrameFormat format, bool allowDirect3dData) = 0;
 
     virtual bool openFile(const PathType& file) = 0;
     virtual bool openUrl(const std::string& url) = 0;

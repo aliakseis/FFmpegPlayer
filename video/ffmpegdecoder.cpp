@@ -217,6 +217,7 @@ FFmpegDecoder::FFmpegDecoder(std::unique_ptr<IAudioPlayer> audioPlayer)
       m_decoderListener(nullptr),
       m_audioSettings({48000, 2, av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16}),
       m_pixelFormat(AV_PIX_FMT_YUV420P),
+      m_allowDirect3dData(false),
       m_audioPlayer(std::move(audioPlayer))
 {
     m_audioPlayer->SetCallback(this);
@@ -654,13 +655,14 @@ void FFmpegDecoder::setVolume(double volume)
 
 double FFmpegDecoder::volume() const { return m_audioPlayer->GetVolume(); }
 
-void FFmpegDecoder::SetFrameFormat(FrameFormat format)
+void FFmpegDecoder::SetFrameFormat(FrameFormat format, bool allowDirect3dData)
 { 
     static_assert(PIX_FMT_YUV420P == AV_PIX_FMT_YUV420P, "FrameFormat and AVPixelFormat values must coincide.");
     static_assert(PIX_FMT_YUYV422 == AV_PIX_FMT_YUYV422, "FrameFormat and AVPixelFormat values must coincide.");
     static_assert(PIX_FMT_RGB24 == AV_PIX_FMT_RGB24,     "FrameFormat and AVPixelFormat values must coincide.");
 
     m_pixelFormat = (AVPixelFormat)format;
+    m_allowDirect3dData = allowDirect3dData;
 }
 
 void FFmpegDecoder::finishedDisplayingFrame()
@@ -817,4 +819,15 @@ void FFmpegDecoder::setAudioTrack(int idx)
 {
     if (idx >= 0 && idx < m_audioIndices.size())
         m_audioStreamNumber = m_audioIndices[idx];
+}
+
+void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame)
+{
+#ifdef USE_HWACCEL
+    if (!m_allowDirect3dData && videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
+    {
+        dxva2_retrieve_data_call(m_videoCodecContext, videoFrame);
+        assert(videoFrame->format != AV_PIX_FMT_DXVA2_VLD);
+    }
+#endif
 }
