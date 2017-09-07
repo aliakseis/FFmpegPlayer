@@ -128,7 +128,7 @@
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerDoc.h" />
     <ClInclude Include="PlayerViewD2D.h" />
-    <ClInclude Include="PlayerViewDxva2.h" />
+    <ClInclude Include="PlayerView.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -144,7 +144,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerDoc.cpp" />
     <ClCompile Include="PlayerViewD2D.cpp" />
-    <ClCompile Include="PlayerViewDxva2.cpp" />
+    <ClCompile Include="PlayerView.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
