@@ -16,6 +16,8 @@ class CD3DFont;
 
 class CPlayerDoc;
 
+#define USE_DXVA2
+
 // CPlayerView view
 
 class CPlayerView : public CView, public IEraseableArea
@@ -47,10 +49,12 @@ protected:
     DECLARE_MESSAGE_MAP()
 private:
     bool InitializeD3D9();
-    bool InitializeDXVA2(bool createSurface);
-    void DestroyDXVA2();
+    bool InitializeExtra(bool createSurface);
+    void DestroyExtra();
     void DestroyD3D9();
+#ifdef USE_DXVA2
     bool CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool createSurface);
+#endif
     bool ResetDevice();
     bool ProcessVideo();
 
@@ -66,13 +70,16 @@ private:
     CComPtr<IDirect3D9> m_pD3D9;
     CComPtr<IDirect3DDevice9>  m_pD3DD9;
     CComPtr<IDirect3DSurface9> m_pD3DRT;
-    CComPtr<IDirectXVideoProcessorService> m_pDXVAVPS;
     CComPtr<IDirect3DSurface9> m_pMainStream;
+
+#ifdef USE_DXVA2
+    CComPtr<IDirectXVideoProcessorService> m_pDXVAVPS;
     CComPtr<IDirectXVideoProcessor> m_pDXVAVPD;
 
     LONG m_ProcAmpValues[4] {};
     LONG m_NFilterValues[6] {};
     LONG m_DFilterValues[6] {};
+#endif
 
     std::unique_ptr<CD3DFont> m_subtitleFont;
 

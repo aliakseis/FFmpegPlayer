@@ -12,7 +12,10 @@
 
 #include <initguid.h>
 #include <d3d9.h>
+
+#ifdef USE_DXVA2
 #include <dxva2api.h>
+#endif
 
 
 #include <vector>
@@ -25,29 +28,13 @@
 
 namespace {
 
-//
-// Type definitions.
-//
-
-typedef HRESULT (WINAPI * PFNDWMISCOMPOSITIONENABLED)(
-    __out BOOL* pfEnabled
-    );
-
-typedef HRESULT (WINAPI * PFNDWMGETCOMPOSITIONTIMINGINFO)(
-    __in HWND hwnd,
-    __out DWM_TIMING_INFO* pTimingInfo
-    );
-
-typedef HRESULT (WINAPI * PFNDWMSETPRESENTPARAMETERS)(
-    __in HWND hwnd,
-    __inout DWM_PRESENT_PARAMETERS* pPresentParams
-    );
-
+#ifdef USE_DXVA2
 const UINT VIDEO_REQUIED_OP = DXVA2_VideoProcess_YUV2RGB |
                               DXVA2_VideoProcess_StretchX |
                               DXVA2_VideoProcess_StretchY/* |
                               DXVA2_VideoProcess_SubRects |
                               DXVA2_VideoProcess_SubStreams*/;
+#endif
 
 const D3DFORMAT VIDEO_RENDER_TARGET_FORMAT = D3DFMT_X8R8G8B8;
 const D3DFORMAT VIDEO_MAIN_FORMAT = D3DFMT_YUY2;
@@ -66,6 +53,22 @@ PVOID g_pfnD3D9GetSWInfo = NULL;
 
 //////////////////////////////////////////////////////////////////////////////
 
+DWORD RGBtoYUV(const D3DCOLOR rgb)
+{
+    const INT A = HIBYTE(HIWORD(rgb));
+    const INT R = LOBYTE(HIWORD(rgb)) - 16;
+    const INT G = HIBYTE(LOWORD(rgb)) - 16;
+    const INT B = LOBYTE(LOWORD(rgb)) - 16;
+
+    //
+    // studio RGB [16...235] to SDTV ITU-R BT.601 YCbCr
+    //
+    INT Y = (77 * R + 150 * G + 29 * B + 128) / 256 + 16;
+    INT U = (-44 * R - 87 * G + 131 * B + 128) / 256 + 128;
+    INT V = (131 * R - 110 * G - 21 * B + 128) / 256 + 128;
+
+    return D3DCOLOR_AYUV(A, Y, U, V);
+}
 
 BOOL RegisterSoftwareRasterizer(IDirect3D9* g_pD3D9)
 {
@@ -129,6 +132,8 @@ D3DPRESENT_PARAMETERS GetD3dPresentParams(HWND hWnd, const CSize& backBufferSize
     return D3DPP;
 }
 
+#ifdef USE_DXVA2
+
 DXVA2_VideoDesc GetVideoDesc(const CSize& sourceSize)
 {
     DXVA2_VideoDesc videoDesc;
@@ -151,24 +156,6 @@ DXVA2_VideoDesc GetVideoDesc(const CSize& sourceSize)
     return videoDesc;
 }
 
-DWORD
-RGBtoYUV(const D3DCOLOR rgb)
-{
-    const INT A = HIBYTE(HIWORD(rgb));
-    const INT R = LOBYTE(HIWORD(rgb)) - 16;
-    const INT G = HIBYTE(LOWORD(rgb)) - 16;
-    const INT B = LOBYTE(LOWORD(rgb)) - 16;
-
-    //
-    // studio RGB [16...235] to SDTV ITU-R BT.601 YCbCr
-    //
-    INT Y = (77 * R + 150 * G + 29 * B + 128) / 256 + 16;
-    INT U = (-44 * R - 87 * G + 131 * B + 128) / 256 + 128;
-    INT V = (131 * R - 110 * G - 21 * B + 128) / 256 + 128;
-
-    return D3DCOLOR_AYUV(A, Y, U, V);
-}
-
 DXVA2_AYUVSample16 GetBackgroundColor()
 {
     const D3DCOLOR yuv = RGBtoYUV(0);
@@ -187,6 +174,7 @@ DXVA2_AYUVSample16 GetBackgroundColor()
     return color;
 }
 
+#endif
 
 void SimdCopyAndConvert(
     __m128i* const __restrict origin0,
@@ -358,6 +346,7 @@ bool CPlayerView::InitializeD3D9()
     return true;
 }
 
+#ifdef USE_DXVA2
 bool CPlayerView::CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool createSurface)
 {
     //
@@ -561,13 +550,11 @@ bool CPlayerView::CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool createSu
 
     return true;
 }
+#endif
 
-
-bool CPlayerView::InitializeDXVA2(bool createSurface)
+bool CPlayerView::InitializeExtra(bool createSurface)
 {
-    //
     // Retrieve a back buffer as the video render target.
-    //
     HRESULT hr = m_pD3DD9->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &m_pD3DRT);
 
     if (FAILED(hr))
@@ -576,9 +563,8 @@ bool CPlayerView::InitializeDXVA2(bool createSurface)
         return false;
     }
 
-    //
+#ifdef USE_DXVA2
     // Create DXVA2 Video Processor Service.
-    //
     hr = DXVA2CreateVideoService(m_pD3DD9,
         IID_IDirectXVideoProcessorService,
         (VOID**)&m_pDXVAVPS);
@@ -589,13 +575,9 @@ bool CPlayerView::InitializeDXVA2(bool createSurface)
         return false;
     }
 
-    //
     // Initialize the video descriptor.
-    //
 
-    //
     // Query the video processor GUID.
-    //
     UINT count;
     GUID* guids = NULL;
 
@@ -608,9 +590,7 @@ bool CPlayerView::InitializeDXVA2(bool createSurface)
         return false;
     }
 
-    //
     // Create a DXVA2 device.
-    //
     bool created = false;
     for (UINT i = 0; i < count; ++i)
     {
@@ -639,6 +619,23 @@ bool CPlayerView::InitializeDXVA2(bool createSurface)
         TRACE("Failed to create a DXVA2 device.\n");
         return false;
     }
+#else
+    if (createSurface)
+    {
+        hr = m_pD3DD9->CreateOffscreenPlainSurface(
+            (m_sourceSize.cx + 7) & ~7,
+            m_sourceSize.cy,
+            VIDEO_MAIN_FORMAT,
+            D3DPOOL_DEFAULT,
+            &m_pMainStream,
+            NULL);
+        if (FAILED(hr))
+        {
+            TRACE("CreateOffscreenPlainSurface failed with error 0x%x.\n", hr);
+            return false;
+        }
+    }
+#endif
 
     m_subtitleFont = std::make_unique<CD3DFont>(
         _T("MS Sans Serif"),
@@ -648,7 +645,7 @@ bool CPlayerView::InitializeDXVA2(bool createSurface)
     return true;
 }
 
-void CPlayerView::DestroyDXVA2()
+void CPlayerView::DestroyExtra()
 {
     if (m_subtitleFont)
     {
@@ -658,8 +655,10 @@ void CPlayerView::DestroyDXVA2()
     }
 
     m_pMainStream.Release();
+#ifdef USE_DXVA2
     m_pDXVAVPD.Release();
     m_pDXVAVPS.Release();
+#endif
     m_pD3DRT.Release();
 }
 
@@ -679,7 +678,7 @@ bool CPlayerView::ResetDevice()
         //
         // Destroy DXVA2 device because it may be holding any D3D9 resources.
         //
-        DestroyDXVA2();
+        DestroyExtra();
 
         //
         // Reset will change the parameters, so use a copy instead.
@@ -693,7 +692,7 @@ bool CPlayerView::ResetDevice()
             TRACE("Reset failed with error 0x%x.\n", hr);
         }
 
-        if (SUCCEEDED(hr) && InitializeDXVA2(true))
+        if (SUCCEEDED(hr) && InitializeExtra(true))
         {
             fullInitialization = false;
         }
@@ -703,12 +702,12 @@ bool CPlayerView::ResetDevice()
             // If either Reset didn't work or failed to initialize DXVA2 device,
             // try to recover by recreating the devices from the scratch.
             //
-            DestroyDXVA2();
+            DestroyExtra();
             DestroyD3D9();
         }
     }
 
-    if (fullInitialization && (!InitializeD3D9() || !InitializeDXVA2(true)))
+    if (fullInitialization && (!InitializeD3D9() || !InitializeExtra(true)))
     {
         return false;
     }
@@ -778,7 +777,7 @@ bool CPlayerView::ProcessVideo()
 
         if (!m_pD3D9)
         {
-            DestroyDXVA2();
+            DestroyExtra();
             DestroyD3D9();
             GetDocument()->getFrameDecoder()->videoReset();
             return false;
@@ -904,13 +903,13 @@ void CPlayerView::updateFrame()
             m_sourceSize.cx = data.width;
             m_sourceSize.cy = data.height;
 
-            DestroyDXVA2();
+            DestroyExtra();
             DestroyD3D9();
 
             m_pD3DD9 = data.d3d9device;
             m_pD3D9.Release();
 
-            InitializeDXVA2(false);
+            InitializeExtra(false);
         }
     }
     else if (!m_pD3D9 || data.width != m_sourceSize.cx || data.height != m_sourceSize.cy)
@@ -957,6 +956,7 @@ void CPlayerView::updateFrame()
         }
     }
 
+#ifdef USE_DXVA2
     DXVA2_VideoProcessBltParams blt = { 0 };
     DXVA2_VideoSample samples[1] = { 0 };
 
@@ -1049,6 +1049,28 @@ void CPlayerView::updateFrame()
     {
         TRACE("VideoProcessBlt failed with error 0x%x.\n", hr);
     }
+#else
+    m_pD3DD9->Clear(
+        0,
+        NULL,
+        D3DCLEAR_TARGET,
+        D3DCOLOR_XRGB(0, 0, 0),
+        1.0f,
+        0);
+
+    RECT rect { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+
+    HRESULT hr = m_pD3DD9->StretchRect(
+        data.surface ? data.surface : m_pMainStream,
+        &rect,
+        m_pD3DRT,
+        &rect,
+        D3DTEXF_NONE);
+    if (FAILED(hr))
+    {
+        TRACE("StretchRect failed with error 0x%x.\n", hr);
+    }
+#endif
 
     auto subtitle = GetDocument()->getSubtitle();
     if (!subtitle.empty())
@@ -1128,7 +1150,7 @@ void CPlayerView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     {
         {
             CSingleLock lock(&m_csSurface, TRUE);
-            DestroyDXVA2();
+            DestroyExtra();
             DestroyD3D9();
             m_sourceSize = {};
         }
