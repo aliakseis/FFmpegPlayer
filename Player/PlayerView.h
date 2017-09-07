@@ -1,7 +1,4 @@
 
-// PlayerView.h : interface of the CPlayerView class
-//
-
 #pragma once
 
 #include <memory>
@@ -10,13 +7,13 @@ struct IFrameListener;
 
 struct ID2D1Effect;
 
-class CPlayerView : public CView
+class CPlayerViewD2D : public CView
 {
 friend class FrameListener;
 
 protected: // create from serialization only
-    CPlayerView();
-    DECLARE_DYNCREATE(CPlayerView)
+    CPlayerViewD2D();
+    DECLARE_DYNCREATE(CPlayerViewD2D)
 
 // Attributes
 public:
@@ -36,7 +33,7 @@ protected:
 
 // Implementation
 public:
-    virtual ~CPlayerView();
+    virtual ~CPlayerViewD2D();
 #ifdef _DEBUG
     virtual void AssertValid() const;
     virtual void Dump(CDumpContext& dc) const;

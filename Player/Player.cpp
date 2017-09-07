@@ -10,7 +10,7 @@
 
 #include "PlayerDoc.h"
 #include "PlayerView.h"
-#include "PlayerViewDxva2.h"
+#include "PlayerViewD2D.h"
 
 #include "I420Effect.h"
 
@@ -165,9 +165,9 @@ BOOL CPlayerApp::InitInstance()
         RUNTIME_CLASS(CPlayerDoc),
         RUNTIME_CLASS(CMainFrame),       // main SDI frame window
 #ifdef USE_DIRECT2D_VIEW
-        RUNTIME_CLASS(CPlayerView));
+        RUNTIME_CLASS(CPlayerViewD2D));
 #else
-        RUNTIME_CLASS(CPlayerViewDxva2));
+        RUNTIME_CLASS(CPlayerView));
 #endif
     if (!pDocTemplate)
         return FALSE;

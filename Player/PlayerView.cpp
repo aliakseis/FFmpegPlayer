@@ -1,7 +1,4 @@
 
-// PlayerView.cpp : implementation of the CPlayerView class
-//
-
 #include "stdafx.h"
 // SHARED_HANDLERS can be defined in an ATL project implementing preview, thumbnail
 // and search filter handlers and allows sharing of document code with that project.
@@ -10,7 +7,7 @@
 #endif
 
 #include "PlayerDoc.h"
-#include "PlayerView.h"
+#include "PlayerViewD2D.h"
 
 #include "I420Effect.h"
 
@@ -56,7 +53,7 @@ HRESULT GetTextSize(const WCHAR* text, IDWriteTextFormat* pTextFormat, const SIZ
 class FrameListener : public IFrameListener
 {
 public:
-    explicit FrameListener(CPlayerView* playerView) : m_playerView(playerView) {}
+    explicit FrameListener(CPlayerViewD2D* playerView) : m_playerView(playerView) {}
 
 private:
     void updateFrame() override
@@ -79,26 +76,26 @@ private:
     }
 
 private:
-    CPlayerView* m_playerView;
+    CPlayerViewD2D* m_playerView;
 };
 
 
-// CPlayerView
+// CPlayerViewD2D
 
-IMPLEMENT_DYNCREATE(CPlayerView, CView)
+IMPLEMENT_DYNCREATE(CPlayerViewD2D, CView)
 
-BEGIN_MESSAGE_MAP(CPlayerView, CView)
+BEGIN_MESSAGE_MAP(CPlayerViewD2D, CView)
     // Standard printing commands
     ON_COMMAND(ID_FILE_PRINT, &CView::OnFilePrint)
     ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
     ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CView::OnFilePrintPreview)
-    ON_REGISTERED_MESSAGE(AFX_WM_DRAW2D, &CPlayerView::OnDraw2D)
+    ON_REGISTERED_MESSAGE(AFX_WM_DRAW2D, &CPlayerViewD2D::OnDraw2D)
     ON_WM_CREATE()
 END_MESSAGE_MAP()
 
-// CPlayerView construction/destruction
+// CPlayerViewD2D construction/destruction
 
-CPlayerView::CPlayerView()
+CPlayerViewD2D::CPlayerViewD2D()
     : m_frameListener(new FrameListener(this))
     , m_aspectRatio(1.f)
 {
@@ -106,12 +103,12 @@ CPlayerView::CPlayerView()
     EnableD2DSupport();
 }
 
-CPlayerView::~CPlayerView()
+CPlayerViewD2D::~CPlayerViewD2D()
 {
     GetDocument()->getFrameDecoder()->setFrameListener(NULL);
 }
 
-BOOL CPlayerView::PreCreateWindow(CREATESTRUCT& cs)
+BOOL CPlayerViewD2D::PreCreateWindow(CREATESTRUCT& cs)
 {
     // For the full screen mode
     cs.style &= ~WS_BORDER;
@@ -120,9 +117,9 @@ BOOL CPlayerView::PreCreateWindow(CREATESTRUCT& cs)
     return CView::PreCreateWindow(cs);
 }
 
-// CPlayerView drawing
+// CPlayerViewD2D drawing
 
-void CPlayerView::OnDraw(CDC* /*pDC*/)
+void CPlayerViewD2D::OnDraw(CDC* /*pDC*/)
 {
     CPlayerDoc* pDoc = GetDocument();
     ASSERT_VALID(pDoc);
@@ -133,49 +130,49 @@ void CPlayerView::OnDraw(CDC* /*pDC*/)
 }
 
 
-// CPlayerView printing
+// CPlayerViewD2D printing
 
-BOOL CPlayerView::OnPreparePrinting(CPrintInfo* pInfo)
+BOOL CPlayerViewD2D::OnPreparePrinting(CPrintInfo* pInfo)
 {
     // default preparation
     return DoPreparePrinting(pInfo);
 }
 
-void CPlayerView::OnBeginPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+void CPlayerViewD2D::OnBeginPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
 {
     // TODO: add extra initialization before printing
 }
 
-void CPlayerView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+void CPlayerViewD2D::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
 {
     // TODO: add cleanup after printing
 }
 
 
-// CPlayerView diagnostics
+// CPlayerViewD2D diagnostics
 
 #ifdef _DEBUG
-void CPlayerView::AssertValid() const
+void CPlayerViewD2D::AssertValid() const
 {
     CView::AssertValid();
 }
 
-void CPlayerView::Dump(CDumpContext& dc) const
+void CPlayerViewD2D::Dump(CDumpContext& dc) const
 {
     CView::Dump(dc);
 }
 #endif //_DEBUG
 
-CPlayerDoc* CPlayerView::GetDocument() const
+CPlayerDoc* CPlayerViewD2D::GetDocument() const
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CPlayerDoc)));
     return static_cast<CPlayerDoc*>(m_pDocument);
 }
 
 
-// CPlayerView message handlers
+// CPlayerViewD2D message handlers
 
-afx_msg LRESULT CPlayerView::OnDraw2D(WPARAM, LPARAM lParam)
+afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
 {
 
     CHwndRenderTarget* pRenderTarget = (CHwndRenderTarget*)lParam;
@@ -271,7 +268,7 @@ afx_msg LRESULT CPlayerView::OnDraw2D(WPARAM, LPARAM lParam)
 }
 
 
-int CPlayerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+int CPlayerViewD2D::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     if (CView::OnCreate(lpCreateStruct) == -1)
         return -1;
@@ -282,7 +279,7 @@ int CPlayerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 }
 
 
-void CPlayerView::updateFrame()
+void CPlayerViewD2D::updateFrame()
 {
     FrameRenderingData data;
     if (!GetDocument()->getFrameDecoder()->getFrameRenderingData(&data))

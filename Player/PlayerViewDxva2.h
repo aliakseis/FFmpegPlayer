@@ -16,17 +16,17 @@ class CD3DFont;
 
 class CPlayerDoc;
 
-// CPlayerViewDxva2 view
+// CPlayerView view
 
-class CPlayerViewDxva2 : public CView, public IEraseableArea
+class CPlayerView : public CView, public IEraseableArea
 {
     friend class FrameListenerDxva2;
 
-    DECLARE_DYNCREATE(CPlayerViewDxva2)
+    DECLARE_DYNCREATE(CPlayerView)
 
 protected:
-    CPlayerViewDxva2();           // protected constructor used by dynamic creation
-    virtual ~CPlayerViewDxva2();
+    CPlayerView();           // protected constructor used by dynamic creation
+    virtual ~CPlayerView();
 
 public:
     virtual void OnDraw(CDC* pDC);      // overridden to draw this view

@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "Player.h"
-#include "PlayerViewDxva2.h"
+#include "PlayerView.h"
 #include "PlayerDoc.h"
 
 #include "decoderinterface.h"
@@ -258,7 +258,7 @@ void CopyAndConvert(
 class FrameListenerDxva2 : public IFrameListener
 {
 public:
-    explicit FrameListenerDxva2(CPlayerViewDxva2* playerView) : m_playerView(playerView) {}
+    explicit FrameListenerDxva2(CPlayerView* playerView) : m_playerView(playerView) {}
 
 private:
     void updateFrame() override
@@ -273,24 +273,24 @@ private:
     }
 
 private:
-    CPlayerViewDxva2* m_playerView;
+    CPlayerView* m_playerView;
 };
 
-// CPlayerViewDxva2
+// CPlayerView
 
-IMPLEMENT_DYNCREATE(CPlayerViewDxva2, CView)
+IMPLEMENT_DYNCREATE(CPlayerView, CView)
 
-CPlayerViewDxva2::CPlayerViewDxva2()
+CPlayerView::CPlayerView()
 : m_frameListener(new FrameListenerDxva2(this))
 , m_aspectRatio(1, 1)
 {
 }
 
-CPlayerViewDxva2::~CPlayerViewDxva2()
+CPlayerView::~CPlayerView()
 {
 }
 
-BEGIN_MESSAGE_MAP(CPlayerViewDxva2, CView)
+BEGIN_MESSAGE_MAP(CPlayerView, CView)
     ON_WM_PAINT()
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
@@ -298,7 +298,7 @@ END_MESSAGE_MAP()
 
 
 
-bool CPlayerViewDxva2::InitializeD3D9()
+bool CPlayerView::InitializeD3D9()
 {
     m_pD3D9.Attach(Direct3DCreate9(D3D_SDK_VERSION));
 
@@ -358,7 +358,7 @@ bool CPlayerViewDxva2::InitializeD3D9()
     return true;
 }
 
-bool CPlayerViewDxva2::CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool createSurface)
+bool CPlayerView::CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool createSurface)
 {
     //
     // Query the supported render target format.
@@ -563,7 +563,7 @@ bool CPlayerViewDxva2::CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool cre
 }
 
 
-bool CPlayerViewDxva2::InitializeDXVA2(bool createSurface)
+bool CPlayerView::InitializeDXVA2(bool createSurface)
 {
     //
     // Retrieve a back buffer as the video render target.
@@ -648,7 +648,7 @@ bool CPlayerViewDxva2::InitializeDXVA2(bool createSurface)
     return true;
 }
 
-void CPlayerViewDxva2::DestroyDXVA2()
+void CPlayerView::DestroyDXVA2()
 {
     if (m_subtitleFont)
     {
@@ -663,14 +663,14 @@ void CPlayerViewDxva2::DestroyDXVA2()
     m_pD3DRT.Release();
 }
 
-void CPlayerViewDxva2::DestroyD3D9()
+void CPlayerView::DestroyD3D9()
 {
     m_pD3DD9.Release();
     m_pD3D9.Release();
 }
 
 
-bool CPlayerViewDxva2::ResetDevice()
+bool CPlayerView::ResetDevice()
 {
     bool fullInitialization = true;
 
@@ -717,7 +717,7 @@ bool CPlayerViewDxva2::ResetDevice()
 }
 
 
-CRect CPlayerViewDxva2::GetTargetRect()
+CRect CPlayerView::GetTargetRect()
 {
     CRect desc;
     GetClientRect(&desc);
@@ -749,9 +749,9 @@ CRect CPlayerViewDxva2::GetTargetRect()
 }
 
 
-// CPlayerViewDxva2 drawing
+// CPlayerView drawing
 
-bool CPlayerViewDxva2::ProcessVideo()
+bool CPlayerView::ProcessVideo()
 {
     if (!m_pD3DD9)
     {
@@ -807,40 +807,40 @@ bool CPlayerViewDxva2::ProcessVideo()
 }
 
 
-void CPlayerViewDxva2::OnDraw(CDC* /*pDC*/)
+void CPlayerView::OnDraw(CDC* /*pDC*/)
 {
     //CDocument* pDoc = GetDocument();
     // TODO: add draw code here
 }
 
 
-// CPlayerViewDxva2 diagnostics
+// CPlayerView diagnostics
 
 #ifdef _DEBUG
-void CPlayerViewDxva2::AssertValid() const
+void CPlayerView::AssertValid() const
 {
     CView::AssertValid();
 }
 
 #ifndef _WIN32_WCE
-void CPlayerViewDxva2::Dump(CDumpContext& dc) const
+void CPlayerView::Dump(CDumpContext& dc) const
 {
     CView::Dump(dc);
 }
 #endif
 #endif //_DEBUG
 
-CPlayerDoc* CPlayerViewDxva2::GetDocument() const
+CPlayerDoc* CPlayerView::GetDocument() const
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CPlayerDoc)));
     return static_cast<CPlayerDoc*>(m_pDocument);
 }
 
 
-// CPlayerViewDxva2 message handlers
+// CPlayerView message handlers
 
 
-void CPlayerViewDxva2::OnPaint()
+void CPlayerView::OnPaint()
 {
     if (!m_pD3DD9)
     {
@@ -854,7 +854,7 @@ void CPlayerViewDxva2::OnPaint()
 }
 
 
-BOOL CPlayerViewDxva2::PreCreateWindow(CREATESTRUCT& cs)
+BOOL CPlayerView::PreCreateWindow(CREATESTRUCT& cs)
 {
     // For the full screen mode
     cs.style &= ~WS_BORDER;
@@ -864,7 +864,7 @@ BOOL CPlayerViewDxva2::PreCreateWindow(CREATESTRUCT& cs)
 }
 
 
-int CPlayerViewDxva2::OnCreate(LPCREATESTRUCT lpCreateStruct)
+int CPlayerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     if (!InitializeModule())
         return -1;
@@ -884,7 +884,7 @@ int CPlayerViewDxva2::OnCreate(LPCREATESTRUCT lpCreateStruct)
     return 0;
 }
 
-void CPlayerViewDxva2::updateFrame()
+void CPlayerView::updateFrame()
 {
     CSingleLock lock(&m_csSurface, TRUE);
 
@@ -1069,7 +1069,7 @@ void CPlayerViewDxva2::updateFrame()
 }
 
 
-BOOL CPlayerViewDxva2::OnEraseBkgnd(CDC* pDC)
+BOOL CPlayerView::OnEraseBkgnd(CDC* pDC)
 {
     if (!m_pD3DD9)
     {
@@ -1086,7 +1086,7 @@ BOOL CPlayerViewDxva2::OnEraseBkgnd(CDC* pDC)
     return TRUE;
 }
 
-void CPlayerViewDxva2::OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen)
+void CPlayerView::OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen)
 {
     if (!!m_pD3DD9)
     {
@@ -1122,7 +1122,7 @@ void CPlayerViewDxva2::OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen)
 }
 
 
-void CPlayerViewDxva2::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+void CPlayerView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
     if (lHint == UPDATE_HINT_CLOSING)
     {
