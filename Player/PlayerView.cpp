@@ -243,10 +243,10 @@ void CopyAndConvert(
 } // namespace
 
 
-class FrameListenerDxva2 : public IFrameListener
+class FrameListener : public IFrameListener
 {
 public:
-    explicit FrameListenerDxva2(CPlayerView* playerView) : m_playerView(playerView) {}
+    explicit FrameListener(CPlayerView* playerView) : m_playerView(playerView) {}
 
 private:
     void updateFrame() override
@@ -269,7 +269,7 @@ private:
 IMPLEMENT_DYNCREATE(CPlayerView, CView)
 
 CPlayerView::CPlayerView()
-: m_frameListener(new FrameListenerDxva2(this))
+: m_frameListener(new FrameListener(this))
 , m_aspectRatio(1, 1)
 {
 }

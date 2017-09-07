@@ -50,10 +50,10 @@ HRESULT GetTextSize(const WCHAR* text, IDWriteTextFormat* pTextFormat, const SIZ
 
 } // namespace
 
-class FrameListener : public IFrameListener
+class FrameListenerD2D : public IFrameListener
 {
 public:
-    explicit FrameListener(CPlayerViewD2D* playerView) : m_playerView(playerView) {}
+    explicit FrameListenerD2D(CPlayerViewD2D* playerView) : m_playerView(playerView) {}
 
 private:
     void updateFrame() override
@@ -96,7 +96,7 @@ END_MESSAGE_MAP()
 // CPlayerViewD2D construction/destruction
 
 CPlayerViewD2D::CPlayerViewD2D()
-    : m_frameListener(new FrameListener(this))
+    : m_frameListener(new FrameListenerD2D(this))
     , m_aspectRatio(1.f)
 {
     // Enable D2D support for this window:

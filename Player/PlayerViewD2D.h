@@ -9,7 +9,7 @@ struct ID2D1Effect;
 
 class CPlayerViewD2D : public CView
 {
-friend class FrameListener;
+friend class FrameListenerD2D;
 
 protected: // create from serialization only
     CPlayerViewD2D();

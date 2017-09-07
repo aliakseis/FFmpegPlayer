@@ -22,7 +22,7 @@ class CPlayerDoc;
 
 class CPlayerView : public CView, public IEraseableArea
 {
-    friend class FrameListenerDxva2;
+    friend class FrameListener;
 
     DECLARE_DYNCREATE(CPlayerView)
 
