@@ -127,7 +127,7 @@
     <ClInclude Include="MakeDelegate.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerDoc.h" />
-    <ClInclude Include="PlayerView.h" />
+    <ClInclude Include="PlayerViewD2D.h" />
     <ClInclude Include="PlayerViewDxva2.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -143,7 +143,7 @@
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerDoc.cpp" />
-    <ClCompile Include="PlayerView.cpp" />
+    <ClCompile Include="PlayerViewD2D.cpp" />
     <ClCompile Include="PlayerViewDxva2.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

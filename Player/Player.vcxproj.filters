@@ -33,9 +33,6 @@
     <ClInclude Include="PlayerDoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerView.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -66,6 +63,9 @@
     <ClInclude Include="DialogOpenURL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PlayerViewD2D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Player.cpp">
@@ -78,9 +78,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PlayerDoc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="I420Effect.cpp">
@@ -102,6 +99,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DialogOpenURL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerViewD2D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
