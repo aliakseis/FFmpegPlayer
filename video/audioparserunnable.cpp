@@ -6,6 +6,18 @@
 #include <functional>
 #include <memory>
 
+namespace {
+
+uint8_t** getAudioData(AVFrame* audioFrame)
+{
+    return audioFrame->extended_data
+        ? audioFrame->extended_data
+        : &audioFrame->data[0];
+}
+
+} // namespace
+
+
 void FFmpegDecoder::audioParseRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Audio thread started";
@@ -157,23 +169,22 @@ bool FFmpegDecoder::handleAudioPacket(
         }
 
         const AVSampleFormat audioFrameFormat = (AVSampleFormat)m_audioFrame->format;
+        const int audioFrameChannels = av_frame_get_channels(m_audioFrame);
 
         const int original_buffer_size = av_samples_get_buffer_size(
-            nullptr, av_frame_get_channels(m_audioFrame),
+            nullptr, audioFrameChannels,
             m_audioFrame->nb_samples, audioFrameFormat, 1);
 
         // write buffer
-        uint8_t* write_data = (m_audioFrame->extended_data)
-                                  ? *m_audioFrame->extended_data
-                                  : m_audioFrame->data[0];
+        uint8_t* write_data = *getAudioData(m_audioFrame);
         int64_t write_size = original_buffer_size;
 
         const int64_t dec_channel_layout =
             (m_audioFrame->channel_layout &&
-             av_frame_get_channels(m_audioFrame) ==
+                audioFrameChannels ==
                  av_get_channel_layout_nb_channels(m_audioFrame->channel_layout))
                 ? m_audioFrame->channel_layout
-                : av_get_default_channel_layout(av_frame_get_channels(m_audioFrame));
+                : av_get_default_channel_layout(audioFrameChannels);
 
         // Check if the new swr context required
         if (audioFrameFormat != m_audioCurrentPref.format ||
@@ -192,7 +203,7 @@ bool FFmpegDecoder::handleAudioPacket(
             }
 
             m_audioCurrentPref.format = audioFrameFormat;
-            m_audioCurrentPref.channels = av_frame_get_channels(m_audioFrame);
+            m_audioCurrentPref.channels = audioFrameChannels;
             m_audioCurrentPref.channel_layout = dec_channel_layout;
             m_audioCurrentPref.frequency = m_audioFrame->sample_rate;
         }
@@ -221,9 +232,7 @@ bool FFmpegDecoder::handleAudioPacket(
                 m_audioSwrContext, 
                 &out,
                 out_count,
-                const_cast<const uint8_t**>(m_audioFrame->extended_data
-                    ? m_audioFrame->extended_data
-                    : &m_audioFrame->data[0]),
+                const_cast<const uint8_t**>(getAudioData(m_audioFrame)),
                 m_audioFrame->nb_samples);
 
             if (converted_size < 0)
@@ -266,7 +275,7 @@ bool FFmpegDecoder::handleAudioPacket(
                 m_audioFrame->sample_rate)
             {
                 const double frame_clock =
-                    (double)original_buffer_size / (av_frame_get_channels(m_audioFrame) *
+                    (double)original_buffer_size / (audioFrameChannels *
                                                     m_audioFrame->sample_rate *
                                                     av_get_bytes_per_sample(audioFrameFormat));
 
