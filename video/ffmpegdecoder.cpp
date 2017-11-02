@@ -462,7 +462,12 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         : ((m_formatContext->duration == AV_NOPTS_VALUE)? 0 
 			: int64_t((m_formatContext->duration / av_q2d(timeStream->time_base)) / 1000000LL));
 
-    resetVideoProcessing();
+    if (!resetVideoProcessing())
+    {
+        return false;
+    }
+
+    m_audioCurrentPref = m_audioSettings;
 
     if (m_audioStreamNumber >= 0)
     {
@@ -474,44 +479,36 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
                 m_audioCodecContext,
                 m_formatContext->streams[m_audioStreamNumber]->codecpar) < 0)
             return false;
-    }
 
-    auto audioCodecContextGuard = MakeGuard(&m_audioCodecContext, avcodec_free_context);
+        auto audioCodecContextGuard = MakeGuard(&m_audioCodecContext, avcodec_free_context);
 
-    // Find audio codec
-    if (m_audioStreamNumber >= 0)
-    {
+        // Find audio codec
         m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id);
         if (m_audioCodec == nullptr)
         {
             assert(false && "No such codec found");
             return false;  // Codec not found
         }
-    }
 
-    // Open audio codec
-    if (m_audioStreamNumber >= 0)
-    {
+        // Open audio codec
         if (avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr) < 0)
         {
             assert(false && "Error on codec opening");
             return false;  // Could not open codec
         }
-    }
 
-    m_audioCurrentPref = m_audioSettings;
+        if (!m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
+            m_audioSettings.frequency, m_audioSettings.channels))
+        {
+            return false;
+        }
 
-    if (m_audioStreamNumber >= 0 
-            && !m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
-                m_audioSettings.frequency, m_audioSettings.channels))
-    {
-        return false;
+        audioCodecContextGuard.release();
     }
 
     m_videoFrame = av_frame_alloc();
     m_audioFrame = av_frame_alloc();
 
-    audioCodecContextGuard.release();
     formatContextGuard.release();
     m_ioCtx = std::move(ioCtx);
 
