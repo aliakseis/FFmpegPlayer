@@ -60,7 +60,7 @@ private:
     {
         m_playerView->updateFrame();
     }
-    void drawFrame() override
+    void drawFrame(IFrameDecoder* decoder) override
     {
         CHwndRenderTarget* renderTarget = m_playerView->LockRenderTarget();
         if (renderTarget)
@@ -72,7 +72,7 @@ private:
             m_playerView->UnlockRenderTarget();
         }
 
-        m_playerView->GetDocument()->getFrameDecoder()->finishedDisplayingFrame();
+        decoder->finishedDisplayingFrame();
     }
 
 private:

@@ -13,6 +13,8 @@ typedef std::string PathType;
 struct IDirect3DDevice9;
 struct IDirect3DSurface9;
 
+struct IFrameDecoder;
+
 struct FrameRenderingData
 {
     uint8_t** image{};
@@ -30,7 +32,7 @@ struct IFrameListener
 {
     virtual ~IFrameListener() {}
     virtual void updateFrame() = 0;
-    virtual void drawFrame() = 0;
+    virtual void drawFrame(IFrameDecoder* decoder) = 0; // decoder->finishedDisplayingFrame() must be called
 };
 
 struct FrameDecoderListener

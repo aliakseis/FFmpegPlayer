@@ -63,7 +63,7 @@ void FFmpegDecoder::displayRunnable()
         }
         if (m_frameListener)
         {
-            m_frameListener->drawFrame();
+            m_frameListener->drawFrame(this);
         }
         else
         {
