@@ -50,8 +50,7 @@ struct DelegateMaker
 };
 
 template<typename T, typename return_type, typename... params>
-DelegateMaker<T, return_type, params... >
-makeDelegate(return_type(T::*)(params...))
+inline auto makeDelegate(return_type(T::*)(params...))
 {
     return DelegateMaker<T, return_type, params...>();
 }
