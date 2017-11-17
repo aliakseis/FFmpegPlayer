@@ -467,43 +467,9 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         return false;
     }
 
-    m_audioCurrentPref = m_audioSettings;
-
-    if (m_audioStreamNumber >= 0)
+    if (!setupAudioProcessing())
     {
-        CHANNEL_LOG(ffmpeg_opening) << "Audio steam number: " << m_audioStreamNumber;
-        m_audioCodecContext = avcodec_alloc_context3(nullptr);
-        if (!m_audioCodecContext)
-            return false;
-        if (avcodec_parameters_to_context(
-                m_audioCodecContext,
-                m_formatContext->streams[m_audioStreamNumber]->codecpar) < 0)
-            return false;
-
-        auto audioCodecContextGuard = MakeGuard(&m_audioCodecContext, avcodec_free_context);
-
-        // Find audio codec
-        m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id);
-        if (m_audioCodec == nullptr)
-        {
-            assert(false && "No such codec found");
-            return false;  // Codec not found
-        }
-
-        // Open audio codec
-        if (avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr) < 0)
-        {
-            assert(false && "Error on codec opening");
-            return false;  // Could not open codec
-        }
-
-        if (!m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
-            m_audioSettings.frequency, m_audioSettings.channels))
-        {
-            return false;
-        }
-
-        audioCodecContextGuard.release();
+        return false;
     }
 
     m_videoFrame = av_frame_alloc();
@@ -595,6 +561,50 @@ bool FFmpegDecoder::resetVideoProcessing()
     }
 
     videoCodecContextGuard.release();
+
+    return true;
+}
+
+bool FFmpegDecoder::setupAudioProcessing()
+{
+    m_audioCurrentPref = m_audioSettings;
+
+    if (m_audioStreamNumber >= 0)
+    {
+        CHANNEL_LOG(ffmpeg_opening) << "Audio steam number: " << m_audioStreamNumber;
+        m_audioCodecContext = avcodec_alloc_context3(nullptr);
+        if (!m_audioCodecContext)
+            return false;
+        if (avcodec_parameters_to_context(
+            m_audioCodecContext,
+            m_formatContext->streams[m_audioStreamNumber]->codecpar) < 0)
+            return false;
+
+        auto audioCodecContextGuard = MakeGuard(&m_audioCodecContext, avcodec_free_context);
+
+        // Find audio codec
+        m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id);
+        if (m_audioCodec == nullptr)
+        {
+            assert(false && "No such codec found");
+            return false;  // Codec not found
+        }
+
+        // Open audio codec
+        if (avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr) < 0)
+        {
+            assert(false && "Error on codec opening");
+            return false;  // Could not open codec
+        }
+
+        if (!m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
+            m_audioSettings.frequency, m_audioSettings.channels))
+        {
+            return false;
+        }
+
+        audioCodecContextGuard.release();
+    }
 
     return true;
 }

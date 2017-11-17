@@ -126,6 +126,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     bool openDecoder(const PathType& file, const std::string& url, bool isFile);
 
     bool resetVideoProcessing();
+    bool setupAudioProcessing();
 
     void seekWhilePaused();
 

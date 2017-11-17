@@ -15,6 +15,15 @@ uint8_t** getAudioData(AVFrame* audioFrame)
         : &audioFrame->data[0];
 }
 
+int64_t getChannelLayout(AVFrame* audioFrame)
+{
+    const int audioFrameChannels = av_frame_get_channels(audioFrame);
+    return (audioFrame->channel_layout &&
+        audioFrameChannels == av_get_channel_layout_nb_channels(audioFrame->channel_layout))
+        ? audioFrame->channel_layout
+        : av_get_default_channel_layout(audioFrameChannels);
+}
+
 } // namespace
 
 
@@ -179,12 +188,7 @@ bool FFmpegDecoder::handleAudioPacket(
         uint8_t* write_data = *getAudioData(m_audioFrame);
         int64_t write_size = original_buffer_size;
 
-        const int64_t dec_channel_layout =
-            (m_audioFrame->channel_layout &&
-                audioFrameChannels ==
-                 av_get_channel_layout_nb_channels(m_audioFrame->channel_layout))
-                ? m_audioFrame->channel_layout
-                : av_get_default_channel_layout(audioFrameChannels);
+        const int64_t dec_channel_layout = getChannelLayout(m_audioFrame);
 
         // Check if the new swr context required
         if (audioFrameFormat != m_audioCurrentPref.format ||
