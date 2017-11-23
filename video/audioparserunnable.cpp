@@ -33,7 +33,6 @@ void FFmpegDecoder::audioParseRunnable()
     AVPacket packet;
 
     bool initialized = false;
-    bool handlePacketPostponed = false;
 
     m_audioPlayer->InitializeThread();
     auto deinitializeThread = MakeGuard(
@@ -42,107 +41,70 @@ void FFmpegDecoder::audioParseRunnable()
 
     std::vector<uint8_t> resampleBuffer;
 
-    try
+    for (;;)
     {
+        if (m_isPaused)
+        {
+            if (!m_audioPaused)
+            {
+                m_audioPlayer->WaveOutPause();
+            }
+            m_audioPaused = true;
+
+            boost::this_thread::interruption_point();
+
+            boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
+            while (m_isPaused)
+            {
+                m_isPausedCV.wait(locker);
+            }
+            continue;
+        }
+
+        if (m_audioPaused)
+        {
+            m_audioPlayer->WaveOutRestart();
+            m_audioPaused = false;
+        }
+
         for (;;)
         {
-            if (m_isPaused && !m_isAudioSeekingWhilePaused)
+            if (!m_audioPacketsQueue.pop(packet,
+                [this] { return static_cast<bool>(m_isPaused); }))
             {
-                if (!m_audioPaused)
-                {
-                    m_audioPlayer->WaveOutPause();
-                }
-                m_audioPaused = true;
-
-                boost::this_thread::interruption_point();
-
-                boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
-                while (m_isPaused)
-                {
-                    m_isPausedCV.wait(locker);
-                }
-                continue;
+                break;
             }
 
-            if (m_audioPaused && !m_isAudioSeekingWhilePaused)
+            auto packetGuard = MakeGuard(&packet, av_packet_unref);
+
+            if (!initialized)
             {
-                m_audioPlayer->WaveOutRestart();
-                m_audioPaused = false;
+                if (packet.pts != AV_NOPTS_VALUE)
+                {
+                    const double pts = av_q2d(m_audioStream->time_base) * packet.pts;
+                    m_audioPTS = pts;
+                }
+                else
+                {
+                    assert(false && "No audio pts found");
+                    return;
+                }
+
+                // invoke changedFramePosition() if needed
+                //AppendFrameClock(0);
             }
 
-            if (handlePacketPostponed)
+            initialized = true;
+
+            const bool handled = handleAudioPacket(packet, resampleBuffer);
+            if (!handled || m_isPaused)
             {
-                handlePacketPostponed = false;
-                if (!m_isAudioSeekingWhilePaused)
-                {
-                    // ignore result for the first time
-                    handleAudioPacket(packet, resampleBuffer);
-                }
-                av_packet_unref(&packet);
+                break;
             }
-
-            for (;;)
-            {
-                if (!m_audioPacketsQueue.pop(packet,
-                    [this] { return m_isPaused && !m_isAudioSeekingWhilePaused; }))
-                {
-                    break;
-                }
-
-                if (!initialized)
-                {
-                    if (packet.pts != AV_NOPTS_VALUE)
-                    {
-                        const double pts = av_q2d(m_audioStream->time_base) * packet.pts;
-                        m_audioPTS = pts;
-                    }
-                    else
-                    {
-                        assert(false && "No audio pts found");
-                        return;
-                    }
-
-                    // invoke changedFramePosition() if needed
-                    AppendFrameClock(0);
-
-                    if (m_isAudioSeekingWhilePaused)
-                    {
-                        m_isAudioSeekingWhilePaused = false;
-                        handlePacketPostponed = true;
-
-                        break;
-                    }
-                }
-
-                initialized = true;
-
-                if (packet.size == 0)
-                {
-                    CHANNEL_LOG(ffmpeg_audio) << "Packet size = 0";
-                    break;
-                }
-
-                const bool handled = handleAudioPacket(packet, resampleBuffer);
-                av_packet_unref(&packet);
-
-                if (!handled || m_isPaused && !m_isAudioSeekingWhilePaused)
-                {
-                    break;
-                }
-            }
-
-            // Break thread
-            boost::this_thread::interruption_point();
         }
-    }
-    catch (...)
-    {
-        if (handlePacketPostponed)
-        {
-            av_packet_unref(&packet);
-        }
-        CHANNEL_LOG(ffmpeg_threads) << "Audio thread interrupted";
-        throw;
+
+        // Break thread
+        boost::this_thread::interruption_point();
     }
 }
 

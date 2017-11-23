@@ -263,7 +263,6 @@ void FFmpegDecoder::resetVariables()
 
     m_videoResetting = false;
 
-    m_isAudioSeekingWhilePaused = false;
     m_isVideoSeekingWhilePaused = false;
 
     m_isPlaying = false;
@@ -722,7 +721,6 @@ void FFmpegDecoder::seekWhilePaused()
         m_pauseTimer = GetHiResTime();
     }
 
-    m_isAudioSeekingWhilePaused = paused;
     m_isVideoSeekingWhilePaused = paused;
 }
 

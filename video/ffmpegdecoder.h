@@ -216,7 +216,6 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     boost::condition_variable m_isPausedCV;
     double m_pauseTimer;
 
-    bool m_isAudioSeekingWhilePaused;
     bool m_isVideoSeekingWhilePaused;
 
     // Audio
