@@ -179,7 +179,6 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 
     m_mainDisplayThread.reset(new boost::thread(&FFmpegDecoder::displayRunnable, this));
 
-    const auto currentTime = GetHiResTime();
     if (hasVideo)
     {
         if (m_videoCodecContext)

@@ -58,7 +58,6 @@ void FFmpegDecoder::audioParseRunnable()
             {
                 m_isPausedCV.wait(locker);
             }
-            continue;
         }
 
         if (m_audioPaused)

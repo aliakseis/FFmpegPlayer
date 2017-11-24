@@ -71,7 +71,6 @@ void FFmpegDecoder::videoParseRunnable()
             {
                 m_isPausedCV.wait(locker);
             }
-            continue;
         }
 
         for (;;)
