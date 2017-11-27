@@ -58,7 +58,7 @@ private:
     bool ResetDevice();
     bool ProcessVideo();
 
-    CRect GetTargetRect();
+    CRect GetScreenPosition();
 
 private:
     std::unique_ptr<IFrameListener> m_frameListener;

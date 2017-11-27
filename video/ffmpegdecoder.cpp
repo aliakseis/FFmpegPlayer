@@ -761,7 +761,7 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
     if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
     {
         data->d3d9device = get_device(m_videoCodecContext);
-        data->surface = (IDirect3DSurface9*)current_frame.m_image->data[3];
+        data->surface = (IDirect3DSurface9**)&current_frame.m_image->data[3];
     }
 #endif
 

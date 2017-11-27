@@ -113,12 +113,12 @@ BOOL InitializeModule()
     return TRUE;
 }
 
-D3DPRESENT_PARAMETERS GetD3dPresentParams(HWND hWnd, const CSize& backBufferSize)
+D3DPRESENT_PARAMETERS GetD3dPresentParams(HWND hWnd)
 {
     D3DPRESENT_PARAMETERS D3DPP = { 0 };
 
-    D3DPP.BackBufferWidth = backBufferSize.cx;
-    D3DPP.BackBufferHeight = backBufferSize.cy;
+    D3DPP.BackBufferWidth = GetSystemMetrics(SM_CXSCREEN);
+    D3DPP.BackBufferHeight = GetSystemMetrics(SM_CYSCREEN);
 
     D3DPP.BackBufferFormat = VIDEO_RENDER_TARGET_FORMAT;
     D3DPP.BackBufferCount = BACK_BUFFER_COUNT;
@@ -296,7 +296,7 @@ bool CPlayerView::InitializeD3D9()
         return false;
     }
 
-    auto D3DPP = GetD3dPresentParams(*this, m_sourceSize);
+    auto D3DPP = GetD3dPresentParams(*this);
 
     //
     // First try to create a hardware D3D9 device.
@@ -683,7 +683,7 @@ bool CPlayerView::ResetDevice()
         //
         // Reset will change the parameters, so use a copy instead.
         //
-        auto d3dpp = GetD3dPresentParams(*this, m_sourceSize);
+        auto d3dpp = GetD3dPresentParams(*this);
 
         HRESULT hr = m_pD3DD9->Reset(&d3dpp);
 
@@ -716,7 +716,7 @@ bool CPlayerView::ResetDevice()
 }
 
 
-CRect CPlayerView::GetTargetRect()
+CRect CPlayerView::GetScreenPosition()
 {
     CRect desc;
     GetClientRect(&desc);
@@ -795,8 +795,143 @@ bool CPlayerView::ProcessVideo()
     }
 
     RECT srcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
-    CRect target = GetTargetRect();
-    hr = m_pD3DD9->Present(&srcRect, &target, GetSafeHwnd(), NULL);
+    CRect screenPosition = GetScreenPosition();
+    CRect target(POINT{}, screenPosition.Size());
+
+
+#ifdef USE_DXVA2
+    DXVA2_VideoProcessBltParams blt = { 0 };
+    DXVA2_VideoSample samples[1] = { 0 };
+
+    LONGLONG start_100ns = 0;// frame * LONGLONG(VIDEO_100NSPF);
+    LONGLONG end_100ns = 0;// start_100ns + LONGLONG(VIDEO_100NSPF);
+
+    // Initialize VPBlt parameters.
+    blt.TargetFrame = start_100ns;
+    blt.TargetRect = target;
+
+    // DXVA2_VideoProcess_Constriction
+    blt.ConstrictionSize.cx = target.right - target.left;
+    blt.ConstrictionSize.cy = target.bottom - target.top;
+
+    blt.BackgroundColor = GetBackgroundColor();
+
+    // DXVA2_VideoProcess_YUV2RGBExtended
+    blt.DestFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_Unknown;
+    blt.DestFormat.NominalRange = DXVA2_NominalRange_Unknown;
+    blt.DestFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_Unknown;
+    blt.DestFormat.VideoLighting = DXVA2_VideoLighting_dim;
+    blt.DestFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+    blt.DestFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+
+    blt.DestFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+
+    // DXVA2_ProcAmp_Brightness
+    blt.ProcAmpValues.Brightness.ll = m_ProcAmpValues[0];
+    // DXVA2_ProcAmp_Contrast
+    blt.ProcAmpValues.Contrast.ll = m_ProcAmpValues[1];
+    // DXVA2_ProcAmp_Hue
+    blt.ProcAmpValues.Hue.ll = m_ProcAmpValues[2];
+    // DXVA2_ProcAmp_Saturation
+    blt.ProcAmpValues.Saturation.ll = m_ProcAmpValues[3];
+
+    // DXVA2_VideoProcess_AlphaBlend
+    blt.Alpha = DXVA2_Fixed32OpaqueAlpha();
+
+    // DXVA2_VideoProcess_NoiseFilter
+    blt.NoiseFilterLuma.Level.ll = m_NFilterValues[0];
+    blt.NoiseFilterLuma.Threshold.ll = m_NFilterValues[1];
+    blt.NoiseFilterLuma.Radius.ll = m_NFilterValues[2];
+    blt.NoiseFilterChroma.Level.ll = m_NFilterValues[3];
+    blt.NoiseFilterChroma.Threshold.ll = m_NFilterValues[4];
+    blt.NoiseFilterChroma.Radius.ll = m_NFilterValues[5];
+
+    // DXVA2_VideoProcess_DetailFilter
+    blt.DetailFilterLuma.Level.ll = m_DFilterValues[0];
+    blt.DetailFilterLuma.Threshold.ll = m_DFilterValues[1];
+    blt.DetailFilterLuma.Radius.ll = m_DFilterValues[2];
+    blt.DetailFilterChroma.Level.ll = m_DFilterValues[3];
+    blt.DetailFilterChroma.Threshold.ll = m_DFilterValues[4];
+    blt.DetailFilterChroma.Radius.ll = m_DFilterValues[5];
+
+    // Initialize main stream video sample.
+    samples[0].Start = start_100ns;
+    samples[0].End = end_100ns;
+
+    // DXVA2_VideoProcess_YUV2RGBExtended
+    samples[0].SampleFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_MPEG2;
+    samples[0].SampleFormat.NominalRange = DXVA2_NominalRange_16_235;
+    samples[0].SampleFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_BT601;
+    samples[0].SampleFormat.VideoLighting = DXVA2_VideoLighting_dim;
+    samples[0].SampleFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+    samples[0].SampleFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+
+    samples[0].SampleFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+
+    samples[0].SrcSurface = m_pMainStream;
+
+    // DXVA2_VideoProcess_SubRects
+    samples[0].SrcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+
+    // DXVA2_VideoProcess_StretchX, Y
+    samples[0].DstRect = target;
+
+    // DXVA2_VideoProcess_PlanarAlpha
+    samples[0].PlanarAlpha = DXVA2FloatToFixed(1.f);
+
+    hr = m_pDXVAVPD->VideoProcessBlt(m_pD3DRT,
+        &blt,
+        samples,
+        SUB_STREAM_COUNT + 1,
+        NULL);
+    if (FAILED(hr))
+    {
+        TRACE("VideoProcessBlt failed with error 0x%x.\n", hr);
+    }
+#else
+    m_pD3DD9->Clear(
+        0,
+        NULL,
+        D3DCLEAR_TARGET,
+        D3DCOLOR_XRGB(0, 0, 0),
+        1.0f,
+        0);
+
+    RECT rect{ 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+
+    hr = m_pD3DD9->StretchRect(
+        //data.surface ? data.surface : m_pMainStream,
+        m_pMainStream,
+        &srcRect,
+        m_pD3DRT,
+        &target,
+        D3DTEXF_NONE);
+    if (FAILED(hr))
+    {
+        TRACE("StretchRect failed with error 0x%x.\n", hr);
+    }
+#endif
+
+    auto subtitle = GetDocument()->getSubtitle();
+    if (!subtitle.empty())
+    {
+        const auto& convertedSubtitle = CA2T(subtitle.c_str(), CP_UTF8);
+        hr = m_pD3DD9->BeginScene();
+        if (SUCCEEDED(hr))
+        {
+            CSize boundingBox;
+            m_subtitleFont->GetTextExtent(convertedSubtitle, &boundingBox);
+            const CSize frameSize = target.Size();
+            const auto left = (frameSize.cx - boundingBox.cx) / 2;
+            const auto top = frameSize.cy - boundingBox.cy - 2;
+            m_subtitleFont->DrawText(left + 1, top + 1, D3DCOLOR_XRGB(0, 0, 0), convertedSubtitle);
+            m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
+            m_pD3DD9->EndScene();
+        }
+    }
+
+
+    hr = m_pD3DD9->Present(&target, &screenPosition, GetSafeHwnd(), NULL);
     if (FAILED(hr))
     {
         TRACE("Present failed with error 0x%x.\n", hr);
@@ -919,7 +1054,11 @@ void CPlayerView::updateFrame()
         ResetDevice();
     }
 
-    if (!data.surface)
+    if (data.surface)
+    {
+        std::swap(m_pMainStream.p, *data.surface);
+    }
+    else
     {
         D3DLOCKED_RECT lr;
         HRESULT hr = m_pMainStream->LockRect(&lr, NULL, D3DLOCK_NOSYSLOCK);
@@ -953,139 +1092,6 @@ void CPlayerView::updateFrame()
         if (FAILED(hr))
         {
             TRACE("UnlockRect failed with error 0x%x.\n", hr);
-        }
-    }
-
-#ifdef USE_DXVA2
-    DXVA2_VideoProcessBltParams blt = { 0 };
-    DXVA2_VideoSample samples[1] = { 0 };
-
-    LONGLONG start_100ns = 0;// frame * LONGLONG(VIDEO_100NSPF);
-    LONGLONG end_100ns = 0;// start_100ns + LONGLONG(VIDEO_100NSPF);
-
-    //
-    // Initialize VPBlt parameters.
-    //
-    blt.TargetFrame = start_100ns;
-    blt.TargetRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };//target;
-
-    // DXVA2_VideoProcess_Constriction
-    blt.ConstrictionSize.cx = m_sourceSize.cx;
-    blt.ConstrictionSize.cy = m_sourceSize.cy;
-
-    blt.BackgroundColor = GetBackgroundColor();
-
-    // DXVA2_VideoProcess_YUV2RGBExtended
-    blt.DestFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_Unknown;
-    blt.DestFormat.NominalRange = DXVA2_NominalRange_Unknown;
-    blt.DestFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_Unknown;
-    blt.DestFormat.VideoLighting = DXVA2_VideoLighting_dim;
-    blt.DestFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
-    blt.DestFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
-
-    blt.DestFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
-
-    // DXVA2_ProcAmp_Brightness
-    blt.ProcAmpValues.Brightness.ll = m_ProcAmpValues[0];
-    // DXVA2_ProcAmp_Contrast
-    blt.ProcAmpValues.Contrast.ll = m_ProcAmpValues[1];
-    // DXVA2_ProcAmp_Hue
-    blt.ProcAmpValues.Hue.ll = m_ProcAmpValues[2];
-    // DXVA2_ProcAmp_Saturation
-    blt.ProcAmpValues.Saturation.ll = m_ProcAmpValues[3];
-
-    // DXVA2_VideoProcess_AlphaBlend
-    blt.Alpha = DXVA2_Fixed32OpaqueAlpha();
-
-    // DXVA2_VideoProcess_NoiseFilter
-    blt.NoiseFilterLuma.Level.ll = m_NFilterValues[0];
-    blt.NoiseFilterLuma.Threshold.ll = m_NFilterValues[1];
-    blt.NoiseFilterLuma.Radius.ll = m_NFilterValues[2];
-    blt.NoiseFilterChroma.Level.ll = m_NFilterValues[3];
-    blt.NoiseFilterChroma.Threshold.ll = m_NFilterValues[4];
-    blt.NoiseFilterChroma.Radius.ll = m_NFilterValues[5];
-
-    // DXVA2_VideoProcess_DetailFilter
-    blt.DetailFilterLuma.Level.ll = m_DFilterValues[0];
-    blt.DetailFilterLuma.Threshold.ll = m_DFilterValues[1];
-    blt.DetailFilterLuma.Radius.ll = m_DFilterValues[2];
-    blt.DetailFilterChroma.Level.ll = m_DFilterValues[3];
-    blt.DetailFilterChroma.Threshold.ll = m_DFilterValues[4];
-    blt.DetailFilterChroma.Radius.ll = m_DFilterValues[5];
-
-    //
-    // Initialize main stream video sample.
-    //
-    samples[0].Start = start_100ns;
-    samples[0].End = end_100ns;
-
-    // DXVA2_VideoProcess_YUV2RGBExtended
-    samples[0].SampleFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_MPEG2;
-    samples[0].SampleFormat.NominalRange = DXVA2_NominalRange_16_235;
-    samples[0].SampleFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_BT601;
-    samples[0].SampleFormat.VideoLighting = DXVA2_VideoLighting_dim;
-    samples[0].SampleFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
-    samples[0].SampleFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
-
-    samples[0].SampleFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
-
-    samples[0].SrcSurface = data.surface ? data.surface : m_pMainStream;
-
-    // DXVA2_VideoProcess_SubRects
-    samples[0].SrcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
-
-    // DXVA2_VideoProcess_StretchX, Y
-    samples[0].DstRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy }; //target;
-
-    // DXVA2_VideoProcess_PlanarAlpha
-    samples[0].PlanarAlpha = DXVA2FloatToFixed(1.f);
-
-    HRESULT hr = m_pDXVAVPD->VideoProcessBlt(m_pD3DRT,
-        &blt,
-        samples,
-        SUB_STREAM_COUNT + 1,
-        NULL);
-    if (FAILED(hr))
-    {
-        TRACE("VideoProcessBlt failed with error 0x%x.\n", hr);
-    }
-#else
-    m_pD3DD9->Clear(
-        0,
-        NULL,
-        D3DCLEAR_TARGET,
-        D3DCOLOR_XRGB(0, 0, 0),
-        1.0f,
-        0);
-
-    RECT rect { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
-
-    HRESULT hr = m_pD3DD9->StretchRect(
-        data.surface ? data.surface : m_pMainStream,
-        &rect,
-        m_pD3DRT,
-        &rect,
-        D3DTEXF_NONE);
-    if (FAILED(hr))
-    {
-        TRACE("StretchRect failed with error 0x%x.\n", hr);
-    }
-#endif
-
-    auto subtitle = GetDocument()->getSubtitle();
-    if (!subtitle.empty())
-    {
-        const auto& convertedSubtitle = CA2T(subtitle.c_str(), CP_UTF8);
-        hr = m_pD3DD9->BeginScene();
-        if (SUCCEEDED(hr))
-        {
-            CSize boundingBox;
-            m_subtitleFont->GetTextExtent(convertedSubtitle, &boundingBox);
-            const auto left = (m_sourceSize.cx - boundingBox.cx) / 2;
-            const auto top = m_sourceSize.cy - boundingBox.cy - 2;
-            m_subtitleFont->DrawText(left + 1, top + 1, D3DCOLOR_XRGB(0, 0, 0), convertedSubtitle);
-            m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
-            m_pD3DD9->EndScene();
         }
     }
 }
@@ -1124,7 +1130,7 @@ void CPlayerView::OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen)
             GetClientRect(&rect);
             MapWindowPoints(pInitiator, &rect);
         }
-        CRect targetRect = GetTargetRect();
+        CRect targetRect = GetScreenPosition();
         targetRect.DeflateRect(1, 1);
         MapWindowPoints(pInitiator, &targetRect);
 

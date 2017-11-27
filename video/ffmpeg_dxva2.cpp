@@ -447,8 +447,8 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
 
         IDirect3D9_GetAdapterDisplayMode(ctx->d3d9, adapter, &d3ddm);
         d3dpp.Windowed = TRUE;
-        d3dpp.BackBufferWidth = s->coded_width;
-        d3dpp.BackBufferHeight = s->coded_height;
+        d3dpp.BackBufferWidth = GetSystemMetrics(SM_CXSCREEN);
+        d3dpp.BackBufferHeight = GetSystemMetrics(SM_CYSCREEN);
         d3dpp.BackBufferCount = 1;
         d3dpp.BackBufferFormat = D3DFMT_X8R8G8B8;// d3ddm.Format;
         d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
@@ -636,7 +636,7 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
 
         /* 4 base work surfaces */
         //ctx->num_surfaces = 4;
-        ctx->num_surfaces = 4 + 2; // two video queue elements
+        ctx->num_surfaces = 4 + 3; // two video queue elements and one cached by view
 
         /* add surfaces based on number of possible refs */
         if (s->codec_id == AV_CODEC_ID_H264 || s->codec_id == AV_CODEC_ID_HEVC)

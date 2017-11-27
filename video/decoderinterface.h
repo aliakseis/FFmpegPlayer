@@ -25,7 +25,7 @@ struct FrameRenderingData
     int aspectDen;
 
     IDirect3DDevice9* d3d9device{};
-    IDirect3DSurface9* surface{};
+    IDirect3DSurface9** surface{};
 };
 
 struct IFrameListener
