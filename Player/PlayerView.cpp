@@ -174,6 +174,103 @@ DXVA2_AYUVSample16 GetBackgroundColor()
     return color;
 }
 
+const LONGLONG start_100ns = 0;// frame * LONGLONG(VIDEO_100NSPF);
+const LONGLONG end_100ns = 0;// start_100ns + LONGLONG(VIDEO_100NSPF);
+
+DXVA2_VideoProcessBltParams GetVideoProcessBltParams(
+    const CRect& target,
+    const LONG (&m_ProcAmpValues)[4],
+    const LONG (&m_NFilterValues)[6],
+    const LONG (&m_DFilterValues)[6])
+{
+    DXVA2_VideoProcessBltParams blt {};
+
+    // Initialize VPBlt parameters.
+    blt.TargetFrame = start_100ns;
+    blt.TargetRect = target;
+
+    // DXVA2_VideoProcess_Constriction
+    blt.ConstrictionSize.cx = target.Width();
+    blt.ConstrictionSize.cy = target.Height();
+
+    blt.BackgroundColor = GetBackgroundColor();
+
+    // DXVA2_VideoProcess_YUV2RGBExtended
+    blt.DestFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_Unknown;
+    blt.DestFormat.NominalRange = DXVA2_NominalRange_Unknown;
+    blt.DestFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_Unknown;
+    blt.DestFormat.VideoLighting = DXVA2_VideoLighting_dim;
+    blt.DestFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+    blt.DestFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+
+    blt.DestFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+
+    // DXVA2_ProcAmp_Brightness
+    blt.ProcAmpValues.Brightness.ll = m_ProcAmpValues[0];
+    // DXVA2_ProcAmp_Contrast
+    blt.ProcAmpValues.Contrast.ll = m_ProcAmpValues[1];
+    // DXVA2_ProcAmp_Hue
+    blt.ProcAmpValues.Hue.ll = m_ProcAmpValues[2];
+    // DXVA2_ProcAmp_Saturation
+    blt.ProcAmpValues.Saturation.ll = m_ProcAmpValues[3];
+
+    // DXVA2_VideoProcess_AlphaBlend
+    blt.Alpha = DXVA2_Fixed32OpaqueAlpha();
+
+    // DXVA2_VideoProcess_NoiseFilter
+    blt.NoiseFilterLuma.Level.ll = m_NFilterValues[0];
+    blt.NoiseFilterLuma.Threshold.ll = m_NFilterValues[1];
+    blt.NoiseFilterLuma.Radius.ll = m_NFilterValues[2];
+    blt.NoiseFilterChroma.Level.ll = m_NFilterValues[3];
+    blt.NoiseFilterChroma.Threshold.ll = m_NFilterValues[4];
+    blt.NoiseFilterChroma.Radius.ll = m_NFilterValues[5];
+
+    // DXVA2_VideoProcess_DetailFilter
+    blt.DetailFilterLuma.Level.ll = m_DFilterValues[0];
+    blt.DetailFilterLuma.Threshold.ll = m_DFilterValues[1];
+    blt.DetailFilterLuma.Radius.ll = m_DFilterValues[2];
+    blt.DetailFilterChroma.Level.ll = m_DFilterValues[3];
+    blt.DetailFilterChroma.Threshold.ll = m_DFilterValues[4];
+    blt.DetailFilterChroma.Radius.ll = m_DFilterValues[5];
+
+    return blt;
+}
+
+DXVA2_VideoSample GetVideoSample(
+    const CSize& m_sourceSize,
+    const CRect& target,
+    IDirect3DSurface9* srcSurface)
+{
+    DXVA2_VideoSample sample {};
+
+    // Initialize main stream video sample.
+    sample.Start = start_100ns;
+    sample.End = end_100ns;
+
+    // DXVA2_VideoProcess_YUV2RGBExtended
+    sample.SampleFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_MPEG2;
+    sample.SampleFormat.NominalRange = DXVA2_NominalRange_16_235;
+    sample.SampleFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_BT601;
+    sample.SampleFormat.VideoLighting = DXVA2_VideoLighting_dim;
+    sample.SampleFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+    sample.SampleFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+
+    sample.SampleFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+
+    sample.SrcSurface = srcSurface; //m_pMainStream;
+
+    // DXVA2_VideoProcess_SubRects
+    sample.SrcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+
+    // DXVA2_VideoProcess_StretchX, Y
+    sample.DstRect = target;
+
+    // DXVA2_VideoProcess_PlanarAlpha
+    sample.PlanarAlpha = DXVA2FloatToFixed(1.f);
+
+    return sample;
+}
+
 #endif
 
 void SimdCopyAndConvert(
@@ -800,88 +897,16 @@ bool CPlayerView::ProcessVideo()
 
 
 #ifdef USE_DXVA2
-    DXVA2_VideoProcessBltParams blt = { 0 };
-    DXVA2_VideoSample samples[1] = { 0 };
-
-    LONGLONG start_100ns = 0;// frame * LONGLONG(VIDEO_100NSPF);
-    LONGLONG end_100ns = 0;// start_100ns + LONGLONG(VIDEO_100NSPF);
-
-    // Initialize VPBlt parameters.
-    blt.TargetFrame = start_100ns;
-    blt.TargetRect = target;
-
-    // DXVA2_VideoProcess_Constriction
-    blt.ConstrictionSize.cx = target.right - target.left;
-    blt.ConstrictionSize.cy = target.bottom - target.top;
-
-    blt.BackgroundColor = GetBackgroundColor();
-
-    // DXVA2_VideoProcess_YUV2RGBExtended
-    blt.DestFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_Unknown;
-    blt.DestFormat.NominalRange = DXVA2_NominalRange_Unknown;
-    blt.DestFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_Unknown;
-    blt.DestFormat.VideoLighting = DXVA2_VideoLighting_dim;
-    blt.DestFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
-    blt.DestFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
-
-    blt.DestFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
-
-    // DXVA2_ProcAmp_Brightness
-    blt.ProcAmpValues.Brightness.ll = m_ProcAmpValues[0];
-    // DXVA2_ProcAmp_Contrast
-    blt.ProcAmpValues.Contrast.ll = m_ProcAmpValues[1];
-    // DXVA2_ProcAmp_Hue
-    blt.ProcAmpValues.Hue.ll = m_ProcAmpValues[2];
-    // DXVA2_ProcAmp_Saturation
-    blt.ProcAmpValues.Saturation.ll = m_ProcAmpValues[3];
-
-    // DXVA2_VideoProcess_AlphaBlend
-    blt.Alpha = DXVA2_Fixed32OpaqueAlpha();
-
-    // DXVA2_VideoProcess_NoiseFilter
-    blt.NoiseFilterLuma.Level.ll = m_NFilterValues[0];
-    blt.NoiseFilterLuma.Threshold.ll = m_NFilterValues[1];
-    blt.NoiseFilterLuma.Radius.ll = m_NFilterValues[2];
-    blt.NoiseFilterChroma.Level.ll = m_NFilterValues[3];
-    blt.NoiseFilterChroma.Threshold.ll = m_NFilterValues[4];
-    blt.NoiseFilterChroma.Radius.ll = m_NFilterValues[5];
-
-    // DXVA2_VideoProcess_DetailFilter
-    blt.DetailFilterLuma.Level.ll = m_DFilterValues[0];
-    blt.DetailFilterLuma.Threshold.ll = m_DFilterValues[1];
-    blt.DetailFilterLuma.Radius.ll = m_DFilterValues[2];
-    blt.DetailFilterChroma.Level.ll = m_DFilterValues[3];
-    blt.DetailFilterChroma.Threshold.ll = m_DFilterValues[4];
-    blt.DetailFilterChroma.Radius.ll = m_DFilterValues[5];
-
-    // Initialize main stream video sample.
-    samples[0].Start = start_100ns;
-    samples[0].End = end_100ns;
-
-    // DXVA2_VideoProcess_YUV2RGBExtended
-    samples[0].SampleFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_MPEG2;
-    samples[0].SampleFormat.NominalRange = DXVA2_NominalRange_16_235;
-    samples[0].SampleFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_BT601;
-    samples[0].SampleFormat.VideoLighting = DXVA2_VideoLighting_dim;
-    samples[0].SampleFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
-    samples[0].SampleFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
-
-    samples[0].SampleFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
-
-    samples[0].SrcSurface = m_pMainStream;
-
-    // DXVA2_VideoProcess_SubRects
-    samples[0].SrcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
-
-    // DXVA2_VideoProcess_StretchX, Y
-    samples[0].DstRect = target;
-
-    // DXVA2_VideoProcess_PlanarAlpha
-    samples[0].PlanarAlpha = DXVA2FloatToFixed(1.f);
+    const auto blt = GetVideoProcessBltParams(
+        target,
+        m_ProcAmpValues,
+        m_NFilterValues,
+        m_DFilterValues);
+    const auto sample = GetVideoSample(m_sourceSize, target, m_pMainStream);
 
     hr = m_pDXVAVPD->VideoProcessBlt(m_pD3DRT,
         &blt,
-        samples,
+        &sample,
         SUB_STREAM_COUNT + 1,
         NULL);
     if (FAILED(hr))
