@@ -89,7 +89,7 @@ std::unique_ptr<IFrameDecoder> GetFrameDecoder(std::unique_ptr<IAudioPlayer> aud
 // https://gist.github.com/xlphs/9895065
 class FFmpegDecoder::IOContext
 {
-public:
+private:
     AVIOContext *ioCtx;
     uint8_t *buffer;  // internal buffer for ffmpeg
     int bufferSize;
