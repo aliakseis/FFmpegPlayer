@@ -155,13 +155,13 @@ FFmpegDecoder::IOContext::IOContext(const PathType &s)
     buffer = (uint8_t *)av_malloc(bufferSize);  // see destructor for details
 
                                                 // open file
-    auto err =
+    if (!(fh = 
 #ifdef _WIN32
-        _wfopen_s(&fh, s.c_str(), L"rb");
+        _wfsopen(s.c_str(), L"rb", _SH_DENYNO)
 #else
-        fopen_s(&fh, s.c_str(), "rb");
+        _fsopen(s.c_str(), "rb", _SH_DENYNO)
 #endif
-    if (err)
+    ))
     {
         // fprintf(stderr, "MyIOContext: failed to open file %s\n", s.c_str());
         BOOST_LOG_TRIVIAL(error) << "MyIOContext: failed to open file";
