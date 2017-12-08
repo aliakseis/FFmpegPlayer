@@ -13,6 +13,25 @@
 #define new DEBUG_NEW
 #endif
 
+namespace {
+
+class FullScreenBarAccessor : public CFullScreenImpl
+{
+public:
+    CMFCToolBar* GetFullScreenBar() { return m_pwndFullScreenBar; }
+};
+
+class FullScreenMgrAccessor : public CFrameImpl
+{
+public:
+    CMFCToolBar* GetFullScreenBar() 
+    { 
+        return static_cast<FullScreenBarAccessor&>(m_FullScreenMgr).GetFullScreenBar(); 
+    }
+};
+
+} // namespace
+
 // CMainFrame
 
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
@@ -166,28 +185,11 @@ void CMainFrame::Dump(CDumpContext& dc) const
 
 // CMainFrame message handlers
 
-
-class FullScreenBarAccessor : public CFullScreenImpl
-{
-public:
-    CMFCToolBar* GetFullScreenBar() { return m_pwndFullScreenBar; }
-};
-
-class FullScreenMgrAccsssor : public CFrameImpl
-{
-public:
-    CMFCToolBar* GetFullScreenBar() 
-    { 
-        return static_cast<FullScreenBarAccessor&>(m_FullScreenMgr).GetFullScreenBar(); 
-    }
-};
-
-
 void CMainFrame::OnFullScreen()
 {
     ModifyStyle(WS_OVERLAPPEDWINDOW, 0, SWP_FRAMECHANGED);
     ShowFullScreen();
-    if (CMFCToolBar* toolBar = static_cast<FullScreenMgrAccsssor&>(m_Impl).GetFullScreenBar())
+    if (CMFCToolBar* toolBar = static_cast<FullScreenMgrAccessor&>(m_Impl).GetFullScreenBar())
     {
         if (auto pFrame = toolBar->GetParentMiniFrame())
         {
