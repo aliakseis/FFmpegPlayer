@@ -8,7 +8,7 @@
 
 #include "decoderinterface.h"
 
-#include "D3DFont.h"
+//#include "D3DFont.h"
 
 #include <initguid.h>
 #include <d3d9.h>
@@ -17,6 +17,7 @@
 #include <dxva2api.h>
 #endif
 
+#include <Gdiplus.h>
 
 #include <vector>
 
@@ -335,6 +336,183 @@ void CopyAndConvert(
         origin0[j] = uv | src00[j * 2] | (src00[j * 2 + 1] << 16);
         origin1[j] = uv | src01[j * 2] | (src01[j * 2 + 1] << 16);
     }
+}
+
+// subtitles
+
+enum { MAX_NUM_VERTICES = 50 * 6 };
+
+typedef struct D3DXVECTOR4 {
+    FLOAT x;
+    FLOAT y;
+    FLOAT z;
+    FLOAT w;
+} D3DXVECTOR4, *LPD3DXVECTOR4;
+
+struct FONT2DVERTEX { D3DXVECTOR4 p;   DWORD color;     FLOAT tu, tv; };
+
+HRESULT RestoreDeviceObjects(LPDIRECT3DDEVICE9 m_pd3dDevice, 
+    IDirect3DTexture9* m_pTexture,
+    CComPtr<IDirect3DVertexBuffer9>& m_pVB,
+    CComPtr<IDirect3DStateBlock9>& m_pStateBlockSaved,
+    CComPtr<IDirect3DStateBlock9>& m_pStateBlockDrawText)
+{
+    HRESULT hr;
+
+    // Create vertex buffer for the letters
+    if (FAILED(hr = m_pd3dDevice->CreateVertexBuffer(MAX_NUM_VERTICES * sizeof(FONT2DVERTEX),
+        D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, 0,
+        D3DPOOL_DEFAULT, &m_pVB, NULL)))
+    {
+        return hr;
+    }
+
+    // Create the state blocks for rendering text
+    for (UINT which = 0; which<2; ++which)
+    {
+        m_pd3dDevice->BeginStateBlock();
+        m_pd3dDevice->SetTexture(0, m_pTexture);
+
+        //if (D3DFONT_ZENABLE & m_dwFontFlags)
+        //    m_pd3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+        //else
+            m_pd3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+
+        m_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+        m_pd3dDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        m_pd3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+        m_pd3dDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+        m_pd3dDevice->SetRenderState(D3DRS_ALPHAREF, 0x08);
+        m_pd3dDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
+        m_pd3dDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+        m_pd3dDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+        m_pd3dDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
+        m_pd3dDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
+        m_pd3dDevice->SetRenderState(D3DRS_CLIPPLANEENABLE, FALSE);
+        m_pd3dDevice->SetRenderState(D3DRS_VERTEXBLEND, D3DVBF_DISABLE);
+        m_pd3dDevice->SetRenderState(D3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
+        m_pd3dDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
+        m_pd3dDevice->SetRenderState(D3DRS_COLORWRITEENABLE,
+            D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN |
+            D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_ALPHA);
+        m_pd3dDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+        m_pd3dDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+        m_pd3dDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+        m_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+        m_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+        m_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+        m_pd3dDevice->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
+        m_pd3dDevice->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+        m_pd3dDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+        m_pd3dDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+        m_pd3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+        m_pd3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+        m_pd3dDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+
+        if (which == 0)
+            m_pd3dDevice->EndStateBlock(&m_pStateBlockSaved);
+        else
+            m_pd3dDevice->EndStateBlock(&m_pStateBlockDrawText);
+    }
+
+    return S_OK;
+}
+
+
+void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const WCHAR* text)
+{
+    using namespace Gdiplus;
+
+    const int fontSize = max(width / 50, 9);
+    Gdiplus::Font font(L"MS Sans Serif", (REAL)fontSize);
+
+    const auto length = wcslen(text);
+    RectF boundingBox;
+
+    {
+        Bitmap bitmap(1, 1);
+        Graphics graphics(&bitmap);
+        graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
+        graphics.MeasureString(text, length, &font, PointF(0, 0), &boundingBox);
+    }
+
+    CComPtr<IDirect3DTexture9> m_pTexture;
+
+    // Create a new texture for the font
+    HRESULT hr = pd3dDevice->CreateTexture(boundingBox.Width, boundingBox.Height, 1,
+        0, 
+        D3DFMT_A4R4G4B4,
+        D3DPOOL_MANAGED, &m_pTexture, NULL);
+    if (FAILED(hr))
+        return;
+
+    D3DLOCKED_RECT d3dlr;
+    m_pTexture->LockRect(0, &d3dlr, 0, 0);
+
+    {
+        Bitmap bitmap(boundingBox.Width, boundingBox.Height, d3dlr.Pitch,
+            PixelFormat16bppRGB565,
+            static_cast<BYTE*>(d3dlr.pBits));
+
+        Graphics graphics(&bitmap);
+        graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
+
+        SolidBrush whiteBrush(Color(0xFF, 0xFF, 0xFF));
+        graphics.DrawString(text, length, &font, PointF(0, 0), &whiteBrush);
+    }
+
+    m_pTexture->UnlockRect(0);
+
+    CComPtr<IDirect3DVertexBuffer9> m_pVB;
+    CComPtr<IDirect3DStateBlock9> m_pStateBlockSaved;
+    CComPtr<IDirect3DStateBlock9> m_pStateBlockDrawText;
+
+    RestoreDeviceObjects(pd3dDevice, m_pTexture, m_pVB, m_pStateBlockSaved, m_pStateBlockDrawText);
+
+    // Setup renderstate
+    m_pStateBlockSaved->Capture();
+    m_pStateBlockDrawText->Apply();
+    pd3dDevice->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+    pd3dDevice->SetPixelShader(NULL);
+    pd3dDevice->SetStreamSource(0, m_pVB, 0, sizeof(FONT2DVERTEX));
+
+    const FLOAT tx1 = 0;
+    const FLOAT ty1 = 0;
+    const FLOAT tx2 = 1;
+    const FLOAT ty2 = 1;
+
+    const FLOAT w = boundingBox.Width;
+    const FLOAT h = boundingBox.Height;
+
+    // Fill vertex buffer
+    FONT2DVERTEX* pVertices = NULL;
+    DWORD         dwNumTriangles = 0;
+    m_pVB->Lock(0, 0, (void**)&pVertices, D3DLOCK_DISCARD);
+
+    for (int pass = 0; pass < 2; ++pass)
+    {
+        const FLOAT sx = (width - boundingBox.Width) / 2 + !pass;
+        const FLOAT sy = height - boundingBox.Height - fontSize / 2 + !pass;
+
+        const DWORD dwColor = pass? D3DCOLOR_XRGB(255, 255, 255) : D3DCOLOR_XRGB(0, 0, 0);
+
+        *pVertices++ = { { sx + 0, sy + h, 0.9f, 1.0f }, dwColor, tx1, ty2 };
+        *pVertices++ = { { sx + 0, sy + 0, 0.9f, 1.0f }, dwColor, tx1, ty1 };
+        *pVertices++ = { { sx + w, sy + h, 0.9f, 1.0f }, dwColor, tx2, ty2 };
+        *pVertices++ = { { sx + w, sy + 0, 0.9f, 1.0f }, dwColor, tx2, ty1 };
+        *pVertices++ = { { sx + w, sy + h, 0.9f, 1.0f }, dwColor, tx2, ty2 };
+        *pVertices++ = { { sx + 0, sy + 0, 0.9f, 1.0f }, dwColor, tx1, ty1 };
+
+        dwNumTriangles += 2;
+    }
+
+    // Unlock and render the vertex buffer
+    m_pVB->Unlock();
+    if (dwNumTriangles > 0)
+        pd3dDevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, dwNumTriangles);
+
+    // Restore the modified renderstates
+    m_pStateBlockSaved->Apply();
 }
 
 } // namespace
@@ -734,22 +912,22 @@ bool CPlayerView::InitializeExtra(bool createSurface)
     }
 #endif
 
-    m_subtitleFont = std::make_unique<CD3DFont>(
-        _T("MS Sans Serif"),
-        max(m_sourceSize.cx / 50, 9));
-    m_subtitleFont->InitDeviceObjects(m_pD3DD9);
-    m_subtitleFont->RestoreDeviceObjects();
+    //m_subtitleFont = std::make_unique<CD3DFont>(
+    //    _T("MS Sans Serif"),
+    //    max(m_sourceSize.cx / 50, 9));
+    //m_subtitleFont->InitDeviceObjects(m_pD3DD9);
+    //m_subtitleFont->RestoreDeviceObjects();
     return true;
 }
 
 void CPlayerView::DestroyExtra()
 {
-    if (m_subtitleFont)
-    {
-        m_subtitleFont->InvalidateDeviceObjects();
-        m_subtitleFont->DeleteDeviceObjects();
-        m_subtitleFont.reset();
-    }
+    //if (m_subtitleFont)
+    //{
+    //    m_subtitleFont->InvalidateDeviceObjects();
+    //    m_subtitleFont->DeleteDeviceObjects();
+    //    m_subtitleFont.reset();
+    //}
 
     m_pMainStream.Release();
 #ifdef USE_DXVA2
@@ -940,17 +1118,21 @@ bool CPlayerView::ProcessVideo()
     auto subtitle = GetDocument()->getSubtitle();
     if (!subtitle.empty())
     {
-        const auto& convertedSubtitle = CA2T(subtitle.c_str(), CP_UTF8);
+        //const auto& convertedSubtitle = CA2T(subtitle.c_str(), CP_UTF8);
         hr = m_pD3DD9->BeginScene();
         if (SUCCEEDED(hr))
         {
-            CSize boundingBox;
-            m_subtitleFont->GetTextExtent(convertedSubtitle, &boundingBox);
-            const CSize frameSize = target.Size();
-            const auto left = (frameSize.cx - boundingBox.cx) / 2;
-            const auto top = frameSize.cy - boundingBox.cy - 2;
-            m_subtitleFont->DrawText(left + 1, top + 1, D3DCOLOR_XRGB(0, 0, 0), convertedSubtitle);
-            m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
+            //CSize boundingBox;
+            //m_subtitleFont->GetTextExtent(convertedSubtitle, &boundingBox);
+            //const CSize frameSize = target.Size();
+            //const auto left = (frameSize.cx - boundingBox.cx) / 2;
+            //const auto top = frameSize.cy - boundingBox.cy - 2;
+            //m_subtitleFont->DrawText(left + 1, top + 1, D3DCOLOR_XRGB(0, 0, 0), convertedSubtitle);
+            //m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
+
+            DrawSubtitleText(m_pD3DD9, target.Width(), target.Height(), 
+                CA2W(subtitle.c_str(), /*CP_UTF8*/ 1251));
+
             m_pD3DD9->EndScene();
         }
     }

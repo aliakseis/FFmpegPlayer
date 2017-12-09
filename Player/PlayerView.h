@@ -12,11 +12,11 @@ struct IDirect3DSurface9;
 struct IDirectXVideoProcessorService;
 struct IDirectXVideoProcessor;
 
-class CD3DFont;
+//class CD3DFont;
 
 class CPlayerDoc;
 
-#define USE_DXVA2
+//#define USE_DXVA2
 
 // CPlayerView view
 
@@ -81,7 +81,7 @@ private:
     LONG m_DFilterValues[6] {};
 #endif
 
-    std::unique_ptr<CD3DFont> m_subtitleFont;
+    //std::unique_ptr<CD3DFont> m_subtitleFont;
 
 public:
     afx_msg void OnPaint();
