@@ -65,7 +65,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(OutDir)video.lib;..\ffmpeg\x86\lib\avutil.lib;..\ffmpeg\x86\lib\avcodec.lib;..\ffmpeg\x86\lib\avformat.lib;..\ffmpeg\x86\lib\swresample.lib;..\ffmpeg\x86\lib\swscale.lib;Winmm.lib;dxva2.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(OutDir)video.lib;Winmm.lib;dxva2.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
     </Link>
     <Midl>
@@ -98,7 +98,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(OutDir)video.lib;..\ffmpeg\x86\lib\avutil.lib;..\ffmpeg\x86\lib\avcodec.lib;..\ffmpeg\x86\lib\avformat.lib;..\ffmpeg\x86\lib\swresample.lib;..\ffmpeg\x86\lib\swscale.lib;Winmm.lib;dxva2.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(OutDir)video.lib;Winmm.lib;dxva2.lib;d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <Midl>
