@@ -47,6 +47,7 @@ private:
 protected:
     DECLARE_MESSAGE_MAP()
     afx_msg LRESULT OnDraw2D(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT DrawFrame(WPARAM wParam, LPARAM lParam);
 public:
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 protected:
@@ -57,5 +58,7 @@ private:
     CSize m_sourceSize;
     float m_aspectRatio;
     CComPtr<ID2D1Effect> m_spEffect;
+
+    CCriticalSection m_csSurface;
 };
 

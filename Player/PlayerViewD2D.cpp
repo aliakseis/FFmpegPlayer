@@ -20,6 +20,8 @@
 #define new DEBUG_NEW
 #endif
 
+enum { WM_DRAW_FRAME = WM_USER + 101 };
+
 namespace {
 
 //Use IDWriteTextLayout to get the text size
@@ -60,19 +62,9 @@ private:
     {
         m_playerView->updateFrame();
     }
-    void drawFrame(IFrameDecoder* decoder) override
+    void drawFrame(IFrameDecoder*) override
     {
-        CHwndRenderTarget* renderTarget = m_playerView->LockRenderTarget();
-        if (renderTarget)
-        {
-            renderTarget->BeginDraw();
-            m_playerView->OnDraw2D(0, (LPARAM)renderTarget);
-            renderTarget->EndDraw();
-
-            m_playerView->UnlockRenderTarget();
-        }
-
-        decoder->finishedDisplayingFrame();
+        m_playerView->SendNotifyMessage(WM_DRAW_FRAME, 0, 0);
     }
 
 private:
@@ -90,6 +82,7 @@ BEGIN_MESSAGE_MAP(CPlayerViewD2D, CView)
     ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
     ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CView::OnFilePrintPreview)
     ON_REGISTERED_MESSAGE(AFX_WM_DRAW2D, &CPlayerViewD2D::OnDraw2D)
+    ON_MESSAGE(WM_DRAW_FRAME, &CPlayerViewD2D::DrawFrame)
     ON_WM_CREATE()
 END_MESSAGE_MAP()
 
@@ -174,6 +167,7 @@ CPlayerDoc* CPlayerViewD2D::GetDocument() const
 
 afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
 {
+    CSingleLock lock(&m_csSurface, TRUE);
 
     CHwndRenderTarget* pRenderTarget = (CHwndRenderTarget*)lParam;
     ASSERT_VALID(pRenderTarget);
@@ -287,6 +281,8 @@ void CPlayerViewD2D::updateFrame()
         return;
     }
 
+    CSingleLock lock(&m_csSurface, TRUE);
+
     CHwndRenderTarget* renderTarget = LockRenderTarget();
     if (!renderTarget)
     {
@@ -311,61 +307,59 @@ void CPlayerViewD2D::updateFrame()
                 return;
             }
         }
-
-        float dpiX;
-        float dpiY;
-        spContext->GetDpi(&dpiX, &dpiY);
-
-        // Init bitmap properties in which will store the y (lumi) plane
-        D2D1_BITMAP_PROPERTIES1 props;
-        D2D1_PIXEL_FORMAT       pixFormat;
-
-        pixFormat.alphaMode = D2D1_ALPHA_MODE_STRAIGHT;
-        pixFormat.format = DXGI_FORMAT_A8_UNORM;
-        props.pixelFormat = pixFormat;
-        props.dpiX = dpiX;
-        props.dpiY = dpiY;
-        props.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
-        props.colorContext = nullptr;
-
-        CComPtr<ID2D1Bitmap1> yBitmap;
-        HRESULT hr = spContext->CreateBitmap(
-            { static_cast<UINT32>(m_sourceSize.cx), static_cast<UINT32>(m_sourceSize.cy) },
-            data.image[0], data.pitch[0], props, &yBitmap);
-        CComPtr<ID2D1Bitmap1> uBitmap;
-        hr = spContext->CreateBitmap(
-            { static_cast<UINT32>(m_sourceSize.cx / 2), static_cast<UINT32>(m_sourceSize.cy / 2) },
-            data.image[1], data.pitch[1], props, &uBitmap);
-        CComPtr<ID2D1Bitmap1> vBitmap;
-        hr = spContext->CreateBitmap(
-            { static_cast<UINT32>(m_sourceSize.cx / 2), static_cast<UINT32>(m_sourceSize.cy / 2) },
-            data.image[2], data.pitch[2], props, &vBitmap);
-
-        m_spEffect->SetInput(0, yBitmap);
-        m_spEffect->SetInput(1, uBitmap);
-        m_spEffect->SetInput(2, vBitmap);
     }
-    else
-    {
-        {
-            D2D1_RECT_U destRect = D2D1::RectU(0, 0, m_sourceSize.cx, m_sourceSize.cy);
-            CComPtr<ID2D1Bitmap1> bitmap;
-            m_spEffect->GetInput(0, (ID2D1Image**)&bitmap);
-            VERIFY(bitmap && SUCCEEDED(bitmap->CopyFromMemory(&destRect, data.image[0], data.pitch[0])));
-        }
-        {
-            D2D1_RECT_U destRect = D2D1::RectU(0, 0, m_sourceSize.cx / 2, m_sourceSize.cy / 2);
-            CComPtr<ID2D1Bitmap1> bitmap;
-            m_spEffect->GetInput(1, (ID2D1Image**)&bitmap);
-            VERIFY(bitmap && SUCCEEDED(bitmap->CopyFromMemory(&destRect, data.image[1], data.pitch[1])));
-        }
-        {
-            D2D1_RECT_U destRect = D2D1::RectU(0, 0, m_sourceSize.cx / 2, m_sourceSize.cy / 2);
-            CComPtr<ID2D1Bitmap1> bitmap;
-            m_spEffect->GetInput(2, (ID2D1Image**)&bitmap);
-            VERIFY(bitmap && SUCCEEDED(bitmap->CopyFromMemory(&destRect, data.image[2], data.pitch[2])));
-        }
-    }
+
+    float dpiX;
+    float dpiY;
+    spContext->GetDpi(&dpiX, &dpiY);
+
+    // Init bitmap properties in which will store the y (lumi) plane
+    D2D1_BITMAP_PROPERTIES1 props;
+    D2D1_PIXEL_FORMAT       pixFormat;
+
+    pixFormat.alphaMode = D2D1_ALPHA_MODE_STRAIGHT;
+    pixFormat.format = DXGI_FORMAT_A8_UNORM;
+    props.pixelFormat = pixFormat;
+    props.dpiX = dpiX;
+    props.dpiY = dpiY;
+    props.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
+    props.colorContext = nullptr;
+
+    CComPtr<ID2D1Bitmap1> yBitmap;
+    HRESULT hr = spContext->CreateBitmap(
+        { static_cast<UINT32>(m_sourceSize.cx), static_cast<UINT32>(m_sourceSize.cy) },
+        data.image[0], data.pitch[0], props, &yBitmap);
+    CComPtr<ID2D1Bitmap1> uBitmap;
+    hr = spContext->CreateBitmap(
+        { static_cast<UINT32>(m_sourceSize.cx / 2), static_cast<UINT32>(m_sourceSize.cy / 2) },
+        data.image[1], data.pitch[1], props, &uBitmap);
+    CComPtr<ID2D1Bitmap1> vBitmap;
+    hr = spContext->CreateBitmap(
+        { static_cast<UINT32>(m_sourceSize.cx / 2), static_cast<UINT32>(m_sourceSize.cy / 2) },
+        data.image[2], data.pitch[2], props, &vBitmap);
+
+    m_spEffect->SetInput(0, yBitmap);
+    m_spEffect->SetInput(1, uBitmap);
+    m_spEffect->SetInput(2, vBitmap);
 
     UnlockRenderTarget();
+}
+
+LRESULT CPlayerViewD2D::DrawFrame(WPARAM, LPARAM)
+{
+    CSingleLock lock(&m_csSurface, TRUE);
+
+    CHwndRenderTarget* renderTarget = LockRenderTarget();
+    if (renderTarget)
+    {
+        renderTarget->BeginDraw();
+        OnDraw2D(0, (LPARAM)renderTarget);
+        renderTarget->EndDraw();
+
+        UnlockRenderTarget();
+    }
+
+    GetDocument()->getFrameDecoder()->finishedDisplayingFrame();
+
+    return 0;
 }

@@ -675,14 +675,16 @@ void FFmpegDecoder::finishedDisplayingFrame()
 {
     {
         boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
-
-        VideoFrame &current_frame = m_videoFramesQueue.front();
-        if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
+        if (m_videoFramesQueue.canPop())
         {
-            av_frame_unref(current_frame.m_image);
-        }
+            VideoFrame &current_frame = m_videoFramesQueue.front();
+            if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
+            {
+                av_frame_unref(current_frame.m_image);
+            }
 
-        m_videoFramesQueue.popFront();
+            m_videoFramesQueue.popFront();
+        }
         m_frameDisplayingRequested = false;
     }
     m_videoFramesCV.notify_all();

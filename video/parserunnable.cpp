@@ -169,10 +169,13 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
     m_mainDisplayThread->join();
 
     // Free videoFrames
-    m_videoFramesQueue.clear();
+    {
+        boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
+        m_videoFramesQueue.clear();
+        m_frameDisplayingRequested = false;
+    }
 
     m_videoResetting = false;
-    m_frameDisplayingRequested = false;
 
     if (resetVideo && !resetVideoProcessing())
         return false;
