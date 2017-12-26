@@ -224,7 +224,7 @@ afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
     auto subtitle = GetDocument()->getSubtitle();
     if (!subtitle.empty())
     {
-        const auto& convertedSubtitle = CA2T(subtitle.c_str(), CP_UTF8);
+        const auto& convertedSubtitle = CA2T(subtitle.c_str(), /*CP_UTF8*/ 1251);
         CComPtr<IDWriteTextFormat> pTextFormat;
         if (SUCCEEDED(AfxGetD2DState()->GetWriteFactory()->CreateTextFormat(
             L"MS Sans Serif",
@@ -349,21 +349,21 @@ void CPlayerViewD2D::updateFrame()
     {
         {
             D2D1_RECT_U destRect = D2D1::RectU(0, 0, m_sourceSize.cx, m_sourceSize.cy);
-            CComPtr<ID2D1Bitmap1> yBitmap;
-            m_spEffect->GetInput(0, (ID2D1Image**)&yBitmap);
-            HRESULT hr = yBitmap->CopyFromMemory(&destRect, data.image[0], data.pitch[0]);
+            CComPtr<ID2D1Bitmap1> bitmap;
+            m_spEffect->GetInput(0, (ID2D1Image**)&bitmap);
+            VERIFY(bitmap && SUCCEEDED(bitmap->CopyFromMemory(&destRect, data.image[0], data.pitch[0])));
         }
         {
             D2D1_RECT_U destRect = D2D1::RectU(0, 0, m_sourceSize.cx / 2, m_sourceSize.cy / 2);
-            CComPtr<ID2D1Bitmap1> yBitmap;
-            m_spEffect->GetInput(1, (ID2D1Image**)&yBitmap);
-            HRESULT hr = yBitmap->CopyFromMemory(&destRect, data.image[1], data.pitch[1]);
+            CComPtr<ID2D1Bitmap1> bitmap;
+            m_spEffect->GetInput(1, (ID2D1Image**)&bitmap);
+            VERIFY(bitmap && SUCCEEDED(bitmap->CopyFromMemory(&destRect, data.image[1], data.pitch[1])));
         }
         {
             D2D1_RECT_U destRect = D2D1::RectU(0, 0, m_sourceSize.cx / 2, m_sourceSize.cy / 2);
-            CComPtr<ID2D1Bitmap1> yBitmap;
-            m_spEffect->GetInput(2, (ID2D1Image**)&yBitmap);
-            HRESULT hr = yBitmap->CopyFromMemory(&destRect, data.image[2], data.pitch[2]);
+            CComPtr<ID2D1Bitmap1> bitmap;
+            m_spEffect->GetInput(2, (ID2D1Image**)&bitmap);
+            VERIFY(bitmap && SUCCEEDED(bitmap->CopyFromMemory(&destRect, data.image[2], data.pitch[2])));
         }
     }
 
