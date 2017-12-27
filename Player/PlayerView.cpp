@@ -522,11 +522,11 @@ private:
     {
         m_playerView->updateFrame();
     }
-    void drawFrame(IFrameDecoder* decoder) override
+    void drawFrame(IFrameDecoder* decoder, unsigned int generation) override
     {
         m_playerView->ProcessVideo();
         //m_playerView->Invalidate();
-	    decoder->finishedDisplayingFrame();
+	    decoder->finishedDisplayingFrame(generation);
     }
 
 private:

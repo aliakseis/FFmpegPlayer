@@ -83,7 +83,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
         return av_q2d((m_videoStream != nullptr)? m_videoStream->time_base : m_audioStream->time_base) * duration;
     }
 
-    void finishedDisplayingFrame() override;
+    void finishedDisplayingFrame(unsigned int generation) override;
 
     void close() override;
     void play(bool isPaused = false) override;
@@ -207,6 +207,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     VQueue m_videoFramesQueue;
 
     bool m_frameDisplayingRequested;
+
+    unsigned int m_generation;
 
     boost::mutex m_videoFramesMutex;
     boost::condition_variable m_videoFramesCV;

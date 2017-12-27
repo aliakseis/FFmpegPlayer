@@ -62,9 +62,9 @@ private:
     {
         m_playerView->updateFrame();
     }
-    void drawFrame(IFrameDecoder*) override
+    void drawFrame(IFrameDecoder*, unsigned int generation) override
     {
-        m_playerView->SendNotifyMessage(WM_DRAW_FRAME, 0, 0);
+        m_playerView->SendNotifyMessage(WM_DRAW_FRAME, 0, generation);
     }
 
 private:
@@ -345,7 +345,7 @@ void CPlayerViewD2D::updateFrame()
     UnlockRenderTarget();
 }
 
-LRESULT CPlayerViewD2D::DrawFrame(WPARAM, LPARAM)
+LRESULT CPlayerViewD2D::DrawFrame(WPARAM, LPARAM generation)
 {
     CSingleLock lock(&m_csSurface, TRUE);
 
@@ -359,7 +359,7 @@ LRESULT CPlayerViewD2D::DrawFrame(WPARAM, LPARAM)
         UnlockRenderTarget();
     }
 
-    GetDocument()->getFrameDecoder()->finishedDisplayingFrame();
+    GetDocument()->getFrameDecoder()->finishedDisplayingFrame(generation);
 
     return 0;
 }

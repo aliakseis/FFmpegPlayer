@@ -22,7 +22,7 @@ void FFmpegDecoder::displayRunnable()
             && m_videoStartClock + current_frame.m_pts < GetHiResTime())
         {
             CHANNEL_LOG(ffmpeg_threads) << __FUNCTION__ << " Framedrop";
-            finishedDisplayingFrame();
+            finishedDisplayingFrame(m_generation);
             continue;
         }
 
@@ -63,11 +63,11 @@ void FFmpegDecoder::displayRunnable()
         }
         if (m_frameListener)
         {
-            m_frameListener->drawFrame(this);
+            m_frameListener->drawFrame(this, m_generation);
         }
         else
         {
-            finishedDisplayingFrame();
+            finishedDisplayingFrame(m_generation);
         }
     }
 }

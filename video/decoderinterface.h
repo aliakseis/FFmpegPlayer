@@ -32,7 +32,7 @@ struct IFrameListener
 {
     virtual ~IFrameListener() {}
     virtual void updateFrame() = 0;
-    virtual void drawFrame(IFrameDecoder* decoder) = 0; // decoder->finishedDisplayingFrame() must be called
+    virtual void drawFrame(IFrameDecoder* decoder, unsigned int generation) = 0; // decoder->finishedDisplayingFrame() must be called
 };
 
 struct FrameDecoderListener
@@ -77,7 +77,7 @@ struct IFrameDecoder
     virtual void setFrameListener(IFrameListener* listener) = 0;
     virtual void setDecoderListener(FrameDecoderListener* listener) = 0;
     virtual bool getFrameRenderingData(FrameRenderingData* data) = 0;
-    virtual void finishedDisplayingFrame() = 0;
+    virtual void finishedDisplayingFrame(unsigned int generation) = 0;
 
     virtual void close() = 0;
 

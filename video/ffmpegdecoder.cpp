@@ -256,6 +256,8 @@ void FFmpegDecoder::resetVariables()
 
     m_frameDisplayingRequested = false;
 
+    m_generation = 0;
+
     m_isPaused = false;
 
     m_seekDuration = AV_NOPTS_VALUE;
@@ -671,11 +673,11 @@ void FFmpegDecoder::SetFrameFormat(FrameFormat format, bool allowDirect3dData)
     m_allowDirect3dData = allowDirect3dData;
 }
 
-void FFmpegDecoder::finishedDisplayingFrame()
+void FFmpegDecoder::finishedDisplayingFrame(unsigned int generation)
 {
     {
         boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
-        if (m_videoFramesQueue.canPop())
+        if (generation == m_generation && m_videoFramesQueue.canPop())
         {
             VideoFrame &current_frame = m_videoFramesQueue.front();
             if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
