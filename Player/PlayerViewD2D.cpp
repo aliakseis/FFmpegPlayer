@@ -167,8 +167,6 @@ CPlayerDoc* CPlayerViewD2D::GetDocument() const
 
 afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
 {
-    CSingleLock lock(&m_csSurface, TRUE);
-
     CHwndRenderTarget* pRenderTarget = (CHwndRenderTarget*)lParam;
     ASSERT_VALID(pRenderTarget);
 
@@ -281,8 +279,6 @@ void CPlayerViewD2D::updateFrame()
         return;
     }
 
-    CSingleLock lock(&m_csSurface, TRUE);
-
     CHwndRenderTarget* renderTarget = LockRenderTarget();
     if (!renderTarget)
     {
@@ -291,27 +287,22 @@ void CPlayerViewD2D::updateFrame()
 
     m_aspectRatio = float(data.aspectNum) / data.aspectDen;
 
+    m_sourceSize.cx = data.width;
+    m_sourceSize.cy = data.height;
+
     CComQIPtr<ID2D1DeviceContext> spContext(*renderTarget);
 
-    if (data.width != m_sourceSize.cx || data.height != m_sourceSize.cy)
-    {
-        m_sourceSize.cx = data.width;
-        m_sourceSize.cy = data.height;
+    CSingleLock lock(&m_csSurface, TRUE);
 
-        if (!m_spEffect)
+    if (!m_spEffect)
+    {
+        HRESULT hr = spContext->CreateEffect(CLSID_CustomI420Effect, &m_spEffect);
+        if (FAILED(hr))
         {
-            HRESULT hr = spContext->CreateEffect(CLSID_CustomI420Effect, &m_spEffect);
-            if (FAILED(hr))
-            {
-                UnlockRenderTarget();
-                return;
-            }
+            UnlockRenderTarget();
+            return;
         }
     }
-
-    float dpiX;
-    float dpiY;
-    spContext->GetDpi(&dpiX, &dpiY);
 
     // Init bitmap properties in which will store the y (lumi) plane
     D2D1_BITMAP_PROPERTIES1 props;
@@ -320,8 +311,9 @@ void CPlayerViewD2D::updateFrame()
     pixFormat.alphaMode = D2D1_ALPHA_MODE_STRAIGHT;
     pixFormat.format = DXGI_FORMAT_A8_UNORM;
     props.pixelFormat = pixFormat;
-    props.dpiX = dpiX;
-    props.dpiY = dpiY;
+
+    spContext->GetDpi(&props.dpiX, &props.dpiY);
+
     props.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
     props.colorContext = nullptr;
 
@@ -347,19 +339,27 @@ void CPlayerViewD2D::updateFrame()
 
 LRESULT CPlayerViewD2D::DrawFrame(WPARAM, LPARAM generation)
 {
-    CSingleLock lock(&m_csSurface, TRUE);
-
-    CHwndRenderTarget* renderTarget = LockRenderTarget();
-    if (renderTarget)
     {
-        renderTarget->BeginDraw();
-        OnDraw2D(0, (LPARAM)renderTarget);
-        renderTarget->EndDraw();
-
-        UnlockRenderTarget();
+        CSingleLock lock(&m_csSurface, TRUE);
+        DoD2DPaint();
     }
 
     GetDocument()->getFrameDecoder()->finishedDisplayingFrame(generation);
 
     return 0;
+}
+
+
+BOOL CPlayerViewD2D::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+{
+    if (message == WM_PAINT)
+    {
+        CSingleLock lock(&m_csSurface, TRUE);
+        const BOOL lResult = DoD2DPaint();
+        if (pResult != NULL)
+            *pResult = lResult;
+        return lResult;
+    }
+
+    return __super::OnWndMsg(message, wParam, lParam, pResult);
 }

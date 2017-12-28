@@ -31,6 +31,8 @@ protected:
     virtual void OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo);
     virtual void OnEndPrinting(CDC* pDC, CPrintInfo* pInfo);
 
+    BOOL OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
+
 // Implementation
 public:
     virtual ~CPlayerViewD2D();
