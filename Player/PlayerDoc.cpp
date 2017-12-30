@@ -48,6 +48,7 @@ CPlayerDoc::CPlayerDoc()
     IsWindowsVistaOrGreater()
     ? GetFrameDecoder(std::make_unique<AudioPlayerWasapi>())
     : GetFrameDecoder(std::make_unique<AudioPlayerImpl>()))
+    , m_unicodeSubtitles(false)
 {
     m_frameDecoder->setDecoderListener(this);
 }
@@ -183,7 +184,8 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
     if (m_frameDecoder->openFile(lpszPathName))
     {
-        OpenSubRipFile(lpszPathName);
+        if (!OpenSubRipFile(lpszPathName))
+            OpenSubStationAlphaFile(lpszPathName);
         m_frameDecoder->play();
         return TRUE;
     }
@@ -238,7 +240,7 @@ double CPlayerDoc::soundVolume() const
     return m_frameDecoder->volume();
 }
 
-void CPlayerDoc::OpenSubRipFile(LPCTSTR lpszVideoPathName)
+bool CPlayerDoc::OpenSubRipFile(LPCTSTR lpszVideoPathName)
 {
     m_subtitles.reset();
 
@@ -249,15 +251,21 @@ void CPlayerDoc::OpenSubRipFile(LPCTSTR lpszVideoPathName)
 
     std::ifstream s(subRipPathName);
     if (!s)
-        return;
+        return false;
 
     auto map(std::make_unique<SubtitlesMap>());
 
     std::string buffer;
-    for (;;)
+    bool first = true;
+    while (std::getline(s, buffer))
     {
-        if (!std::getline(s, buffer))
-            break;
+        if (first)
+        {
+            m_unicodeSubtitles = buffer.length() > 2
+                && buffer[0] == char(0xEF) && buffer[1] == char(0xBB) && buffer[2] == char(0xBF);
+            first = false;
+        }
+
         if (!std::getline(s, buffer))
             break;
 
@@ -293,6 +301,83 @@ void CPlayerDoc::OpenSubRipFile(LPCTSTR lpszVideoPathName)
     {
         m_subtitles = std::move(map);
     }
+
+    return true;
+}
+
+bool CPlayerDoc::OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName)
+{
+    m_subtitles.reset();
+
+    CString subRipPathName(lpszVideoPathName);
+    PathRemoveExtension(subRipPathName.GetBuffer());
+    subRipPathName.ReleaseBuffer();
+    subRipPathName += _T(".ass");
+
+    std::ifstream s(subRipPathName);
+    if (!s)
+        return false;
+
+    auto map(std::make_unique<SubtitlesMap>());
+
+    std::string buffer;
+    bool first = true;
+    while (std::getline(s, buffer))
+    {
+        if (first)
+        {
+            m_unicodeSubtitles = buffer.length() > 2
+                && buffer[0] == char(0xEF) && buffer[1] == char(0xBB) && buffer[2] == char(0xBF);
+            first = false;
+        }
+
+        std::istringstream ss(buffer);
+
+        std::getline(ss, buffer, ':');
+
+        if (buffer != "Dialogue")
+            continue;
+
+        double start, end;
+        for (int i = 0; i < 9; ++i)
+        {
+            std::getline(ss, buffer, ',');
+            if (i == 1 || i == 2)
+            {
+                int hr, min, sec, msec;
+                if (sscanf(
+                    buffer.c_str(),
+                    "%d:%d:%d.%d",
+                    &hr, &min, &sec, &msec) != 4)
+                {
+                    return true;
+                }
+                ((i == 1)? start : end)
+                    = hr * 3600 + min * 60 + sec + msec / 1000.;
+            }
+        }
+
+        std::string subtitle;
+        while (std::getline(ss, buffer, '\\') && !buffer.empty())
+        { 
+            if (subtitle.empty())
+                subtitle = buffer;
+            else subtitle += (buffer[0] == 'N')? '\n' + buffer.substr(1) : '\\' + buffer;
+        }
+
+        if (!subtitle.empty())
+        {
+            subtitle += '\n'; // The last '\n' is for aggregating overlapped subtitles (if any)
+            map->add(std::make_pair(boost::icl::interval<double>::closed(start, end), subtitle));
+        }
+    }
+
+    if (!map->empty())
+    {
+        m_subtitles = std::move(map);
+    }
+
+    return true;
 }
 
 std::string CPlayerDoc::getSubtitle()

@@ -76,9 +76,11 @@ public:
     boost::signals2::signal<void(double)> currentTimeUpdated;
 
     std::string getSubtitle();
+    bool isUnicodeSubtitles() const { return m_unicodeSubtitles; }
 
 private:
-    void OpenSubRipFile(LPCTSTR lpszVideoPathName);
+    bool OpenSubRipFile(LPCTSTR lpszVideoPathName);
+    bool OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName);
 
 private:
     std::unique_ptr<IFrameDecoder> m_frameDecoder;
@@ -87,4 +89,5 @@ private:
 
     class SubtitlesMap;
     std::unique_ptr<SubtitlesMap> m_subtitles;
+    bool m_unicodeSubtitles;
 };

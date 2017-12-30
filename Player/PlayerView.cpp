@@ -1028,9 +1028,7 @@ bool CPlayerView::ProcessVideo()
 
     CSingleLock lock(&m_csSurface, TRUE);
 
-    //
     // Check the current status of D3D9 device.
-    //
     HRESULT hr = m_pD3DD9->TestCooperativeLevel();
     switch (hr)
     {
@@ -1097,7 +1095,6 @@ bool CPlayerView::ProcessVideo()
     RECT rect{ 0, 0, m_sourceSize.cx, m_sourceSize.cy };
 
     hr = m_pD3DD9->StretchRect(
-        //data.surface ? data.surface : m_pMainStream,
         m_pMainStream,
         &srcRect,
         m_pD3DRT,
@@ -1125,7 +1122,7 @@ bool CPlayerView::ProcessVideo()
             //m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
 
             DrawSubtitleText(m_pD3DD9, target.Width(), target.Height(), 
-                CA2W(subtitle.c_str(), /*CP_UTF8*/ 1251));
+                CA2W(subtitle.c_str(), GetDocument()->isUnicodeSubtitles()? CP_UTF8 : CP_ACP));
 
             m_pD3DD9->EndScene();
         }
