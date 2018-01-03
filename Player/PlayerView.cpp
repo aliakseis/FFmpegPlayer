@@ -403,7 +403,7 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
 {
     using namespace Gdiplus;
 
-    const int fontSize = max(width / 50, 9);
+    const int fontSize = max(width / 60, 9);
     Gdiplus::Font font(L"MS Sans Serif", (REAL)fontSize);
 
     const auto length = wcslen(text);

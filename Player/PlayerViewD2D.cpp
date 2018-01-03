@@ -224,7 +224,7 @@ afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
             DWRITE_FONT_WEIGHT_NORMAL,
             DWRITE_FONT_STYLE_NORMAL,
             DWRITE_FONT_STRETCH_NORMAL,
-            max(m_sourceSize.cx / 50, 9),
+            max(m_sourceSize.cx / 60, 9),
             L"", //locale
             &pTextFormat)))
         {
