@@ -81,7 +81,6 @@ public:
 
     void notify()
     {
-        boost::lock_guard<boost::mutex> locker(m_mutex);
         m_condVar.notify_all();
     }
 

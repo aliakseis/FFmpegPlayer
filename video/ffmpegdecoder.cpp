@@ -797,11 +797,7 @@ bool FFmpegDecoder::pauseResume()
     {
         CHANNEL_LOG(ffmpeg_pause) << "Pause";
         m_isPaused = true;
-        {
-            boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
-            m_videoFramesCV.notify_all();
-        }
-
+        m_videoFramesCV.notify_all();
         m_videoPacketsQueue.notify();
         m_audioPacketsQueue.notify();
 
