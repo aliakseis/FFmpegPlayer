@@ -362,7 +362,8 @@ bool CPlayerDoc::OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName)
             continue;
         while (std::getline(ss, buffer, '\\'))
         { 
-            subtitle += (buffer[0] == 'N')? '\n' + buffer.substr(1) : '\\' + buffer;
+            subtitle +=
+                (buffer[0] == 'N' || buffer[0] == 'n')? '\n' + buffer.substr(1) : '\\' + buffer;
         }
 
         if (!subtitle.empty())
