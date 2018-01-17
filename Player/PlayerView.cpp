@@ -277,7 +277,7 @@ DXVA2_VideoSample GetVideoSample(
 #ifdef _WIN64
 #define _mm_movpi64_epi64(a) _mm_set_epi64x(0, (a))
 #define __m64 __int64
-#define _mm_empty()
+#define _mm_empty() ((void)0)
 #endif
 
 void SimdCopyAndConvert(
