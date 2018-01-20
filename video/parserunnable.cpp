@@ -23,8 +23,7 @@ void FFmpegDecoder::parseRunnable()
         int64_t seekDuration = m_seekDuration.exchange(AV_NOPTS_VALUE);
         if (seekDuration != AV_NOPTS_VALUE)
         {
-            if (!resetDecoding(seekDuration, false))
-                return;
+            resetDecoding(seekDuration, false);
         }
         seekDuration = m_videoResetDuration.exchange(AV_NOPTS_VALUE);
         if (seekDuration != AV_NOPTS_VALUE)
