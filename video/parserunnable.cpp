@@ -135,7 +135,10 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 
     if (avformat_seek_file(m_formatContext, 
                            hasVideo ? m_videoStreamNumber : m_audioStreamNumber,
-                           0, seekDuration, seekDuration, AVSEEK_FLAG_FRAME) < 0)
+                           0, seekDuration, seekDuration, AVSEEK_FLAG_FRAME) < 0
+        && (seekDuration >= 0 || avformat_seek_file(m_formatContext, 
+                           hasVideo ? m_videoStreamNumber : m_audioStreamNumber,
+                           0, 0, 0, AVSEEK_FLAG_FRAME) < 0))
     {
         CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
         return false;
