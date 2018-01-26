@@ -113,15 +113,9 @@ bool FFmpegDecoder::handleAudioPacket(
 {
     if (packet.stream_index != m_audioStream->index)
     {
-        // Close the audio codec
         avcodec_close(m_audioCodecContext);
-
         m_audioStream = m_formatContext->streams[packet.stream_index];
-        if (avcodec_parameters_to_context(
-            m_audioCodecContext,
-            m_formatContext->streams[packet.stream_index]->codecpar) < 0
-            || (m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id)) == nullptr
-            || avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr) < 0)
+        if (!setupAudioCodec())
         {
             return false;
         }
@@ -222,7 +216,8 @@ bool FFmpegDecoder::handleAudioPacket(
         const double delta = m_videoStartClock + m_audioPTS - GetHiResTime();
         if (fabs(delta) > 0.1)
         {
-            const double correction = (delta < 0) ? 0.05 : -0.05;
+            //const double correction = (delta < 0) ? 0.05 : -0.05;
+            const double correction = -delta / 2;
             for (double v = m_videoStartClock;
                  !m_videoStartClock.compare_exchange_weak(v, v + correction);)
             {

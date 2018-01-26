@@ -127,6 +127,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     bool resetVideoProcessing();
     bool setupAudioProcessing();
+    bool setupAudioCodec();
 
     void seekWhilePaused();
 

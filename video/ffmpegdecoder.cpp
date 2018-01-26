@@ -501,9 +501,7 @@ bool FFmpegDecoder::resetVideoProcessing()
         m_videoCodecContext = avcodec_alloc_context3(nullptr);
         if (!m_videoCodecContext)
             return false;
-        if (avcodec_parameters_to_context(
-            m_videoCodecContext,
-            m_formatContext->streams[m_videoStreamNumber]->codecpar) < 0)
+        if (avcodec_parameters_to_context(m_videoCodecContext, m_videoStream->codecpar) < 0)
             return false;
 
         m_videoCodec = avcodec_find_decoder(m_videoCodecContext->codec_id);
@@ -576,27 +574,11 @@ bool FFmpegDecoder::setupAudioProcessing()
         m_audioCodecContext = avcodec_alloc_context3(nullptr);
         if (!m_audioCodecContext)
             return false;
-        if (avcodec_parameters_to_context(
-            m_audioCodecContext,
-            m_formatContext->streams[m_audioStreamNumber]->codecpar) < 0)
-            return false;
 
         auto audioCodecContextGuard = MakeGuard(&m_audioCodecContext, avcodec_free_context);
 
-        // Find audio codec
-        m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id);
-        if (m_audioCodec == nullptr)
-        {
-            assert(false && "No such codec found");
-            return false;  // Codec not found
-        }
-
-        // Open audio codec
-        if (avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr) < 0)
-        {
-            assert(false && "Error on codec opening");
-            return false;  // Could not open codec
-        }
+        if (!setupAudioCodec())
+            return false;
 
         if (!m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
             m_audioSettings.frequency, m_audioSettings.channels))
@@ -605,6 +587,29 @@ bool FFmpegDecoder::setupAudioProcessing()
         }
 
         audioCodecContextGuard.release();
+    }
+
+    return true;
+}
+
+bool FFmpegDecoder::setupAudioCodec()
+{
+    if (avcodec_parameters_to_context(m_audioCodecContext, m_audioStream->codecpar) < 0)
+        return false;
+
+    // Find audio codec
+    m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id);
+    if (m_audioCodec == nullptr)
+    {
+        assert(false && "No such codec found");
+        return false;  // Codec not found
+    }
+
+    // Open audio codec
+    if (avcodec_open2(m_audioCodecContext, m_audioCodec, nullptr) < 0)
+    {
+        assert(false && "Error on codec opening");
+        return false;  // Could not open codec
     }
 
     return true;
