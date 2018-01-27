@@ -180,9 +180,9 @@ const LONGLONG end_100ns = 0;// start_100ns + LONGLONG(VIDEO_100NSPF);
 
 DXVA2_VideoProcessBltParams GetVideoProcessBltParams(
     const CRect& target,
-    const LONG (&m_ProcAmpValues)[4],
-    const LONG (&m_NFilterValues)[6],
-    const LONG (&m_DFilterValues)[6])
+    const LONG (&procAmpValues)[4],
+    const LONG (&nFilterValues)[6],
+    const LONG (&dFilterValues)[6])
 {
     DXVA2_VideoProcessBltParams blt {};
 
@@ -207,32 +207,32 @@ DXVA2_VideoProcessBltParams GetVideoProcessBltParams(
     blt.DestFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
 
     // DXVA2_ProcAmp_Brightness
-    blt.ProcAmpValues.Brightness.ll = m_ProcAmpValues[0];
+    blt.ProcAmpValues.Brightness.ll = procAmpValues[0];
     // DXVA2_ProcAmp_Contrast
-    blt.ProcAmpValues.Contrast.ll = m_ProcAmpValues[1];
+    blt.ProcAmpValues.Contrast.ll = procAmpValues[1];
     // DXVA2_ProcAmp_Hue
-    blt.ProcAmpValues.Hue.ll = m_ProcAmpValues[2];
+    blt.ProcAmpValues.Hue.ll = procAmpValues[2];
     // DXVA2_ProcAmp_Saturation
-    blt.ProcAmpValues.Saturation.ll = m_ProcAmpValues[3];
+    blt.ProcAmpValues.Saturation.ll = procAmpValues[3];
 
     // DXVA2_VideoProcess_AlphaBlend
     blt.Alpha = DXVA2_Fixed32OpaqueAlpha();
 
     // DXVA2_VideoProcess_NoiseFilter
-    blt.NoiseFilterLuma.Level.ll = m_NFilterValues[0];
-    blt.NoiseFilterLuma.Threshold.ll = m_NFilterValues[1];
-    blt.NoiseFilterLuma.Radius.ll = m_NFilterValues[2];
-    blt.NoiseFilterChroma.Level.ll = m_NFilterValues[3];
-    blt.NoiseFilterChroma.Threshold.ll = m_NFilterValues[4];
-    blt.NoiseFilterChroma.Radius.ll = m_NFilterValues[5];
+    blt.NoiseFilterLuma.Level.ll = nFilterValues[0];
+    blt.NoiseFilterLuma.Threshold.ll = nFilterValues[1];
+    blt.NoiseFilterLuma.Radius.ll = nFilterValues[2];
+    blt.NoiseFilterChroma.Level.ll = nFilterValues[3];
+    blt.NoiseFilterChroma.Threshold.ll = nFilterValues[4];
+    blt.NoiseFilterChroma.Radius.ll = nFilterValues[5];
 
     // DXVA2_VideoProcess_DetailFilter
-    blt.DetailFilterLuma.Level.ll = m_DFilterValues[0];
-    blt.DetailFilterLuma.Threshold.ll = m_DFilterValues[1];
-    blt.DetailFilterLuma.Radius.ll = m_DFilterValues[2];
-    blt.DetailFilterChroma.Level.ll = m_DFilterValues[3];
-    blt.DetailFilterChroma.Threshold.ll = m_DFilterValues[4];
-    blt.DetailFilterChroma.Radius.ll = m_DFilterValues[5];
+    blt.DetailFilterLuma.Level.ll = dFilterValues[0];
+    blt.DetailFilterLuma.Threshold.ll = dFilterValues[1];
+    blt.DetailFilterLuma.Radius.ll = dFilterValues[2];
+    blt.DetailFilterChroma.Level.ll = dFilterValues[3];
+    blt.DetailFilterChroma.Threshold.ll = dFilterValues[4];
+    blt.DetailFilterChroma.Radius.ll = dFilterValues[5];
 
     return blt;
 }
@@ -348,60 +348,64 @@ void CopyAndConvert(
 
 enum { MAX_NUM_VERTICES = 50 * 6 };
 
-typedef struct D3DXVECTOR4 {
+struct D3DXVECTOR4 {
     FLOAT x;
     FLOAT y;
     FLOAT z;
     FLOAT w;
-} D3DXVECTOR4, *LPD3DXVECTOR4;
+};
 
-struct FONT2DVERTEX { D3DXVECTOR4 p;   DWORD color;     FLOAT tu, tv; };
+struct FONT2DVERTEX {
+    D3DXVECTOR4 p;
+    DWORD color;
+    FLOAT tu, tv;
+};
 
 
-CComPtr<IDirect3DStateBlock9> InitStateBlock(LPDIRECT3DDEVICE9 m_pd3dDevice,
-    IDirect3DTexture9* m_pTexture)
+CComPtr<IDirect3DStateBlock9> InitStateBlock(LPDIRECT3DDEVICE9 pd3dDevice,
+    IDirect3DTexture9* pTexture)
 {
-    m_pd3dDevice->BeginStateBlock();
-    m_pd3dDevice->SetTexture(0, m_pTexture);
+    pd3dDevice->BeginStateBlock();
+    pd3dDevice->SetTexture(0, pTexture);
 
     //if (D3DFONT_ZENABLE & m_dwFontFlags)
-    //    m_pd3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+    //    pd3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
     //else
-    m_pd3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+    pd3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 
-    m_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-    m_pd3dDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-    m_pd3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    m_pd3dDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-    m_pd3dDevice->SetRenderState(D3DRS_ALPHAREF, 0x08);
-    m_pd3dDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
-    m_pd3dDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-    m_pd3dDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-    m_pd3dDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
-    m_pd3dDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
-    m_pd3dDevice->SetRenderState(D3DRS_CLIPPLANEENABLE, FALSE);
-    m_pd3dDevice->SetRenderState(D3DRS_VERTEXBLEND, D3DVBF_DISABLE);
-    m_pd3dDevice->SetRenderState(D3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
-    m_pd3dDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    m_pd3dDevice->SetRenderState(D3DRS_COLORWRITEENABLE,
+    pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+    pd3dDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    pd3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    pd3dDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+    pd3dDevice->SetRenderState(D3DRS_ALPHAREF, 0x08);
+    pd3dDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
+    pd3dDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+    pd3dDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+    pd3dDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
+    pd3dDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
+    pd3dDevice->SetRenderState(D3DRS_CLIPPLANEENABLE, FALSE);
+    pd3dDevice->SetRenderState(D3DRS_VERTEXBLEND, D3DVBF_DISABLE);
+    pd3dDevice->SetRenderState(D3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
+    pd3dDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    pd3dDevice->SetRenderState(D3DRS_COLORWRITEENABLE,
         D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN |
         D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_ALPHA);
-    m_pd3dDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-    m_pd3dDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    m_pd3dDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-    m_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-    m_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-    m_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
-    m_pd3dDevice->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
-    m_pd3dDevice->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
-    m_pd3dDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    m_pd3dDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
-    m_pd3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-    m_pd3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-    m_pd3dDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+    pd3dDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+    pd3dDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    pd3dDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+    pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+    pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+    pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+    pd3dDevice->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
+    pd3dDevice->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+    pd3dDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    pd3dDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+    pd3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+    pd3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+    pd3dDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
 
     CComPtr<IDirect3DStateBlock9> result;
-    m_pd3dDevice->EndStateBlock(&result);
+    pd3dDevice->EndStateBlock(&result);
     return result;
 }
 
@@ -422,19 +426,19 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
         graphics.MeasureString(text, length, &font, PointF(0, 0), &boundingBox);
     }
 
-    CComPtr<IDirect3DTexture9> m_pTexture;
+    CComPtr<IDirect3DTexture9> pTexture;
 
     // Create a new texture for the font
     if (FAILED(pd3dDevice->CreateTexture(boundingBox.Width, boundingBox.Height, 1,
         0,
         D3DFMT_A4R4G4B4,
-        D3DPOOL_MANAGED, &m_pTexture, NULL)))
+        D3DPOOL_MANAGED, &pTexture, NULL)))
     {
         return;
     }
 
     D3DLOCKED_RECT d3dlr;
-    if (FAILED(m_pTexture->LockRect(0, &d3dlr, 0, 0)))
+    if (FAILED(pTexture->LockRect(0, &d3dlr, 0, 0)))
         return;
 
     {
@@ -449,31 +453,31 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
         graphics.DrawString(text, length, &font, PointF(0, 0), &whiteBrush);
     }
 
-    m_pTexture->UnlockRect(0);
+    pTexture->UnlockRect(0);
 
-    CComPtr<IDirect3DVertexBuffer9> m_pVB;
+    CComPtr<IDirect3DVertexBuffer9> pVB;
     // Create vertex buffer for the letters
     if (FAILED(pd3dDevice->CreateVertexBuffer(MAX_NUM_VERTICES * sizeof(FONT2DVERTEX),
         D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, 0,
-        D3DPOOL_DEFAULT, &m_pVB, NULL)))
+        D3DPOOL_DEFAULT, &pVB, NULL)))
     {
         return;
     }
 
-    CComPtr<IDirect3DStateBlock9> m_pStateBlockSaved(InitStateBlock(pd3dDevice, m_pTexture));
-    if (!m_pStateBlockSaved)
+    CComPtr<IDirect3DStateBlock9> pStateBlockSaved(InitStateBlock(pd3dDevice, pTexture));
+    if (!pStateBlockSaved)
         return;
 
-    CComPtr<IDirect3DStateBlock9> m_pStateBlockDrawText(InitStateBlock(pd3dDevice, m_pTexture));
-    if (!m_pStateBlockDrawText)
+    CComPtr<IDirect3DStateBlock9> pStateBlockDrawText(InitStateBlock(pd3dDevice, pTexture));
+    if (!pStateBlockDrawText)
         return;
 
     // Setup renderstate
-    m_pStateBlockSaved->Capture();
-    m_pStateBlockDrawText->Apply();
+    pStateBlockSaved->Capture();
+    pStateBlockDrawText->Apply();
     pd3dDevice->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
     pd3dDevice->SetPixelShader(NULL);
-    pd3dDevice->SetStreamSource(0, m_pVB, 0, sizeof(FONT2DVERTEX));
+    pd3dDevice->SetStreamSource(0, pVB, 0, sizeof(FONT2DVERTEX));
 
     const FLOAT tx1 = 0;
     const FLOAT ty1 = 0;
@@ -486,7 +490,7 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
     // Fill vertex buffer
     FONT2DVERTEX* pVertices = NULL;
     DWORD         dwNumTriangles = 0;
-    if (FAILED(m_pVB->Lock(0, 0, (void**)&pVertices, D3DLOCK_DISCARD)))
+    if (FAILED(pVB->Lock(0, 0, (void**)&pVertices, D3DLOCK_DISCARD)))
         return;
 
     for (int pass = 0; pass < 2; ++pass)
@@ -507,12 +511,12 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
     }
 
     // Unlock and render the vertex buffer
-    m_pVB->Unlock();
+    pVB->Unlock();
     if (dwNumTriangles > 0)
         pd3dDevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, dwNumTriangles);
 
     // Restore the modified renderstates
-    m_pStateBlockSaved->Apply();
+    pStateBlockSaved->Apply();
 }
 
 } // namespace
@@ -616,7 +620,6 @@ bool CPlayerView::InitializeD3D9()
     {
         return false;
     }
-
 
     return true;
 }
@@ -1097,8 +1100,6 @@ bool CPlayerView::ProcessVideo()
         D3DCOLOR_XRGB(0, 0, 0),
         1.0f,
         0);
-
-    RECT rect{ 0, 0, m_sourceSize.cx, m_sourceSize.cy };
 
     hr = m_pD3DD9->StretchRect(
         m_pMainStream,
