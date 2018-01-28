@@ -339,23 +339,40 @@ bool CPlayerDoc::OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName)
             continue;
 
         double start, end;
-        for (int i = 0; i < 9; ++i)
+        bool skip = false;
+        for (int i = 0; i < 9; ++i) // TODO indices from Format?
         {
             std::getline(ss, buffer, ',');
             if (i == 1 || i == 2)
             {
-                int hr, min, sec, msec;
+                int hr, min, sec;
+                char msecString[10] {};
                 if (sscanf(
                     buffer.c_str(),
-                    "%d:%d:%d.%d",
-                    &hr, &min, &sec, &msec) != 4)
+                    "%d:%d:%d.%9s",
+                    &hr, &min, &sec, msecString) != 4)
                 {
                     return true;
                 }
+
+                double msec = 0;
+                if (const auto msecStringLen = strlen(msecString))
+                {
+                    msec = atoi(msecString) / pow(10, msecStringLen);
+                }
+
                 ((i == 1)? start : end)
-                    = hr * 3600 + min * 60 + sec + msec / 1000.;
+                    = hr * 3600 + min * 60 + sec + msec;
+            }
+            else if (i == 3 && buffer == "OP_kar")
+            {
+                skip = true;
+                break;
             }
         }
+
+        if (skip)
+            continue;
 
         std::string subtitle;
         if (!std::getline(ss, subtitle, '\\'))
