@@ -90,6 +90,7 @@
     <ClInclude Include="ffmpeg_dxva2.h" />
     <ClInclude Include="fqueue.h" />
     <ClInclude Include="decoderinterface.h" />
+    <ClInclude Include="interlockedadd.h" />
     <ClInclude Include="makeguard.h" />
     <ClInclude Include="videoframe.h" />
     <ClInclude Include="vqueue.h" />

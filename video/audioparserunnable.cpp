@@ -1,5 +1,6 @@
 #include "ffmpegdecoder.h"
 #include "makeguard.h"
+#include "interlockedadd.h"
 
 #include <boost/log/trivial.hpp>
 
@@ -216,12 +217,7 @@ bool FFmpegDecoder::handleAudioPacket(
         const double delta = m_videoStartClock + m_audioPTS - GetHiResTime();
         if (fabs(delta) > 0.1)
         {
-            //const double correction = (delta < 0) ? 0.05 : -0.05;
-            const double correction = -delta / 2;
-            for (double v = m_videoStartClock;
-                 !m_videoStartClock.compare_exchange_weak(v, v + correction);)
-            {
-            }
+            InterlockedAdd(m_videoStartClock, -delta / 2);
         }
 
         if (write_size > 0)
@@ -238,11 +234,7 @@ bool FFmpegDecoder::handleAudioPacket(
                     (double)original_buffer_size / (audioFrameChannels *
                                                     m_audioFrame->sample_rate *
                                                     av_get_bytes_per_sample(audioFrameFormat));
-
-                for (double v = m_audioPTS;
-                     !m_audioPTS.compare_exchange_weak(v, v + frame_clock);)
-                {
-                }
+                InterlockedAdd(m_audioPTS, frame_clock);
             }
         }
     }

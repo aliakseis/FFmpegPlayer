@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "makeguard.h"
+#include "interlockedadd.h"
 
 #include <boost/chrono.hpp>
 #include <utility>
@@ -645,10 +646,7 @@ void FFmpegDecoder::AppendFrameClock(double frame_clock)
             m_duration + m_startTime);
     }
 
-    for (double v = m_audioPTS;
-         !m_audioPTS.compare_exchange_weak(v, v + frame_clock);)
-    {
-    }
+    InterlockedAdd(m_audioPTS, frame_clock);
 }
 
 void FFmpegDecoder::setVolume(double volume)
@@ -723,10 +721,7 @@ void FFmpegDecoder::seekWhilePaused()
     const bool paused = m_isPaused;
     if (paused)
     {
-        for (double v = m_videoStartClock;
-             !m_videoStartClock.compare_exchange_weak(v, v + GetHiResTime() - m_pauseTimer);)
-        {
-        }
+        InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
         m_pauseTimer = GetHiResTime();
     }
 
@@ -788,10 +783,7 @@ bool FFmpegDecoder::pauseResume()
     {
         CHANNEL_LOG(ffmpeg_pause) << "Unpause";
         CHANNEL_LOG(ffmpeg_pause) << "Move >> " << GetHiResTime() - m_pauseTimer;
-        for (double v = m_videoStartClock;
-             !m_videoStartClock.compare_exchange_weak(v, v + GetHiResTime() - m_pauseTimer);)
-        {
-        }
+        InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
         {
             boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
             m_isPaused = false;

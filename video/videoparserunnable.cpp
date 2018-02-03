@@ -1,5 +1,6 @@
 #include "ffmpegdecoder.h"
 #include "makeguard.h"
+#include "interlockedadd.h"
 
 #include <boost/log/trivial.hpp>
 
@@ -135,11 +136,7 @@ bool FFmpegDecoder::handleVideoPacket(
             {
                 if (m_videoStartClock + pts < curTime - 1.)
                 {
-                    // adjust clock
-                    for (double v = m_videoStartClock;
-                        !m_videoStartClock.compare_exchange_weak(v, v + 1.);)
-                    {
-                    }
+                    InterlockedAdd(m_videoStartClock, 1.);
                 }
 
                 CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
