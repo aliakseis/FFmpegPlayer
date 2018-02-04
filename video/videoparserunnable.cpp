@@ -159,17 +159,11 @@ bool FFmpegDecoder::handleVideoPacket(
         {
             boost::unique_lock<boost::mutex> locker(m_videoFramesMutex);
 
-            auto cond = [this]()
-            {
-                return m_isPaused && !m_isVideoSeekingWhilePaused ||
-                    m_videoFramesQueue.canPush();
-            };
-
-            if (td.is_pos_infinity())
-            {
-                m_videoFramesCV.wait(locker, cond);
-            }
-            else if (!m_videoFramesCV.timed_wait(locker, td, cond))
+            if (!m_videoFramesCV.timed_wait(locker, td, [this]
+                {
+                    return m_isPaused && !m_isVideoSeekingWhilePaused ||
+                        m_videoFramesQueue.canPush();
+                }))
             {
                 continue;
             }
