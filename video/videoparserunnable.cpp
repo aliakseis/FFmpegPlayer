@@ -129,9 +129,9 @@ bool FFmpegDecoder::handleVideoPacket(
 
         boost::posix_time::time_duration td(boost::posix_time::pos_infin);
         // Skipping frames
-        if (initialized)
+        if (initialized && !m_videoPacketsQueue.empty())
         {
-            double curTime = GetHiResTime();
+            const double curTime = GetHiResTime();
             if (m_videoStartClock + pts <= curTime)
             {
                 if (m_videoStartClock + pts < curTime - 1.)
