@@ -23,7 +23,7 @@ protected: // create from serialization only
 
 // Attributes
 public:
-    IFrameDecoder* getFrameDecoder() { return m_frameDecoder.get(); }
+    IFrameDecoder* getFrameDecoder() const { return m_frameDecoder.get(); }
 
 // Operations
 public:
@@ -75,7 +75,7 @@ public:
     boost::signals2::signal<void(double)> totalTimeUpdated;
     boost::signals2::signal<void(double)> currentTimeUpdated;
 
-    std::string getSubtitle();
+    std::string getSubtitle() const;
     bool isUnicodeSubtitles() const { return m_unicodeSubtitles; }
 
 private:

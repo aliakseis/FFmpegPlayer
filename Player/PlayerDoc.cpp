@@ -398,7 +398,7 @@ bool CPlayerDoc::OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName)
     return true;
 }
 
-std::string CPlayerDoc::getSubtitle()
+std::string CPlayerDoc::getSubtitle() const
 {
     std::string result;
     if (m_subtitles)
