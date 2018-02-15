@@ -1233,6 +1233,8 @@ void CPlayerView::updateFrame()
         return;
     }
 
+    data.width &= -2; // must be even
+
     m_aspectRatio.cx = data.aspectNum;
     m_aspectRatio.cy = data.aspectDen;
 
