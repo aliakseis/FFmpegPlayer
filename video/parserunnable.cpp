@@ -5,7 +5,7 @@ void FFmpegDecoder::parseRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Parse thread started";
     AVPacket packet;
-    bool eof = false;
+    enum { UNSET, SET, REPORTED } eof = UNSET;
 
     // detect real framesize
     fixDuration();
@@ -36,11 +36,11 @@ void FFmpegDecoder::parseRunnable()
         if (readStatus >= 0)
         {
             dispatchPacket(packet);
-            eof = false;
+            eof = UNSET;
         }
         else
         {
-            if (eof)
+            if (eof == SET)
             {
                 using namespace boost;
                 if (m_decoderListener
@@ -49,11 +49,13 @@ void FFmpegDecoder::parseRunnable()
                     && (lock_guard<mutex>(m_videoFramesMutex), !m_videoFramesQueue.canPop()))
                 {
                     m_decoderListener->onEndOfStream();
+                    eof = REPORTED;
                 }
 
                 this_thread::sleep_for(chrono::milliseconds(10));
             }
-            eof = readStatus == AVERROR_EOF;
+            if (eof == UNSET && readStatus == AVERROR_EOF)
+                eof = SET;
         }
 
         // Continue packet reading
