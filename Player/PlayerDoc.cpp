@@ -201,57 +201,63 @@ void CPlayerDoc::OnIdle()
     if (m_onEndOfStream)
     {
         m_onEndOfStream = false;
-        if (m_autoPlay)
+        MoveToNextFile();
+    }
+}
+
+void CPlayerDoc::MoveToNextFile()
+{
+    if (m_autoPlay)
+    {
+        const CString pathName = GetPathName();
+        const auto extension = PathFindExtension(pathName);
+        const auto fileName = PathFindFileName(pathName);
+        if (!extension || !fileName)
+            return;
+        const CString directory(pathName, fileName - pathName);
+        CString pattern(directory + _T('*'));
+        pattern += extension;
+
+        WIN32_FIND_DATA ffd{};
+        const auto hFind = FindFirstFile(pattern, &ffd);
+
+        if (INVALID_HANDLE_VALUE == hFind)
         {
-            const CString pathName = GetPathName();
-            const auto extension = PathFindExtension(pathName);
-            const auto fileName = PathFindFileName(pathName);
-            if (!extension || !fileName)
-                return;
-            const CString directory(pathName, fileName - pathName);
-            CString pattern(directory + _T('*'));
-            pattern += extension;
+            return;
+        }
 
-            WIN32_FIND_DATA ffd{};
-            const auto hFind = FindFirstFile(pattern, &ffd);
+        std::vector<CString> files;
 
-            if (INVALID_HANDLE_VALUE == hFind)
+        do
+        {
+            if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
-                return;
+                continue;
             }
-
-            std::vector<CString> files;
-
-            do
+            else if (_tcsicmp(fileName, ffd.cFileName) < 0)
             {
-                if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                {
-                    continue;
-                }
-                else if (_tcsicmp(fileName, ffd.cFileName) < 0)
-                {
-                    files.push_back(ffd.cFileName);
-                }
-            } while (FindNextFile(hFind, &ffd));
+                files.push_back(ffd.cFileName);
+            }
+        } while (FindNextFile(hFind, &ffd));
 
-            FindClose(hFind);
+        FindClose(hFind);
 
-            std::sort(files.begin(), files.end(),
-                [](const CString& left, const CString& right) {
-                    return left.CompareNoCase(right) < 0;
-                });
+        std::sort(files.begin(), files.end(),
+            [](const CString& left, const CString& right) {
+                return left.CompareNoCase(right) < 0;
+            });
 
-            for (const auto& file : files)
+        for (const auto& file : files)
+        {
+            CString path = directory + file;
+            if (OnOpenDocument(path))
             {
-                CString path = directory + file;
-                if (OnOpenDocument(path))
-                {
-                    SetPathName(path, FALSE);
-                    return;
-                }
+                SetPathName(path, FALSE);
+                return;
             }
         }
     }
+
 }
 
 void CPlayerDoc::OnCloseDocument()

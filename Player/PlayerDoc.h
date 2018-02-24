@@ -85,6 +85,7 @@ public:
 private:
     bool OpenSubRipFile(LPCTSTR lpszVideoPathName);
     bool OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName);
+    void MoveToNextFile();
 
 private:
     std::unique_ptr<IFrameDecoder> m_frameDecoder;
