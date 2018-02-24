@@ -38,6 +38,8 @@ IMPLEMENT_DYNCREATE(CPlayerDoc, CDocument)
 BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND_RANGE(ID_TRACK1, ID_TRACK4, OnAudioTrack)
     ON_UPDATE_COMMAND_UI_RANGE(ID_TRACK1, ID_TRACK4, OnUpdateAudioTrack)
+    ON_COMMAND(ID_AUTOPLAY, &CPlayerDoc::OnAutoplay)
+    ON_UPDATE_COMMAND_UI(ID_AUTOPLAY, &CPlayerDoc::OnUpdateAutoplay)
 END_MESSAGE_MAP()
 
 
@@ -49,6 +51,8 @@ CPlayerDoc::CPlayerDoc()
     ? GetFrameDecoder(std::make_unique<AudioPlayerWasapi>())
     : GetFrameDecoder(std::make_unique<AudioPlayerImpl>()))
     , m_unicodeSubtitles(false)
+    , m_onEndOfStream(false)
+    , m_autoPlay(false)
 {
     m_frameDecoder->setDecoderListener(this);
 }
@@ -177,9 +181,6 @@ void CPlayerDoc::Dump(CDumpContext& dc) const
 
 BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
-    //if (!CDocument::OnOpenDocument(lpszPathName))
-    //    return FALSE;
-
     m_frameDecoder->close();
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
     if (m_frameDecoder->openFile(lpszPathName))
@@ -191,6 +192,66 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
     }
 
     return FALSE;
+}
+
+void CPlayerDoc::OnIdle()
+{
+    __super::OnIdle();
+
+    if (m_onEndOfStream)
+    {
+        m_onEndOfStream = false;
+        if (m_autoPlay)
+        {
+            const CString pathName = GetPathName();
+            const auto extension = PathFindExtension(pathName);
+            const auto fileName = PathFindFileName(pathName);
+            if (!extension || !fileName)
+                return;
+            const CString directory(pathName, fileName - pathName);
+            CString pattern(directory + _T('*'));
+            pattern += extension;
+
+            WIN32_FIND_DATA ffd{};
+            const auto hFind = FindFirstFile(pattern, &ffd);
+
+            if (INVALID_HANDLE_VALUE == hFind)
+            {
+                return;
+            }
+
+            std::vector<CString> files;
+
+            do
+            {
+                if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                {
+                    continue;
+                }
+                else if (_tcsicmp(fileName, ffd.cFileName) < 0)
+                {
+                    files.push_back(ffd.cFileName);
+                }
+            } while (FindNextFile(hFind, &ffd));
+
+            FindClose(hFind);
+
+            std::sort(files.begin(), files.end(),
+                [](const CString& left, const CString& right) {
+                    return left.CompareNoCase(right) < 0;
+                });
+
+            for (const auto& file : files)
+            {
+                CString path = directory + file;
+                if (OnOpenDocument(path))
+                {
+                    SetPathName(path, FALSE);
+                    return;
+                }
+            }
+        }
+    }
 }
 
 void CPlayerDoc::OnCloseDocument()
@@ -208,6 +269,11 @@ void CPlayerDoc::changedFramePosition(long long start, long long frame, long lon
     m_currentTime = currentTime;
     totalTimeUpdated(m_frameDecoder->getDurationSecs(total));
     currentTimeUpdated(currentTime);
+}
+
+void CPlayerDoc::onEndOfStream()
+{
+    m_onEndOfStream = true;
 }
 
 bool CPlayerDoc::pauseResume()
@@ -422,4 +488,16 @@ void CPlayerDoc::OnUpdateAudioTrack(CCmdUI* pCmdUI)
     const int idx = pCmdUI->m_nID - ID_TRACK1;
     pCmdUI->Enable(idx < m_frameDecoder->getNumAudioTracks());
     pCmdUI->SetCheck(idx == m_frameDecoder->getAudioTrack());
+}
+
+
+void CPlayerDoc::OnAutoplay()
+{
+    m_autoPlay = !m_autoPlay;
+}
+
+
+void CPlayerDoc::OnUpdateAutoplay(CCmdUI *pCmdUI)
+{
+    pCmdUI->SetCheck(m_autoPlay);
 }

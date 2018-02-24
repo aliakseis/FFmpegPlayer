@@ -48,11 +48,14 @@ public:
 
 protected:
     void changedFramePosition(long long start, long long frame, long long total) override;
+    void onEndOfStream() override;
 
 // Generated message map functions
 protected:
     afx_msg void OnAudioTrack(UINT id);
     afx_msg void OnUpdateAudioTrack(CCmdUI* pCmdUI);
+    afx_msg void OnAutoplay();
+    afx_msg void OnUpdateAutoplay(CCmdUI *pCmdUI);
     DECLARE_MESSAGE_MAP()
 
 #ifdef SHARED_HANDLERS
@@ -62,6 +65,7 @@ protected:
 public:
     BOOL OnOpenDocument(LPCTSTR lpszPathName) override;
     BOOL OnSaveDocument(LPCTSTR) override { return FALSE; }
+    void OnIdle() override;
 
     bool pauseResume();
     bool seekByPercent(double percent);
@@ -90,4 +94,6 @@ private:
     class SubtitlesMap;
     std::unique_ptr<SubtitlesMap> m_subtitles;
     bool m_unicodeSubtitles;
+    bool m_onEndOfStream;
+    bool m_autoPlay;
 };
