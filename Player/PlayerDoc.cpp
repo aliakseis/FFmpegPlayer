@@ -215,8 +215,7 @@ void CPlayerDoc::MoveToNextFile()
         if (!extension || !fileName)
             return;
         const CString directory(pathName, fileName - pathName);
-        CString pattern(directory + _T('*'));
-        pattern += extension;
+        const CString pattern((directory + _T('*')) + extension);
 
         WIN32_FIND_DATA ffd{};
         const auto hFind = FindFirstFile(pattern, &ffd);
@@ -280,6 +279,9 @@ void CPlayerDoc::changedFramePosition(long long start, long long frame, long lon
 void CPlayerDoc::onEndOfStream()
 {
     m_onEndOfStream = true;
+
+    if (CWnd* pMainWnd = AfxGetApp()->GetMainWnd())
+        pMainWnd->PostMessage(WM_KICKIDLE); // trigger idle update
 }
 
 bool CPlayerDoc::pauseResume()
