@@ -40,9 +40,9 @@ void FFmpegDecoder::parseRunnable()
         }
         else
         {
+            using namespace boost;
             if (eof == SET)
             {
-                using namespace boost;
                 if (m_decoderListener
                     && m_videoPacketsQueue.empty()
                     && m_audioPacketsQueue.empty()
@@ -51,11 +51,11 @@ void FFmpegDecoder::parseRunnable()
                     m_decoderListener->onEndOfStream();
                     eof = REPORTED;
                 }
-
-                this_thread::sleep_for(chrono::milliseconds(10));
             }
             if (eof == UNSET && readStatus == AVERROR_EOF)
                 eof = SET;
+
+            this_thread::sleep_for(chrono::milliseconds(10));
         }
 
         // Continue packet reading
