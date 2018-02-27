@@ -20,6 +20,7 @@
 
 #include <boost/icl/interval_map.hpp>
 
+#include <algorithm>
 #include <fstream>
 
 #include <VersionHelpers.h>
@@ -229,11 +230,8 @@ void CPlayerDoc::MoveToNextFile()
 
         do
         {
-            if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            {
-                continue;
-            }
-            else if (_tcsicmp(fileName, ffd.cFileName) < 0)
+            if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                && _tcsicmp(fileName, ffd.cFileName) < 0)
             {
                 files.push_back(ffd.cFileName);
             }
@@ -241,19 +239,21 @@ void CPlayerDoc::MoveToNextFile()
 
         FindClose(hFind);
 
-        std::sort(files.begin(), files.end(),
-            [](const CString& left, const CString& right) {
-                return left.CompareNoCase(right) < 0;
-            });
+        auto comp = [](const CString& left, const CString& right) {
+            return left.CompareNoCase(right) > 0;
+        };
+        std::make_heap(files.begin(), files.end(), comp);
 
-        for (const auto& file : files)
+        while (!files.empty())
         {
-            CString path = directory + file;
+            const CString path = directory + files.front();
             if (OnOpenDocument(path))
             {
                 SetPathName(path, FALSE);
                 return;
             }
+            std::pop_heap(files.begin(), files.end(), comp);
+            files.pop_back();
         }
     }
 
