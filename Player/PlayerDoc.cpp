@@ -227,13 +227,22 @@ void CPlayerDoc::MoveToNextFile()
         }
 
         std::vector<CString> files;
+        const auto extensionLength = pathName.GetLength() - (extension - pathName);
+        const CString justFileName(fileName, extension - fileName);
 
         do
         {
-            if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                && _tcsicmp(fileName, ffd.cFileName) < 0)
+            if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
             {
-                files.push_back(ffd.cFileName);
+                const auto length = _tcslen(ffd.cFileName);
+                if (length > extensionLength && ffd.cFileName[length - extensionLength] == _T('.'))
+                {
+                    ffd.cFileName[length - extensionLength] = 0;
+                    if (_tcsicmp(justFileName, ffd.cFileName) < 0)
+                    {
+                        files.emplace_back(ffd.cFileName, length - extensionLength);
+                    }
+                }
             }
         } while (FindNextFile(hFind, &ffd));
 
@@ -246,7 +255,7 @@ void CPlayerDoc::MoveToNextFile()
 
         while (!files.empty())
         {
-            const CString path = directory + files.front();
+            const CString path = directory + files.front() + extension;
             if (OnOpenDocument(path))
             {
                 SetPathName(path, FALSE);
