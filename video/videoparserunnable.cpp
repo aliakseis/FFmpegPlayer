@@ -55,13 +55,19 @@ bool frameToImage(
 
 } // namespace
 
+struct FFmpegDecoder::VideoParseContext
+{
+    bool initialized = false;
+    int numSkipped = 0;
+};
+
 void FFmpegDecoder::videoParseRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Video thread started";
     m_videoStartClock = GetHiResTime();
     double videoClock = 0; // pts of last decoded frame / predicted pts of next decoded frame
 
-    bool initialized = false;
+    VideoParseContext context{};
 
     for (;;)
     {
@@ -85,7 +91,7 @@ void FFmpegDecoder::videoParseRunnable()
 
             auto packetGuard = MakeGuard(&packet, av_packet_unref);
 
-            if (!handleVideoPacket(packet, videoClock, initialized)
+            if (!handleVideoPacket(packet, videoClock, context)
                 || m_isPaused && !m_isVideoSeekingWhilePaused)
             {
                 break;
@@ -97,8 +103,11 @@ void FFmpegDecoder::videoParseRunnable()
 bool FFmpegDecoder::handleVideoPacket(
     const AVPacket& packet,
     double& videoClock,
-    bool& initialized)
+    VideoParseContext& context)
 {
+    enum { MAX_SKIPPED = 4 };
+    const double MAX_DELAY = 0.2;
+
     const int ret = avcodec_send_packet(m_videoCodecContext, &packet);
     if (ret < 0)
         return false;
@@ -116,7 +125,7 @@ bool FFmpegDecoder::handleVideoPacket(
         }
         const double pts = videoClock;
 
-        if (!initialized)
+        if (!context.initialized)
         {
             m_videoStartClock = GetHiResTime() - pts;
         }
@@ -129,32 +138,42 @@ bool FFmpegDecoder::handleVideoPacket(
 
         boost::posix_time::time_duration td(boost::posix_time::pos_infin);
         // Skipping frames
-        if (initialized && !m_videoPacketsQueue.empty())
+        if (context.initialized && !m_videoPacketsQueue.empty())
         {
             const double curTime = GetHiResTime();
             if (m_videoStartClock + pts <= curTime)
             {
-                if (m_videoStartClock + pts < curTime - 1.)
+                if (m_videoStartClock + pts < curTime - MAX_DELAY)
                 {
-                    InterlockedAdd(m_videoStartClock, 1.);
+                    InterlockedAdd(m_videoStartClock, MAX_DELAY);
                 }
 
-                CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
-
-                // pause
-                if (m_isPaused && !m_isVideoSeekingWhilePaused)
+                if (++context.numSkipped > MAX_SKIPPED)
                 {
-                    break;
+                    context.numSkipped = 0;
                 }
+                else
+                {
+                    CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
 
-                continue;
+                    // pause
+                    if (m_isPaused && !m_isVideoSeekingWhilePaused)
+                    {
+                        break;
+                    }
+
+                    continue;
+                }
             }
-
-            td = boost::posix_time::milliseconds(
-                int((m_videoStartClock + pts - curTime) * 1000.) + 1);
+            else
+            {
+                context.numSkipped = 0;
+                td = boost::posix_time::milliseconds(
+                    int((m_videoStartClock + pts - curTime) * 1000.) + 1);
+            }
         }
 
-        initialized = true;
+        context.initialized = true;
 
         {
             boost::unique_lock<boost::mutex> locker(m_videoFramesMutex);

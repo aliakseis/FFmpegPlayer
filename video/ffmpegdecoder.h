@@ -96,6 +96,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
    private:
     class IOContext;
+    struct VideoParseContext;
 
     // Threads
     void parseRunnable();
@@ -115,7 +116,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     bool handleVideoPacket(
         const AVPacket& packet,
         double& videoClock,
-        bool& initialized);
+        VideoParseContext& context);
 
     // IAudioPlayerCallback
     void AppendFrameClock(double frame_clock) override;
