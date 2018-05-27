@@ -15,6 +15,18 @@
 
 #include "DialogOpenURL.h"
 
+//#define YOUTUBE_EXPERIMENT
+
+
+#ifdef YOUTUBE_EXPERIMENT
+
+#include <boost/python/exec.hpp>
+#include <boost/python/import.hpp>
+#include <boost/python/extract.hpp>
+#include <regex>
+
+#endif
+
 #include <propkey.h>
 #include <memory>
 
@@ -23,11 +35,69 @@
 #include <algorithm>
 #include <fstream>
 
+#include <string>
+
 #include <VersionHelpers.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+namespace {
+
+#ifdef YOUTUBE_EXPERIMENT
+
+bool isUrlYoutube(const std::string& url)
+{
+    std::regex txt_regex(R"(^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+)");
+    return std::regex_match(url, txt_regex);
+}
+
+
+std::string getYoutubeUrl(const std::string& url)
+{
+    using namespace boost::python;
+
+    std::string result;
+
+    Py_Initialize();
+    try {
+        // Retrieve the main module.
+        object main = import("__main__");
+
+        // Retrieve the main module's namespace
+        object global(main.attr("__dict__"));
+
+        const char script[] = R"(import sys
+sys.path.append("/solutions/pytube")
+from pytube import YouTube
+def getYoutubeUrl(url):
+	return YouTube(url).streams.filter(progressive=True).order_by('resolution').desc().first().url)";
+
+
+        // Define greet function in Python.
+        object exec_result = exec(script, global, global);
+
+        // Create a reference to it.
+        object obj = global["getYoutubeUrl"];
+
+        // Call it.
+        result = extract<std::string>(obj(url));
+    }
+    catch (const std::exception&)
+    {
+    }
+    catch (const error_already_set&)
+    {
+    }
+    Py_Finalize();
+    return result;
+}
+
+#endif
+
+}
+
 
 class CPlayerDoc::SubtitlesMap : public boost::icl::interval_map<double, std::string>
 {};
@@ -79,7 +149,13 @@ BOOL CPlayerDoc::OnNewDocument()
         {
             m_frameDecoder->close();
             UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
-            const std::string url(dlg.m_URL.GetString(), dlg.m_URL.GetString() + dlg.m_URL.GetLength());
+            std::string url(dlg.m_URL.GetString(), dlg.m_URL.GetString() + dlg.m_URL.GetLength());
+#ifdef YOUTUBE_EXPERIMENT
+            if (isUrlYoutube(url))
+            {
+                url = getYoutubeUrl(url);
+            }
+#endif
             if (m_frameDecoder->openUrl(url))
             {
                 m_frameDecoder->play();
