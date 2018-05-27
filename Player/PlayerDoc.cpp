@@ -150,24 +150,29 @@ BOOL CPlayerDoc::OnNewDocument()
             m_frameDecoder->close();
             UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
             std::string url(dlg.m_URL.GetString(), dlg.m_URL.GetString() + dlg.m_URL.GetLength());
-#ifdef YOUTUBE_EXPERIMENT
-            if (isUrlYoutube(url))
-            {
-                url = getYoutubeUrl(url);
-            }
-#endif
-            if (m_frameDecoder->openUrl(url))
-            {
-                m_frameDecoder->play();
-            }
-
+            openUrl(url);
         }
     }
 
     return TRUE;
 }
 
+bool CPlayerDoc::openUrl(std::string url)
+{
+#ifdef YOUTUBE_EXPERIMENT
+    if (isUrlYoutube(url))
+    {
+        url = getYoutubeUrl(url);
+    }
+#endif
+    if (m_frameDecoder->openUrl(url))
+    {
+        m_frameDecoder->play();
+        return true;
+    }
 
+    return false;
+}
 
 
 // CPlayerDoc serialization
@@ -260,6 +265,29 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
     m_frameDecoder->close();
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+
+    const auto extension = PathFindExtension(lpszPathName);
+    if (!_tcsicmp(extension, _T(".lst")))
+    {
+        std::ifstream s(lpszPathName);
+        if (!s)
+            return false;
+        m_playList.clear();
+        std::string buffer;
+        while (std::getline(s, buffer))
+        {
+            m_playList.push_back(buffer);
+        }
+        while (!m_playList.empty())
+        { 
+            buffer = m_playList.front();
+            m_playList.pop_front();
+            if (openUrl(buffer))
+                return true;
+        }
+        return false;
+    }
+
     if (m_frameDecoder->openFile(lpszPathName))
     {
         if (!OpenSubRipFile(lpszPathName))
@@ -284,6 +312,16 @@ void CPlayerDoc::OnIdle()
 
 void CPlayerDoc::MoveToNextFile()
 {
+    if (!m_playList.empty())
+    {
+        do
+        {
+            auto buffer = m_playList.front();
+            m_playList.pop_front();
+            if (openUrl(buffer))
+                return;
+        } while (!m_playList.empty());
+    }
     if (m_autoPlay)
     {
         const CString pathName = GetPathName();

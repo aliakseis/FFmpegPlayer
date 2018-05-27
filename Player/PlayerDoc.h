@@ -8,6 +8,8 @@
 
 #include <memory>
 #include <atomic>
+#include <deque>
+#include <string>
 
 #include <boost/signals2/signal.hpp>
 
@@ -86,6 +88,7 @@ private:
     bool OpenSubRipFile(LPCTSTR lpszVideoPathName);
     bool OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName);
     void MoveToNextFile();
+    bool openUrl(std::string url);
 
 private:
     std::unique_ptr<IFrameDecoder> m_frameDecoder;
@@ -97,4 +100,6 @@ private:
     bool m_unicodeSubtitles;
     bool m_onEndOfStream;
     bool m_autoPlay;
+
+    std::deque<std::string> m_playList;
 };
