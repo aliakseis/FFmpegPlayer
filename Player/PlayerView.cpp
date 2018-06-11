@@ -1301,6 +1301,14 @@ void CPlayerView::updateFrame()
             TRACE("UnlockRect failed with error 0x%x.\n", hr);
         }
     }
+
+    lock.Unlock();
+
+    if (CFrameWndEx* pMainWnd = dynamic_cast<CFrameWndEx*>(AfxGetApp()->GetMainWnd()))
+        if (pMainWnd->IsFullScreen())
+        {
+            ::SetThreadExecutionState(ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED | ES_CONTINUOUS);
+        }
 }
 
 
