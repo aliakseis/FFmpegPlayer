@@ -10,6 +10,7 @@
 #include <atomic>
 #include <deque>
 #include <string>
+#include <functional>
 
 #include <boost/signals2/signal.hpp>
 
@@ -58,6 +59,8 @@ protected:
     afx_msg void OnUpdateAudioTrack(CCmdUI* pCmdUI);
     afx_msg void OnAutoplay();
     afx_msg void OnUpdateAutoplay(CCmdUI *pCmdUI);
+    afx_msg void OnLooping();
+    afx_msg void OnUpdateLooping(CCmdUI *pCmdUI);
     DECLARE_MESSAGE_MAP()
 
 #ifdef SHARED_HANDLERS
@@ -100,6 +103,8 @@ private:
     bool m_unicodeSubtitles;
     bool m_onEndOfStream;
     bool m_autoPlay;
+    bool m_looping;
 
     std::deque<std::string> m_playList;
+    std::function<void()> m_reopenFunc;
 };

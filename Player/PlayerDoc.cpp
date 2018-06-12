@@ -46,6 +46,8 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_UPDATE_COMMAND_UI_RANGE(ID_TRACK1, ID_TRACK4, OnUpdateAudioTrack)
     ON_COMMAND(ID_AUTOPLAY, &CPlayerDoc::OnAutoplay)
     ON_UPDATE_COMMAND_UI(ID_AUTOPLAY, &CPlayerDoc::OnUpdateAutoplay)
+    ON_COMMAND(ID_LOOPING, &CPlayerDoc::OnLooping)
+    ON_UPDATE_COMMAND_UI(ID_LOOPING, &CPlayerDoc::OnUpdateLooping)
 END_MESSAGE_MAP()
 
 
@@ -59,6 +61,7 @@ CPlayerDoc::CPlayerDoc()
     , m_unicodeSubtitles(false)
     , m_onEndOfStream(false)
     , m_autoPlay(false)
+    , m_looping(false)
 {
     m_frameDecoder->setDecoderListener(this);
 }
@@ -86,6 +89,10 @@ BOOL CPlayerDoc::OnNewDocument()
             UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
             std::string url(dlg.m_URL.GetString(), dlg.m_URL.GetString() + dlg.m_URL.GetLength());
             openUrl(url);
+            m_reopenFunc = [this, url] {
+                UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+                openUrl(url);
+            };
         }
     }
 
@@ -209,24 +216,29 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
             m_playList.push_back(buffer);
         }
         while (!m_playList.empty())
-        { 
+        {
             buffer = m_playList.front();
             m_playList.pop_front();
             if (openUrl(buffer))
-                return true;
+                break;
         }
-        return false;
+        if (m_playList.empty())
+            return false;
     }
-
-    if (m_frameDecoder->openFile(lpszPathName))
+    else
     {
+        if (!m_frameDecoder->openFile(lpszPathName))
+            return false;
         if (!OpenSubRipFile(lpszPathName))
             OpenSubStationAlphaFile(lpszPathName);
         m_frameDecoder->play();
-        return TRUE;
     }
 
-    return FALSE;
+    m_reopenFunc = [this, path = CString(lpszPathName)] {
+        if (OnOpenDocument(path))
+            SetPathName(path);
+    };
+    return true;
 }
 
 void CPlayerDoc::OnIdle()
@@ -310,6 +322,8 @@ void CPlayerDoc::MoveToNextFile()
         }
     }
 
+    if (m_looping && m_reopenFunc)
+        m_reopenFunc();
 }
 
 void CPlayerDoc::OnCloseDocument()
@@ -561,4 +575,15 @@ void CPlayerDoc::OnAutoplay()
 void CPlayerDoc::OnUpdateAutoplay(CCmdUI *pCmdUI)
 {
     pCmdUI->SetCheck(m_autoPlay);
+}
+
+void CPlayerDoc::OnLooping()
+{
+    m_looping = !m_looping;
+}
+
+
+void CPlayerDoc::OnUpdateLooping(CCmdUI *pCmdUI)
+{
+    pCmdUI->SetCheck(m_looping);
 }
