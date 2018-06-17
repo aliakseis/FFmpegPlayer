@@ -11,6 +11,9 @@
 #include <boost/python/exec.hpp>
 #include <boost/python/import.hpp>
 #include <boost/python/extract.hpp>
+
+#include <boost/log/trivial.hpp>
+
 #include <regex>
 #include <fstream>
 
@@ -95,17 +98,15 @@ public:
     YouTubeDealer();
     ~YouTubeDealer();
 
-    bool isValid() const { return m_valid; }
+    bool isValid() const { return !!m_obj; }
     std::string getYoutubeUrl(const std::string& url);
 
 private:
-    bool m_valid;
     boost::python::object m_obj;
 };
 
 
 YouTubeDealer::YouTubeDealer()
-    : m_valid(false)
 {
     // String buffer for holding the path.
     TCHAR strPath[MAX_PATH]{};
@@ -122,55 +123,52 @@ YouTubeDealer::YouTubeDealer()
     PathAppend(strPath, _T("pytube-master"));
 
     if (-1 == _taccess(strPath, 0)
-        && !DownloadAndExtractZip(PYTUBE_URL, localAppdataPath))
+        && (!DownloadAndExtractZip(PYTUBE_URL, localAppdataPath)
+            || -1 == _taccess(strPath, 0)))
     {
         return;
     }
-    if (-1 != _taccess(strPath, 0))
-    {
-        using namespace boost::python;
+    using namespace boost::python;
 
-        Py_Initialize();
-        try {
-            // Retrieve the main module.
-            object main = import("__main__");
+    Py_Initialize();
+    try {
+        // Retrieve the main module.
+        object main = import("__main__");
 
-            // Retrieve the main module's namespace
-            object global(main.attr("__dict__"));
+        // Retrieve the main module's namespace
+        object global(main.attr("__dict__"));
 
 
-            CT2A convert(strPath, CP_UTF8);
+        CT2A convert(strPath, CP_UTF8);
 
-            replace_char(convert, '\\', '/');
+        replace_char(convert, '\\', '/');
 
-            char script[4096];
-            sprintf_s(script, SCRIPT_TEMPLATE, static_cast<LPSTR>(convert));
+        char script[4096];
+        sprintf_s(script, SCRIPT_TEMPLATE, static_cast<LPSTR>(convert));
 
-            // Define greet function in Python.
-            object exec_result = exec(script, global, global);
+        // Define greet function in Python.
+        object exec_result = exec(script, global, global);
 
-            // Create a reference to it.
-            m_obj = global["getYoutubeUrl"];
-        }
-        catch (const std::exception&)
-        {
+        // Create a reference to it.
+        m_obj = global["getYoutubeUrl"];
+        if (!m_obj)
             Py_Finalize();
-            return;
-        }
-        catch (const error_already_set&)
-        {
-            Py_Finalize();
-            return;
-        }
-
-        m_valid = true;
     }
-
+    catch (const std::exception&)
+    {
+        Py_Finalize();
+        return;
+    }
+    catch (const error_already_set&)
+    {
+        Py_Finalize();
+        return;
+    }
 }
 
 YouTubeDealer::~YouTubeDealer()
 {
-    if (m_valid)
+    if (isValid())
         Py_Finalize();
 }
 
@@ -189,6 +187,8 @@ std::string YouTubeDealer::getYoutubeUrl(const std::string& url)
     catch (const error_already_set&)
     {
     }
+
+    BOOST_LOG_TRIVIAL(trace) << "getYoutubeUrl() returning \"" << result << "\"";
 
     return result;
 }
