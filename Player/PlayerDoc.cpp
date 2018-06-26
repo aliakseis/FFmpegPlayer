@@ -236,7 +236,7 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
     m_reopenFunc = [this, path = CString(lpszPathName)] {
         if (OnOpenDocument(path))
-            SetPathName(path);
+            SetPathName(path, FALSE);
     };
     return true;
 }
