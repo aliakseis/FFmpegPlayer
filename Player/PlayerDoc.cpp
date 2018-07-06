@@ -229,6 +229,7 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
     {
         if (!m_frameDecoder->openFile(lpszPathName))
             return false;
+        m_playList.clear();
         if (!OpenSubRipFile(lpszPathName))
             OpenSubStationAlphaFile(lpszPathName);
         m_frameDecoder->play();
