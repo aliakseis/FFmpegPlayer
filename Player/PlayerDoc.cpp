@@ -34,6 +34,68 @@
 #endif
 
 
+namespace {
+
+bool HandleFilesSequence(const CString& pathName, std::function<bool(const CString&)> tryToOpen)
+{
+    const auto extension = PathFindExtension(pathName);
+    const auto fileName = PathFindFileName(pathName);
+    if (!extension || !fileName)
+        return false;
+    const CString directory(pathName, fileName - pathName);
+    const CString pattern((directory + _T('*')) + extension);
+
+    WIN32_FIND_DATA ffd{};
+    const auto hFind = FindFirstFile(pattern, &ffd);
+
+    if (INVALID_HANDLE_VALUE == hFind)
+    {
+        return false;
+    }
+
+    std::vector<CString> files;
+    const auto extensionLength = pathName.GetLength() - (extension - pathName);
+    const CString justFileName(fileName, extension - fileName);
+
+    do
+    {
+        if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            const auto length = _tcslen(ffd.cFileName);
+            if (length > extensionLength && ffd.cFileName[length - extensionLength] == _T('.'))
+            {
+                ffd.cFileName[length - extensionLength] = 0;
+                if (_tcsicmp(justFileName, ffd.cFileName) < 0)
+                {
+                    files.emplace_back(ffd.cFileName, length - extensionLength);
+                }
+            }
+        }
+    } while (FindNextFile(hFind, &ffd));
+
+    FindClose(hFind);
+
+    auto comp = [](const CString& left, const CString& right) {
+        return left.CompareNoCase(right) > 0;
+    };
+    std::make_heap(files.begin(), files.end(), comp);
+
+    while (!files.empty())
+    {
+        const CString path = directory + files.front() + extension;
+        if (tryToOpen(path))
+        {
+            return true;
+        }
+        std::pop_heap(files.begin(), files.end(), comp);
+        files.pop_back();
+    }
+    return false;
+}
+
+} // namespace
+
+
 class CPlayerDoc::SubtitlesMap : public boost::icl::interval_map<double, std::string>
 {};
 
@@ -265,62 +327,19 @@ void CPlayerDoc::MoveToNextFile()
                 return;
         } while (!m_playList.empty());
     }
-    if (m_autoPlay)
-    {
-        const CString pathName = GetPathName();
-        const auto extension = PathFindExtension(pathName);
-        const auto fileName = PathFindFileName(pathName);
-        if (!extension || !fileName)
-            return;
-        const CString directory(pathName, fileName - pathName);
-        const CString pattern((directory + _T('*')) + extension);
-
-        WIN32_FIND_DATA ffd{};
-        const auto hFind = FindFirstFile(pattern, &ffd);
-
-        if (INVALID_HANDLE_VALUE == hFind)
+    if (m_autoPlay && HandleFilesSequence(
+        GetPathName(), 
+        [this](const CString& path) 
         {
-            return;
-        }
-
-        std::vector<CString> files;
-        const auto extensionLength = pathName.GetLength() - (extension - pathName);
-        const CString justFileName(fileName, extension - fileName);
-
-        do
-        {
-            if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-            {
-                const auto length = _tcslen(ffd.cFileName);
-                if (length > extensionLength && ffd.cFileName[length - extensionLength] == _T('.'))
-                {
-                    ffd.cFileName[length - extensionLength] = 0;
-                    if (_tcsicmp(justFileName, ffd.cFileName) < 0)
-                    {
-                        files.emplace_back(ffd.cFileName, length - extensionLength);
-                    }
-                }
-            }
-        } while (FindNextFile(hFind, &ffd));
-
-        FindClose(hFind);
-
-        auto comp = [](const CString& left, const CString& right) {
-            return left.CompareNoCase(right) > 0;
-        };
-        std::make_heap(files.begin(), files.end(), comp);
-
-        while (!files.empty())
-        {
-            const CString path = directory + files.front() + extension;
             if (OnOpenDocument(path))
             {
                 SetPathName(path, FALSE);
-                return;
+                return true;
             }
-            std::pop_heap(files.begin(), files.end(), comp);
-            files.pop_back();
-        }
+            return false;
+        }))
+    {
+        return;
     }
 
     if (m_looping && m_reopenFunc)
