@@ -93,6 +93,19 @@ bool HandleFilesSequence(const CString& pathName, std::function<bool(const CStri
     return false;
 }
 
+template<typename T>
+bool OpenUrlFromList(std::deque<std::string>& playList, T openUrl)
+{
+    while (!playList.empty())
+    {
+        auto buffer = playList.front();
+        playList.pop_front();
+        if (openUrl(buffer))
+            return true;
+    }
+    return false;
+}
+
 } // namespace
 
 
@@ -277,14 +290,8 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
         {
             m_playList.push_back(buffer);
         }
-        while (!m_playList.empty())
-        {
-            buffer = m_playList.front();
-            m_playList.pop_front();
-            if (openUrl(buffer))
-                break;
-        }
-        if (m_playList.empty())
+
+        if (!OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
             return false;
     }
     else
@@ -317,16 +324,9 @@ void CPlayerDoc::OnIdle()
 
 void CPlayerDoc::MoveToNextFile()
 {
-    if (!m_playList.empty())
-    {
-        do
-        {
-            auto buffer = m_playList.front();
-            m_playList.pop_front();
-            if (openUrl(buffer))
-                return;
-        } while (!m_playList.empty());
-    }
+    if (OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
+        return;
+
     if (m_autoPlay && HandleFilesSequence(
         GetPathName(), 
         [this](const CString& path) 
