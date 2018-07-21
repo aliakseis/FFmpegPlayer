@@ -84,6 +84,7 @@ BEGIN_MESSAGE_MAP(CPlayerViewD2D, CView)
     ON_REGISTERED_MESSAGE(AFX_WM_DRAW2D, &CPlayerViewD2D::OnDraw2D)
     ON_MESSAGE(WM_DRAW_FRAME, &CPlayerViewD2D::DrawFrame)
     ON_WM_CREATE()
+    ON_WM_DROPFILES()
 END_MESSAGE_MAP()
 
 // CPlayerViewD2D construction/destruction
@@ -267,6 +268,8 @@ int CPlayerViewD2D::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
     GetDocument()->getFrameDecoder()->setFrameListener(m_frameListener.get());
 
+    DragAcceptFiles();
+
     return 0;
 }
 
@@ -362,4 +365,11 @@ BOOL CPlayerViewD2D::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESUL
     }
 
     return __super::OnWndMsg(message, wParam, lParam, pResult);
+}
+
+
+void CPlayerViewD2D::OnDropFiles(HDROP hDropInfo)
+{
+    GetDocument()->OnDropFiles(hDropInfo);
+    CView::OnDropFiles(hDropInfo);
 }

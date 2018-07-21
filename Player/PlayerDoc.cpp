@@ -573,6 +573,16 @@ std::string CPlayerDoc::getSubtitle() const
     return result;
 }
 
+void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
+{
+    TCHAR lpszFileName[MAX_PATH];
+    if (DragQueryFile(hDropInfo, 0, lpszFileName, MAX_PATH)
+        && OnOpenDocument(lpszFileName))
+    {
+        SetPathName(lpszFileName, FALSE);
+    }
+}
+
 void CPlayerDoc::OnAudioTrack(UINT id)
 {
     m_frameDecoder->setAudioTrack(id - ID_TRACK1);
