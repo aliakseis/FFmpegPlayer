@@ -62,5 +62,7 @@ private:
     CComPtr<ID2D1Effect> m_spEffect;
 
     CCriticalSection m_csSurface;
+public:
+    afx_msg void OnDropFiles(HDROP hDropInfo);
 };
 

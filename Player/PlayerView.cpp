@@ -561,6 +561,7 @@ BEGIN_MESSAGE_MAP(CPlayerView, CView)
     ON_WM_PAINT()
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
+    ON_WM_DROPFILES()
 END_MESSAGE_MAP()
 
 
@@ -1220,6 +1221,8 @@ int CPlayerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 #endif
         , true);
 
+    DragAcceptFiles();
+
     return 0;
 }
 
@@ -1379,4 +1382,11 @@ void CPlayerView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     }
 
     __super::OnUpdate(pSender, lHint, pHint);
+}
+
+
+void CPlayerView::OnDropFiles(HDROP hDropInfo)
+{
+    GetDocument()->OnDropFiles(hDropInfo);
+    __super::OnDropFiles(hDropInfo);
 }

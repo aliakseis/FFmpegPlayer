@@ -87,6 +87,8 @@ public:
     std::string getSubtitle() const;
     bool isUnicodeSubtitles() const { return m_unicodeSubtitles; }
 
+    void OnDropFiles(HDROP hDropInfo);
+
 private:
     bool OpenSubRipFile(LPCTSTR lpszVideoPathName);
     bool OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName);
