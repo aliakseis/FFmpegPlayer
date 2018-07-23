@@ -182,6 +182,8 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 
     m_videoResetting = false;
 
+    m_videoStartClock = VIDEO_START_CLOCK_NOT_INITIALIZED;
+
     if (resetVideo && !resetVideoProcessing())
         return false;
 

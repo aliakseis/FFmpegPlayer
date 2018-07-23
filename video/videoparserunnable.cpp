@@ -64,7 +64,7 @@ struct FFmpegDecoder::VideoParseContext
 void FFmpegDecoder::videoParseRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Video thread started";
-    m_videoStartClock = GetHiResTime();
+    m_videoStartClock = VIDEO_START_CLOCK_NOT_INITIALIZED;
     double videoClock = 0; // pts of last decoded frame / predicted pts of next decoded frame
 
     VideoParseContext context{};

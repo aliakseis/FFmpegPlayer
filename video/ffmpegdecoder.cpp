@@ -721,7 +721,8 @@ void FFmpegDecoder::seekWhilePaused()
     const bool paused = m_isPaused;
     if (paused)
     {
-        InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
+        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+            InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
         m_pauseTimer = GetHiResTime();
     }
 
@@ -783,7 +784,8 @@ bool FFmpegDecoder::pauseResume()
     {
         CHANNEL_LOG(ffmpeg_pause) << "Unpause";
         CHANNEL_LOG(ffmpeg_pause) << "Move >> " << GetHiResTime() - m_pauseTimer;
-        InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
+        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+            InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
         {
             boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
             m_isPaused = false;

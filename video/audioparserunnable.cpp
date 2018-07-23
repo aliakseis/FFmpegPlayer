@@ -214,10 +214,14 @@ bool FFmpegDecoder::handleAudioPacket(
         }
 
         // Audio sync
-        const double delta = m_videoStartClock + m_audioPTS - GetHiResTime();
-        if (fabs(delta) > 0.1)
+        const double videoStartClock = m_videoStartClock;
+        if (videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
         {
-            InterlockedAdd(m_videoStartClock, -delta / 2);
+            const double delta = videoStartClock + m_audioPTS - GetHiResTime();
+            if (fabs(delta) > 0.1)
+            {
+                InterlockedAdd(m_videoStartClock, -delta / 2);
+            }
         }
 
         if (write_size > 0)
