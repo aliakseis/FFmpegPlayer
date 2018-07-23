@@ -164,6 +164,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     boost::atomic_bool m_videoResetting;
 
     // Video Stuff
+    enum { VIDEO_START_CLOCK_NOT_INITIALIZED = -1 };
     boost::atomic<double> m_videoStartClock;
 
     AVCodec* m_videoCodec;
