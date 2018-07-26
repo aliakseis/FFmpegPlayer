@@ -163,11 +163,14 @@ BOOL CPlayerDoc::OnNewDocument()
             m_frameDecoder->close();
             UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
             std::string url(dlg.m_URL.GetString(), dlg.m_URL.GetString() + dlg.m_URL.GetLength());
-            openUrl(url);
-            m_reopenFunc = [this, url] {
-                UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
-                openUrl(url);
-            };
+            if (openUrl(url))
+            {
+                m_playList.clear();
+                m_reopenFunc = [this, url] {
+                    UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+                    openUrl(url);
+                };
+            }
         }
     }
 
