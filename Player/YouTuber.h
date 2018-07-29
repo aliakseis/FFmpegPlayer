@@ -2,4 +2,4 @@
 
 #include <string>
 
-std::string getYoutubeUrl(const std::string& url);
+std::string getYoutubeUrl(std::string url);
