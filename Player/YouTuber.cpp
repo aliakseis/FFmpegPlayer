@@ -16,6 +16,8 @@
 
 #include <regex>
 #include <fstream>
+#include <iterator>
+#include <streambuf>
 
 #include "unzip.h"
 
@@ -40,10 +42,76 @@ char* replace_char(char* str, char find, char replace)
     return str;
 }
 
-bool isUrlYoutube(const std::string& url)
+
+int from_hex(char ch)
 {
-    std::regex txt_regex(R"(^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+)");
-    return std::regex_match(url, txt_regex);
+    return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+}
+
+class UrlUnescapeBuf : public std::streambuf
+{
+    char readBuf_;
+    const char* pExternBuf_;
+
+    int_type underflow() override
+    {
+        if (gptr() == &readBuf_)
+            return traits_type::to_int_type(readBuf_);
+
+        if (*pExternBuf_ == '\0')
+            return traits_type::eof();
+
+        int_type nextChar = *pExternBuf_++;
+        if (nextChar == '%')
+        {
+            const auto char1 = *pExternBuf_;
+            if (char1 == '\0')
+                return traits_type::eof();
+            const auto char2 = *++pExternBuf_;
+            if (char2 == '\0')
+                return traits_type::eof();
+            ++pExternBuf_;
+            nextChar = (from_hex(char1) << 4) | from_hex(char2);
+        }
+
+        readBuf_ = traits_type::to_char_type(nextChar);
+
+        setg(&readBuf_, &readBuf_, &readBuf_ + 1);
+        return traits_type::to_int_type(readBuf_);
+    }
+
+public:
+    explicit UrlUnescapeBuf(const char* pExternBuf)
+        : pExternBuf_(pExternBuf)
+    {
+        setg(nullptr, nullptr, nullptr);
+    }
+};
+
+std::string UrlUnescapeString(const char* s)
+{
+    using IteratorType = std::istreambuf_iterator<char>;
+    UrlUnescapeBuf buf(s);
+    return{ IteratorType(&buf), IteratorType() };
+}
+
+bool extractYoutubeUrl(std::string& s)
+{
+    std::regex txt_regex(R"((http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+)");
+    std::string copy = s;
+    for (int unescaped = 0; unescaped < 2; ++unescaped)
+    {
+        std::smatch m;
+        if (std::regex_search(copy, m, txt_regex))
+        {
+            s = copy.substr(m.position());
+            return true;
+        }
+        if (!unescaped)
+            copy = UrlUnescapeString(copy.c_str());
+    }
+
+    return false;
 }
 
 bool DownloadAndExtractZip(const char* zipfile, const TCHAR* root)
@@ -197,9 +265,9 @@ std::string YouTubeDealer::getYoutubeUrl(const std::string& url)
 } // namespace
 
 
-std::string getYoutubeUrl(const std::string& url)
+std::string getYoutubeUrl(std::string url)
 {
-    if (isUrlYoutube(url))
+    if (extractYoutubeUrl(url))
     {
         static YouTubeDealer buddy;
         if (buddy.isValid())
@@ -212,7 +280,7 @@ std::string getYoutubeUrl(const std::string& url)
 
 #else // YOUTUBE_EXPERIMENT
 
-std::string getYoutubeUrl(const std::string& url)
+std::string getYoutubeUrl(std::string url)
 {
     return url;
 }
