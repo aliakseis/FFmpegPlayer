@@ -327,11 +327,10 @@ void CPlayerDoc::OnIdle()
 
 void CPlayerDoc::MoveToNextFile()
 {
-    if (OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
-        return;
+    auto saveReopenFunc = m_reopenFunc;
 
-    if (m_autoPlay && HandleFilesSequence(
-        GetPathName(), 
+    if (OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1))
+        || m_autoPlay && HandleFilesSequence(GetPathName(), 
         [this](const CString& path) 
         {
             if (OnOpenDocument(path))
@@ -342,6 +341,7 @@ void CPlayerDoc::MoveToNextFile()
             return false;
         }))
     {
+        m_reopenFunc = saveReopenFunc;
         return;
     }
 
