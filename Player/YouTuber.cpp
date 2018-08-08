@@ -48,51 +48,20 @@ int from_hex(char ch)
     return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
 }
 
-class UrlUnescapeBuf : public std::streambuf
+std::string UrlUnescapeString(const std::string& s)
 {
-    char readBuf_;
-    const char* pExternBuf_;
-
-    int_type underflow() override
+    std::istringstream ss(s);
+    std::string result;
+    std::getline(ss, result, '%');
+    std::string buffer;
+    while (std::getline(ss, buffer, '%'))
     {
-        if (gptr() == &readBuf_)
-            return traits_type::to_int_type(readBuf_);
-
-        if (*pExternBuf_ == '\0')
-            return traits_type::eof();
-
-        int_type nextChar = *pExternBuf_++;
-        if (nextChar == '%')
+        if (buffer.size() >= 2)
         {
-            const auto char1 = *pExternBuf_;
-            if (char1 == '\0')
-                return traits_type::eof();
-            const auto char2 = *++pExternBuf_;
-            if (char2 == '\0')
-                return traits_type::eof();
-            ++pExternBuf_;
-            nextChar = (from_hex(char1) << 4) | from_hex(char2);
+            result += char((from_hex(buffer[0]) << 4) | from_hex(buffer[1])) + buffer.substr(2);
         }
-
-        readBuf_ = traits_type::to_char_type(nextChar);
-
-        setg(&readBuf_, &readBuf_, &readBuf_ + 1);
-        return traits_type::to_int_type(readBuf_);
     }
-
-public:
-    explicit UrlUnescapeBuf(const char* pExternBuf)
-        : pExternBuf_(pExternBuf)
-    {
-        setg(nullptr, nullptr, nullptr);
-    }
-};
-
-std::string UrlUnescapeString(const char* s)
-{
-    using IteratorType = std::istreambuf_iterator<char>;
-    UrlUnescapeBuf buf(s);
-    return{ IteratorType(&buf), IteratorType() };
+    return result;
 }
 
 bool extractYoutubeUrl(std::string& s)
@@ -108,7 +77,7 @@ bool extractYoutubeUrl(std::string& s)
             return true;
         }
         if (!unescaped)
-            copy = UrlUnescapeString(copy.c_str());
+            copy = UrlUnescapeString(copy);
     }
 
     return false;
