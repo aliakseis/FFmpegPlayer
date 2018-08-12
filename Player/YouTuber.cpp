@@ -151,9 +151,9 @@ YouTubeDealer::YouTubeDealer()
     // Get the special folder path.
     SHGetSpecialFolderPath(
         0,       // Hwnd
-        strPath, // String buffer.
+        strPath, // String buffer
         CSIDL_LOCAL_APPDATA, // CSLID of folder
-        TRUE); // Create if doesn't exists?}
+        TRUE); // Create if doesn't exist?
 
     CString localAppdataPath = strPath;
 
@@ -238,6 +238,7 @@ std::string getYoutubeUrl(std::string url)
 {
     if (extractYoutubeUrl(url))
     {
+        CWaitCursor wait;
         static YouTubeDealer buddy;
         if (buddy.isValid())
             return buddy.getYoutubeUrl(url);
