@@ -18,6 +18,7 @@
 #include <fstream>
 #include <iterator>
 #include <streambuf>
+#include <algorithm>
 
 #include "unzip.h"
 
@@ -30,17 +31,6 @@ sys.path.append("%s")
 from pytube import YouTube
 def getYoutubeUrl(url):
 	return YouTube(url).streams.filter(progressive=True).order_by('resolution').desc().first().url)";
-
-
-char* replace_char(char* str, char find, char replace)
-{
-    char *current_pos = strchr(str,find);
-    while (current_pos) {
-        *current_pos = replace;
-        current_pos = strchr(++current_pos, find);
-    }
-    return str;
-}
 
 
 int from_hex(char ch)
@@ -175,15 +165,14 @@ YouTubeDealer::YouTubeDealer()
         // Retrieve the main module's namespace
         object global(main.attr("__dict__"));
 
-
-        CT2A convert(strPath, CP_UTF8);
-
-        replace_char(convert, '\\', '/');
+        CT2A const convert(strPath, CP_UTF8);
+        LPSTR const pszConvert = convert;
+        std::replace(pszConvert, pszConvert + strlen(pszConvert), '\\', '/');
 
         char script[4096];
-        sprintf_s(script, SCRIPT_TEMPLATE, static_cast<LPSTR>(convert));
+        sprintf_s(script, SCRIPT_TEMPLATE, pszConvert);
 
-        // Define greet function in Python.
+        // Define function in Python.
         object exec_result = exec(script, global, global);
 
         // Create a reference to it.
