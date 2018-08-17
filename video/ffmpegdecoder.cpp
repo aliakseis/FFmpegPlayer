@@ -389,7 +389,7 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     }
     else
     {
-        av_dict_set(&streamOpts, "stimeout", "5000000", 0); // 5 seconds timeout.
+        av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
     }
 
     auto formatContextGuard = MakeGuard(&m_formatContext, avformat_close_input);
