@@ -54,6 +54,11 @@ inline void Shutdown(const std::unique_ptr<boost::thread>& th)
     }
 }
 
+int ThisThreadInterruptionRequested(void*)
+{
+    return boost::this_thread::interruption_requested();
+}
+
 }  // namespace
 
 namespace channel_logger
@@ -391,6 +396,8 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     {
         av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
     }
+
+    m_formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
 
     auto formatContextGuard = MakeGuard(&m_formatContext, avformat_close_input);
 
