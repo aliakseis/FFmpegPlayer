@@ -1270,6 +1270,11 @@ void CPlayerView::updateFrame()
     }
     else
     {
+        if (!m_pMainStream)
+        {
+            TRACE("m_pMainStream is NULL!\n");
+            return;
+        }
         D3DLOCKED_RECT lr;
         HRESULT hr = m_pMainStream->LockRect(&lr, NULL, D3DLOCK_NOSYSLOCK);
         if (FAILED(hr))
