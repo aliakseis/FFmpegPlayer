@@ -237,13 +237,15 @@ YouTubeDealer::YouTubeDealer()
         if (!m_obj)
             Py_Finalize();
     }
-    catch (const std::exception&)
+    catch (const std::exception& ex)
     {
+        BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() bootstrap exception \"" << ex.what() << "\"";
         Py_Finalize();
         return;
     }
     catch (const error_already_set&)
     {
+        BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() bootstrap error \"" << parse_python_exception() << "\"";
         Py_Finalize();
         return;
     }
@@ -264,8 +266,9 @@ std::string YouTubeDealer::getYoutubeUrl(const std::string& url)
     {
         result = extract<std::string>(m_obj(url));
     }
-    catch (const std::exception&)
+    catch (const std::exception& ex)
     {
+        BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() exception \"" << ex.what() << "\"";
     }
     catch (const error_already_set&)
     {
