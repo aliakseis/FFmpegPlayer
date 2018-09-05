@@ -163,7 +163,23 @@ BOOL CPlayerDoc::OnNewDocument()
             m_frameDecoder->close();
             UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
             std::string url(dlg.m_URL.GetString(), dlg.m_URL.GetString() + dlg.m_URL.GetLength());
-            if (openUrl(url))
+
+            auto playList = ParsePlaylist(url);
+
+            if (!playList.empty())
+            {
+                m_playList = { playList.begin(), playList.end() };
+
+                if (OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
+                {
+                    m_reopenFunc = [this, playList] {
+                        UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+                        m_playList = { playList.begin(), playList.end() };
+                        OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1));
+                    };
+                }
+            }
+            else if (openUrl(url))
             {
                 m_playList.clear();
                 m_reopenFunc = [this, url] {

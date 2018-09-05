@@ -19,8 +19,10 @@
 #include <iterator>
 #include <streambuf>
 #include <algorithm>
+#include <utility>
 
 #include "unzip.h"
+#include "http_get.h"
 
 namespace {
 
@@ -284,6 +286,51 @@ std::string YouTubeDealer::getYoutubeUrl(const std::string& url)
 } // namespace
 
 
+std::vector<std::string> ParsePlaylist(const std::string& url)
+{
+    if (url.find("/playlist?list=") == std::string::npos)
+        return{};
+
+    CComVariant varBody = HttpGet(url.c_str());
+    if ((VT_ARRAY | VT_UI1) != V_VT(&varBody))
+        return{};
+
+    auto psa = V_ARRAY(&varBody);
+    LONG iLBound, iUBound;
+    HRESULT hr = SafeArrayGetLBound(psa, 1, &iLBound);
+    if (FAILED(hr))
+        return{};
+    hr = SafeArrayGetUBound(psa, 1, &iUBound);
+    if (FAILED(hr))
+        return{};
+
+    char* pData = nullptr;
+
+    hr = SafeArrayAccessData(psa, (void**)&pData);
+    if (FAILED(hr))
+        return{};
+
+    const char watch[] = "/watch?v=";
+
+
+    std::vector<std::string> result;
+
+    char* const pDataEnd = pData + iUBound - iLBound + 1;
+
+    while ((pData = std::search(pData, pDataEnd, std::begin(watch), std::prev(std::end(watch)))) != pDataEnd)
+    {
+        const auto localEnd = std::find(pData, pDataEnd, '&');
+        auto el = "https://www.youtube.com" + std::string(pData, localEnd);
+        if (std::find(result.begin(), result.end(), el) == result.end())
+            result.push_back(std::move(el));
+        pData += sizeof(watch) / sizeof(watch[0]) - 1;
+    }
+
+    SafeArrayUnaccessData(psa);
+
+    return result;
+}
+
 std::string getYoutubeUrl(std::string url)
 {
     if (extractYoutubeUrl(url))
@@ -299,6 +346,11 @@ std::string getYoutubeUrl(std::string url)
 
 
 #else // YOUTUBE_EXPERIMENT
+
+std::vector<std::string> ParsePlaylist(const std::string& url)
+{
+    return{};
+}
 
 std::string getYoutubeUrl(std::string url)
 {
