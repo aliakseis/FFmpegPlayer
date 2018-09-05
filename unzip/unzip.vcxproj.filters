@@ -27,6 +27,9 @@
     <ClCompile Include="httpioapi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="http_get.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crypt.h">
@@ -39,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="httprequest_h.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="http_get.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

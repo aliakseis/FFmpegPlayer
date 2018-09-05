@@ -79,11 +79,13 @@
   <ItemGroup>
     <ClCompile Include="httprequest_i.c" />
     <ClCompile Include="httpioapi.cpp" />
+    <ClCompile Include="http_get.cpp" />
     <ClCompile Include="unzip.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crypt.h" />
     <ClInclude Include="httprequest_h.h" />
+    <ClInclude Include="http_get.h" />
     <ClInclude Include="ioapi.h" />
     <ClInclude Include="unzip.h" />
   </ItemGroup>
