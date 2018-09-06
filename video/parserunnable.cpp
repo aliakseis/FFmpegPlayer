@@ -52,7 +52,7 @@ void FFmpegDecoder::parseRunnable()
                     eof = REPORTED;
                 }
             }
-            if (eof == UNSET && readStatus == AVERROR_EOF)
+            if (eof == UNSET && (readStatus == AVERROR_EOF || readStatus == AVERROR_INVALIDDATA))
                 eof = SET;
 
             this_thread::sleep_for(chrono::milliseconds(10));
