@@ -125,6 +125,7 @@
     <ClInclude Include="IEraseableArea.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="MakeDelegate.h" />
+    <ClInclude Include="MemoryMappedFile.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerDoc.h" />
     <ClInclude Include="PlayerViewD2D.h" />

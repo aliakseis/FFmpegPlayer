@@ -340,6 +340,26 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
     }
     else
     {
+        if (extension[0] == _T('\0')) // https://community.spiceworks.com/topic/1968971-opening-web-links-downloading-1-item-to-zcrksihu
+        {
+            auto playList = ParsePlaylistFile(lpszPathName);
+            if (!playList.empty())
+            {
+                m_playList = { playList.begin(), playList.end() };
+
+                if (OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
+                {
+                    m_reopenFunc = [this, playList] {
+                        UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+                        m_playList = { playList.begin(), playList.end() };
+                        OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1));
+                    };
+                    return true;
+                }
+                return false;
+            }
+        }
+
         if (!m_frameDecoder->openFile(lpszPathName))
             return false;
         m_playList.clear();

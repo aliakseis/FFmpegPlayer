@@ -21,8 +21,12 @@
 #include <algorithm>
 #include <utility>
 
+#include <tchar.h>
+
 #include "unzip.h"
 #include "http_get.h"
+
+#include "MemoryMappedFile.h"
 
 namespace {
 
@@ -282,6 +286,24 @@ std::string YouTubeDealer::getYoutubeUrl(const std::string& url)
     return result;
 }
 
+std::vector<std::string> ParsePlaylist(const char* pData, const char* const pDataEnd)
+{
+    const char watch[] = "/watch?v=";
+
+    std::vector<std::string> result;
+
+    while ((pData = std::search(pData, pDataEnd, std::begin(watch), std::prev(std::end(watch)))) != pDataEnd)
+    {
+        const auto localEnd = std::find(pData, pDataEnd, '&');
+        auto el = "https://www.youtube.com" + std::string(pData, localEnd);
+        if (std::find(result.begin(), result.end(), el) == result.end())
+            result.push_back(std::move(el));
+        pData += sizeof(watch) / sizeof(watch[0]) - 1;
+    }
+
+    return result;
+}
+
 
 } // namespace
 
@@ -307,29 +329,30 @@ std::vector<std::string> ParsePlaylist(const std::string& url)
     char* pData = nullptr;
 
     hr = SafeArrayAccessData(psa, (void**)&pData);
-    if (FAILED(hr))
+    if (FAILED(hr) || !pData)
         return{};
-
-    const char watch[] = "/watch?v=";
-
-
-    std::vector<std::string> result;
 
     char* const pDataEnd = pData + iUBound - iLBound + 1;
 
-    while ((pData = std::search(pData, pDataEnd, std::begin(watch), std::prev(std::end(watch)))) != pDataEnd)
-    {
-        const auto localEnd = std::find(pData, pDataEnd, '&');
-        auto el = "https://www.youtube.com" + std::string(pData, localEnd);
-        if (std::find(result.begin(), result.end(), el) == result.end())
-            result.push_back(std::move(el));
-        pData += sizeof(watch) / sizeof(watch[0]) - 1;
-    }
+    auto result = ParsePlaylist(pData, pDataEnd);
 
     SafeArrayUnaccessData(psa);
 
     return result;
 }
+
+std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName)
+{
+    if (!_tcsstr(fileName, _T("playlist")) && !_tcsstr(fileName, _T("watch")))
+        return{};
+
+    MemoryMappedFile memoryMappedFile;
+    if (!memoryMappedFile.MapFlie(fileName))
+        return{};
+    auto* const pData = static_cast<const char*>(memoryMappedFile.data());
+    return ParsePlaylist(pData, pData + memoryMappedFile.size());
+}
+
 
 std::string getYoutubeUrl(std::string url)
 {
@@ -347,7 +370,12 @@ std::string getYoutubeUrl(std::string url)
 
 #else // YOUTUBE_EXPERIMENT
 
-std::vector<std::string> ParsePlaylist(const std::string& url)
+std::vector<std::string> ParsePlaylist(const std::string&)
+{
+    return{};
+}
+
+std::vector<std::string> ParsePlaylistFile(const TCHAR*)
 {
     return{};
 }
