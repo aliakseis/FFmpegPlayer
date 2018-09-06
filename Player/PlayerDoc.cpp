@@ -162,35 +162,44 @@ BOOL CPlayerDoc::OnNewDocument()
         {
             m_frameDecoder->close();
             UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
-            std::string url(dlg.m_URL.GetString(), dlg.m_URL.GetString() + dlg.m_URL.GetLength());
-
-            auto playList = ParsePlaylist(url);
-
-            if (!playList.empty())
-            {
-                m_playList = { playList.begin(), playList.end() };
-
-                if (OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
-                {
-                    m_reopenFunc = [this, playList] {
-                        UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
-                        m_playList = { playList.begin(), playList.end() };
-                        OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1));
-                    };
-                }
-            }
-            else if (openUrl(url))
-            {
-                m_playList.clear();
-                m_reopenFunc = [this, url] {
-                    UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
-                    openUrl(url);
-                };
-            }
+            openTopLevelUrl(dlg.m_URL);
         }
     }
 
     return TRUE;
+}
+
+bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl)
+{
+    std::string url(topLevelUrl.GetString(), topLevelUrl.GetString() + topLevelUrl.GetLength());
+
+    auto playList = ParsePlaylist(url);
+
+    if (!playList.empty())
+    {
+        m_playList = { playList.begin(), playList.end() };
+
+        if (OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
+        {
+            m_reopenFunc = [this, playList] {
+                UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+                m_playList = { playList.begin(), playList.end() };
+                OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1));
+            };
+            return true;
+        }
+    }
+    else if (openUrl(url))
+    {
+        m_playList.clear();
+        m_reopenFunc = [this, url] {
+            UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+            openUrl(url);
+        };
+        return true;
+    }
+
+    return false;
 }
 
 bool CPlayerDoc::openUrl(std::string url)
@@ -312,6 +321,22 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
         if (!OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
             return false;
+    }
+    else if (!_tcsicmp(extension, _T(".url")))
+    {
+        CString url;
+        auto result = GetPrivateProfileString(
+            _T("InternetShortcut"),
+            _T("URL"),
+            nullptr,
+            url.GetBuffer(4095),
+            4096,
+            lpszPathName);
+        if (!result)
+            return false;
+        url.ReleaseBuffer();
+
+        return openTopLevelUrl(url); // sets m_reopenFunc
     }
     else
     {

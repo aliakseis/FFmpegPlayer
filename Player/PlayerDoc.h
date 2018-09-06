@@ -93,6 +93,7 @@ private:
     bool OpenSubRipFile(LPCTSTR lpszVideoPathName);
     bool OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName);
     void MoveToNextFile();
+    bool openTopLevelUrl(const CString& url);
     bool openUrl(std::string url);
 
 private:
