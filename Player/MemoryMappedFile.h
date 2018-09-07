@@ -17,6 +17,8 @@ public:
         if (INVALID_HANDLE_VALUE != hFile)
             CloseHandle(hFile);
     }
+    MemoryMappedFile(const MemoryMappedFile&) = delete;
+    MemoryMappedFile& operator=(const MemoryMappedFile&) = delete;
 
     bool MapFlie(LPCTSTR szFile)
     {

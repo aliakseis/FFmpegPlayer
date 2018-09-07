@@ -93,19 +93,6 @@ bool HandleFilesSequence(const CString& pathName, std::function<bool(const CStri
     return false;
 }
 
-template<typename T>
-bool OpenUrlFromList(std::deque<std::string>& playList, T openUrl)
-{
-    while (!playList.empty())
-    {
-        auto buffer = playList.front();
-        playList.pop_front();
-        if (openUrl(buffer))
-            return true;
-    }
-    return false;
-}
-
 } // namespace
 
 
@@ -161,7 +148,7 @@ BOOL CPlayerDoc::OnNewDocument()
         if (dlg.DoModal() == IDOK && !dlg.m_URL.IsEmpty())
         {
             m_frameDecoder->close();
-            UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+            UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
             openTopLevelUrl(dlg.m_URL);
         }
     }
@@ -179,12 +166,12 @@ bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl)
     {
         m_playList = { playList.begin(), playList.end() };
 
-        if (OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
+        if (openUrlFromList())
         {
             m_reopenFunc = [this, playList] {
-                UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+                UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
                 m_playList = { playList.begin(), playList.end() };
-                OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1));
+                openUrlFromList();
             };
             return true;
         }
@@ -193,7 +180,7 @@ bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl)
     {
         m_playList.clear();
         m_reopenFunc = [this, url] {
-            UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+            UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
             openUrl(url);
         };
         return true;
@@ -214,6 +201,17 @@ bool CPlayerDoc::openUrl(std::string url)
     return false;
 }
 
+bool CPlayerDoc::openUrlFromList()
+{
+    while (!m_playList.empty())
+    {
+        auto buffer = m_playList.front();
+        m_playList.pop_front();
+        if (openUrl(buffer))
+            return true;
+    }
+    return false;
+}
 
 // CPlayerDoc serialization
 
@@ -304,7 +302,7 @@ void CPlayerDoc::Dump(CDumpContext& dc) const
 BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
     m_frameDecoder->close();
-    UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+    UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
 
     const auto extension = PathFindExtension(lpszPathName);
     if (!_tcsicmp(extension, _T(".lst")))
@@ -319,7 +317,7 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
             m_playList.push_back(buffer);
         }
 
-        if (!OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
+        if (!openUrlFromList())
             return false;
     }
     else if (!_tcsicmp(extension, _T(".url")))
@@ -347,12 +345,12 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
             {
                 m_playList = { playList.begin(), playList.end() };
 
-                if (OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1)))
+                if (openUrlFromList())
                 {
                     m_reopenFunc = [this, playList] {
-                        UpdateAllViews(nullptr, UPDATE_HINT_CLOSING, nullptr);
+                        UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
                         m_playList = { playList.begin(), playList.end() };
-                        OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1));
+                        openUrlFromList();
                     };
                     return true;
                 }
@@ -390,8 +388,7 @@ void CPlayerDoc::MoveToNextFile()
 {
     auto saveReopenFunc = m_reopenFunc;
 
-    if (OpenUrlFromList(m_playList, std::bind(&CPlayerDoc::openUrl, this, std::placeholders::_1))
-        || m_autoPlay && HandleFilesSequence(GetPathName(), 
+    if (openUrlFromList() || m_autoPlay && HandleFilesSequence(GetPathName(), 
         [this](const CString& path) 
         {
             if (OnOpenDocument(path))
