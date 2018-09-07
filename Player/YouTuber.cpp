@@ -19,6 +19,7 @@
 #include <iterator>
 #include <streambuf>
 #include <algorithm>
+#include <memory>
 #include <utility>
 
 #include <tchar.h>
@@ -334,11 +335,9 @@ std::vector<std::string> ParsePlaylist(const std::string& url)
 
     const char* const pDataEnd = pData + iUBound - iLBound + 1;
 
-    auto result = ParsePlaylist(pData, pDataEnd);
-
-    SafeArrayUnaccessData(psa);
-
-    return result;
+    std::unique_ptr<SAFEARRAY, decltype(&SafeArrayUnaccessData)> guard(
+        psa, SafeArrayUnaccessData);
+    return ParsePlaylist(pData, pDataEnd);
 }
 
 std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName)

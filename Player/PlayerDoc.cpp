@@ -531,93 +531,97 @@ bool CPlayerDoc::OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName)
 {
     m_subtitles.reset();
 
-    CString subRipPathName(lpszVideoPathName);
-    PathRemoveExtension(subRipPathName.GetBuffer());
-    subRipPathName.ReleaseBuffer();
-    subRipPathName += _T(".ass");
-
-    std::ifstream s(subRipPathName);
-    if (!s)
-        return false;
-
-    auto map(std::make_unique<SubtitlesMap>());
-
-    std::string buffer;
-    bool first = true;
-    while (std::getline(s, buffer))
+    for (auto ext : { _T(".ass"), _T(".ssa") })
     {
-        if (first)
-        {
-            m_unicodeSubtitles = buffer.length() > 2
-                && buffer[0] == char(0xEF) && buffer[1] == char(0xBB) && buffer[2] == char(0xBF);
-            first = false;
-        }
+        CString subRipPathName(lpszVideoPathName);
+        PathRemoveExtension(subRipPathName.GetBuffer());
+        subRipPathName.ReleaseBuffer();
+        subRipPathName += ext;
 
-        std::istringstream ss(buffer);
-
-        std::getline(ss, buffer, ':');
-
-        if (buffer != "Dialogue")
+        std::ifstream s(subRipPathName);
+        if (!s)
             continue;
 
-        double start, end;
-        bool skip = false;
-        for (int i = 0; i < 9; ++i) // TODO indices from Format?
+        auto map(std::make_unique<SubtitlesMap>());
+
+        std::string buffer;
+        bool first = true;
+        while (std::getline(s, buffer))
         {
-            std::getline(ss, buffer, ',');
-            if (i == 1 || i == 2)
+            if (first)
             {
-                int hr, min, sec;
-                char msecString[10] {};
-                if (sscanf(
-                    buffer.c_str(),
-                    "%d:%d:%d.%9s",
-                    &hr, &min, &sec, msecString) != 4)
-                {
-                    return true;
-                }
-
-                double msec = 0;
-                if (const auto msecStringLen = strlen(msecString))
-                {
-                    msec = atoi(msecString) / pow(10, msecStringLen);
-                }
-
-                ((i == 1)? start : end)
-                    = hr * 3600 + min * 60 + sec + msec;
+                m_unicodeSubtitles = buffer.length() > 2
+                    && buffer[0] == char(0xEF) && buffer[1] == char(0xBB) && buffer[2] == char(0xBF);
+                first = false;
             }
-            else if (i == 3 && buffer == "OP_kar")
+
+            std::istringstream ss(buffer);
+
+            std::getline(ss, buffer, ':');
+
+            if (buffer != "Dialogue")
+                continue;
+
+            double start, end;
+            bool skip = false;
+            for (int i = 0; i < 9; ++i) // TODO indices from Format?
             {
-                skip = true;
-                break;
+                std::getline(ss, buffer, ',');
+                if (i == 1 || i == 2)
+                {
+                    int hr, min, sec;
+                    char msecString[10]{};
+                    if (sscanf(
+                        buffer.c_str(),
+                        "%d:%d:%d.%9s",
+                        &hr, &min, &sec, msecString) != 4)
+                    {
+                        return true;
+                    }
+
+                    double msec = 0;
+                    if (const auto msecStringLen = strlen(msecString))
+                    {
+                        msec = atoi(msecString) / pow(10, msecStringLen);
+                    }
+
+                    ((i == 1) ? start : end)
+                        = hr * 3600 + min * 60 + sec + msec;
+                }
+                else if (i == 3 && buffer == "OP_kar")
+                {
+                    skip = true;
+                    break;
+                }
+            }
+
+            if (skip)
+                continue;
+
+            std::string subtitle;
+            if (!std::getline(ss, subtitle, '\\'))
+                continue;
+            while (std::getline(ss, buffer, '\\'))
+            {
+                subtitle +=
+                    (buffer[0] == 'N' || buffer[0] == 'n') ? '\n' + buffer.substr(1) : '\\' + buffer;
+            }
+
+            if (!subtitle.empty())
+            {
+                subtitle += '\n'; // The last '\n' is for aggregating overlapped subtitles (if any)
+                map->add(std::make_pair(boost::icl::interval<double>::closed(start, end), subtitle));
             }
         }
 
-        if (skip)
-            continue;
-
-        std::string subtitle;
-        if (!std::getline(ss, subtitle, '\\'))
-            continue;
-        while (std::getline(ss, buffer, '\\'))
-        { 
-            subtitle +=
-                (buffer[0] == 'N' || buffer[0] == 'n')? '\n' + buffer.substr(1) : '\\' + buffer;
-        }
-
-        if (!subtitle.empty())
+        if (!map->empty())
         {
-            subtitle += '\n'; // The last '\n' is for aggregating overlapped subtitles (if any)
-            map->add(std::make_pair(boost::icl::interval<double>::closed(start, end), subtitle));
+            m_subtitles = std::move(map);
         }
-    }
 
-    if (!map->empty())
-    {
-        m_subtitles = std::move(map);
+        return true;
     }
-
-    return true;
+    return false;
 }
 
 std::string CPlayerDoc::getSubtitle() const
