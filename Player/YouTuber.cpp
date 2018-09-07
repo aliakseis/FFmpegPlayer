@@ -326,13 +326,13 @@ std::vector<std::string> ParsePlaylist(const std::string& url)
     if (FAILED(hr))
         return{};
 
-    char* pData = nullptr;
+    const char* pData = nullptr;
 
     hr = SafeArrayAccessData(psa, (void**)&pData);
     if (FAILED(hr) || !pData)
         return{};
 
-    char* const pDataEnd = pData + iUBound - iLBound + 1;
+    const char* const pDataEnd = pData + iUBound - iLBound + 1;
 
     auto result = ParsePlaylist(pData, pDataEnd);
 

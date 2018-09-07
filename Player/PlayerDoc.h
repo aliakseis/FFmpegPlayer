@@ -92,9 +92,12 @@ public:
 private:
     bool OpenSubRipFile(LPCTSTR lpszVideoPathName);
     bool OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName);
+
     void MoveToNextFile();
+
     bool openTopLevelUrl(const CString& url);
     bool openUrl(std::string url);
+    bool openUrlFromList();
 
 private:
     std::unique_ptr<IFrameDecoder> m_frameDecoder;
