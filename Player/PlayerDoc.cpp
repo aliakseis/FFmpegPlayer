@@ -148,6 +148,7 @@ BOOL CPlayerDoc::OnNewDocument()
         if (dlg.DoModal() == IDOK && !dlg.m_URL.IsEmpty())
         {
             m_frameDecoder->close();
+            m_reopenFunc = nullptr;
             UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
             openTopLevelUrl(dlg.m_URL);
         }
@@ -192,7 +193,7 @@ bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl)
 bool CPlayerDoc::openUrl(std::string url)
 {
     url = getYoutubeUrl(url);
-    if (m_frameDecoder->openUrl(url))
+    if (!url.empty() && m_frameDecoder->openUrl(url))
     {
         m_frameDecoder->play();
         return true;
@@ -302,6 +303,7 @@ void CPlayerDoc::Dump(CDumpContext& dc) const
 BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
     m_frameDecoder->close();
+    m_reopenFunc = nullptr;
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
 
     const auto extension = PathFindExtension(lpszPathName);
