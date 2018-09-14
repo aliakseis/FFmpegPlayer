@@ -49,3 +49,4 @@ vcpkg install --featurepackages --recurse boost[python]
 
 ```
 
+Tiny demo here: https://www.youtube.com/watch?v=dySA4yEGdEc
