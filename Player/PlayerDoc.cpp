@@ -646,7 +646,7 @@ void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
     if (DragQueryFile(hDropInfo, 0, lpszFileName, MAX_PATH)
         && OnOpenDocument(lpszFileName))
     {
-        SetPathName(lpszFileName, FALSE);
+        SetPathName(lpszFileName, TRUE);
     }
 }
 
