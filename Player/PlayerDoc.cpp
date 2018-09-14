@@ -93,6 +93,16 @@ bool HandleFilesSequence(const CString& pathName, std::function<bool(const CStri
     return false;
 }
 
+bool IsDeletingItemFromMruList()
+{
+    auto msg = AfxGetCurrentMessage();
+    return msg && msg->message == WM_COMMAND
+        && msg->wParam >= ID_FILE_MRU_FILE1
+        && msg->wParam < ID_FILE_MRU_FILE1 + _AFX_MRU_MAX_COUNT
+        && GetAsyncKeyState(VK_SHIFT) < 0
+        && GetAsyncKeyState(VK_CONTROL) < 0;
+}
+
 } // namespace
 
 
@@ -302,6 +312,9 @@ void CPlayerDoc::Dump(CDumpContext& dc) const
 
 BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
+    if (IsDeletingItemFromMruList())
+        return false;
+
     m_frameDecoder->close();
     m_reopenFunc = nullptr;
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
