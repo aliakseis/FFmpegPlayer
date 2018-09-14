@@ -158,6 +158,7 @@ BOOL CPlayerDoc::OnNewDocument()
         if (dlg.DoModal() == IDOK && !dlg.m_URL.IsEmpty())
         {
             m_frameDecoder->close();
+            m_subtitles.reset();
             m_reopenFunc = nullptr;
             UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
             openTopLevelUrl(dlg.m_URL);
@@ -316,6 +317,7 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
         return false;
 
     m_frameDecoder->close();
+    m_subtitles.reset();
     m_reopenFunc = nullptr;
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
 
