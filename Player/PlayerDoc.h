@@ -95,7 +95,7 @@ private:
 
     void MoveToNextFile();
 
-    bool openTopLevelUrl(const CString& url);
+    bool openTopLevelUrl(const CString& url, const CString& pathName = CString());
     bool openUrl(std::string url);
     bool openUrlFromList();
 
