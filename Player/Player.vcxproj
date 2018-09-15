@@ -56,7 +56,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\video;$(VcpkgRoot)include\python3.6;..\unzip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\video;$(VcpkgRoot)include\python3.6;..\networking;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -88,7 +88,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\video;$(VcpkgRoot)include\python3.6;..\unzip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\video;$(VcpkgRoot)include\python3.6;..\networking;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <AdditionalOptions>/std:c++latest /D_HAS_CXX17=1 %(AdditionalOptions)</AdditionalOptions>
