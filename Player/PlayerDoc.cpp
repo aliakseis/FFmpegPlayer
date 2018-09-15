@@ -168,7 +168,7 @@ BOOL CPlayerDoc::OnNewDocument()
     return TRUE;
 }
 
-bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl)
+bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl, const CString& pathName)
 {
     std::string url(topLevelUrl.GetString(), topLevelUrl.GetString() + topLevelUrl.GetLength());
 
@@ -180,10 +180,11 @@ bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl)
 
         if (openUrlFromList())
         {
-            m_reopenFunc = [this, playList] {
+            m_reopenFunc = [this, playList, pathName] {
                 UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
                 m_playList = { playList.begin(), playList.end() };
-                openUrlFromList();
+                if (openUrlFromList() && !pathName.IsEmpty())
+                    SetPathName(pathName, FALSE);
             };
             return true;
         }
@@ -191,9 +192,10 @@ bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl)
     else if (openUrl(url))
     {
         m_playList.clear();
-        m_reopenFunc = [this, url] {
+        m_reopenFunc = [this, url, pathName] {
             UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
-            openUrl(url);
+            if (openUrl(url) && !pathName.IsEmpty())
+                SetPathName(pathName, FALSE);
         };
         return true;
     }
@@ -351,7 +353,7 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
             return false;
         url.ReleaseBuffer();
 
-        return openTopLevelUrl(url); // sets m_reopenFunc
+        return openTopLevelUrl(url, lpszPathName); // sets m_reopenFunc
     }
     else
     {
