@@ -103,6 +103,22 @@ bool IsDeletingItemFromMruList()
         && GetAsyncKeyState(VK_CONTROL) < 0;
 }
 
+CString GetUrlFromUrlFile(LPCTSTR lpszPathName)
+{
+    CString url;
+    auto result = GetPrivateProfileString(
+        _T("InternetShortcut"),
+        _T("URL"),
+        nullptr,
+        url.GetBuffer(4095),
+        4096,
+        lpszPathName);
+    if (!result)
+        return {};
+    url.ReleaseBuffer();
+    return url;
+}
+
 } // namespace
 
 
@@ -318,6 +334,11 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
     if (IsDeletingItemFromMruList())
         return false;
 
+    return openDocument(lpszPathName);
+}
+
+bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
+{
     m_frameDecoder->close();
     m_subtitles.reset();
     m_reopenFunc = nullptr;
@@ -341,19 +362,8 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
     }
     else if (!_tcsicmp(extension, _T(".url")))
     {
-        CString url;
-        auto result = GetPrivateProfileString(
-            _T("InternetShortcut"),
-            _T("URL"),
-            nullptr,
-            url.GetBuffer(4095),
-            4096,
-            lpszPathName);
-        if (!result)
-            return false;
-        url.ReleaseBuffer();
-
-        return openTopLevelUrl(url, lpszPathName); // sets m_reopenFunc
+        CString url = GetUrlFromUrlFile(lpszPathName);
+        return !url.IsEmpty() && openTopLevelUrl(url, lpszPathName); // sets m_reopenFunc
     }
     else
     {
@@ -386,7 +396,7 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
     }
 
     m_reopenFunc = [this, path = CString(lpszPathName)] {
-        if (OnOpenDocument(path))
+        if (openDocument(path))
             SetPathName(path, FALSE);
     };
     return true;
@@ -410,7 +420,7 @@ void CPlayerDoc::MoveToNextFile()
     if (openUrlFromList() || m_autoPlay && HandleFilesSequence(GetPathName(), 
         [this](const CString& path) 
         {
-            if (OnOpenDocument(path))
+            if (openDocument(path))
             {
                 SetPathName(path, FALSE);
                 return true;
@@ -661,7 +671,7 @@ void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
 {
     TCHAR lpszFileName[MAX_PATH];
     if (DragQueryFile(hDropInfo, 0, lpszFileName, MAX_PATH)
-        && OnOpenDocument(lpszFileName))
+        && openDocument(lpszFileName))
     {
         SetPathName(lpszFileName, TRUE);
     }
