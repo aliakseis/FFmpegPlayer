@@ -315,6 +315,7 @@ std::vector<std::string> ParsePlaylist(const std::string& url)
     if (url.find("/playlist?list=") == std::string::npos)
         return{};
 
+    CWaitCursor wait;
     CComVariant varBody = HttpGet(url.c_str());
     if ((VT_ARRAY | VT_UI1) != V_VT(&varBody))
         return{};

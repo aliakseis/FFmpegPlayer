@@ -135,6 +135,7 @@ BEGIN
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
+        MENUITEM SEPARATOR
         MENUITEM "Autoplay",                    ID_AUTOPLAY
         MENUITEM "Looping",                     ID_LOOPING
         MENUITEM SEPARATOR
