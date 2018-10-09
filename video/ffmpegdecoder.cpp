@@ -26,7 +26,13 @@ void FreeVideoCodecContext(AVCodecContext*& videoCodecContext)
 #ifdef USE_HWACCEL
     if (videoCodecContext)
     {
-        delete (InputStream*)videoCodecContext->opaque;
+        if (auto stream = static_cast<InputStream*>(videoCodecContext->opaque))
+        {
+            avcodec_close(videoCodecContext);
+            if (stream->hwaccel_uninit)
+                stream->hwaccel_uninit(videoCodecContext);
+            delete stream;
+        }
         videoCodecContext->opaque = nullptr;
     }
 #endif
