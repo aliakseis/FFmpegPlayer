@@ -299,6 +299,9 @@ void FFmpegDecoder::close()
 
     m_audioPlayer->Close();
 
+    if (m_frameListener)
+        m_frameListener->decoderClosing();
+
     closeProcessing();
 
     if (m_decoderListener)
