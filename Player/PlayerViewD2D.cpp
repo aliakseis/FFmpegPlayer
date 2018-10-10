@@ -66,6 +66,9 @@ private:
     {
         m_playerView->SendNotifyMessage(WM_DRAW_FRAME, 0, generation);
     }
+    void decoderClosing() override
+    {
+    }
 
 private:
     CPlayerViewD2D* m_playerView;
@@ -99,7 +102,7 @@ CPlayerViewD2D::CPlayerViewD2D()
 
 CPlayerViewD2D::~CPlayerViewD2D()
 {
-    GetDocument()->getFrameDecoder()->setFrameListener(NULL);
+    GetDocument()->getFrameDecoder()->setFrameListener(nullptr);
 }
 
 BOOL CPlayerViewD2D::PreCreateWindow(CREATESTRUCT& cs)

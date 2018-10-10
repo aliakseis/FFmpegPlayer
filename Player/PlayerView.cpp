@@ -538,6 +538,14 @@ private:
         //m_playerView->Invalidate();
 	    decoder->finishedDisplayingFrame(generation);
     }
+    void decoderClosing() override
+    {
+        if (!m_playerView->m_pD3D9)
+        {
+            m_playerView->DestroyExtra();
+            m_playerView->DestroyD3D9();
+        }
+    }
 
 private:
     CPlayerView* m_playerView;
@@ -555,6 +563,7 @@ CPlayerView::CPlayerView()
 
 CPlayerView::~CPlayerView()
 {
+    GetDocument()->getFrameDecoder()->setFrameListener(nullptr);
 }
 
 BEGIN_MESSAGE_MAP(CPlayerView, CView)
