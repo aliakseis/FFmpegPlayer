@@ -507,6 +507,8 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
 
 bool FFmpegDecoder::resetVideoProcessing()
 {
+    av_frame_free(&m_videoFrame);
+
     FreeVideoCodecContext(m_videoCodecContext);
 
     auto videoCodecContextGuard = MakeGuard(&m_videoCodecContext, avcodec_free_context);
