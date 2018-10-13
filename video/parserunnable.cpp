@@ -184,11 +184,9 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 
     m_videoStartClock = VIDEO_START_CLOCK_NOT_INITIALIZED;
 
-    if (resetVideo)
+    if (resetVideo && !resetVideoProcessing())
     {
-        if (!resetVideoProcessing())
-            return false;
-        m_videoFrame = av_frame_alloc();
+        return false;
     }
 
     m_mainDisplayThread.reset(new boost::thread(&FFmpegDecoder::displayRunnable, this));

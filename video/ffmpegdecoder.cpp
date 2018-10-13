@@ -357,15 +357,8 @@ void FFmpegDecoder::closeProcessing()
 
     resetVariables();
 
-    if (isFileReallyClosed)
-    {
-        CHANNEL_LOG(ffmpeg_closing) << "File was opened. Emit file closing signal";
-        if (m_decoderListener)
-            m_decoderListener->fileReleased();
-    }
-
     if (m_decoderListener)
-        m_decoderListener->decoderClosed();
+        m_decoderListener->decoderClosed(isFileReallyClosed);
 }
 
 bool FFmpegDecoder::openFile(const PathType& filename)
@@ -490,9 +483,6 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         return false;
     }
 
-    m_videoFrame = av_frame_alloc();
-    m_audioFrame = av_frame_alloc();
-
     formatContextGuard.release();
     m_ioCtx = std::move(ioCtx);
 
@@ -511,8 +501,6 @@ bool FFmpegDecoder::resetVideoProcessing()
 
     FreeVideoCodecContext(m_videoCodecContext);
 
-    auto videoCodecContextGuard = MakeGuard(&m_videoCodecContext, avcodec_free_context);
-
     // Find the decoder for the video stream
     if (m_videoStreamNumber >= 0)
     {
@@ -520,6 +508,9 @@ bool FFmpegDecoder::resetVideoProcessing()
         m_videoCodecContext = avcodec_alloc_context3(nullptr);
         if (!m_videoCodecContext)
             return false;
+
+        auto videoCodecContextGuard = MakeGuard(&m_videoCodecContext, avcodec_free_context);
+
         if (avcodec_parameters_to_context(m_videoCodecContext, m_videoStream->codecpar) < 0)
             return false;
 
@@ -576,9 +567,11 @@ bool FFmpegDecoder::resetVideoProcessing()
             assert(false && "This file lacks resolution");
             return false;  // Could not open codec
         }
-    }
 
-    videoCodecContextGuard.release();
+        m_videoFrame = av_frame_alloc();
+
+        videoCodecContextGuard.release();
+    }
 
     return true;
 }
@@ -604,6 +597,8 @@ bool FFmpegDecoder::setupAudioProcessing()
         {
             return false;
         }
+
+        m_audioFrame = av_frame_alloc();
 
         audioCodecContextGuard.release();
     }
