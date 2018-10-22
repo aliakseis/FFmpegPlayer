@@ -31,7 +31,7 @@ public:
             FILE_ATTRIBUTE_NORMAL,		// file attributes 
             NULL						// handle to file with attributes to copy
         );
-        if (INVALID_HANDLE_VALUE != hFile && GetFileSizeEx(hFile, &fileSize))
+        if (INVALID_HANDLE_VALUE != hFile && GetFileSizeEx(hFile, &fileSize) && fileSize.HighPart == 0)
         {
             hFileMapping = CreateFileMapping(
                 hFile,			    // handle to file to map 
