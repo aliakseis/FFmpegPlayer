@@ -367,7 +367,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
     }
     else
     {
-        if (extension[0] == _T('\0')) // https://community.spiceworks.com/topic/1968971-opening-web-links-downloading-1-item-to-zcrksihu
+        if (extension[0] == _T('\0') || !_tcsicmp(extension, _T(".html"))) // https://community.spiceworks.com/topic/1968971-opening-web-links-downloading-1-item-to-zcrksihu
         {
             auto playList = ParsePlaylistFile(lpszPathName);
             if (!playList.empty())
