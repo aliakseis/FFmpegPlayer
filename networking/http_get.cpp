@@ -4,15 +4,8 @@
 
 CComVariant HttpGet(const char * url)
 {
-    VARIANT         varFalse;
-    VARIANT         varEmpty;
-
-    VariantInit(&varFalse);
-    V_VT(&varFalse) = VT_BOOL;
-    V_BOOL(&varFalse) = VARIANT_FALSE;
-
-    VariantInit(&varEmpty);
-    V_VT(&varEmpty) = VT_ERROR;
+    VARIANT varFalse{ VT_BOOL };
+    VARIANT varEmpty{ VT_ERROR };
 
     CComVariant varBody;
 
