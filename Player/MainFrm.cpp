@@ -30,6 +30,15 @@ public:
     }
 };
 
+class DocumentAccessor : public CView
+{
+public:
+    CPlayerDoc* GetDocument()
+    {
+        return dynamic_cast<CPlayerDoc*>(m_pDocument);
+    }
+};
+
 } // namespace
 
 // CMainFrame
@@ -42,6 +51,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_ERASEBKGND()
     ON_WM_WINDOWPOSCHANGED()
     ON_WM_NCPAINT()
+    ON_WM_POWERBROADCAST()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -227,4 +237,22 @@ void CMainFrame::OnNcPaint()
 {
     if (!IsFullScreen())
         Default();
+}
+
+
+UINT CMainFrame::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
+{
+    if (nPowerEvent == PBT_APMSUSPEND)
+    {
+        if (CView* pView = dynamic_cast<CView*>(GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE)))
+        {
+            if (CPlayerDoc* pDoc = static_cast<DocumentAccessor*>(pView)->GetDocument())
+            {
+                if (pDoc->isPlaying() && !pDoc->isPaused())
+                    pDoc->pauseResume();
+                ShowWindow(SW_MINIMIZE);
+            }
+        }
+    }
+    return CFrameWndEx::OnPowerBroadcast(nPowerEvent, nEventData);
 }
