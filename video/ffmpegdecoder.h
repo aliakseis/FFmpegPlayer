@@ -24,11 +24,9 @@ namespace channel_logger
 {
 
 extern boost::log::sources::channel_logger_mt<> 
-    ffmpeg_audio,
     ffmpeg_closing, 
     ffmpeg_opening, 
     ffmpeg_pause,
-    ffmpeg_readpacket, 
     ffmpeg_seek, 
     ffmpeg_sync,
     ffmpeg_threads, 

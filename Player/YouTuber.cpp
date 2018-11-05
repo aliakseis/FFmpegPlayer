@@ -267,6 +267,7 @@ YouTubeDealer::~YouTubeDealer()
 
 std::string YouTubeDealer::getYoutubeUrl(const std::string& url)
 {
+    BOOST_LOG_TRIVIAL(trace) << "getYoutubeUrl() url = \"" << url << "\"";
     using namespace boost::python;
     std::string result;
     try
