@@ -73,11 +73,9 @@ namespace channel_logger
 using boost::log::keywords::channel;
 
 boost::log::sources::channel_logger_mt<> 
-    ffmpeg_audio(channel = "ffmpeg_audio"),
     ffmpeg_closing(channel = "ffmpeg_closing"),
     ffmpeg_opening(channel = "ffmpeg_opening"),
     ffmpeg_pause(channel = "ffmpeg_pause"),
-    ffmpeg_readpacket(channel = "ffmpeg_readpacket"),
     ffmpeg_seek(channel = "ffmpeg_seek"),
     ffmpeg_sync(channel = "ffmpeg_sync"),
     ffmpeg_threads(channel = "ffmpeg_threads"),
