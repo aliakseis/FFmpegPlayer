@@ -74,7 +74,7 @@ void FFmpegDecoder::videoParseRunnable()
         if (m_isPaused && !m_isVideoSeekingWhilePaused)
         {
             boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
-            while (m_isPaused)
+            while (m_isPaused && !m_isVideoSeekingWhilePaused)
             {
                 m_isPausedCV.wait(locker);
             }
@@ -125,7 +125,8 @@ bool FFmpegDecoder::handleVideoPacket(
         }
         const double pts = videoClock;
 
-        if (!context.initialized)
+        const bool inNextFrame = m_isPaused && m_isVideoSeekingWhilePaused;
+        if (!context.initialized || inNextFrame)
         {
             m_videoStartClock = GetHiResTime() - pts;
         }
@@ -138,7 +139,7 @@ bool FFmpegDecoder::handleVideoPacket(
 
         boost::posix_time::time_duration td(boost::posix_time::pos_infin);
         // Skipping frames
-        if (context.initialized && !m_videoPacketsQueue.empty())
+        if (context.initialized && !inNextFrame && !m_videoPacketsQueue.empty())
         {
             const double curTime = GetHiResTime();
             if (m_videoStartClock + pts <= curTime)
@@ -194,6 +195,10 @@ bool FFmpegDecoder::handleVideoPacket(
         }
 
         m_isVideoSeekingWhilePaused = false;
+        if (inNextFrame)
+        {
+            m_isPausedCV.notify_all();
+        }
 
         VideoFrame& current_frame = m_videoFramesQueue.back();
         handleDirect3dData(m_videoFrame);

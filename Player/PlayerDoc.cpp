@@ -463,7 +463,8 @@ void CPlayerDoc::onEndOfStream()
 
 bool CPlayerDoc::pauseResume()
 {
-    return m_frameDecoder->pauseResume();
+    const bool oneStep = m_frameDecoder->isPaused() && GetAsyncKeyState(VK_SHIFT) < 0;
+    return oneStep? m_frameDecoder->nextFrame() : m_frameDecoder->pauseResume();
 }
 
 bool CPlayerDoc::seekByPercent(double percent)

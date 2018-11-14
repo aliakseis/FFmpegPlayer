@@ -86,6 +86,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     void close() override;
     void play(bool isPaused = false) override;
     bool pauseResume() override;
+    bool nextFrame() override;
     void setVolume(double volume) override;
 
     int getNumAudioTracks() const override;
@@ -219,7 +220,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     boost::condition_variable m_isPausedCV;
     double m_pauseTimer;
 
-    bool m_isVideoSeekingWhilePaused;
+    boost::atomic_bool m_isVideoSeekingWhilePaused;
 
     // Audio
     std::unique_ptr<IAudioPlayer> m_audioPlayer;
