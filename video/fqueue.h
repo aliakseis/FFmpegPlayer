@@ -2,6 +2,7 @@
 
 #include <boost/thread/thread.hpp>
 #include <deque>
+#include <type_traits>
 
 template<size_t MAX_QUEUE_SIZE, size_t MAX_FRAMES>
 class FQueue
@@ -36,8 +37,8 @@ public:
         return true;
     }
 
-    template<typename T>
-    bool pop(AVPacket& packet, T abortFunc)
+    template<typename T = std::false_type>
+    bool pop(AVPacket& packet, T abortFunc = T())
     {
         bool wasFull;
         {

@@ -819,6 +819,35 @@ bool FFmpegDecoder::pauseResume()
     return true;
 }
 
+bool FFmpegDecoder::nextFrame()
+{
+    if (m_mainParseThread == nullptr)
+    {
+        return false;
+    }
+
+    if (m_isPaused)
+    {
+        if (m_videoPacketsQueue.empty())
+        {
+            return false;
+        }
+        const auto currentTime = GetHiResTime();
+        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+            InterlockedAdd(m_videoStartClock, currentTime - m_pauseTimer);
+        m_pauseTimer = currentTime;
+        {
+            boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+            m_isVideoSeekingWhilePaused = true;
+        }
+        m_isPausedCV.notify_all();
+        m_videoPacketsQueue.notify();
+        return true;
+    }
+
+    return false;
+}
+
 int FFmpegDecoder::getNumAudioTracks() const
 {
     return m_audioIndices.size();

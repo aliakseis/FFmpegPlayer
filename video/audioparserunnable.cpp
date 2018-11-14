@@ -44,67 +44,33 @@ void FFmpegDecoder::audioParseRunnable()
 
     for (;;)
     {
-        if (m_isPaused)
+        if (!m_audioPacketsQueue.pop(packet))
         {
-            if (!m_audioPaused)
-            {
-                m_audioPlayer->WaveOutPause();
-            }
-            m_audioPaused = true;
-
-            boost::this_thread::interruption_point();
-
-            boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
-            while (m_isPaused)
-            {
-                m_isPausedCV.wait(locker);
-            }
+            break;
         }
 
-        if (m_audioPaused)
+        auto packetGuard = MakeGuard(&packet, av_packet_unref);
+
+        if (!initialized)
         {
-            m_audioPlayer->WaveOutRestart();
-            m_audioPaused = false;
+            if (packet.pts != AV_NOPTS_VALUE)
+            {
+                const double pts = av_q2d(m_audioStream->time_base) * packet.pts;
+                m_audioPTS = pts;
+            }
+            else
+            {
+                assert(false && "No audio pts found");
+                return;
+            }
+
+            // invoke changedFramePosition() if needed
+            //AppendFrameClock(0);
         }
 
-        for (;;)
-        {
-            if (!m_audioPacketsQueue.pop(packet,
-                [this] { return static_cast<bool>(m_isPaused); }))
-            {
-                break;
-            }
+        initialized = true;
 
-            auto packetGuard = MakeGuard(&packet, av_packet_unref);
-
-            if (!initialized)
-            {
-                if (packet.pts != AV_NOPTS_VALUE)
-                {
-                    const double pts = av_q2d(m_audioStream->time_base) * packet.pts;
-                    m_audioPTS = pts;
-                }
-                else
-                {
-                    assert(false && "No audio pts found");
-                    return;
-                }
-
-                // invoke changedFramePosition() if needed
-                //AppendFrameClock(0);
-            }
-
-            initialized = true;
-
-            const bool handled = handleAudioPacket(packet, resampleBuffer);
-            if (!handled || m_isPaused)
-            {
-                break;
-            }
-        }
-
-        // Break thread
-        boost::this_thread::interruption_point();
+        handleAudioPacket(packet, resampleBuffer);
     }
 }
 
@@ -213,33 +179,55 @@ bool FFmpegDecoder::handleAudioPacket(
             assert(write_size < buffer_size);
         }
 
-        // Audio sync
-        const double videoStartClock = m_videoStartClock;
-        if (videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+        const double frame_clock 
+            = m_audioFrame->sample_rate? double(m_audioFrame->nb_samples) / m_audioFrame->sample_rate : 0;
+
+        bool skipAll = false;
+        double delta = 0;
+        auto getDelta = [this] {
+            return (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+                ? GetHiResTime() - m_videoStartClock - m_audioPTS : 0;
+        };
+
+        if (m_isPaused)
         {
-            const double delta = videoStartClock + m_audioPTS - GetHiResTime();
-            if (fabs(delta) > 0.1)
+            if (!m_audioPaused)
             {
-                InterlockedAdd(m_videoStartClock, -delta / 2);
+                m_audioPlayer->WaveOutPause();
+                m_audioPaused = true;
+            }
+            boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
+            while (m_isVideoSeekingWhilePaused 
+                || (delta = getDelta(), m_isPaused && !(skipAll = delta >= frame_clock)))
+            {
+                m_isPausedCV.wait(locker);
             }
         }
-
-        if (write_size > 0)
+        else
         {
-            if (boost::this_thread::interruption_requested())
-            {
-                return false;
-            }
+            delta = getDelta();
+        }
 
-            if (!m_audioPlayer->WriteAudio(write_data, write_size) &&
-                m_audioFrame->sample_rate)
-            {
-                const double frame_clock =
-                    (double)original_buffer_size / (audioFrameChannels *
-                                                    m_audioFrame->sample_rate *
-                                                    av_get_bytes_per_sample(audioFrameFormat));
-                InterlockedAdd(m_audioPTS, frame_clock);
-            }
+        // Audio sync
+        if (!skipAll && fabs(delta) > 0.1)
+        {
+            InterlockedAdd(m_videoStartClock, delta / 2);
+        }
+
+        if (m_audioPaused && !skipAll)
+        {
+            m_audioPlayer->WaveOutRestart();
+            m_audioPaused = false;
+        }
+
+        if (boost::this_thread::interruption_requested())
+        {
+            return false;
+        }
+
+        if (skipAll || !m_audioPlayer->WriteAudio(write_data, write_size))
+        {
+            InterlockedAdd(m_audioPTS, frame_clock);
         }
     }
 
