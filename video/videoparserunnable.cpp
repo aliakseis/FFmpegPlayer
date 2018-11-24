@@ -125,12 +125,6 @@ bool FFmpegDecoder::handleVideoPacket(
         }
         const double pts = videoClock;
 
-        const bool inNextFrame = m_isPaused && m_isVideoSeekingWhilePaused;
-        if (!context.initialized || inNextFrame)
-        {
-            m_videoStartClock = GetHiResTime() - pts;
-        }
-
         // update video clock for next frame
         // for MPEG2, the frame can be repeated, so we update the clock accordingly
         const double frameDelay = av_q2d(m_videoCodecContext->time_base) *
@@ -138,39 +132,52 @@ bool FFmpegDecoder::handleVideoPacket(
         videoClock += frameDelay;
 
         boost::posix_time::time_duration td(boost::posix_time::pos_infin);
-        // Skipping frames
-        if (context.initialized && !inNextFrame && !m_videoPacketsQueue.empty())
-        {
-            const double curTime = GetHiResTime();
-            if (m_videoStartClock + pts <= curTime)
-            {
-                if (m_videoStartClock + pts < curTime - MAX_DELAY)
-                {
-                    InterlockedAdd(m_videoStartClock, MAX_DELAY);
-                }
+        bool inNextFrame = false;
+        const bool haveVideoPackets = !m_videoPacketsQueue.empty();
 
-                if (++context.numSkipped > MAX_SKIPPED)
+        {
+            boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+
+            inNextFrame = m_isPaused && m_isVideoSeekingWhilePaused;
+            if (!context.initialized || inNextFrame)
+            {
+                m_videoStartClock = (m_isPaused ? m_pauseTimer : GetHiResTime()) - pts;
+            }
+
+            // Skipping frames
+            if (context.initialized && !inNextFrame && haveVideoPackets)
+            {
+                const double curTime = GetHiResTime();
+                if (m_videoStartClock + pts <= curTime)
                 {
-                    context.numSkipped = 0;
+                    if (m_videoStartClock + pts < curTime - MAX_DELAY)
+                    {
+                        InterlockedAdd(m_videoStartClock, MAX_DELAY);
+                    }
+
+                    if (++context.numSkipped > MAX_SKIPPED)
+                    {
+                        context.numSkipped = 0;
+                    }
+                    else
+                    {
+                        CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
+
+                        // pause
+                        if (m_isPaused && !m_isVideoSeekingWhilePaused)
+                        {
+                            break;
+                        }
+
+                        continue;
+                    }
                 }
                 else
                 {
-                    CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
-
-                    // pause
-                    if (m_isPaused && !m_isVideoSeekingWhilePaused)
-                    {
-                        break;
-                    }
-
-                    continue;
+                    context.numSkipped = 0;
+                    td = boost::posix_time::milliseconds(
+                        int((m_videoStartClock + pts - curTime) * 1000.) + 1);
                 }
-            }
-            else
-            {
-                context.numSkipped = 0;
-                td = boost::posix_time::milliseconds(
-                    int((m_videoStartClock + pts - curTime) * 1000.) + 1);
             }
         }
 
@@ -189,12 +196,16 @@ bool FFmpegDecoder::handleVideoPacket(
             }
         }
 
-        if (m_isPaused && !m_isVideoSeekingWhilePaused)
         {
-            break;
+            boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+            if (m_isPaused && !m_isVideoSeekingWhilePaused)
+            {
+                break;
+            }
+
+            m_isVideoSeekingWhilePaused = false;
         }
 
-        m_isVideoSeekingWhilePaused = false;
         if (inNextFrame)
         {
             m_isPausedCV.notify_all();

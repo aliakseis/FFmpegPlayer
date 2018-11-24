@@ -731,6 +731,8 @@ void FFmpegDecoder::videoReset()
 
 void FFmpegDecoder::seekWhilePaused()
 {
+    boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+
     const bool paused = m_isPaused;
     if (paused)
     {
@@ -793,28 +795,29 @@ bool FFmpegDecoder::pauseResume()
         return false;
     }
 
-    if (m_isPaused)
-    {
-        CHANNEL_LOG(ffmpeg_pause) << "Unpause";
-        CHANNEL_LOG(ffmpeg_pause) << "Move >> " << GetHiResTime() - m_pauseTimer;
-        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
-            InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
-        {
-            boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
-            m_isPaused = false;
-        }
-        m_isPausedCV.notify_all();
-    }
-    else
+    if (!m_isPaused)
     {
         CHANNEL_LOG(ffmpeg_pause) << "Pause";
-        m_isPaused = true;
+        {
+            boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+            m_isPaused = true;
+            m_pauseTimer = GetHiResTime();
+        }
         m_videoFramesCV.notify_all();
         m_videoPacketsQueue.notify();
         m_audioPacketsQueue.notify();
 
-        m_pauseTimer = GetHiResTime();
+        return true;
     }
+
+    CHANNEL_LOG(ffmpeg_pause) << "Resume";
+    {
+        boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+        InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
+        m_isPaused = false;
+    }
+    m_isPausedCV.notify_all();
 
     return true;
 }
@@ -826,26 +829,30 @@ bool FFmpegDecoder::nextFrame()
         return false;
     }
 
-    if (m_isPaused)
+    if (m_videoPacketsQueue.empty())
     {
-        if (m_videoPacketsQueue.empty())
+        return false;
+    }
+
+    CHANNEL_LOG(ffmpeg_pause) << "Next frame";
+    {
+        boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+
+        if (!m_isPaused || m_isVideoSeekingWhilePaused)
         {
             return false;
         }
+ 
         const auto currentTime = GetHiResTime();
         if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
             InterlockedAdd(m_videoStartClock, currentTime - m_pauseTimer);
         m_pauseTimer = currentTime;
-        {
-            boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
-            m_isVideoSeekingWhilePaused = true;
-        }
-        m_isPausedCV.notify_all();
-        m_videoPacketsQueue.notify();
-        return true;
-    }
 
-    return false;
+        m_isVideoSeekingWhilePaused = true;
+    }
+    m_isPausedCV.notify_all();
+    m_videoPacketsQueue.notify();
+    return true;
 }
 
 int FFmpegDecoder::getNumAudioTracks() const
