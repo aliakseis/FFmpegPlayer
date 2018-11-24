@@ -61,6 +61,8 @@ public:
     afx_msg void OnUpdateAudioOnOff(CCmdUI *pCmdUI);
     afx_msg void OnClickedPlayPause();
     afx_msg void OnClickedAudioOnOff();
+    afx_msg void OnUpdateFrameStep(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateVolumeSlider(CCmdUI *pCmdUI);
 };
 
 
