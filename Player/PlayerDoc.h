@@ -73,6 +73,7 @@ public:
     void OnIdle() override;
 
     bool pauseResume();
+    bool nextFrame();
     bool seekByPercent(double percent);
     void setVolume(double volume);
 
