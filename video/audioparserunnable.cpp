@@ -184,28 +184,35 @@ bool FFmpegDecoder::handleAudioPacket(
 
         bool skipAll = false;
         double delta = 0;
-        auto getDelta = [this] {
-            return (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
-                ? GetHiResTime() - m_videoStartClock - m_audioPTS : 0;
-        };
+        bool isPaused = false;
 
-        if (m_isPaused)
+        {
+            boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
+            isPaused = m_isPaused;
+            if (!isPaused)
+            {
+                delta = (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+                    ? GetHiResTime() - m_videoStartClock - m_audioPTS : 0;
+            }
+        }
+
+        if (isPaused)
         {
             if (!m_audioPaused)
             {
                 m_audioPlayer->WaveOutPause();
                 m_audioPaused = true;
             }
+
             boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
+
             while (m_isVideoSeekingWhilePaused 
-                || (delta = getDelta(), m_isPaused && !(skipAll = delta >= frame_clock)))
+                || (delta = (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+                    ? (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock - m_audioPTS : 0
+                , m_isPaused && !(skipAll = delta >= frame_clock)))
             {
                 m_isPausedCV.wait(locker);
             }
-        }
-        else
-        {
-            delta = getDelta();
         }
 
         // Audio sync
