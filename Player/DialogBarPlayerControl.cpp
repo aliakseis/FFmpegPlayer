@@ -122,6 +122,8 @@ BEGIN_MESSAGE_MAP(CDialogBarPlayerControl, CPaneDialog)
     ON_BN_CLICKED(IDC_AUDIO_ON_OFF, &CDialogBarPlayerControl::OnClickedAudioOnOff)
     ON_MESSAGE(WM_SET_TIME, &CDialogBarPlayerControl::OnSetTime)
     ON_MESSAGE(WM_INITDIALOG, &CDialogBarPlayerControl::HandleInitDialog)
+    ON_UPDATE_COMMAND_UI(IDC_FRAME_STEP, &CDialogBarPlayerControl::OnUpdateFrameStep)
+    ON_UPDATE_COMMAND_UI(IDC_VOLUME_SLIDER, &CDialogBarPlayerControl::OnUpdateVolumeSlider)
 END_MESSAGE_MAP()
 
 
@@ -274,7 +276,14 @@ void CDialogBarPlayerControl::OnClickedPlayPause()
 {
     if (m_pDoc)
     {
-        m_pDoc->pauseResume();
+        if (m_pDoc->isPaused() && IsDlgButtonChecked(IDC_FRAME_STEP))
+        {
+            m_pDoc->nextFrame();
+        }
+        else
+        {
+            m_pDoc->pauseResume();
+        }
     }
 }
 
@@ -295,4 +304,24 @@ void CDialogBarPlayerControl::OnClickedAudioOnOff()
 
     m_volumeSlider.SetPos(newVolume);
     m_pDoc->setVolume(newVolume / double(RANGE_MAX));
+}
+
+
+void CDialogBarPlayerControl::OnUpdateFrameStep(CCmdUI *pCmdUI)
+{
+    if (pCmdUI->m_pOther)
+    {
+        pCmdUI->m_pOther->ShowWindow(
+            (m_pDoc && m_pDoc->isPaused()) ? SW_SHOWNA : SW_HIDE);
+    }
+}
+
+
+void CDialogBarPlayerControl::OnUpdateVolumeSlider(CCmdUI *pCmdUI)
+{
+    if (pCmdUI->m_pOther)
+    {
+        pCmdUI->m_pOther->ShowWindow(
+            (m_pDoc && m_pDoc->isPaused()) ? SW_HIDE : SW_SHOWNA);
+    }
 }

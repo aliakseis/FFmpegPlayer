@@ -23,9 +23,9 @@
 #define IDC_VOLUME_SLIDER               1003
 #define IDC_CURRENT_TIME                1004
 #define IDC_TOTAL_TIME                  1005
-#define IDC_EDIT1                       1005
 #define IDC_EDIT_URL                    1005
 #define IDC_FULL_SCREEN                 1006
+#define IDC_FRAME_STEP                  1007
 #define ID_TRACK1                       32771
 #define ID_TRACK2                       32772
 #define ID_TRACK3                       32773
@@ -39,7 +39,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        319
 #define _APS_NEXT_COMMAND_VALUE         32777
-#define _APS_NEXT_CONTROL_VALUE         1006
+#define _APS_NEXT_CONTROL_VALUE         1008
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

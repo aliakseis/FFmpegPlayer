@@ -466,6 +466,11 @@ bool CPlayerDoc::pauseResume()
     return m_frameDecoder->pauseResume();
 }
 
+bool CPlayerDoc::nextFrame()
+{
+    return m_frameDecoder->nextFrame();
+}
+
 bool CPlayerDoc::seekByPercent(double percent)
 {
     return m_frameDecoder->seekByPercent(percent);
