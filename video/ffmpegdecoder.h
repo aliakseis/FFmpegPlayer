@@ -17,6 +17,7 @@ extern "C" {
 #include <memory>
 #include <vector>
 
+#include <boost/chrono.hpp>
 #include <boost/log/sources/channel_logger.hpp>
 #include <boost/log/common.hpp>
 
@@ -40,7 +41,6 @@ extern boost::log::sources::channel_logger_mt<>
 #include "videoframe.h"
 #include "vqueue.h"
 
-double GetHiResTime();
 
 // Inspired by http://dranger.com/ffmpeg/ffmpeg.html
 
@@ -133,6 +133,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     void handleDirect3dData(AVFrame* videoFrame);
 
+    double GetHiResTime();
+
     // Frame display listener
     IFrameListener* m_frameListener;
 
@@ -163,7 +165,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     boost::atomic_bool m_videoResetting;
 
     // Video Stuff
-    enum { VIDEO_START_CLOCK_NOT_INITIALIZED = -1 };
+    enum { VIDEO_START_CLOCK_NOT_INITIALIZED = -1000000000 };
     boost::atomic<double> m_videoStartClock;
 
     AVCodec* m_videoCodec;
@@ -229,4 +231,6 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     std::vector<int> m_audioIndices;
 
     std::unique_ptr<IOContext> m_ioCtx;
+
+    boost::chrono::high_resolution_clock::time_point m_referenceTime;
 };

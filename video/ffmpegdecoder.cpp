@@ -83,14 +83,6 @@ boost::log::sources::channel_logger_mt<>
 
 } // namespace channel_logger
 
-double GetHiResTime()
-{
-    return boost::chrono::duration_cast<boost::chrono::microseconds>(
-               boost::chrono::high_resolution_clock::now().time_since_epoch())
-               .count() /
-           1000000.;
-}
-
 std::unique_ptr<IFrameDecoder> GetFrameDecoder(std::unique_ptr<IAudioPlayer> audioPlayer)
 {
     return std::unique_ptr<IFrameDecoder>(new FFmpegDecoder(std::move(audioPlayer)));
@@ -372,6 +364,8 @@ bool FFmpegDecoder::openUrl(const std::string& url)
 bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bool isFile)
 {
     close();
+
+    m_referenceTime = boost::chrono::high_resolution_clock::now();
 
     std::unique_ptr<IOContext> ioCtx;
     if (isFile)
@@ -883,4 +877,12 @@ void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame)
         assert(videoFrame->format != AV_PIX_FMT_DXVA2_VLD);
     }
 #endif
+}
+
+double FFmpegDecoder::GetHiResTime()
+{
+    return boost::chrono::duration_cast<boost::chrono::microseconds>(
+        boost::chrono::high_resolution_clock::now() - m_referenceTime)
+        .count() /
+        1000000.;
 }
