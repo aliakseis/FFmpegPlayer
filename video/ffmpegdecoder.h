@@ -135,6 +135,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     double GetHiResTime();
 
+    enum { SPEED_COEFF = 1 };
+
     // Frame display listener
     IFrameListener* m_frameListener;
 

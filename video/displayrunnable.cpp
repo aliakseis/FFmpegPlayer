@@ -41,11 +41,11 @@ void FFmpegDecoder::displayRunnable()
                 break;
             if (delay > 0.1)
             {
-                boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+                boost::this_thread::sleep_for(boost::chrono::milliseconds(100 / SPEED_COEFF));
                 continue;
             }
 
-            boost::this_thread::sleep_for(boost::chrono::milliseconds(int(delay * 1000.)));
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(int(delay * 1000. / SPEED_COEFF)));
             break;
         }
 
