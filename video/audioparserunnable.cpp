@@ -120,7 +120,7 @@ bool FFmpegDecoder::handleAudioPacket(
             swr_free(&m_audioSwrContext);
             m_audioSwrContext = swr_alloc_set_opts(
                 nullptr, m_audioSettings.channel_layout, m_audioSettings.format,
-                m_audioSettings.frequency, dec_channel_layout, audioFrameFormat,
+                m_audioSettings.frequency / SPEED_COEFF, dec_channel_layout, audioFrameFormat,
                 m_audioFrame->sample_rate, 0, nullptr);
 
             if (!m_audioSwrContext || swr_init(m_audioSwrContext) < 0)

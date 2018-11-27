@@ -653,7 +653,7 @@ void FFmpegDecoder::AppendFrameClock(double frame_clock)
             m_duration + m_startTime);
     }
 
-    InterlockedAdd(m_audioPTS, frame_clock);
+    InterlockedAdd(m_audioPTS, frame_clock * SPEED_COEFF);
 }
 
 void FFmpegDecoder::setVolume(double volume)
@@ -884,5 +884,5 @@ double FFmpegDecoder::GetHiResTime()
     return boost::chrono::duration_cast<boost::chrono::microseconds>(
         boost::chrono::high_resolution_clock::now() - m_referenceTime)
         .count() /
-        1000000.;
+        1000000. * SPEED_COEFF;
 }

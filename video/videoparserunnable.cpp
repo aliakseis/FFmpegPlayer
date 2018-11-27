@@ -176,7 +176,7 @@ bool FFmpegDecoder::handleVideoPacket(
                 {
                     context.numSkipped = 0;
                     td = boost::posix_time::milliseconds(
-                        int((m_videoStartClock + pts - curTime) * 1000.) + 1);
+                        int((m_videoStartClock + pts - curTime) * 1000. / SPEED_COEFF) + 1);
                 }
             }
         }
