@@ -182,13 +182,9 @@ local int unzlocal_getByte(pzlib_filefunc_def,filestream,pi)
         *pi = (int)c;
         return UNZ_OK;
     }
-    else
-    {
-        if (ZERROR(*pzlib_filefunc_def,filestream))
-            return UNZ_ERRNO;
-        else
-            return UNZ_EOF;
-    }
+    if (ZERROR(*pzlib_filefunc_def,filestream))
+        return UNZ_ERRNO;
+    return UNZ_EOF;
 }
 
 
@@ -1423,8 +1419,7 @@ extern int ZEXPORT unzeof (file)
 
     if (pfile_in_zip_read_info->rest_read_uncompressed == 0)
         return 1;
-    else
-        return 0;
+    return 0;
 }
 
 
