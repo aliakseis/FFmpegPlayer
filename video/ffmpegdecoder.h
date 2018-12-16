@@ -93,6 +93,9 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     int getAudioTrack() const override;
     void setAudioTrack(int idx) override;
 
+    std::pair<int, int> getSpeedRational() const override;
+    void setSpeedRational(const std::pair<int, int>& speed) override;
+
    private:
     class IOContext;
     struct VideoParseContext;
@@ -134,8 +137,6 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     void handleDirect3dData(AVFrame* videoFrame);
 
     double GetHiResTime();
-
-    enum { SPEED_COEFF = 1 };
 
     // Frame display listener
     IFrameListener* m_frameListener;
@@ -234,5 +235,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     std::unique_ptr<IOContext> m_ioCtx;
 
-    boost::chrono::high_resolution_clock::time_point m_referenceTime;
+    boost::atomic<boost::chrono::high_resolution_clock::duration> m_referenceTime;
+
+    boost::atomic<std::pair<int, int>> m_speedRational; // Numerator, Denominator
 };

@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <memory>
 #include <string>
+#include <utility>
 
 #ifdef _WIN32
 typedef std::wstring PathType;
@@ -90,6 +91,9 @@ struct IFrameDecoder
     virtual int getNumAudioTracks() const = 0;
     virtual int getAudioTrack() const = 0;
     virtual void setAudioTrack(int idx) = 0;
+
+    virtual std::pair<int, int> getSpeedRational() const = 0;
+    virtual void setSpeedRational(const std::pair<int, int>& speed) = 0;
 };
 
 struct IAudioPlayer;

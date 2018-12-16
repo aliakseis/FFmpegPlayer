@@ -6,6 +6,8 @@
 
 #include <functional>
 #include <memory>
+#include <tuple>
+
 
 namespace {
 
@@ -112,16 +114,20 @@ bool FFmpegDecoder::handleAudioPacket(
 
         const int64_t dec_channel_layout = getChannelLayout(m_audioFrame);
 
+        int speedNumerator, speedDenominator;
+        std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
+
         // Check if the new swr context required
         if (audioFrameFormat != m_audioCurrentPref.format ||
             dec_channel_layout != m_audioCurrentPref.channel_layout ||
-            m_audioFrame->sample_rate != m_audioCurrentPref.frequency)
+            (m_audioFrame->sample_rate * speedNumerator) / speedDenominator != m_audioCurrentPref.frequency)
         {
             swr_free(&m_audioSwrContext);
             m_audioSwrContext = swr_alloc_set_opts(
                 nullptr, m_audioSettings.channel_layout, m_audioSettings.format,
-                m_audioSettings.frequency / SPEED_COEFF, dec_channel_layout, audioFrameFormat,
-                m_audioFrame->sample_rate, 0, nullptr);
+                m_audioSettings.frequency * speedDenominator,
+                dec_channel_layout, audioFrameFormat,
+                m_audioFrame->sample_rate * speedNumerator, 0, nullptr);
 
             if (!m_audioSwrContext || swr_init(m_audioSwrContext) < 0)
             {
@@ -131,7 +137,7 @@ bool FFmpegDecoder::handleAudioPacket(
             m_audioCurrentPref.format = audioFrameFormat;
             m_audioCurrentPref.channels = audioFrameChannels;
             m_audioCurrentPref.channel_layout = dec_channel_layout;
-            m_audioCurrentPref.frequency = m_audioFrame->sample_rate;
+            m_audioCurrentPref.frequency = (m_audioFrame->sample_rate * speedNumerator) / speedDenominator;
         }
 
         if (m_audioSwrContext)
@@ -140,7 +146,7 @@ bool FFmpegDecoder::handleAudioPacket(
 
             const int out_count = (int64_t)m_audioFrame->nb_samples *
                 m_audioSettings.frequency /
-                m_audioFrame->sample_rate + EXTRA_SPACE;
+                m_audioCurrentPref.frequency + EXTRA_SPACE;
 
             const int size_multiplier = m_audioSettings.channels *
                 av_get_bytes_per_sample(m_audioSettings.format);

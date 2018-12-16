@@ -3,6 +3,7 @@
 #include "interlockedadd.h"
 
 #include <boost/log/trivial.hpp>
+#include <tuple>
 
 namespace {
 
@@ -174,9 +175,11 @@ bool FFmpegDecoder::handleVideoPacket(
                 }
                 else
                 {
+                    int speedNumerator, speedDenominator;
+                    std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
                     context.numSkipped = 0;
                     td = boost::posix_time::milliseconds(
-                        int((m_videoStartClock + pts - curTime) * 1000. / SPEED_COEFF) + 1);
+                        int((m_videoStartClock + pts - curTime) * 1000.  * speedDenominator / speedNumerator) + 1);
                 }
             }
         }

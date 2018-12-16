@@ -147,7 +147,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
-    POPUP "Audio"
+    POPUP "Audio/Video"
     BEGIN
         POPUP "Audio Track"
         BEGIN
@@ -155,6 +155,16 @@ BEGIN
             MENUITEM "Track 2",                     ID_TRACK2
             MENUITEM "Track 3",                     ID_TRACK3
             MENUITEM "Track 4",                     ID_TRACK4
+        END
+        POPUP "Video Speed"
+        BEGIN
+            MENUITEM "0.5x",                        ID_VIDEO_SPEED1
+            MENUITEM "0.64x",                       ID_VIDEO_SPEED2
+            MENUITEM "0.8x",                        ID_VIDEO_SPEED3
+            MENUITEM "1x",                          ID_VIDEO_SPEED4
+            MENUITEM "1.28x",                       ID_VIDEO_SPEED5
+            MENUITEM "1.6x",                        ID_VIDEO_SPEED6
+            MENUITEM "2x",                          ID_VIDEO_SPEED7
         END
     END
     POPUP "&View"

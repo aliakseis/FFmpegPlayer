@@ -1,5 +1,7 @@
 #include "ffmpegdecoder.h"
 
+#include <tuple>
+
 void FFmpegDecoder::displayRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Displaying thread started";
@@ -34,6 +36,9 @@ void FFmpegDecoder::displayRunnable()
             m_frameListener->updateFrame();
         }
 
+        int speedNumerator, speedDenominator;
+        std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
+
         for (;;)
         {
             const double delay = m_videoStartClock + current_frame.m_pts - GetHiResTime();
@@ -41,11 +46,13 @@ void FFmpegDecoder::displayRunnable()
                 break;
             if (delay > 0.1)
             {
-                boost::this_thread::sleep_for(boost::chrono::milliseconds(100 / SPEED_COEFF));
+                boost::this_thread::sleep_for(
+                    boost::chrono::milliseconds(100 * speedDenominator / speedNumerator));
                 continue;
             }
 
-            boost::this_thread::sleep_for(boost::chrono::milliseconds(int(delay * 1000. / SPEED_COEFF)));
+            boost::this_thread::sleep_for(
+                boost::chrono::milliseconds(int(delay * 1000. * speedDenominator / speedNumerator)));
             break;
         }
 
