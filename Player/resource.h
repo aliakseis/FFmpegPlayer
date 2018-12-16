@@ -32,13 +32,20 @@
 #define ID_TRACK4                       32774
 #define ID_AUTOPLAY                     32775
 #define ID_LOOPING                      32776
+#define ID_VIDEO_SPEED1                 32777
+#define ID_VIDEO_SPEED2                 32778
+#define ID_VIDEO_SPEED3                 32779
+#define ID_VIDEO_SPEED4                 32780
+#define ID_VIDEO_SPEED5                 32781
+#define ID_VIDEO_SPEED6                 32782
+#define ID_VIDEO_SPEED7                 32783
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        319
-#define _APS_NEXT_COMMAND_VALUE         32777
+#define _APS_NEXT_COMMAND_VALUE         32784
 #define _APS_NEXT_CONTROL_VALUE         1008
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

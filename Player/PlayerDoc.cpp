@@ -36,6 +36,17 @@
 
 namespace {
 
+const std::pair<int, int> videoSpeeds[] 
+{
+    { 1, 2 },
+    { 16, 25 },
+    { 4, 5 },
+    { 1, 1 },
+    { 32, 25 },
+    { 8, 5 },
+    { 2, 1 },
+};
+
 bool HandleFilesSequence(const CString& pathName, std::function<bool(const CString&)> tryToOpen)
 {
     const auto extension = PathFindExtension(pathName);
@@ -132,6 +143,8 @@ IMPLEMENT_DYNCREATE(CPlayerDoc, CDocument)
 BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND_RANGE(ID_TRACK1, ID_TRACK4, OnAudioTrack)
     ON_UPDATE_COMMAND_UI_RANGE(ID_TRACK1, ID_TRACK4, OnUpdateAudioTrack)
+    ON_COMMAND_RANGE(ID_VIDEO_SPEED1, ID_VIDEO_SPEED7, OnVideoSpeed)
+    ON_UPDATE_COMMAND_UI_RANGE(ID_VIDEO_SPEED1, ID_VIDEO_SPEED7, OnUpdateVideoSpeed)
     ON_COMMAND(ID_AUTOPLAY, &CPlayerDoc::OnAutoplay)
     ON_UPDATE_COMMAND_UI(ID_AUTOPLAY, &CPlayerDoc::OnUpdateAutoplay)
     ON_COMMAND(ID_LOOPING, &CPlayerDoc::OnLooping)
@@ -715,4 +728,23 @@ void CPlayerDoc::OnLooping()
 void CPlayerDoc::OnUpdateLooping(CCmdUI *pCmdUI)
 {
     pCmdUI->SetCheck(m_looping);
+}
+
+void CPlayerDoc::OnVideoSpeed(UINT id)
+{
+    const int idx = id - ID_VIDEO_SPEED1;
+    if (idx >= 0 && idx < sizeof(videoSpeeds) / sizeof(videoSpeeds[0]))
+    {
+        m_frameDecoder->setSpeedRational(videoSpeeds[idx]);
+    }
+}
+
+void CPlayerDoc::OnUpdateVideoSpeed(CCmdUI* pCmdUI)
+{
+    const int idx = pCmdUI->m_nID - ID_VIDEO_SPEED1;
+    if (idx >= 0 && idx < sizeof(videoSpeeds) / sizeof(videoSpeeds[0]))
+    {
+        pCmdUI->SetCheck(
+            m_frameDecoder->getSpeedRational() == videoSpeeds[idx]);
+    }
 }

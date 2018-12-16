@@ -57,6 +57,8 @@ protected:
 protected:
     afx_msg void OnAudioTrack(UINT id);
     afx_msg void OnUpdateAudioTrack(CCmdUI* pCmdUI);
+    afx_msg void OnVideoSpeed(UINT id);
+    afx_msg void OnUpdateVideoSpeed(CCmdUI* pCmdUI);
     afx_msg void OnAutoplay();
     afx_msg void OnUpdateAutoplay(CCmdUI *pCmdUI);
     afx_msg void OnLooping();
