@@ -634,6 +634,7 @@ void FFmpegDecoder::play(bool isPaused)
 
     if (isPaused)
     {
+        boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
         m_pauseTimer = GetHiResTime();
     }
 
