@@ -744,6 +744,7 @@ void CPlayerDoc::OnUpdateVideoSpeed(CCmdUI* pCmdUI)
     const int idx = pCmdUI->m_nID - ID_VIDEO_SPEED1;
     if (idx >= 0 && idx < sizeof(videoSpeeds) / sizeof(videoSpeeds[0]))
     {
+        pCmdUI->Enable(m_frameDecoder->isPlaying());
         pCmdUI->SetCheck(
             m_frameDecoder->getSpeedRational() == videoSpeeds[idx]);
     }
