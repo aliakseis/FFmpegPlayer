@@ -100,6 +100,9 @@ CDialogBarPlayerControl::~CDialogBarPlayerControl()
         m_pDoc->framePositionChanged.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onFramePositionChanged, this));
         m_pDoc->totalTimeUpdated.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onTotalTimeUpdated, this));
         m_pDoc->currentTimeUpdated.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onCurrentTimeUpdated, this));
+
+        m_pDoc->rangeStartTimeChanged.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onRangeStartTimeChanged, this));
+        m_pDoc->rangeEndTimeChanged.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onRangeEndTimeChanged, this));
     }
 }
 
@@ -146,6 +149,7 @@ LRESULT CDialogBarPlayerControl::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 
     m_progressSlider.SetRange(0, RANGE_MAX);
     m_progressSlider.SetPageSize(0);
+    m_progressSlider.ModifyStyle(0, TBS_ENABLESELRANGE);
     m_volumeSlider.SetRange(0, RANGE_MAX);
     m_volumeSlider.SetPos(RANGE_MAX);
     m_volumeSlider.SetPageSize(0);
@@ -163,6 +167,9 @@ void CDialogBarPlayerControl::setDocument(CPlayerDoc* pDoc)
     m_pDoc->framePositionChanged.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onFramePositionChanged, this));
     m_pDoc->totalTimeUpdated.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onTotalTimeUpdated, this));
     m_pDoc->currentTimeUpdated.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onCurrentTimeUpdated, this));
+
+    m_pDoc->rangeStartTimeChanged.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onRangeStartTimeChanged, this));
+    m_pDoc->rangeEndTimeChanged.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onRangeEndTimeChanged, this));
 }
 
 void CDialogBarPlayerControl::onFramePositionChanged(long long frame, long long total)
@@ -173,6 +180,20 @@ void CDialogBarPlayerControl::onFramePositionChanged(long long frame, long long 
         const int pos = (total > 0)? int((frame * RANGE_MAX) / total) : 0;
         m_progressSlider.SendNotifyMessage(TBM_SETPOS, TRUE, pos);
     }
+}
+
+void CDialogBarPlayerControl::onRangeStartTimeChanged(long long frame, long long total)
+{
+    ASSERT(total >= 0);
+    const int pos = (total > 0) ? int((frame * RANGE_MAX) / total) : 0;
+    m_progressSlider.SendNotifyMessage(TBM_SETSELSTART, TRUE, pos);
+}
+
+void CDialogBarPlayerControl::onRangeEndTimeChanged(long long frame, long long total)
+{
+    ASSERT(total >= 0);
+    const int pos = (total > 0) ? int((frame * RANGE_MAX) / total) : 0;
+    m_progressSlider.SendNotifyMessage(TBM_SETSELEND, TRUE, pos);
 }
 
 void CDialogBarPlayerControl::onTotalTimeUpdated(double secs)

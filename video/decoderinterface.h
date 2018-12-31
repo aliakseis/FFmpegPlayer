@@ -44,7 +44,7 @@ struct FrameDecoderListener
     virtual void changedFramePosition(
         long long /*start*/, long long /*frame*/, long long /*total*/) {}
     virtual void decoderClosed(bool /*fileReleased*/) {}
-    virtual void fileLoaded() {}
+    virtual void fileLoaded(long long /*start*/, long long /*total*/) {}
     virtual void volumeChanged(double /*volume*/) {}
 
     virtual void onEndOfStream() {}

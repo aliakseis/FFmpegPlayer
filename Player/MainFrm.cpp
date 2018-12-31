@@ -97,6 +97,7 @@ BOOL CMainFrame::Create(LPCTSTR lpszClassName,
         ASSERT(pContext->m_pCurrentDoc);
         ASSERT(pContext->m_pCurrentDoc->IsKindOf(RUNTIME_CLASS(CPlayerDoc)));
         m_wndPlayerControl.setDocument(static_cast<CPlayerDoc*>(pContext->m_pCurrentDoc));
+        m_wndRange.setDocument(static_cast<CPlayerDoc*>(pContext->m_pCurrentDoc));
     }
 
     return result;
@@ -138,7 +139,17 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI,
         IDD_DIALOGBAR_PLAYER_CONTROL))
     {
-        TRACE0("Failed to create dialog bar\n");
+        TRACE0("Failed to create player control dialog bar\n");
+        return -1;      // fail to create
+    }
+
+    if (!m_wndRange.Create(
+        this,
+        IDD_DIALOGBAR_RANGE,
+        WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI,
+        IDD_DIALOGBAR_RANGE))
+    {
+        TRACE0("Failed to create range dialog bar\n");
         return -1;      // fail to create
     }
 
@@ -146,21 +157,25 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     m_wndMenuBar.EnableDocking(CBRS_ALIGN_ANY);
     //m_wndToolBar.EnableDocking(CBRS_ALIGN_TOP);
     m_wndPlayerControl.EnableDocking(CBRS_ALIGN_BOTTOM);
+    m_wndRange.EnableDocking(CBRS_ALIGN_BOTTOM);
 
-    CString strPlayerControl;
-    VERIFY(strPlayerControl.LoadString(IDS_PLAYER_CONTROL));
-    m_wndPlayerControl.SetWindowText(strPlayerControl);
+    CString strBuffer;
+    VERIFY(strBuffer.LoadString(IDS_PLAYER_CONTROL));
+    m_wndPlayerControl.SetWindowText(strBuffer);
 
-    EnableDocking(CBRS_ALIGN_ANY);
+    VERIFY(strBuffer.LoadString(IDS_RANGE));
+    m_wndRange.SetWindowText(strBuffer);
+
+    EnableDocking(CBRS_ALIGN_TOP | CBRS_ALIGN_BOTTOM);
     DockPane(&m_wndMenuBar);
     //DockPane(&m_wndToolBar, AFX_IDW_DOCKBAR_TOP);
     DockPane(&m_wndPlayerControl, AFX_IDW_DOCKBAR_BOTTOM);
+    DockPane(&m_wndRange, AFX_IDW_DOCKBAR_BOTTOM);
 
     // Enable toolbar and docking window menu replacement
-    CString strCustomize;
-    VERIFY(strCustomize.LoadString(IDS_TOOLBAR_CUSTOMIZE));
+    VERIFY(strBuffer.LoadString(IDS_TOOLBAR_CUSTOMIZE));
     //m_wndToolBar.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
-    EnablePaneMenu(TRUE, ID_VIEW_CUSTOMIZE, strCustomize, ID_VIEW_TOOLBAR);
+    EnablePaneMenu(TRUE, ID_VIEW_CUSTOMIZE, strBuffer, ID_VIEW_TOOLBAR);
 
     EnableFullScreenMode(IDC_FULL_SCREEN);
     EnableFullScreenMainMenu(FALSE);

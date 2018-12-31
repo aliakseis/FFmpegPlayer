@@ -5,6 +5,7 @@
 #pragma once
 
 #include "DialogBarPlayerControl.h"
+#include "DialogBarRange.h"
 
 class CMainFrame : public CFrameWndEx
 {
@@ -45,6 +46,7 @@ protected:  // control bar embedded members
     //CMFCToolBar          m_wndToolBar;
     CMFCStatusBar        m_wndStatusBar;
     CDialogBarPlayerControl m_wndPlayerControl;
+    CDialogBarRange m_wndRange;
 
     BOOL            m_bFullScreen;
 

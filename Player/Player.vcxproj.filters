@@ -72,6 +72,12 @@
     <ClInclude Include="MemoryMappedFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DialogBarRange.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditTime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Player.cpp">
@@ -111,6 +117,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="YouTuber.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DialogBarRange.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EditTime.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

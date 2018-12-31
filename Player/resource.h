@@ -10,12 +10,14 @@
 #define IDR_PlayerTYPE                  130
 #define IDS_PlayerControl               130
 #define IDS_PLAYER_CONTROL              130
+#define IDS_RANGE                       131
 #define IDI_PAUSE                       311
 #define IDI_PLAY                        312
 #define IDI_AUDIO                       313
 #define IDI_AUDIO_OFF                   314
 #define IDI_FULL_SCREEN                 315
 #define IDD_DIALOG_OPEN_URL             317
+#define IDD_DIALOGBAR_RANGE             319
 #define IDC_PROGRESS_SLIDER             1000
 #define IDC_PLAY_PAUSE                  1001
 #define IDC_AUDIO_ON_OFF                1002
@@ -26,6 +28,13 @@
 #define IDC_EDIT_URL                    1005
 #define IDC_FULL_SCREEN                 1006
 #define IDC_FRAME_STEP                  1007
+#define IDC_START                       1008
+#define IDC_EDIT_START                  1010
+#define IDC_START_RESET                 1011
+#define IDC_END                         1012
+#define IDC_EDIT_END                    1013
+#define IDC_END_RESET                   1014
+#define IDC_SAVE                        1015
 #define ID_TRACK1                       32771
 #define ID_TRACK2                       32772
 #define ID_TRACK3                       32773
@@ -44,9 +53,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        319
+#define _APS_NEXT_RESOURCE_VALUE        321
 #define _APS_NEXT_COMMAND_VALUE         32784
-#define _APS_NEXT_CONTROL_VALUE         1008
+#define _APS_NEXT_CONTROL_VALUE         1016
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

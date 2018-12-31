@@ -483,12 +483,6 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     formatContextGuard.release();
     m_ioCtx = std::move(ioCtx);
 
-    if (m_decoderListener)
-    {
-        m_decoderListener->fileLoaded();
-        m_decoderListener->changedFramePosition(m_startTime, m_startTime, m_duration + m_startTime);
-    }
-
     return true;
 }
 

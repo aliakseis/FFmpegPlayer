@@ -51,6 +51,7 @@ public:
 
 protected:
     void changedFramePosition(long long start, long long frame, long long total) override;
+    void fileLoaded(long long start, long long total) override;
     void onEndOfStream() override;
 
 // Generated message map functions
@@ -84,13 +85,22 @@ public:
     double soundVolume() const;
 
     boost::signals2::signal<void(long long, long long)> framePositionChanged;
+    boost::signals2::signal<void(double)> startTimeUpdated;
     boost::signals2::signal<void(double)> totalTimeUpdated;
     boost::signals2::signal<void(double)> currentTimeUpdated;
+
+    boost::signals2::signal<void(long long, long long)> rangeStartTimeChanged;
+    boost::signals2::signal<void(long long, long long)> rangeEndTimeChanged;
 
     std::string getSubtitle() const;
     bool isUnicodeSubtitles() const { return m_unicodeSubtitles; }
 
     void OnDropFiles(HDROP hDropInfo);
+
+    double getCurrentTime() const { return m_currentTime; }
+
+    void setRangeStartTime(double time);
+    void setRangeEndTime(double time);
 
 private:
     bool OpenSubRipFile(LPCTSTR lpszVideoPathName);
@@ -107,6 +117,8 @@ private:
     std::unique_ptr<IFrameDecoder> m_frameDecoder;
 
     std::atomic<double> m_currentTime;
+    double m_startTime;
+    double m_endTime;
 
     class SubtitlesMap;
     std::unique_ptr<SubtitlesMap> m_subtitles;

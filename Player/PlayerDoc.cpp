@@ -462,8 +462,17 @@ void CPlayerDoc::changedFramePosition(long long start, long long frame, long lon
     framePositionChanged(frame - start, total - start);
     const double currentTime = m_frameDecoder->getDurationSecs(frame);
     m_currentTime = currentTime;
-    totalTimeUpdated(m_frameDecoder->getDurationSecs(total));
     currentTimeUpdated(currentTime);
+}
+
+void CPlayerDoc::fileLoaded(long long start, long long total)
+{
+    const double startTime = m_frameDecoder->getDurationSecs(start);
+    m_startTime = startTime;
+    startTimeUpdated(startTime);
+    const double endTime = m_frameDecoder->getDurationSecs(total);
+    m_endTime = endTime;
+    totalTimeUpdated(endTime);
 }
 
 void CPlayerDoc::onEndOfStream()
@@ -683,6 +692,16 @@ std::string CPlayerDoc::getSubtitle() const
         }
     }
     return result;
+}
+
+void CPlayerDoc::setRangeStartTime(double time)
+{
+    rangeStartTimeChanged(time - m_startTime, m_endTime - m_startTime);
+}
+
+void CPlayerDoc::setRangeEndTime(double time)
+{
+    rangeEndTimeChanged(time - m_startTime, m_endTime - m_startTime);
 }
 
 void CPlayerDoc::OnDropFiles(HDROP hDropInfo)

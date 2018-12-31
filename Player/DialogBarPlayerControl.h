@@ -36,6 +36,9 @@ protected:
     void onTotalTimeUpdated(double secs);
     void onCurrentTimeUpdated(double secs);
 
+    void onRangeStartTimeChanged(long long frame, long long total);
+    void onRangeEndTimeChanged(long long frame, long long total);
+
 protected:
     DECLARE_MESSAGE_MAP()
     afx_msg LRESULT HandleInitDialog(WPARAM wParam, LPARAM lParam);
