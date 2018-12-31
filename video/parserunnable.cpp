@@ -10,6 +10,12 @@ void FFmpegDecoder::parseRunnable()
     // detect real framesize
     fixDuration();
 
+    if (m_decoderListener)
+    {
+        m_decoderListener->fileLoaded(m_startTime, m_duration + m_startTime);
+        m_decoderListener->changedFramePosition(m_startTime, m_startTime, m_duration + m_startTime);
+    }
+
     startAudioThread();
     startVideoThread();
 

@@ -15,7 +15,6 @@
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
-
 /////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
@@ -197,6 +196,19 @@ BEGIN
     LTEXT           "Enter a URL to play:",IDC_STATIC,7,7,66,8
 END
 
+IDD_DIALOGBAR_RANGE DIALOGEX 0, 0, 374, 28
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Start",IDC_START,7,7,50,14
+    EDITTEXT        IDC_EDIT_START,62,7,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Reset",IDC_START_RESET,107,7,50,14
+    PUSHBUTTON      "End",IDC_END,162,7,50,14
+    EDITTEXT        IDC_EDIT_END,217,7,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Reset",IDC_END_RESET,262,7,50,14
+    PUSHBUTTON      "Save",IDC_SAVE,317,7,50,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -300,6 +312,31 @@ BEGIN
 END
 
 
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // String Table
@@ -310,6 +347,7 @@ BEGIN
     IDR_MAINFRAME           "Player\n\nPlayer\n\n\nPlayer.Document\nPlayer.Document"
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
     IDS_PLAYER_CONTROL      "Player Control"
+    IDS_RANGE               "Range"
 END
 
 STRINGTABLE
@@ -425,13 +463,12 @@ END
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
-
-
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
+
 #define _AFX_NO_OLE_RESOURCES
 #define _AFX_NO_TRACKER_RESOURCES
 #define _AFX_NO_PROPERTY_RESOURCES
@@ -442,6 +479,8 @@ LANGUAGE 9, 1
 #include "afxres.rc"      // Standard components
 #include "afxprint.rc"    // printing/print preview resources
 #endif
+
+
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
