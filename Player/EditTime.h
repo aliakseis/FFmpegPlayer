@@ -12,7 +12,7 @@ public:
 // Attributes
 public:
 	void SetValue(double fTime);
-	float GetValue();
+	double GetValue() const;
 
 // Operations
 public:
