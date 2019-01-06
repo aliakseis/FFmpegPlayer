@@ -64,12 +64,9 @@ void CEditTime::SetValue(double fTime)
 	SetWindowText(strBuf);
 }
 
-float CEditTime::GetValue()
+double CEditTime::GetValue() const
 {
 	CString strBuf;
 	GetWindowText(strBuf);
-	float fBuf = (float)_ttof(strBuf);
-	while(fBuf > 360)
-		fBuf =- 360.f;
-	return fBuf;
+	return _ttof(strBuf);
 }
