@@ -79,7 +79,7 @@ double GetValueByMouseClick(CWnd* pDlg, CSliderCtrl* pSliderCtrl)
 IMPLEMENT_DYNAMIC(CDialogBarPlayerControl, CPaneDialog)
 
 CDialogBarPlayerControl::CDialogBarPlayerControl()
-: m_pDoc(0)
+: m_pDoc(nullptr)
 , m_hPlay(NULL)
 , m_hPause(NULL)
 , m_hAudio(NULL)

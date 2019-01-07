@@ -113,6 +113,8 @@ private:
     bool openUrl(std::string url);
     bool openUrlFromList();
 
+    void reset();
+
 private:
     std::unique_ptr<IFrameDecoder> m_frameDecoder;
 
