@@ -186,10 +186,7 @@ BOOL CPlayerDoc::OnNewDocument()
         CDialogOpenURL dlg;
         if (dlg.DoModal() == IDOK && !dlg.m_URL.IsEmpty())
         {
-            m_frameDecoder->close();
-            m_subtitles.reset();
-            m_reopenFunc = nullptr;
-            UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
+            reset();
             openTopLevelUrl(dlg.m_URL);
         }
     }
@@ -254,6 +251,14 @@ bool CPlayerDoc::openUrlFromList()
             return true;
     }
     return false;
+}
+
+void CPlayerDoc::reset()
+{
+    m_frameDecoder->close();
+    m_subtitles.reset();
+    m_reopenFunc = nullptr;
+    UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
 }
 
 // CPlayerDoc serialization
@@ -352,10 +357,7 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
 {
-    m_frameDecoder->close();
-    m_subtitles.reset();
-    m_reopenFunc = nullptr;
-    UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
+    reset();
 
     const auto extension = PathFindExtension(lpszPathName);
     if (!_tcsicmp(extension, _T(".lst")))

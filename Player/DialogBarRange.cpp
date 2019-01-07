@@ -30,6 +30,7 @@ CSize CalcDialogSize(UINT nResourceId)
 IMPLEMENT_DYNAMIC(CDialogBarRange, CPaneDialog)
 
 CDialogBarRange::CDialogBarRange()
+: m_pDoc(nullptr)
 {
     SetMinSize(CalcDialogSize(IDD));
 }
