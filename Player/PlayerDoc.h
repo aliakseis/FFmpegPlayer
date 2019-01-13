@@ -72,8 +72,10 @@ protected:
 #endif // SHARED_HANDLERS
 public:
     BOOL OnOpenDocument(LPCTSTR lpszPathName) override;
-    BOOL OnSaveDocument(LPCTSTR) override { return FALSE; }
+	BOOL DoFileSave() override { return FALSE; }
+    BOOL OnSaveDocument(LPCTSTR) override;
     void OnIdle() override;
+    void OnFileSaveCopyAs();
 
     bool pauseResume();
     bool nextFrame();
@@ -122,12 +124,17 @@ private:
     double m_startTime;
     double m_endTime;
 
+    double m_rangeStartTime{};
+    double m_rangeEndTime{};
+
     class SubtitlesMap;
     std::unique_ptr<SubtitlesMap> m_subtitles;
     bool m_unicodeSubtitles;
     bool m_onEndOfStream;
     bool m_autoPlay;
     bool m_looping;
+
+    std::string m_url;
 
     std::deque<std::string> m_playList;
     std::function<void()> m_reopenFunc;

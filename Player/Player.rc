@@ -84,7 +84,7 @@ BEGIN
         MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
-        MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
+        MENUITEM "Save Copy &As...",            ID_FILE_SAVE_COPY_AS
         MENUITEM SEPARATOR
         MENUITEM "Autoplay",                    ID_AUTOPLAY
         MENUITEM "Looping",                     ID_LOOPING
@@ -206,7 +206,7 @@ BEGIN
     PUSHBUTTON      "End",IDC_END,162,7,50,14
     EDITTEXT        IDC_EDIT_END,217,7,40,14,ES_AUTOHSCROLL
     PUSHBUTTON      "Reset",IDC_END_RESET,262,7,50,14
-    PUSHBUTTON      "Save",IDC_SAVE,317,7,50,14
+    PUSHBUTTON      "Save", ID_FILE_SAVE_COPY_AS,317,7,50,14
 END
 
 

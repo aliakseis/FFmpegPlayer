@@ -149,6 +149,7 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_UPDATE_COMMAND_UI(ID_AUTOPLAY, &CPlayerDoc::OnUpdateAutoplay)
     ON_COMMAND(ID_LOOPING, &CPlayerDoc::OnLooping)
     ON_UPDATE_COMMAND_UI(ID_LOOPING, &CPlayerDoc::OnUpdateLooping)
+    ON_COMMAND(ID_FILE_SAVE_COPY_AS, &CPlayerDoc::OnFileSaveCopyAs)
 END_MESSAGE_MAP()
 
 
@@ -170,8 +171,12 @@ CPlayerDoc::CPlayerDoc()
 CPlayerDoc::~CPlayerDoc()
 {
     ASSERT(framePositionChanged.empty());
+    ASSERT(startTimeUpdated.empty());
     ASSERT(totalTimeUpdated.empty());
     ASSERT(currentTimeUpdated.empty());
+
+    ASSERT(rangeStartTimeChanged.empty());
+    ASSERT(rangeEndTimeChanged.empty());
 }
 
 BOOL CPlayerDoc::OnNewDocument()
@@ -234,6 +239,7 @@ bool CPlayerDoc::openUrl(std::string url)
     url = getYoutubeUrl(url);
     if (!url.empty() && m_frameDecoder->openUrl(url))
     {
+        m_url = url;
         m_frameDecoder->play();
         return true;
     }
@@ -258,6 +264,9 @@ void CPlayerDoc::reset()
     m_frameDecoder->close();
     m_subtitles.reset();
     m_reopenFunc = nullptr;
+
+    m_url.clear();
+
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
 }
 
@@ -355,6 +364,27 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
     return openDocument(lpszPathName);
 }
 
+BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
+{
+    CString source(m_url.empty()
+        ? m_strPathName
+        : CString(m_url.data(), m_url.length()));
+
+    if (source.IsEmpty())
+        return false;
+
+    CString strParams;
+    strParams.Format(
+        _T("-ss %.3f -t %.3f -i \"%s\" \"%s\""),
+        m_rangeStartTime,
+        m_rangeEndTime - m_rangeStartTime,
+        source,
+        lpszPathName);
+    const  auto result = ShellExecute(NULL, NULL, _T("ffmpeg.exe"), strParams, NULL, SW_MINIMIZE);
+    return int(result) > 32;
+}
+
+
 bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
 {
     reset();
@@ -426,6 +456,12 @@ void CPlayerDoc::OnIdle()
         m_onEndOfStream = false;
         MoveToNextFile();
     }
+}
+
+void CPlayerDoc::OnFileSaveCopyAs()
+{
+    if (!DoSave(NULL, FALSE))
+        TRACE(traceAppMsg, 0, "Warning: File save-as failed.\n");
 }
 
 void CPlayerDoc::MoveToNextFile()
@@ -698,11 +734,13 @@ std::string CPlayerDoc::getSubtitle() const
 
 void CPlayerDoc::setRangeStartTime(double time)
 {
+    m_rangeStartTime = time;
     rangeStartTimeChanged(time - m_startTime, m_endTime - m_startTime);
 }
 
 void CPlayerDoc::setRangeEndTime(double time)
 {
+    m_rangeEndTime = time;
     rangeEndTimeChanged(time - m_startTime, m_endTime - m_startTime);
 }
 
