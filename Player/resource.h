@@ -21,7 +21,6 @@
 #define IDC_PROGRESS_SLIDER             1000
 #define IDC_PLAY_PAUSE                  1001
 #define IDC_AUDIO_ON_OFF                1002
-#define IDC_PROGRESS_SLIDER2            1003
 #define IDC_VOLUME_SLIDER               1003
 #define IDC_CURRENT_TIME                1004
 #define IDC_TOTAL_TIME                  1005
@@ -34,7 +33,6 @@
 #define IDC_END                         1012
 #define IDC_EDIT_END                    1013
 #define IDC_END_RESET                   1014
-#define IDC_SAVE                        1015
 #define ID_TRACK1                       32771
 #define ID_TRACK2                       32772
 #define ID_TRACK3                       32773

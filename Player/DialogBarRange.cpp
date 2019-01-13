@@ -60,12 +60,11 @@ BEGIN_MESSAGE_MAP(CDialogBarRange, CPaneDialog)
     ON_COMMAND(IDC_START_RESET, &CDialogBarRange::OnStartReset)
     ON_COMMAND(IDC_END, &CDialogBarRange::OnEnd)
     ON_COMMAND(IDC_END_RESET, &CDialogBarRange::OnEndReset)
-    ON_COMMAND(IDC_SAVE, &CDialogBarRange::OnSave)
     ON_UPDATE_COMMAND_UI(IDC_START, &CDialogBarRange::OnUpdateStart)
     ON_UPDATE_COMMAND_UI(IDC_START_RESET, &CDialogBarRange::OnUpdateStartReset)
     ON_UPDATE_COMMAND_UI(IDC_END, &CDialogBarRange::OnUpdateEnd)
     ON_UPDATE_COMMAND_UI(IDC_END_RESET, &CDialogBarRange::OnUpdateEndReset)
-    ON_UPDATE_COMMAND_UI(IDC_SAVE, &CDialogBarRange::OnUpdateSave)
+    ON_UPDATE_COMMAND_UI(ID_FILE_SAVE_COPY_AS, &CDialogBarRange::OnUpdateSave)
 END_MESSAGE_MAP()
 
 
@@ -98,12 +97,6 @@ void CDialogBarRange::OnEnd()
 
 
 void CDialogBarRange::OnEndReset()
-{
-    // TODO: Add your command handler code here
-}
-
-
-void CDialogBarRange::OnSave()
 {
     // TODO: Add your command handler code here
 }

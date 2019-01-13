@@ -39,7 +39,6 @@ public:
     afx_msg void OnStartReset();
     afx_msg void OnEnd();
     afx_msg void OnEndReset();
-    afx_msg void OnSave();
     afx_msg void OnUpdateStart(CCmdUI *pCmdUI);
     afx_msg void OnUpdateStartReset(CCmdUI *pCmdUI);
     afx_msg void OnUpdateEnd(CCmdUI *pCmdUI);
