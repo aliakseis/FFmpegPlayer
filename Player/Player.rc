@@ -15,12 +15,68 @@
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
+
 /////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#include ""afxres.h""\r\n"
+    "#include ""verrsrc.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#include ""res\\Player.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""      // Standard components\r\n"
+    "#include ""afxprint.rc""    // printing/print preview resources\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -165,7 +221,7 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
     LTEXT           "Player, Version 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2015-2018",IDC_STATIC,42,26,114,8
+    LTEXT           "Copyright (C) 2015-2019",IDC_STATIC,42,26,114,8
     DEFPUSHBUTTON   "OK",IDOK,114,64,50,14,WS_GROUP
     LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,42,38,114,8
     LTEXT           "YouTube: github.com/nficano/pytube",IDC_STATIC,42,50,122,8
@@ -200,13 +256,13 @@ IDD_DIALOGBAR_RANGE DIALOGEX 0, 0, 374, 18
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-PUSHBUTTON      "Start", IDC_START, 7, 2, 50, 14
-EDITTEXT        IDC_EDIT_START, 62, 2, 40, 14, ES_AUTOHSCROLL
-PUSHBUTTON      "Reset", IDC_START_RESET, 107, 2, 50, 14
-PUSHBUTTON      "End", IDC_END, 162, 2, 50, 14
-EDITTEXT        IDC_EDIT_END, 217, 2, 40, 14, ES_AUTOHSCROLL
-PUSHBUTTON      "Reset", IDC_END_RESET, 262, 2, 50, 14
-PUSHBUTTON      "Save", ID_FILE_SAVE_COPY_AS, 317, 2, 50, 14
+    PUSHBUTTON      "Start",IDC_START,7,2,50,14
+    EDITTEXT        IDC_EDIT_START,62,2,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Reset",IDC_START_RESET,107,2,50,14
+    PUSHBUTTON      "End",IDC_END,162,2,50,14
+    EDITTEXT        IDC_EDIT_END,217,2,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Reset",IDC_END_RESET,262,2,50,14
+    PUSHBUTTON      "Save",ID_FILE_SAVE_COPY_AS,317,2,50,14
 END
 
 
@@ -326,31 +382,6 @@ IDD_ABOUTBOX AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
-
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE 
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE 
-BEGIN
-    "\0"
-END
-
-3 TEXTINCLUDE 
-BEGIN
-    "\r\n"
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -479,12 +510,13 @@ END
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
+
+
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
 #define _AFX_NO_OLE_RESOURCES
 #define _AFX_NO_TRACKER_RESOURCES
 #define _AFX_NO_PROPERTY_RESOURCES
@@ -495,8 +527,6 @@ LANGUAGE 9, 1
 #include "afxres.rc"      // Standard components
 #include "afxprint.rc"    // printing/print preview resources
 #endif
-
-
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
