@@ -57,6 +57,11 @@ void CEditTime::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 	CEdit::OnChar(nChar, nRepCnt, nFlags);
 }
 
+void CEditTime::Reset()
+{
+	SetWindowText(_T(""));
+}
+
 void CEditTime::SetValue(double fTime)
 {
 	CString strBuf;

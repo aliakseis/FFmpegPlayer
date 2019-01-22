@@ -28,6 +28,8 @@ protected:
 protected:
     int GetCaptionHeight() const override { return 0; }
 
+	void onTotalTimeUpdated(double secs);
+
 protected:
 	DECLARE_MESSAGE_MAP()
 private:

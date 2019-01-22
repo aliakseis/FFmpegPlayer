@@ -100,9 +100,13 @@ public:
     void OnDropFiles(HDROP hDropInfo);
 
     double getCurrentTime() const { return m_currentTime; }
+	double getStartTime() const { return m_startTime; }
+	double getEndTime() const { return m_endTime; }
 
     void setRangeStartTime(double time);
     void setRangeEndTime(double time);
+
+	bool isFullFrameRange() const;
 
 private:
     bool OpenSubRipFile(LPCTSTR lpszVideoPathName);
