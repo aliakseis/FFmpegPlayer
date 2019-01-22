@@ -11,6 +11,7 @@ public:
 
 // Attributes
 public:
+	void Reset();
 	void SetValue(double fTime);
 	double GetValue() const;
 

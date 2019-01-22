@@ -7,6 +7,8 @@
 
 #include "PlayerDoc.h"
 
+#include "MakeDelegate.h"
+
 namespace {
 
 CSize CalcDialogSize(UINT nResourceId) 
@@ -37,12 +39,18 @@ CDialogBarRange::CDialogBarRange()
 
 CDialogBarRange::~CDialogBarRange()
 {
+	if (m_pDoc)
+	{
+		m_pDoc->totalTimeUpdated.disconnect(MAKE_DELEGATE(&CDialogBarRange::onTotalTimeUpdated, this));
+	}
 }
 
 void CDialogBarRange::setDocument(CPlayerDoc* pDoc)
 {
     ASSERT(!m_pDoc);
     m_pDoc = pDoc;
+
+	m_pDoc->totalTimeUpdated.connect(MAKE_DELEGATE(&CDialogBarRange::onTotalTimeUpdated, this));
 }
 
 void CDialogBarRange::DoDataExchange(CDataExchange* pDX)
@@ -69,8 +77,14 @@ END_MESSAGE_MAP()
 
 
 
-// CDialogBarRange message handlers
+void CDialogBarRange::onTotalTimeUpdated(double)
+{
+	m_startTime.Reset();
+	m_endTime.Reset();
+}
 
+
+// CDialogBarRange message handlers
 
 
 
@@ -84,7 +98,8 @@ void CDialogBarRange::OnStart()
 
 void CDialogBarRange::OnStartReset()
 {
-    // TODO: Add your command handler code here
+	m_pDoc->setRangeStartTime(m_pDoc->getStartTime());
+	m_startTime.Reset();
 }
 
 
@@ -98,7 +113,8 @@ void CDialogBarRange::OnEnd()
 
 void CDialogBarRange::OnEndReset()
 {
-    // TODO: Add your command handler code here
+	m_pDoc->setRangeEndTime(m_pDoc->getEndTime());
+	m_endTime.Reset();
 }
 
 

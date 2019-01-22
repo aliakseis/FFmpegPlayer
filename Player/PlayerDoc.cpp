@@ -508,9 +508,16 @@ void CPlayerDoc::fileLoaded(long long start, long long total)
     const double startTime = m_frameDecoder->getDurationSecs(start);
     m_startTime = startTime;
     startTimeUpdated(startTime);
-    const double endTime = m_frameDecoder->getDurationSecs(total);
+
+	const double endTime = m_frameDecoder->getDurationSecs(total);
     m_endTime = endTime;
     totalTimeUpdated(endTime);
+
+	setRangeStartTime(startTime);
+	setRangeEndTime(endTime);
+
+	if (CWnd* pMainWnd = AfxGetApp()->GetMainWnd())
+		pMainWnd->PostMessage(WM_KICKIDLE); // trigger idle update
 }
 
 void CPlayerDoc::onEndOfStream()
@@ -743,6 +750,12 @@ void CPlayerDoc::setRangeEndTime(double time)
     m_rangeEndTime = time;
     rangeEndTimeChanged(time - m_startTime, m_endTime - m_startTime);
 }
+
+bool CPlayerDoc::isFullFrameRange() const
+{
+	return m_startTime == m_rangeStartTime && m_endTime == m_rangeEndTime;
+}
+
 
 void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
 {
