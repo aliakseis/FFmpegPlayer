@@ -366,21 +366,41 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 {
-    CString source(m_url.empty()
+    const bool isLocalFile = m_url.empty();
+    CString source(isLocalFile
         ? m_strPathName
         : CString(m_url.data(), m_url.length()));
 
     if (source.IsEmpty())
         return false;
 
+    if (isLocalFile && isFullFrameRange())
+    {
+        return CopyFile(source, lpszPathName, TRUE);
+    }
+
+    CString strFile;
     CString strParams;
-    strParams.Format(
-        _T("-ss %.3f -t %.3f -i \"%s\" \"%s\""),
-        m_rangeStartTime,
-        m_rangeEndTime - m_rangeStartTime,
-        source,
-        lpszPathName);
-    const  auto result = ShellExecute(NULL, NULL, _T("ffmpeg.exe"), strParams, NULL, SW_MINIMIZE);
+    if (isFullFrameRange())
+    {
+        TCHAR pszPath[MAX_PATH] = { 0 };
+        GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
+        PathRemoveFileSpec(pszPath);
+        PathAppend(pszPath, _T("HttpDownload.exe"));
+        strFile = pszPath;
+        strParams = source + _T(" \"") + lpszPathName + _T('"');
+    }
+    else
+    {
+        strFile = _T("ffmpeg.exe");
+        strParams.Format(
+            _T("-ss %.3f -t %.3f -i \"%s\" \"%s\""),
+            m_rangeStartTime,
+            m_rangeEndTime - m_rangeStartTime,
+            source,
+            lpszPathName);
+    }
+    const  auto result = ShellExecute(NULL, NULL, strFile, strParams, NULL, SW_MINIMIZE);
     return int(result) > 32;
 }
 
@@ -509,15 +529,15 @@ void CPlayerDoc::fileLoaded(long long start, long long total)
     m_startTime = startTime;
     startTimeUpdated(startTime);
 
-	const double endTime = m_frameDecoder->getDurationSecs(total);
+    const double endTime = m_frameDecoder->getDurationSecs(total);
     m_endTime = endTime;
     totalTimeUpdated(endTime);
 
-	setRangeStartTime(startTime);
-	setRangeEndTime(endTime);
+    setRangeStartTime(startTime);
+    setRangeEndTime(endTime);
 
-	if (CWnd* pMainWnd = AfxGetApp()->GetMainWnd())
-		pMainWnd->PostMessage(WM_KICKIDLE); // trigger idle update
+    if (CWnd* pMainWnd = AfxGetApp()->GetMainWnd())
+        pMainWnd->PostMessage(WM_KICKIDLE); // trigger idle update
 }
 
 void CPlayerDoc::onEndOfStream()
@@ -753,7 +773,7 @@ void CPlayerDoc::setRangeEndTime(double time)
 
 bool CPlayerDoc::isFullFrameRange() const
 {
-	return m_startTime == m_rangeStartTime && m_endTime == m_rangeEndTime;
+    return m_startTime == m_rangeStartTime && m_endTime == m_rangeEndTime;
 }
 
 
