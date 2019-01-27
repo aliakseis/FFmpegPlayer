@@ -73,6 +73,8 @@ BEGIN_MESSAGE_MAP(CDialogBarRange, CPaneDialog)
     ON_UPDATE_COMMAND_UI(IDC_END, &CDialogBarRange::OnUpdateEnd)
     ON_UPDATE_COMMAND_UI(IDC_END_RESET, &CDialogBarRange::OnUpdateEndReset)
     ON_UPDATE_COMMAND_UI(ID_FILE_SAVE_COPY_AS, &CDialogBarRange::OnUpdateSave)
+    ON_EN_CHANGE(IDC_EDIT_START, &CDialogBarRange::OnChangeStart)
+    ON_EN_CHANGE(IDC_EDIT_END, &CDialogBarRange::OnChangeEnd)
 END_MESSAGE_MAP()
 
 
@@ -145,4 +147,20 @@ void CDialogBarRange::OnUpdateEndReset(CCmdUI *pCmdUI)
 void CDialogBarRange::OnUpdateSave(CCmdUI *pCmdUI)
 {
     pCmdUI->Enable(m_pDoc->isPlaying());
+}
+
+void CDialogBarRange::OnChangeStart()
+{
+    if (!m_startTime.IsEmpty())
+    {
+        m_pDoc->setRangeStartTime(m_startTime.GetValue());
+    }
+}
+
+void CDialogBarRange::OnChangeEnd()
+{
+    if (!m_endTime.IsEmpty())
+    {
+        m_pDoc->setRangeEndTime(m_endTime.GetValue());
+    }
 }

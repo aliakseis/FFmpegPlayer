@@ -75,3 +75,10 @@ double CEditTime::GetValue() const
 	GetWindowText(strBuf);
 	return _ttof(strBuf);
 }
+
+bool CEditTime::IsEmpty() const
+{
+    CString strBuf;
+    GetWindowText(strBuf);
+    return strBuf.IsEmpty();
+}
