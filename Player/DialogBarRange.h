@@ -46,4 +46,6 @@ public:
     afx_msg void OnUpdateEnd(CCmdUI *pCmdUI);
     afx_msg void OnUpdateEndReset(CCmdUI *pCmdUI);
     afx_msg void OnUpdateSave(CCmdUI *pCmdUI);
+    afx_msg void OnChangeStart();
+    afx_msg void OnChangeEnd();
 };

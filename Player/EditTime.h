@@ -14,6 +14,7 @@ public:
 	void Reset();
 	void SetValue(double fTime);
 	double GetValue() const;
+    bool IsEmpty() const;
 
 // Operations
 public:
