@@ -49,6 +49,6 @@ vcpkg install --featurepackages --recurse boost[python]
 
 ```
 
-You may need to remove pytube stuff from your profile folder for the player application to set up the latest version.
+You may need to remove pytube stuff from your profile folder for the player application to set up the latest version, for example, by invoking remove_pytube.cmd.
 
 Tiny demo here: https://www.youtube.com/watch?v=dySA4yEGdEc
