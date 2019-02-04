@@ -228,8 +228,10 @@ FFmpegDecoder::FFmpegDecoder(std::unique_ptr<IAudioPlayer> audioPlayer)
     resetVariables();
 
     // init codecs
+#if ( LIBAVFORMAT_VERSION_INT <= AV_VERSION_INT(58,9,100) )
     avcodec_register_all();
     av_register_all();
+#endif
 
     //avdevice_register_all();
     avformat_network_init();
@@ -536,14 +538,13 @@ bool FFmpegDecoder::resetVideoProcessing()
             m_videoCodecContext->opaque = nullptr;
 
             m_videoCodecContext->thread_count = 2;
-            m_videoCodecContext->flags2 |= CODEC_FLAG2_FAST;
+            m_videoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
         }
 #else
         m_videoCodecContext->thread_count = 2;
         m_videoCodecContext->flags2 |= CODEC_FLAG2_FAST;
 #endif
 
-        m_videoCodecContext->refcounted_frames = 1;
 
     // Open codec
         if (avcodec_open2(m_videoCodecContext, m_videoCodec, nullptr) < 0)

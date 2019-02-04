@@ -20,7 +20,7 @@ uint8_t** getAudioData(AVFrame* audioFrame)
 
 int64_t getChannelLayout(AVFrame* audioFrame)
 {
-    const int audioFrameChannels = av_frame_get_channels(audioFrame);
+	const int audioFrameChannels = audioFrame->channels; //av_frame_get_channels(audioFrame);
     return (audioFrame->channel_layout &&
         audioFrameChannels == av_get_channel_layout_nb_channels(audioFrame->channel_layout))
         ? audioFrame->channel_layout
@@ -102,7 +102,7 @@ bool FFmpegDecoder::handleAudioPacket(
         }
 
         const AVSampleFormat audioFrameFormat = (AVSampleFormat)m_audioFrame->format;
-        const int audioFrameChannels = av_frame_get_channels(m_audioFrame);
+		const int audioFrameChannels = m_audioFrame->channels; //av_frame_get_channels(m_audioFrame);
 
         const int original_buffer_size = av_samples_get_buffer_size(
             nullptr, audioFrameChannels,
