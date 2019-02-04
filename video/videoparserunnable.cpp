@@ -115,8 +115,8 @@ bool FFmpegDecoder::handleVideoPacket(
 
     while (avcodec_receive_frame(m_videoCodecContext, m_videoFrame) == 0)
     {
-        const int64_t duration_stamp =
-            av_frame_get_best_effort_timestamp(m_videoFrame);
+		const int64_t duration_stamp =
+			m_videoFrame->best_effort_timestamp; //av_frame_get_best_effort_timestamp(m_videoFrame);
 
         // compute the exact PTS for the picture if it is omitted in the stream
         // pts1 is the dts of the pkt / pts of the frame
