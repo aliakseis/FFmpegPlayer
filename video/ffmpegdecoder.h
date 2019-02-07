@@ -31,7 +31,8 @@ extern boost::log::sources::channel_logger_mt<>
     ffmpeg_seek, 
     ffmpeg_sync,
     ffmpeg_threads, 
-    ffmpeg_volume;
+    ffmpeg_volume,
+    ffmpeg_internal;
 
 } // namespace channel_logger
 
