@@ -66,6 +66,20 @@ int ThisThreadInterruptionRequested(void*)
     return boost::this_thread::interruption_requested();
 }
 
+void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
+{
+    if (level <= AV_LOG_ERROR)
+    {
+        char buffer[4096];
+        vsprintf_s(buffer, fmt, vargs);
+        auto length = strlen(buffer);
+        for (; length > 0 && isspace(buffer[length - 1]); --length)
+            ;
+        buffer[length] = '\0';
+        CHANNEL_LOG(ffmpeg_internal) << buffer;
+    }
+}
+
 }  // namespace
 
 namespace channel_logger
@@ -80,7 +94,8 @@ boost::log::sources::channel_logger_mt<>
     ffmpeg_seek(channel = "ffmpeg_seek"),
     ffmpeg_sync(channel = "ffmpeg_sync"),
     ffmpeg_threads(channel = "ffmpeg_threads"),
-    ffmpeg_volume(channel = "ffmpeg_volume");
+    ffmpeg_volume(channel = "ffmpeg_volume"),
+    ffmpeg_internal(channel = "ffmpeg_internal");
 
 } // namespace channel_logger
 
@@ -223,6 +238,9 @@ FFmpegDecoder::FFmpegDecoder(std::unique_ptr<IAudioPlayer> audioPlayer)
       m_allowDirect3dData(false),
       m_audioPlayer(std::move(audioPlayer))
 {
+    av_log_set_level(AV_LOG_ERROR);
+    av_log_set_callback(log_callback);
+
     m_audioPlayer->SetCallback(this);
 
     resetVariables();
@@ -466,11 +484,11 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     m_startTime = (timeStream->start_time > 0)
         ? timeStream->start_time
         : ((m_formatContext->start_time == AV_NOPTS_VALUE)? 0 
-			: int64_t((m_formatContext->start_time / av_q2d(timeStream->time_base)) / 1000000LL));
+            : int64_t((m_formatContext->start_time / av_q2d(timeStream->time_base)) / 1000000LL));
     m_duration = (timeStream->duration > 0)
         ? timeStream->duration
         : ((m_formatContext->duration == AV_NOPTS_VALUE)? 0 
-			: int64_t((m_formatContext->duration / av_q2d(timeStream->time_base)) / 1000000LL));
+            : int64_t((m_formatContext->duration / av_q2d(timeStream->time_base)) / 1000000LL));
 
     if (!resetVideoProcessing())
     {
