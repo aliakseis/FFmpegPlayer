@@ -197,18 +197,18 @@ BOOL CPlayerDoc::OnNewDocument()
         if (dlg.DoModal() == IDOK && !dlg.m_URL.IsEmpty())
         {
             reset();
-            openTopLevelUrl(dlg.m_URL);
+            openTopLevelUrl(dlg.m_URL, dlg.m_bParse);
         }
     }
 
     return TRUE;
 }
 
-bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl, const CString& pathName)
+bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl, bool force, const CString& pathName)
 {
     std::string url(topLevelUrl.GetString(), topLevelUrl.GetString() + topLevelUrl.GetLength());
 
-    auto playList = ParsePlaylist(url);
+    auto playList = ParsePlaylist(url, force);
 
     if (!playList.empty())
     {
@@ -433,7 +433,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
     else if (!_tcsicmp(extension, _T(".url")))
     {
         CString url = GetUrlFromUrlFile(lpszPathName);
-        return !url.IsEmpty() && openTopLevelUrl(url, lpszPathName); // sets m_reopenFunc
+        return !url.IsEmpty() && openTopLevelUrl(url, false, lpszPathName); // sets m_reopenFunc
     }
     else
     {

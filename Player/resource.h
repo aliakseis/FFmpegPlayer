@@ -33,6 +33,8 @@
 #define IDC_END                         1012
 #define IDC_EDIT_END                    1013
 #define IDC_END_RESET                   1014
+#define IDC_CHECK1                      1016
+#define IDC_PARSE                       1016
 #define ID_TRACK1                       32771
 #define ID_TRACK2                       32772
 #define ID_TRACK3                       32773
@@ -53,7 +55,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
 #define _APS_NEXT_COMMAND_VALUE         32784
-#define _APS_NEXT_CONTROL_VALUE         1016
+#define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif
