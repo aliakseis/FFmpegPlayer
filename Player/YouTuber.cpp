@@ -311,9 +311,9 @@ std::vector<std::string> ParsePlaylist(const char* pData, const char* const pDat
 } // namespace
 
 
-std::vector<std::string> ParsePlaylist(const std::string& url)
+std::vector<std::string> ParsePlaylist(const std::string& url, bool force)
 {
-    if (url.find("/playlist?list=") == std::string::npos)
+    if (!force && url.find("/playlist?list=") == std::string::npos)
         return{};
 
     CWaitCursor wait;
@@ -373,7 +373,7 @@ std::string getYoutubeUrl(std::string url)
 
 #else // YOUTUBE_EXPERIMENT
 
-std::vector<std::string> ParsePlaylist(const std::string&)
+std::vector<std::string> ParsePlaylist(const std::string&, bool)
 {
     return{};
 }

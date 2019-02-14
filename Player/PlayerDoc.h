@@ -115,7 +115,7 @@ private:
     void MoveToNextFile();
 
     bool openDocument(LPCTSTR lpszPathName);
-    bool openTopLevelUrl(const CString& url, const CString& pathName = CString());
+    bool openTopLevelUrl(const CString& url, bool force, const CString& pathName = CString());
     bool openUrl(std::string url);
     bool openUrlFromList();
 
