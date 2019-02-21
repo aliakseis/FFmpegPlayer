@@ -30,7 +30,7 @@ voidpf ZCALLBACK qiodevice_open_file_func(
 
     CComPtr<IWinHttpRequest> pIWinHttpRequest;
 
-    if (SUCCEEDED(pIWinHttpRequest.CoCreateInstance(L"WinHttp.WinHttpRequest.5.1", NULL, CLSCTX_INPROC_SERVER))
+    if (SUCCEEDED(pIWinHttpRequest.CoCreateInstance(L"WinHttp.WinHttpRequest.5.1", nullptr, CLSCTX_INPROC_SERVER))
         && SUCCEEDED(pIWinHttpRequest->Open(CComBSTR(L"GET"), CComBSTR(static_cast<const char*>(filename)), varFalse))
         && SUCCEEDED(pIWinHttpRequest->Send(varEmpty))
         && SUCCEEDED(pIWinHttpRequest->get_ResponseStream(&varStream)))
@@ -51,7 +51,7 @@ uLong ZCALLBACK qiodevice_read_file_func(
     void* buf,
     uLong size)
 {
-    IStream* stream = static_cast<IStream*>(pf);
+    auto stream = static_cast<IStream*>(pf);
     uLong ret = 0;
     HRESULT hr = stream->Read(buf, size, &ret);
     return ret;
@@ -64,7 +64,7 @@ uLong ZCALLBACK qiodevice_write_file_func(
     const void* buf,
     uLong size)
 {
-    IStream* stream = static_cast<IStream*>(pf);
+    auto stream = static_cast<IStream*>(pf);
     uLong ret = 0;
     stream->Write(buf, size, &ret);
     return ret;
@@ -74,7 +74,7 @@ uLong ZCALLBACK qiodevice_tell_file_func(
     voidpf, // opaque
     voidpf pf)
 {
-    IStream* stream = static_cast<IStream*>(pf);
+    auto stream = static_cast<IStream*>(pf);
     const LARGE_INTEGER move{};
     ULARGE_INTEGER libNewPosition{};
     stream->Seek(move, STREAM_SEEK_CUR, &libNewPosition);
@@ -105,7 +105,7 @@ int ZCALLBACK qiodevice_seek_file_func(
         break;
     default: return -1;
     }
-    IStream* stream = static_cast<IStream*>(pf);
+    auto stream = static_cast<IStream*>(pf);
     ULARGE_INTEGER libNewPosition{};
     int ret = FAILED(stream->Seek(move, dwOrigin, &libNewPosition));
     return ret;
@@ -115,7 +115,7 @@ int ZCALLBACK qiodevice_close_file_func(
     voidpf, // opaque
     voidpf pf)
 {
-    IStream* stream = static_cast<IStream*>(pf);
+    auto stream = static_cast<IStream*>(pf);
     auto cnt = stream->Release();
     assert(cnt == 0);
     return 0;
@@ -139,5 +139,5 @@ void fill_qiodevice_filefunc(
     pzlib_filefunc_def->zseek_file = qiodevice_seek_file_func;
     pzlib_filefunc_def->zclose_file = qiodevice_close_file_func;
     pzlib_filefunc_def->zerror_file = qiodevice_error_file_func;
-    pzlib_filefunc_def->opaque = NULL;
+    pzlib_filefunc_def->opaque = nullptr;
 }

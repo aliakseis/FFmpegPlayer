@@ -9,7 +9,7 @@ class AudioPlayerImpl :
 {
 public:
     AudioPlayerImpl();
-    virtual ~AudioPlayerImpl();
+    ~AudioPlayerImpl() override;
 
     AudioPlayerImpl(const AudioPlayerImpl&) = delete;
     AudioPlayerImpl& operator=(const AudioPlayerImpl&) = delete;

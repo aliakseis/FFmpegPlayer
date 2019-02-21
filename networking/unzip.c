@@ -1303,7 +1303,7 @@ extern int ZEXPORT unzReadCurrentFile  (file, buf, len)
 
             pfile_in_zip_read_info->stream.next_in =
                 (Bytef*)pfile_in_zip_read_info->read_buffer;
-            pfile_in_zip_read_info->stream.avail_in = (uInt)uReadThis;
+            pfile_in_zip_read_info->stream.avail_in = uReadThis;
         }
 
         if ((pfile_in_zip_read_info->compression_method==0) || (pfile_in_zip_read_info->raw))
