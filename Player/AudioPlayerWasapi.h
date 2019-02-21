@@ -11,7 +11,7 @@ class AudioPlayerWasapi :
 {
 public:
     AudioPlayerWasapi();
-    virtual ~AudioPlayerWasapi();
+    ~AudioPlayerWasapi() override;
 
     AudioPlayerWasapi(const AudioPlayerWasapi&) = delete;
     AudioPlayerWasapi& operator=(const AudioPlayerWasapi&) = delete;

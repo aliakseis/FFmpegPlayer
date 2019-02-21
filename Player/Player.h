@@ -22,7 +22,7 @@ public:
 
 // Overrides
 public:
-    virtual BOOL InitInstance();
+    BOOL InitInstance() override;
 
 // Implementation
     afx_msg void OnAppAbout();
