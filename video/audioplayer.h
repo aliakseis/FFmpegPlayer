@@ -17,7 +17,7 @@ struct IAudioPlayer
 
     virtual void WaveOutReset() = 0;
     virtual void Close() = 0;
-    virtual bool Open(int bytesPerSample, int samplesPerSec, int channels) = 0;
+    virtual bool Open(int bytesPerSample, int channels, int* samplesPerSec) = 0;
     virtual void Reset() = 0;
 
     virtual void SetVolume(double volume) = 0;

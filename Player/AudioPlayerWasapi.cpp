@@ -246,7 +246,7 @@ AudioPlayerWasapi::~AudioPlayerWasapi()
     CloseHandle(m_hAudioSamplesRenderEvent);
 }
 
-bool AudioPlayerWasapi::Open(int bytesPerSample, int samplesPerSec, int channels)
+bool AudioPlayerWasapi::Open(int bytesPerSample, int channels, int* samplesPerSec)
 {
     const ERole device_role_ = eConsole;
 
@@ -264,18 +264,23 @@ bool AudioPlayerWasapi::Open(int bytesPerSample, int samplesPerSec, int channels
     if (FAILED(hr))
         return false;
 
+    if (format_.Format.nSamplesPerSec != 0)
+    {
+        *samplesPerSec = format_.Format.nSamplesPerSec;
+    }
+
     // Begin with the WAVEFORMATEX structure that specifies the basic format.
     WAVEFORMATEX* format = &format_.Format;
     format->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
     format->nChannels = channels;
-    format->nSamplesPerSec = samplesPerSec;
+    format->nSamplesPerSec = *samplesPerSec;
     format->wBitsPerSample = bytesPerSample << 3;
     format->nBlockAlign = (format->wBitsPerSample / 8) * format->nChannels;
     format->nAvgBytesPerSec = format->nSamplesPerSec * format->nBlockAlign;
     format->cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
     m_FrameSize = format->nBlockAlign;
 
-    m_samplesPerSec = samplesPerSec;
+    m_samplesPerSec = *samplesPerSec;
 
     // Add the parts which are unique to WAVE_FORMAT_EXTENSIBLE.
     format_.Samples.wValidBitsPerSample = bytesPerSample << 3; //params.bits_per_sample();

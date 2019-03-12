@@ -191,7 +191,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
         int64_t channel_layout;
         AVSampleFormat format;
     };
-    const AudioParams m_audioSettings;
+    AudioParams m_audioSettings;
     AudioParams m_audioCurrentPref;
 
     AVFrame* m_audioFrame;

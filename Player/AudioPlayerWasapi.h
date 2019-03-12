@@ -27,7 +27,7 @@ public:
     void WaveOutReset() override;
 
     void Close() override;
-    bool Open(int bytesPerSample, int samplesPerSec, int channels) override;
+    bool Open(int bytesPerSample, int channels, int* samplesPerSec) override;
     void Reset() override;
 
     void SetVolume(double volume) override;

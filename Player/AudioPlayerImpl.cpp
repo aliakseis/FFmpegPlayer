@@ -90,7 +90,7 @@ void AudioPlayerImpl::Close()
     }
 }
 
-bool AudioPlayerImpl::Open(int bytesPerSample, int samplesPerSec, int channels)
+bool AudioPlayerImpl::Open(int bytesPerSample, int channels, int* samplesPerSec)
 {
     m_waveBlocks = allocateBlocks(BLOCK_SIZE, BLOCK_COUNT);
     m_waveFreeBlockCount = BLOCK_COUNT;
@@ -99,7 +99,7 @@ bool AudioPlayerImpl::Open(int bytesPerSample, int samplesPerSec, int channels)
     WAVEFORMATEX waveFormat = {};
 
     waveFormat.wBitsPerSample = bytesPerSample << 3;
-    waveFormat.nSamplesPerSec = samplesPerSec;
+    waveFormat.nSamplesPerSec = *samplesPerSec;
     waveFormat.nChannels = channels;
 
     waveFormat.cbSize = 0; // size of _extra_ info

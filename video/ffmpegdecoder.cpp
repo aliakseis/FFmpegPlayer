@@ -603,7 +603,7 @@ bool FFmpegDecoder::setupAudioProcessing()
             return false;
 
         if (!m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
-            m_audioSettings.frequency, m_audioSettings.channels))
+            m_audioSettings.channels, &m_audioSettings.frequency))
         {
             return false;
         }
