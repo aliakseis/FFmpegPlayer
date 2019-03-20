@@ -45,7 +45,7 @@ struct DelegateMaker
     template<return_type(T::*foo)(params...)>
     inline static auto Bind(T* o)
     {
-        return DelegateScope<return_type, params...>::Delegate<T, foo>(o);
+        return DelegateScope<return_type, params...>::template Delegate<T, foo>(o);
     }
 };
 
@@ -55,4 +55,4 @@ inline auto makeDelegate(return_type(T::*)(params...))
     return DelegateMaker<T, return_type, params...>();
 }
 
-#define MAKE_DELEGATE(foo, thisPrt) (makeDelegate(foo).Bind<foo>(thisPrt))
+#define MAKE_DELEGATE(foo, thisPtr) (makeDelegate(foo).Bind<foo>(thisPtr))
