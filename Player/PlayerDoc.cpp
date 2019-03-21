@@ -511,7 +511,11 @@ void CPlayerDoc::MoveToNextFile()
     }
 
     if (m_looping && m_reopenFunc)
-        m_reopenFunc();
+    {
+        // m_reopenFunc can be reset during invocation
+        auto saveReopenFunc = m_reopenFunc;
+        saveReopenFunc();
+    }
 }
 
 void CPlayerDoc::OnCloseDocument()
