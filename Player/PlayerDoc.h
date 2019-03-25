@@ -94,6 +94,8 @@ public:
     boost::signals2::signal<void(long long, long long)> rangeStartTimeChanged;
     boost::signals2::signal<void(long long, long long)> rangeEndTimeChanged;
 
+    boost::signals2::signal<void(bool)> onPauseResume;
+
     std::string getSubtitle() const;
     bool isUnicodeSubtitles() const { return m_unicodeSubtitles; }
 
