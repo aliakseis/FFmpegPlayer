@@ -7,6 +7,8 @@
 #include "DialogBarPlayerControl.h"
 #include "DialogBarRange.h"
 
+struct ITaskbarList3;
+
 class CMainFrame : public CFrameWndEx
 {
     
@@ -18,7 +20,9 @@ protected: // create from serialization only
 public:
 
 // Operations
-public:
+private:
+    void onPauseResume(bool paused);
+
 
 // Overrides
 public:
@@ -32,6 +36,8 @@ public:
         LPCTSTR lpszMenuName = NULL,
         DWORD dwExStyle = 0,
         CCreateContext* pContext = NULL) override;
+
+    BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
 
 // Implementation
 public:
@@ -50,11 +56,13 @@ protected:  // control bar embedded members
 
     BOOL            m_bFullScreen;
 
+    CComPtr<ITaskbarList3>  m_pTaskbarList;
+
 // Generated message map functions
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     DECLARE_MESSAGE_MAP()
-
+    afx_msg LRESULT CreateThumbnailToolbar(WPARAM wParam, LPARAM lParam);
 public:
     afx_msg void OnFullScreen();
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);

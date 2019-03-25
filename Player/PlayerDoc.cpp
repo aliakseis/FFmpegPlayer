@@ -246,6 +246,7 @@ bool CPlayerDoc::openUrl(std::string url)
     {
         m_url = url;
         m_frameDecoder->play();
+        onPauseResume(false);
         return true;
     }
 
@@ -463,6 +464,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
         if (!OpenSubRipFile(lpszPathName))
             OpenSubStationAlphaFile(lpszPathName);
         m_frameDecoder->play();
+        onPauseResume(false);
     }
 
     m_reopenFunc = [this, path = CString(lpszPathName)] {
@@ -561,7 +563,12 @@ void CPlayerDoc::onEndOfStream()
 
 bool CPlayerDoc::pauseResume()
 {
-    return m_frameDecoder->pauseResume();
+    if (m_frameDecoder->pauseResume())
+    {
+        onPauseResume(m_frameDecoder->isPaused());
+        return true;
+    }
+    return false;
 }
 
 bool CPlayerDoc::nextFrame()
