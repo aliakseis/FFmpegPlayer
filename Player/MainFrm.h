@@ -58,6 +58,9 @@ protected:  // control bar embedded members
 
     CComPtr<ITaskbarList3>  m_pTaskbarList;
 
+    HICON m_hPlay;
+    HICON m_hPause;
+
 // Generated message map functions
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
