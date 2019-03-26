@@ -16,25 +16,17 @@
 
 namespace {
 
-HIMAGELIST GetImageList(bool paused)
+HICON LoadIcon(int idr)
 {
-    enum { NUM_ICONS = 1 };
     int const cxButton = GetSystemMetrics(SM_CXSMICON);
-    auto himl = ImageList_Create(cxButton, cxButton, ILC_MASK, NUM_ICONS, 0);
-
-    int idr = paused ? IDI_PAUSE : IDI_PLAY;
-
-    auto hIcon = (HICON)LoadImage(
+    return (HICON) LoadImage(
         AfxGetApp()->m_hInstance,
         MAKEINTRESOURCE(idr),
         IMAGE_ICON,
         cxButton, cxButton, // use actual size
         LR_DEFAULTCOLOR);
-
-    ImageList_AddIcon(himl, hIcon);
-
-    return himl;
 }
+
 
 class FullScreenBarAccessor : public CFullScreenImpl
 {
@@ -220,6 +212,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     //m_wndToolBar.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
     EnablePaneMenu(TRUE, ID_VIEW_CUSTOMIZE, strBuffer, ID_VIEW_TOOLBAR);
 
+    m_hPlay = LoadIcon(IDI_PLAY);
+    m_hPause = LoadIcon(IDI_PAUSE);
+
     // In case the application is run elevated, allow the
     // TaskbarButtonCreated and WM_COMMAND messages through.
     ChangeWindowMessageFilter(s_uTBBC, MSGFLT_ADD);
@@ -231,7 +226,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     return 0;
 }
 
-LRESULT CMainFrame::CreateThumbnailToolbar(WPARAM wParam, LPARAM lParam)
+LRESULT CMainFrame::CreateThumbnailToolbar(WPARAM, LPARAM)
 {
     HRESULT hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pTaskbarList));
     if (SUCCEEDED(hr))
@@ -239,21 +234,21 @@ LRESULT CMainFrame::CreateThumbnailToolbar(WPARAM wParam, LPARAM lParam)
         hr = m_pTaskbarList->HrInit();
         if (SUCCEEDED(hr))
         {
-            //HIMAGELIST himl = ImageList_LoadImage(g_hInstance, bitmaps[iButtons].pbmp,
-            //    bitmaps[iButtons].cx, 0, RGB(255, 0, 255), IMAGE_BITMAP, LR_CREATEDIBSECTION);
-            if (auto himl = GetImageList(false))
+            enum { NUM_ICONS = 1 };
+            int const cxButton = GetSystemMetrics(SM_CXSMICON);
+            if (auto himl = ImageList_Create(cxButton, cxButton, ILC_MASK, NUM_ICONS, 0))
             {
                 hr = m_pTaskbarList->ThumbBarSetImageList(*this, himl);
                 if (SUCCEEDED(hr))
                 {
-                    THUMBBUTTON buttons[1] = {};
+                    THUMBBUTTON buttons[NUM_ICONS] = {};
 
                     // First button
-                    buttons[0].dwMask = THB_BITMAP | THB_TOOLTIP | THB_FLAGS;
+                    buttons[0].dwMask = THB_ICON | THB_TOOLTIP | THB_FLAGS;
                     buttons[0].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
                     buttons[0].iId = IDC_PLAY_PAUSE;
-                    buttons[0].iBitmap = 0;
-                    wcscpy_s(buttons[0].szTip, L"Button 1");
+                    buttons[0].hIcon = m_hPause;
+                    wcscpy_s(buttons[0].szTip, L"Pause");
 
                     // Set the buttons to be the thumbnail toolbar
                     hr = m_pTaskbarList->ThumbBarAddButtons(*this, ARRAYSIZE(buttons), buttons);
@@ -261,9 +256,6 @@ LRESULT CMainFrame::CreateThumbnailToolbar(WPARAM wParam, LPARAM lParam)
                 ImageList_Destroy(himl);
             }
         }
-
-        // It's OK to release ITaskbarList3 here; the thumbnail toolbar will remain.
-        //pTaskbarList->Release();
     }
 
     return TRUE;
@@ -271,6 +263,18 @@ LRESULT CMainFrame::CreateThumbnailToolbar(WPARAM wParam, LPARAM lParam)
 
 void CMainFrame::onPauseResume(bool paused)
 {
+    if (m_pTaskbarList)
+    {
+        THUMBBUTTON buttons[1] = {};
+
+        // First button
+        buttons[0].dwMask = THB_ICON | THB_TOOLTIP | THB_FLAGS;
+        buttons[0].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
+        buttons[0].iId = IDC_PLAY_PAUSE;
+        buttons[0].hIcon = paused? m_hPlay : m_hPause;
+        wcscpy_s(buttons[0].szTip, paused ? L"Play" : L"Pause");
+        m_pTaskbarList->ThumbBarUpdateButtons(*this, 1, buttons);
+    }
 }
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
