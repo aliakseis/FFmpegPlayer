@@ -64,14 +64,14 @@ protected:  // control bar embedded members
 // Generated message map functions
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    DECLARE_MESSAGE_MAP()
+    afx_msg void OnClose();
     afx_msg LRESULT CreateThumbnailToolbar(WPARAM wParam, LPARAM lParam);
-public:
     afx_msg void OnFullScreen();
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnWindowPosChanged(WINDOWPOS* lpwndpos);
     afx_msg void OnNcPaint();
     afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
+    DECLARE_MESSAGE_MAP()
 };
 
 

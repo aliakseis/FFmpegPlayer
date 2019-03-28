@@ -62,6 +62,7 @@ IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_CREATE()
+    ON_WM_CLOSE()
     ON_COMMAND(IDC_FULL_SCREEN, &CMainFrame::OnFullScreen)
     ON_WM_ERASEBKGND()
     ON_WM_WINDOWPOSCHANGED()
@@ -224,6 +225,12 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     EnableFullScreenMainMenu(FALSE);
 
     return 0;
+}
+
+void CMainFrame::OnClose()
+{
+    m_pTaskbarList.Release();
+    __super::OnClose();
 }
 
 LRESULT CMainFrame::CreateThumbnailToolbar(WPARAM, LPARAM)
