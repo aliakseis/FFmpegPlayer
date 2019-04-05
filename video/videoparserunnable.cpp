@@ -9,7 +9,7 @@ namespace {
 
 bool frameToImage(
     VideoFrame& videoFrameData, 
-    AVFrame*& m_videoFrame,
+    AVFramePtr& m_videoFrame,
     SwsContext*& m_imageCovertContext,
     AVPixelFormat m_pixelFormat)
 {
@@ -113,10 +113,11 @@ bool FFmpegDecoder::handleVideoPacket(
     if (ret < 0)
         return false;
 
-    while (avcodec_receive_frame(m_videoCodecContext, m_videoFrame) == 0)
+    AVFramePtr videoFrame(av_frame_alloc());
+    while (avcodec_receive_frame(m_videoCodecContext, videoFrame.get()) == 0)
     {
 		const int64_t duration_stamp =
-			m_videoFrame->best_effort_timestamp; //av_frame_get_best_effort_timestamp(m_videoFrame);
+			videoFrame->best_effort_timestamp; //av_frame_get_best_effort_timestamp(m_videoFrame);
 
         // compute the exact PTS for the picture if it is omitted in the stream
         // pts1 is the dts of the pkt / pts of the frame
@@ -129,7 +130,7 @@ bool FFmpegDecoder::handleVideoPacket(
         // update video clock for next frame
         // for MPEG2, the frame can be repeated, so we update the clock accordingly
         const double frameDelay = av_q2d(m_videoCodecContext->time_base) *
-            (1. + m_videoFrame->repeat_pict * 0.5);
+            (1. + videoFrame->repeat_pict * 0.5);
         videoClock += frameDelay;
 
         boost::posix_time::time_duration td(boost::posix_time::pos_infin);
@@ -215,8 +216,8 @@ bool FFmpegDecoder::handleVideoPacket(
         }
 
         VideoFrame& current_frame = m_videoFramesQueue.back();
-        handleDirect3dData(m_videoFrame);
-        if (!frameToImage(current_frame, m_videoFrame, m_imageCovertContext, m_pixelFormat))
+        handleDirect3dData(videoFrame.get());
+        if (!frameToImage(current_frame, videoFrame, m_imageCovertContext, m_pixelFormat))
         {
             continue;
         }

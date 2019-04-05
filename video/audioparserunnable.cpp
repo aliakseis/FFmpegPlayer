@@ -94,25 +94,26 @@ bool FFmpegDecoder::handleAudioPacket(
     if (ret < 0)
         return false;
 
-    while (avcodec_receive_frame(m_audioCodecContext, m_audioFrame) == 0)
+    AVFramePtr audioFrame(av_frame_alloc());
+    while (avcodec_receive_frame(m_audioCodecContext, audioFrame.get()) == 0)
     {
-        if (m_audioFrame->nb_samples <= 0)
+        if (audioFrame->nb_samples <= 0)
         {
             continue;
         }
 
-        const AVSampleFormat audioFrameFormat = (AVSampleFormat)m_audioFrame->format;
-		const int audioFrameChannels = m_audioFrame->channels; //av_frame_get_channels(m_audioFrame);
+        const AVSampleFormat audioFrameFormat = (AVSampleFormat)audioFrame->format;
+		const int audioFrameChannels = audioFrame->channels; //av_frame_get_channels(m_audioFrame);
 
         const int original_buffer_size = av_samples_get_buffer_size(
             nullptr, audioFrameChannels,
-            m_audioFrame->nb_samples, audioFrameFormat, 1);
+            audioFrame->nb_samples, audioFrameFormat, 1);
 
         // write buffer
-        uint8_t* write_data = *getAudioData(m_audioFrame);
+        uint8_t* write_data = *getAudioData(audioFrame.get());
         int64_t write_size = original_buffer_size;
 
-        const int64_t dec_channel_layout = getChannelLayout(m_audioFrame);
+        const int64_t dec_channel_layout = getChannelLayout(audioFrame.get());
 
         int speedNumerator, speedDenominator;
         std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
@@ -120,14 +121,14 @@ bool FFmpegDecoder::handleAudioPacket(
         // Check if the new swr context required
         if (audioFrameFormat != m_audioCurrentPref.format ||
             dec_channel_layout != m_audioCurrentPref.channel_layout ||
-            (m_audioFrame->sample_rate * speedNumerator) / speedDenominator != m_audioCurrentPref.frequency)
+            (audioFrame->sample_rate * speedNumerator) / speedDenominator != m_audioCurrentPref.frequency)
         {
             swr_free(&m_audioSwrContext);
             m_audioSwrContext = swr_alloc_set_opts(
                 nullptr, m_audioSettings.channel_layout, m_audioSettings.format,
                 m_audioSettings.frequency * speedDenominator,
                 dec_channel_layout, audioFrameFormat,
-                m_audioFrame->sample_rate * speedNumerator, 0, nullptr);
+                audioFrame->sample_rate * speedNumerator, 0, nullptr);
 
             if (!m_audioSwrContext || swr_init(m_audioSwrContext) < 0)
             {
@@ -137,14 +138,14 @@ bool FFmpegDecoder::handleAudioPacket(
             m_audioCurrentPref.format = audioFrameFormat;
             m_audioCurrentPref.channels = audioFrameChannels;
             m_audioCurrentPref.channel_layout = dec_channel_layout;
-            m_audioCurrentPref.frequency = (m_audioFrame->sample_rate * speedNumerator) / speedDenominator;
+            m_audioCurrentPref.frequency = (audioFrame->sample_rate * speedNumerator) / speedDenominator;
         }
 
         if (m_audioSwrContext)
         {
             enum { EXTRA_SPACE = 256 };
 
-            const int out_count = (int64_t)m_audioFrame->nb_samples *
+            const int out_count = (int64_t)audioFrame->nb_samples *
                 m_audioSettings.frequency /
                 m_audioCurrentPref.frequency + EXTRA_SPACE;
 
@@ -164,8 +165,8 @@ bool FFmpegDecoder::handleAudioPacket(
                 m_audioSwrContext, 
                 &out,
                 out_count,
-                const_cast<const uint8_t**>(getAudioData(m_audioFrame)),
-                m_audioFrame->nb_samples);
+                const_cast<const uint8_t**>(getAudioData(audioFrame.get())),
+                audioFrame->nb_samples);
 
             if (converted_size < 0)
             {
@@ -186,7 +187,7 @@ bool FFmpegDecoder::handleAudioPacket(
         }
 
         const double frame_clock 
-            = m_audioFrame->sample_rate? double(m_audioFrame->nb_samples) / m_audioFrame->sample_rate : 0;
+            = audioFrame->sample_rate? double(audioFrame->nb_samples) / audioFrame->sample_rate : 0;
 
         bool skipAll = false;
         double delta = 0;

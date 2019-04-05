@@ -194,10 +194,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     AudioParams m_audioSettings;
     AudioParams m_audioCurrentPref;
 
-    AVFrame* m_audioFrame;
-
     // Stuff for converting image
-    AVFrame* m_videoFrame;
     SwsContext* m_imageCovertContext;
     AVPixelFormat m_pixelFormat;
     bool m_allowDirect3dData;

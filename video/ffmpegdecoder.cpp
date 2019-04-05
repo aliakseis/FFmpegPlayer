@@ -263,8 +263,6 @@ void FFmpegDecoder::resetVariables()
     m_formatContext = nullptr;
     m_videoCodecContext = nullptr;
     m_audioCodecContext = nullptr;
-    m_videoFrame = nullptr;
-    m_audioFrame = nullptr;
     m_audioSwrContext = nullptr;
     m_videoStream = nullptr;
     m_audioStream = nullptr;
@@ -340,15 +338,10 @@ void FFmpegDecoder::closeProcessing()
 
     sws_freeContext(m_imageCovertContext);
 
-    av_frame_free(&m_audioFrame);
-
     if (m_audioSwrContext)
     {
         swr_free(&m_audioSwrContext);
     }
-
-    // Free the YUV frame
-    av_frame_free(&m_videoFrame);
 
     FreeVideoCodecContext(m_videoCodecContext);
 
@@ -508,8 +501,6 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
 
 bool FFmpegDecoder::resetVideoProcessing()
 {
-    av_frame_free(&m_videoFrame);
-
     FreeVideoCodecContext(m_videoCodecContext);
 
     // Find the decoder for the video stream
@@ -578,8 +569,6 @@ bool FFmpegDecoder::resetVideoProcessing()
             return false;  // Could not open codec
         }
 
-        m_videoFrame = av_frame_alloc();
-
         videoCodecContextGuard.release();
     }
 
@@ -607,8 +596,6 @@ bool FFmpegDecoder::setupAudioProcessing()
         {
             return false;
         }
-
-        m_audioFrame = av_frame_alloc();
 
         audioCodecContextGuard.release();
     }
@@ -711,7 +698,7 @@ void FFmpegDecoder::finishedDisplayingFrame(unsigned int generation)
             VideoFrame &current_frame = m_videoFramesQueue.front();
             if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
             {
-                av_frame_unref(current_frame.m_image);
+                av_frame_unref(current_frame.m_image.get());
             }
 
             m_videoFramesQueue.popFront();
