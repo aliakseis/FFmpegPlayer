@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "networking", "networking\ne
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HttpDownload", "HttpDownload\HttpDownload.vcxproj", "{A4113679-4736-494B-B8D2-3C35B34E5491}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{72C57644-86FB-4587-9EE5-092F360D146C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -83,6 +85,14 @@ Global
 		{A4113679-4736-494B-B8D2-3C35B34E5491}.RelWithDebInfo|Win32.Build.0 = Release|Win32
 		{A4113679-4736-494B-B8D2-3C35B34E5491}.RelWithDebInfo|x64.ActiveCfg = Release|x64
 		{A4113679-4736-494B-B8D2-3C35B34E5491}.RelWithDebInfo|x64.Build.0 = Release|x64
+		{72C57644-86FB-4587-9EE5-092F360D146C}.Debug|Win32.ActiveCfg = Debug
+		{72C57644-86FB-4587-9EE5-092F360D146C}.Debug|x64.ActiveCfg = Debug
+		{72C57644-86FB-4587-9EE5-092F360D146C}.MinSizeRel|Win32.ActiveCfg = Release
+		{72C57644-86FB-4587-9EE5-092F360D146C}.MinSizeRel|x64.ActiveCfg = Release
+		{72C57644-86FB-4587-9EE5-092F360D146C}.Release|Win32.ActiveCfg = Release
+		{72C57644-86FB-4587-9EE5-092F360D146C}.Release|x64.ActiveCfg = Release
+		{72C57644-86FB-4587-9EE5-092F360D146C}.RelWithDebInfo|Win32.ActiveCfg = Release
+		{72C57644-86FB-4587-9EE5-092F360D146C}.RelWithDebInfo|x64.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
