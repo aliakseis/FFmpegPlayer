@@ -255,7 +255,9 @@ LRESULT CMainFrame::CreateThumbnailToolbar(WPARAM, LPARAM)
                     buttons[0].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
                     buttons[0].iId = IDC_PLAY_PAUSE;
                     buttons[0].hIcon = m_hPause;
-                    wcscpy_s(buttons[0].szTip, L"Pause");
+                    CStringW strBuffer;
+                    VERIFY(strBuffer.LoadString(IDS_PAUSE));
+                    wcscpy_s(buttons[0].szTip, strBuffer);
 
                     // Set the buttons to be the thumbnail toolbar
                     hr = m_pTaskbarList->ThumbBarAddButtons(*this, ARRAYSIZE(buttons), buttons);
@@ -279,7 +281,9 @@ void CMainFrame::onPauseResume(bool paused)
         buttons[0].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
         buttons[0].iId = IDC_PLAY_PAUSE;
         buttons[0].hIcon = paused? m_hPlay : m_hPause;
-        wcscpy_s(buttons[0].szTip, paused ? L"Play" : L"Pause");
+        CStringW strBuffer;
+        VERIFY(strBuffer.LoadString(paused? IDS_PLAY : IDS_PAUSE));
+        wcscpy_s(buttons[0].szTip, strBuffer);
         m_pTaskbarList->ThumbBarUpdateButtons(*this, 1, buttons);
     }
 }
