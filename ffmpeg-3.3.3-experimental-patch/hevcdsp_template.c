@@ -670,13 +670,14 @@ static void FUNC(put_hevc_pel_bi_w_pixels)(uint8_t *_dst, ptrdiff_t _dststride, 
     ptrdiff_t dststride = _dststride / sizeof(pixel);
 
     int shift = 14  + 1 - BIT_DEPTH;
-    int log2Wd = denom + shift - 1;
+    int log2Wd = denom + shift;
 
-    ox0     = ox0 * (1 << (BIT_DEPTH - 8));
-    ox1     = ox1 * (1 << (BIT_DEPTH - 8));
+    int bias = ((ox0 + ox1) * (1 << (BIT_DEPTH - 8)) + 1) << (log2Wd - 1);
+    wx1 <<= (14 - BIT_DEPTH);
+
     for (y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
-            dst[x] = av_clip_pixel(( (src[x] << (14 - BIT_DEPTH)) * wx1 + src2[x] * wx0 + ((ox0 + ox1 + 1) << log2Wd)) >> (log2Wd + 1));
+            dst[x] = av_clip_pixel(( src[x] * wx1 + src2[x] * wx0 + bias) >> log2Wd);
         }
         src  += srcstride;
         dst  += dststride;
