@@ -11,6 +11,8 @@
 #define IDS_PlayerControl               130
 #define IDS_PLAYER_CONTROL              130
 #define IDS_RANGE                       131
+#define IDS_PAUSE                       132
+#define IDS_PLAY                        133
 #define IDI_PAUSE                       311
 #define IDI_PLAY                        312
 #define IDI_AUDIO                       313

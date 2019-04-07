@@ -396,6 +396,8 @@ BEGIN
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
     IDS_PLAYER_CONTROL      "Player Control"
     IDS_RANGE               "Range"
+    IDS_PAUSE               "Pause"
+    IDS_PLAY                "Play"
 END
 
 STRINGTABLE
