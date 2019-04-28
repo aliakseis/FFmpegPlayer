@@ -51,6 +51,8 @@ vcpkg install --featurepackages --recurse boost[python]
 
 You may need to remove pytube stuff from your profile folder for the player application to set up the latest version, for example, by invoking remove_pytube.cmd.
 
+Sometimes we need to go deeper and visit pytube issues list, for example https://github.com/nficano/pytube/issues/381
+
 Just in case (I haven't checked it up yet): https://github.com/pybind/pybind11/issues/1295
 
 Tiny demo here: https://www.youtube.com/watch?v=dySA4yEGdEc
