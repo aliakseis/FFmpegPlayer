@@ -116,7 +116,7 @@ typedef struct InputStream {
 
     /* hwaccel options */
     enum HWAccelID hwaccel_id;
-    char  *hwaccel_device;
+    intptr_t hwaccel_device;
 
     /* hwaccel context */
     enum HWAccelID active_hwaccel_id;
