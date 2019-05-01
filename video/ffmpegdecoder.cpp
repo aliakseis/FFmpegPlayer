@@ -530,7 +530,6 @@ bool FFmpegDecoder::resetVideoProcessing()
         m_videoCodecContext->thread_count = 1;  // Multithreading is apparently not compatible with hardware decoding
         InputStream *ist = new InputStream();
         ist->hwaccel_id = HWACCEL_AUTO;
-        ist->hwaccel_device = "dxva2";
         ist->dec = m_videoCodec;
         ist->dec_ctx = m_videoCodecContext;
 

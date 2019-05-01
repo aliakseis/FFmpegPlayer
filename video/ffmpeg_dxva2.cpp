@@ -91,6 +91,26 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
     }
 }
 
+// TODO use better criteria
+static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
+{
+    intptr_t result = D3DADAPTER_DEFAULT;
+    const auto count = pDirect3D9->GetAdapterCount();
+    UINT height{}, width{};
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        D3DDISPLAYMODE d3ddm{};
+        if (SUCCEEDED(pDirect3D9->GetAdapterDisplayMode(i, &d3ddm))
+            && d3ddm.Height > height && d3ddm.Width > width)
+        {
+            result = i;
+            height = d3ddm.Height;
+            width = d3ddm.Width;
+        }
+    }
+
+    return result;
+}
 
 
     /* define all the GUIDs used directly here,
@@ -397,7 +417,7 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
         pCreateDeviceManager9 *createDeviceManager = NULL;
         HRESULT hr;
         D3DPRESENT_PARAMETERS d3dpp = { 0 };
-        D3DDISPLAYMODE        d3ddm;
+        //D3DDISPLAYMODE        d3ddm;
         unsigned resetToken = 0;
         UINT adapter = D3DADAPTER_DEFAULT;
 
@@ -441,11 +461,14 @@ static void CopyPlane(uint8_t *dst, int dst_linesize,
         }
 
         if (ist->hwaccel_device) {
-            adapter = atoi(ist->hwaccel_device);
-            av_log(NULL, AV_LOG_INFO, "Using HWAccel device %d\n", adapter);
+            adapter = ist->hwaccel_device;
         }
+        else {
+            adapter = getHWAccelDevice(ctx->d3d9);
+        }
+        av_log(NULL, AV_LOG_INFO, "Using HWAccel device %d\n", adapter);
 
-        IDirect3D9_GetAdapterDisplayMode(ctx->d3d9, adapter, &d3ddm);
+        //IDirect3D9_GetAdapterDisplayMode(ctx->d3d9, adapter, &d3ddm);
         d3dpp.Windowed = TRUE;
         d3dpp.BackBufferWidth = GetSystemMetrics(SM_CXSCREEN);
         d3dpp.BackBufferHeight = GetSystemMetrics(SM_CYSCREEN);
