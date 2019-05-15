@@ -11,8 +11,10 @@
 #include <boost/python/exec.hpp>
 #include <boost/python/import.hpp>
 #include <boost/python/extract.hpp>
+#include <boost/python.hpp>
 
 #include <boost/log/trivial.hpp>
+#include <boost/log/sources/channel_logger.hpp>
 
 #include <regex>
 #include <fstream>
@@ -88,9 +90,23 @@ std::string parse_python_exception()
     return ret;
 }
 
+
+class LoggerStream
+{
+public:
+    void write(const std::string& what)
+    {
+        using namespace boost::log;
+        BOOST_LOG(sources::channel_logger_mt<>(keywords::channel = "python")) << what;
+    }
+    void flush() {}
+};
+
+
 const char PYTUBE_URL[] = "https://github.com/nficano/pytube/archive/master.zip";
 
 const char SCRIPT_TEMPLATE[] = R"(import sys
+sys.stderr = LoggerStream()
 sys.path.append("%s")
 from pytube import YouTube
 def getYoutubeUrl(url):
@@ -228,6 +244,10 @@ YouTubeDealer::YouTubeDealer()
 
         // Retrieve the main module's namespace
         object global(main.attr("__dict__"));
+
+        global["LoggerStream"] = class_<LoggerStream>("LoggerStream", init<>())
+            .def("write", &LoggerStream::write)
+            .def("flush", &LoggerStream::flush);
 
         CT2A const convert(strPath, CP_UTF8);
         LPSTR const pszConvert = convert;
