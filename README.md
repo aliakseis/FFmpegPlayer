@@ -41,7 +41,7 @@ vcpkg install python3
 
 ```
 
-The matching Python version (currently 3.6) has to be installed and added to the PATH environment variable for the accessory DLLs to be accessible.
+The matching Python version (currently 3.7) has to be installed and added to the PATH environment variable for the accessory DLLs to be accessible.
 
 It is also possible that Boost::Python stuff will have to be enabled:
 ```
