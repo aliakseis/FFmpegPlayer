@@ -405,8 +405,8 @@ YouTubeTranscriptDealer::YouTubeTranscriptDealer()
 
         // Create a reference to it.
         m_obj = global["getYoutubeTranscript"];
-        if (!m_obj)
-            Py_Finalize();
+        //if (!m_obj)
+        //    Py_Finalize();
     }
     catch (const std::exception& ex)
     {
@@ -455,8 +455,6 @@ std::vector<TranscriptRecord> YouTubeTranscriptDealer::getYoutubeTranscripts(con
     {
         BOOST_LOG_TRIVIAL(error) << "getYoutubeTranscripts() error \"" << parse_python_exception() << "\"";
     }
-
-    //BOOST_LOG_TRIVIAL(trace) << "getYoutubeTranscripts() returning \"" << result << "\"";
 
     return{};
 }
