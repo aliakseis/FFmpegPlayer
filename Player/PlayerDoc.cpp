@@ -239,12 +239,30 @@ bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl, bool force, const C
     return false;
 }
 
-bool CPlayerDoc::openUrl(std::string url)
+bool CPlayerDoc::openUrl(const std::string& originalUrl)
 {
-    url = getYoutubeUrl(url);
+    const auto url = getYoutubeUrl(originalUrl);
     if (!url.empty() && m_frameDecoder->openUrl(url))
     {
         m_url = url;
+        m_playList.clear();
+        auto transcripts = getYoutubeTranscripts(originalUrl);
+        if (!transcripts.empty())
+        {
+            // TODO refactor
+            m_unicodeSubtitles = true;
+            auto map(std::make_unique<SubtitlesMap>());
+            for (const auto& v : transcripts)
+            {
+                map->add(std::make_pair(
+                    boost::icl::interval<double>::closed(v.start, v.start + v.duration), 
+                    v.text));
+            }
+            if (!map->empty())
+            {
+                m_subtitles = std::move(map);
+            }
+        }
         m_frameDecoder->play();
         onPauseResume(false);
         return true;

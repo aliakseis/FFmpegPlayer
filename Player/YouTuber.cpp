@@ -104,6 +104,7 @@ public:
 
 
 const char PYTUBE_URL[] = "https://github.com/nficano/pytube/archive/master.zip";
+const char YOUTUBE_TRANSCRIPT_API_URL[] = "https://github.com/jdepoix/youtube-transcript-api/archive/master.zip";
 
 const char SCRIPT_TEMPLATE[] = R"(import sys
 sys.stderr = LoggerStream()
@@ -112,6 +113,24 @@ from pytube import YouTube
 def getYoutubeUrl(url):
 	return YouTube(url).streams.filter(progressive=True).order_by('resolution').desc().first().url)";
 
+const char TRANSCRIPT_TEMPLATE[] = R"(import sys
+sys.stderr = LoggerStream()
+
+def install_and_import(package):
+    import importlib
+    try:
+        importlib.import_module(package)
+    except ImportError:
+        import subprocess
+        subprocess.call(["pip", "install", package])
+    finally:
+        globals()[package] = importlib.import_module(package)
+
+install_and_import('requests')
+sys.path.append("%s")
+from youtube_transcript_api import YouTubeTranscriptApi
+def getYoutubeTranscript(video_id):
+	return YouTubeTranscriptApi.get_transcript(video_id))";
 
 int from_hex(char ch)
 {
@@ -144,6 +163,25 @@ bool extractYoutubeUrl(std::string& s)
         if (std::regex_search(copy, m, txt_regex))
         {
             s = copy.substr(m.position());
+            return true;
+        }
+        if (!unescaped)
+            copy = UrlUnescapeString(copy);
+    }
+
+    return false;
+}
+
+bool extractYoutubeId(std::string& s)
+{
+    std::regex txt_regex(R"((?:v=|\/)([0-9A-Za-z_-]{11}).*)");
+    std::string copy = s;
+    for (int unescaped = 0; unescaped < 2; ++unescaped)
+    {
+        std::smatch m;
+        if (std::regex_search(copy, m, txt_regex) && m.size() == 2)
+        {
+            s = m[1];//copy.substr(m.position());
             return true;
         }
         if (!unescaped)
@@ -199,6 +237,36 @@ bool DownloadAndExtractZip(const char* zipfile, const TCHAR* root)
     return true;
 }
 
+std::string getPathWithPackage(const char* url, const TCHAR* name)
+{
+    // String buffer for holding the path.
+    TCHAR strPath[MAX_PATH]{};
+
+    // Get the special folder path.
+    SHGetSpecialFolderPath(
+        0,       // Hwnd
+        strPath, // String buffer
+        CSIDL_LOCAL_APPDATA, // CSLID of folder
+        TRUE); // Create if doesn't exist?
+
+    CString localAppdataPath = strPath;
+
+    PathAppend(strPath, name);
+
+    if (-1 == _taccess(strPath, 0)
+        && (!DownloadAndExtractZip(url, localAppdataPath)
+            || -1 == _taccess(strPath, 0)))
+    {
+        return{};
+    }
+
+    CT2A const convert(strPath, CP_UTF8);
+    LPSTR const pszConvert = convert;
+    std::replace(pszConvert, pszConvert + strlen(pszConvert), '\\', '/');
+
+    return pszConvert;
+}
+
 class YouTubeDealer 
 {
 public:
@@ -215,26 +283,12 @@ private:
 
 YouTubeDealer::YouTubeDealer()
 {
-    // String buffer for holding the path.
-    TCHAR strPath[MAX_PATH]{};
-
-    // Get the special folder path.
-    SHGetSpecialFolderPath(
-        0,       // Hwnd
-        strPath, // String buffer
-        CSIDL_LOCAL_APPDATA, // CSLID of folder
-        TRUE); // Create if doesn't exist?
-
-    CString localAppdataPath = strPath;
-
-    PathAppend(strPath, _T("pytube-master"));
-
-    if (-1 == _taccess(strPath, 0)
-        && (!DownloadAndExtractZip(PYTUBE_URL, localAppdataPath)
-            || -1 == _taccess(strPath, 0)))
+    const auto packagePath = getPathWithPackage(PYTUBE_URL, _T("pytube-master"));
+    if (packagePath.empty())
     {
         return;
     }
+
     using namespace boost::python;
 
     Py_Initialize();
@@ -249,12 +303,8 @@ YouTubeDealer::YouTubeDealer()
             .def("write", &LoggerStream::write)
             .def("flush", &LoggerStream::flush);
 
-        CT2A const convert(strPath, CP_UTF8);
-        LPSTR const pszConvert = convert;
-        std::replace(pszConvert, pszConvert + strlen(pszConvert), '\\', '/');
-
         char script[4096];
-        sprintf_s(script, SCRIPT_TEMPLATE, pszConvert);
+        sprintf_s(script, SCRIPT_TEMPLATE, packagePath.c_str());
 
         // Define function in Python.
         object exec_result = exec(script, global, global);
@@ -307,6 +357,112 @@ std::string YouTubeDealer::getYoutubeUrl(const std::string& url)
 
     return result;
 }
+
+
+
+class YouTubeTranscriptDealer
+{
+public:
+    YouTubeTranscriptDealer();
+    ~YouTubeTranscriptDealer();
+
+    bool isValid() const { return !!m_obj; }
+    std::vector<TranscriptRecord> getYoutubeTranscripts(const std::string& id);
+
+private:
+    boost::python::object m_obj;
+};
+
+
+YouTubeTranscriptDealer::YouTubeTranscriptDealer()
+{
+    const auto packagePath = getPathWithPackage(
+        YOUTUBE_TRANSCRIPT_API_URL, _T("youtube-transcript-api-master"));
+    if (packagePath.empty())
+    {
+        return;
+    }
+
+    using namespace boost::python;
+
+    //Py_Initialize();
+    try {
+        // Retrieve the main module.
+        object main = import("__main__");
+
+        // Retrieve the main module's namespace
+        object global(main.attr("__dict__"));
+
+        global["LoggerStream"] = class_<LoggerStream>("LoggerStream", init<>())
+            .def("write", &LoggerStream::write)
+            .def("flush", &LoggerStream::flush);
+
+        char script[4096];
+        sprintf_s(script, TRANSCRIPT_TEMPLATE, packagePath.c_str());
+
+        // Define function in Python.
+        object exec_result = exec(script, global, global);
+
+        // Create a reference to it.
+        m_obj = global["getYoutubeTranscript"];
+        if (!m_obj)
+            Py_Finalize();
+    }
+    catch (const std::exception& ex)
+    {
+        BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() bootstrap exception \"" << ex.what() << "\"";
+        //Py_Finalize();
+        return;
+    }
+    catch (const error_already_set&)
+    {
+        BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() bootstrap error \"" << parse_python_exception() << "\"";
+        //Py_Finalize();
+        return;
+    }
+}
+
+YouTubeTranscriptDealer::~YouTubeTranscriptDealer()
+{
+    //if (isValid())
+    //    Py_Finalize();
+}
+
+
+std::vector<TranscriptRecord> YouTubeTranscriptDealer::getYoutubeTranscripts(const std::string& id)
+{
+    BOOST_LOG_TRIVIAL(trace) << "getYoutubeTranscripts() id = \"" << id << "\"";
+    using namespace boost::python;
+    try
+    {
+        const auto v = m_obj(id);
+        std::vector<TranscriptRecord> result;
+        for (int i = 0; i < len(v); ++i)
+        {
+            const auto& el = v[i];
+            result.push_back({
+                extract<std::string>(el["text"]),
+                extract<double>(el["start"]),
+                extract<double>(el["duration"]) });
+        }
+        return result;
+    }
+    catch (const std::exception& ex)
+    {
+        BOOST_LOG_TRIVIAL(error) << "getYoutubeTranscripts() exception \"" << ex.what() << "\"";
+    }
+    catch (const error_already_set&)
+    {
+        BOOST_LOG_TRIVIAL(error) << "getYoutubeTranscripts() error \"" << parse_python_exception() << "\"";
+    }
+
+    //BOOST_LOG_TRIVIAL(trace) << "getYoutubeTranscripts() returning \"" << result << "\"";
+
+    return{};
+}
+
+
+
 
 std::vector<std::string> ParsePlaylist(const char* pData, const char* const pDataEnd)
 {
@@ -390,6 +546,18 @@ std::string getYoutubeUrl(std::string url)
     return url;
 }
 
+std::vector<TranscriptRecord> getYoutubeTranscripts(std::string url)
+{
+    if (extractYoutubeId(url))
+    {
+        CWaitCursor wait;
+        static YouTubeTranscriptDealer buddy;
+        if (buddy.isValid())
+            return buddy.getYoutubeTranscripts(url);
+    }
+
+    return{};
+}
 
 #else // YOUTUBE_EXPERIMENT
 
@@ -406,6 +574,11 @@ std::vector<std::string> ParsePlaylistFile(const TCHAR*)
 std::string getYoutubeUrl(std::string url)
 {
     return url;
+}
+
+std::vector<TranscriptRecord> getYoutubeTranscripts(std::string url)
+{
+    return{};
 }
 
 #endif // YOUTUBE_EXPERIMENT

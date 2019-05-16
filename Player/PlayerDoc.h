@@ -118,7 +118,7 @@ private:
 
     bool openDocument(LPCTSTR lpszPathName);
     bool openTopLevelUrl(const CString& url, bool force, const CString& pathName = CString());
-    bool openUrl(std::string url);
+    bool openUrl(const std::string& url);
     bool openUrlFromList();
 
     void reset();
