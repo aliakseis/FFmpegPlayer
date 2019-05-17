@@ -245,7 +245,7 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
     if (!url.empty() && m_frameDecoder->openUrl(url))
     {
         m_url = url;
-        m_playList.clear();
+        m_subtitles.reset();
         auto transcripts = getYoutubeTranscripts(originalUrl);
         if (!transcripts.empty())
         {

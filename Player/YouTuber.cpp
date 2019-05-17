@@ -359,7 +359,6 @@ std::string YouTubeDealer::getYoutubeUrl(const std::string& url)
 }
 
 
-
 class YouTubeTranscriptDealer
 {
 public:
@@ -410,13 +409,13 @@ YouTubeTranscriptDealer::YouTubeTranscriptDealer()
     }
     catch (const std::exception& ex)
     {
-        BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() bootstrap exception \"" << ex.what() << "\"";
+        BOOST_LOG_TRIVIAL(error) << "YouTubeTranscriptDealer() bootstrap exception \"" << ex.what() << "\"";
         //Py_Finalize();
         return;
     }
     catch (const error_already_set&)
     {
-        BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() bootstrap error \"" << parse_python_exception() << "\"";
+        BOOST_LOG_TRIVIAL(error) << "YouTubeTranscriptDealer() bootstrap error \"" << parse_python_exception() << "\"";
         //Py_Finalize();
         return;
     }
@@ -458,8 +457,6 @@ std::vector<TranscriptRecord> YouTubeTranscriptDealer::getYoutubeTranscripts(con
 
     return{};
 }
-
-
 
 
 std::vector<std::string> ParsePlaylist(const char* pData, const char* const pDataEnd)
