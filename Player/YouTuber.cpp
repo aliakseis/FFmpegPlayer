@@ -267,6 +267,15 @@ std::string getPathWithPackage(const char* url, const TCHAR* name)
     return pszConvert;
 }
 
+
+auto getLoggerStream()
+{
+    return boost::python::class_<LoggerStream>("LoggerStream")
+        .def("write", &LoggerStream::write)
+        .def("flush", &LoggerStream::flush);
+}
+
+
 class YouTubeDealer 
 {
 public:
@@ -299,9 +308,7 @@ YouTubeDealer::YouTubeDealer()
         // Retrieve the main module's namespace
         object global(main.attr("__dict__"));
 
-        global["LoggerStream"] = class_<LoggerStream>("LoggerStream", init<>())
-            .def("write", &LoggerStream::write)
-            .def("flush", &LoggerStream::flush);
+        global["LoggerStream"] = getLoggerStream();
 
         char script[4096];
         sprintf_s(script, SCRIPT_TEMPLATE, packagePath.c_str());
@@ -392,9 +399,7 @@ YouTubeTranscriptDealer::YouTubeTranscriptDealer()
         // Retrieve the main module's namespace
         object global(main.attr("__dict__"));
 
-        global["LoggerStream"] = class_<LoggerStream>("LoggerStream", init<>())
-            .def("write", &LoggerStream::write)
-            .def("flush", &LoggerStream::flush);
+        global["LoggerStream"] = getLoggerStream();
 
         char script[4096];
         sprintf_s(script, TRANSCRIPT_TEMPLATE, packagePath.c_str());
