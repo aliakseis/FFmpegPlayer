@@ -181,7 +181,7 @@ bool extractYoutubeId(std::string& s)
         std::smatch m;
         if (std::regex_search(copy, m, txt_regex) && m.size() == 2)
         {
-            s = m[1];//copy.substr(m.position());
+            s = m[1];
             return true;
         }
         if (!unescaped)
@@ -441,7 +441,8 @@ std::vector<TranscriptRecord> YouTubeTranscriptDealer::getYoutubeTranscripts(con
     {
         const auto v = m_obj(id);
         std::vector<TranscriptRecord> result;
-        for (int i = 0; i < len(v); ++i)
+        const auto length = len(v);
+        for (int i = 0; i < length; ++i)
         {
             const auto& el = v[i];
             result.push_back({
