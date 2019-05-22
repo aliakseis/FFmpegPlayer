@@ -21,6 +21,7 @@
 #include <memory>
 
 #include <boost/icl/interval_map.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -256,7 +257,7 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
             {
                 map->add(std::make_pair(
                     boost::icl::interval<double>::closed(v.start, v.start + v.duration), 
-                    v.text));
+                    boost::algorithm::trim_copy(v.text) + '\n'));
             }
             if (!map->empty())
             {
