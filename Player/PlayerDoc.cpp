@@ -255,9 +255,9 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
             auto map(std::make_unique<SubtitlesMap>());
             for (const auto& v : transcripts)
             {
-                map->add(std::make_pair(
-                    boost::icl::interval<double>::closed(v.start, v.start + v.duration), 
-                    boost::algorithm::trim_copy(v.text) + '\n'));
+                map->add({
+                    boost::icl::interval<double>::closed(v.start, v.start + v.duration),
+                    boost::algorithm::trim_copy(v.text) + '\n' });
             }
             if (!map->empty())
             {
@@ -534,8 +534,8 @@ void CPlayerDoc::MoveToNextFile()
     if (m_looping && m_reopenFunc)
     {
         // m_reopenFunc can be reset during invocation
-        auto saveReopenFunc = m_reopenFunc;
-        saveReopenFunc();
+        auto tempReopenFunc = m_reopenFunc;
+        tempReopenFunc();
     }
 }
 
@@ -673,7 +673,7 @@ bool CPlayerDoc::OpenSubRipFile(LPCTSTR lpszVideoPathName)
 
         if (!subtitle.empty())
         {
-            map->add(std::make_pair(boost::icl::interval<double>::closed(start, end), subtitle));
+            map->add({ boost::icl::interval<double>::closed(start, end), subtitle });
         }
     }
 
@@ -768,7 +768,7 @@ bool CPlayerDoc::OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName)
             if (!subtitle.empty())
             {
                 subtitle += '\n'; // The last '\n' is for aggregating overlapped subtitles (if any)
-                map->add(std::make_pair(boost::icl::interval<double>::closed(start, end), subtitle));
+                map->add({ boost::icl::interval<double>::closed(start, end), subtitle });
             }
         }
 
