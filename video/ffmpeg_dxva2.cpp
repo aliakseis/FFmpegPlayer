@@ -128,6 +128,7 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
     DEFINE_GUID(DXVA2_ModeVC1_D, 0x1b81beA3, 0xa0c7, 0x11d3, 0xb9, 0x84, 0x00, 0xc0, 0x4f, 0x2e, 0x73, 0xc5);
     DEFINE_GUID(DXVA2_ModeVC1_D2010, 0x1b81beA4, 0xa0c7, 0x11d3, 0xb9, 0x84, 0x00, 0xc0, 0x4f, 0x2e, 0x73, 0xc5);
     DEFINE_GUID(DXVA2_ModeHEVC_VLD_Main, 0x5b11d51b, 0x2f4c, 0x4452, 0xbc, 0xc3, 0x09, 0xf2, 0xa1, 0x16, 0x0c, 0xc0);
+    DEFINE_GUID(DXVA2_ModeHEVC_VLD_Main10,0x107af0e0, 0xef1a,0x4d19,0xab,0xa8,0x67,0xa1,0x63,0x07,0x3d,0x13);
     DEFINE_GUID(DXVA2_ModeVP9_VLD_Profile0, 0x463707f8, 0xa1d0, 0x4585, 0x87, 0x6d, 0x83, 0xaa, 0x6d, 0x60, 0xb8, 0x9e);
     DEFINE_GUID(DXVA2_NoEncrypt, 0x1b81beD0, 0xa0c7, 0x11d3, 0xb9, 0x84, 0x00, 0xc0, 0x4f, 0x2e, 0x73, 0xc5);
     DEFINE_GUID(GUID_NULL, 0x00000000, 0x0000, 0x0000, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
@@ -162,6 +163,7 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
         { &DXVA2_ModeVC1_D, AV_CODEC_ID_WMV3 },
 
         /* HEVC/H.265 */
+        { &DXVA2_ModeHEVC_VLD_Main10,AV_CODEC_ID_HEVC }, // comes first
         { &DXVA2_ModeHEVC_VLD_Main, AV_CODEC_ID_HEVC },
 
         /* VP8/9 */
@@ -368,6 +370,24 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
             av_image_copy_plane(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
                 (uint8_t*)LockedRect.pBits + LockedRect.Pitch * surfaceDesc.Height,
                 LockedRect.Pitch, frame->width, frame->height / 2);
+        }
+        else if (ist->target_format == MKTAG('P', '0', '1', '0'))
+        {
+            ctx->tmp_frame->width = frame->width;
+            ctx->tmp_frame->height = frame->height;
+            ctx->tmp_frame->format = AV_PIX_FMT_P010;
+
+            ret = av_frame_get_buffer(ctx->tmp_frame, 32);
+            if (ret < 0)
+                return ret;
+
+            av_image_copy_plane(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
+                (uint8_t*)LockedRect.pBits,
+                LockedRect.Pitch, frame->width * 2, frame->height);
+
+            av_image_copy_plane(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
+                (uint8_t*)LockedRect.pBits + LockedRect.Pitch * surfaceDesc.Height,
+                LockedRect.Pitch, frame->width * 2, frame->height / 2);
         }
         else // IMC3
         {
@@ -615,9 +635,13 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
             if (FAILED(hr)) {
                 continue;
             }
+
+            const bool is10format = IsEqualGUID(*mode->guid, DXVA2_ModeHEVC_VLD_Main10);
+
             for (j = 0; j < target_count; j++) {
                 const D3DFORMAT format = target_list[j];
-                if (format == MKTAG('N', 'V', '1', '2') || format == MKTAG('I', 'M', 'C', '3')) {
+                if (is10format? (format == MKTAG('P', '0', '1', '0'))
+                    : (format == MKTAG('N', 'V', '1', '2') || format == MKTAG('I', 'M', 'C', '3'))) {
                     target_format = format;
                     break;
                 }
@@ -736,6 +760,12 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
             av_log(NULL, loglevel, "Unsupported H.264 profile for DXVA2 HWAccel: %d\n", s->profile);
             return AVERROR(EINVAL);
         }
+
+    if (s->codec_id == AV_CODEC_ID_HEVC &&
+        s->profile != FF_PROFILE_HEVC_MAIN && s->profile != FF_PROFILE_HEVC_MAIN_10) {
+        av_log(NULL, loglevel, "Unsupported HEVC profile for DXVA2 HWAccel: %d\n", s->profile);
+        return AVERROR(EINVAL);
+    }
 
         if (ctx->decoder)
             dxva2_destroy_decoder(s);
