@@ -43,6 +43,8 @@ typedef struct AVCodec AVCodec;
 typedef struct AVFrame AVFrame;
 typedef struct AVDictionary AVDictionary;
 
+typedef struct IDirect3DDevice9 IDirect3DDevice9;
+
 typedef struct InputStream {
     int file_index;
     AVStream *st;
