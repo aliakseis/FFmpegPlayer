@@ -32,64 +32,134 @@ extern "C"
 #include "libavutil/frame.h"
 #include "libavutil/imgutils.h"
 #include "libavutil/pixfmt.h"
+
+#include "libavutil/cpu.h"
 }
 
 #include <emmintrin.h>
 #include <smmintrin.h>
 
-static void CopyPlane(uint8_t *dst, int dst_linesize,
-    const uint8_t *src, int src_linesize,
-    int bytewidth, int height)
+#include <algorithm>
+
+
+// https://github.com/NVIDIA/gdrcopy/blob/master/memcpy_sse41.c
+
+// implementation of copy from BAR using MOVNTDQA 
+// suggested by Nicholas Wilt <nwilt@amazon.com>
+
+// src is WC MMIO of GPU BAR
+// dest is host memory
+int memcpy_uncached_load_sse41(void *dest, const void *src, size_t n_bytes)
 {
-    __declspec(align(64)) __m128i cache[256];
+    int ret = 0;
 
-    __m128i     *pLoad = (__m128i *)src;
-    __m128i     *pStore = (__m128i *)dst;
+    char *d = (char*)dest;
+    uintptr_t d_int = (uintptr_t)d;
+    const char *s = (const char *)src;
+    uintptr_t s_int = (uintptr_t)s;
+    size_t n = n_bytes;
 
-    __m128i     x0, x1, x2, x3;
+    // align src to 128-bits
+    if (s_int & 0xf) {
+        size_t nh = std::min(0x10 - (s_int & 0x0f), n);
+        memcpy(d, s, nh);
+        d += nh; d_int += nh;
+        s += nh; s_int += nh;
+        n -= nh;
+    }
 
-    bytewidth = (bytewidth + 15) & ~15;
-
-    unsigned int sourceIdx = 256;
-
-    for (unsigned int y = 0; y < height; ++y)
-    {
-        for (unsigned int x = 0; x < bytewidth / 16; ++x)
-        {
-            if (sourceIdx >= 256)
-            {
-
-                _mm_mfence();
-                // LOAD ROWS OF PITCH WIDTH INTO CACHED BLOCK
-                for (unsigned int load = 0; load < 256; load += 4)
-                {
-                    x0 = _mm_stream_load_si128(pLoad + 0);
-                    x1 = _mm_stream_load_si128(pLoad + 1);
-                    x2 = _mm_stream_load_si128(pLoad + 2);
-                    x3 = _mm_stream_load_si128(pLoad + 3);
-
-                    _mm_store_si128(cache + load, x0);
-                    _mm_store_si128(cache + load + 1, x1);
-                    _mm_store_si128(cache + load + 2, x2);
-                    _mm_store_si128(cache + load + 3, x3);
-
-                    pLoad += 4;
-                }
-
-                _mm_mfence();
-
-                sourceIdx -= 256;
-            }
-
-            x0 = _mm_load_si128(cache + sourceIdx);
-            _mm_stream_si128(pStore, x0);
-            ++sourceIdx;
-            ++pStore;
+    if (d_int & 0xf) { // dest is not aligned to 128-bits
+        __m128i r0, r1, r2, r3, r4, r5, r6, r7;
+        // unroll 8
+        while (n >= 8 * sizeof(__m128i)) {
+            r0 = _mm_stream_load_si128((__m128i *)(s + 0 * sizeof(__m128i)));
+            r1 = _mm_stream_load_si128((__m128i *)(s + 1 * sizeof(__m128i)));
+            r2 = _mm_stream_load_si128((__m128i *)(s + 2 * sizeof(__m128i)));
+            r3 = _mm_stream_load_si128((__m128i *)(s + 3 * sizeof(__m128i)));
+            r4 = _mm_stream_load_si128((__m128i *)(s + 4 * sizeof(__m128i)));
+            r5 = _mm_stream_load_si128((__m128i *)(s + 5 * sizeof(__m128i)));
+            r6 = _mm_stream_load_si128((__m128i *)(s + 6 * sizeof(__m128i)));
+            r7 = _mm_stream_load_si128((__m128i *)(s + 7 * sizeof(__m128i)));
+            _mm_storeu_si128((__m128i *)(d + 0 * sizeof(__m128i)), r0);
+            _mm_storeu_si128((__m128i *)(d + 1 * sizeof(__m128i)), r1);
+            _mm_storeu_si128((__m128i *)(d + 2 * sizeof(__m128i)), r2);
+            _mm_storeu_si128((__m128i *)(d + 3 * sizeof(__m128i)), r3);
+            _mm_storeu_si128((__m128i *)(d + 4 * sizeof(__m128i)), r4);
+            _mm_storeu_si128((__m128i *)(d + 5 * sizeof(__m128i)), r5);
+            _mm_storeu_si128((__m128i *)(d + 6 * sizeof(__m128i)), r6);
+            _mm_storeu_si128((__m128i *)(d + 7 * sizeof(__m128i)), r7);
+            s += 8 * sizeof(__m128i);
+            d += 8 * sizeof(__m128i);
+            n -= 8 * sizeof(__m128i);
         }
-        sourceIdx += (src_linesize - bytewidth) / 16;
-        pStore += (dst_linesize - bytewidth) / 16;
+        while (n >= sizeof(__m128i)) {
+            r0 = _mm_stream_load_si128((__m128i *)(s + 0 * sizeof(__m128i)));
+            _mm_storeu_si128((__m128i *)(d + 0 * sizeof(__m128i)), r0);
+            s += sizeof(__m128i);
+            d += sizeof(__m128i);
+            n -= sizeof(__m128i);
+        }
+    }
+    else { // or it IS aligned
+        __m128i r0, r1, r2, r3, r4, r5, r6, r7;
+        // unroll 8
+        while (n >= 8 * sizeof(__m128i)) {
+            r0 = _mm_stream_load_si128((__m128i *)(s + 0 * sizeof(__m128i)));
+            r1 = _mm_stream_load_si128((__m128i *)(s + 1 * sizeof(__m128i)));
+            r2 = _mm_stream_load_si128((__m128i *)(s + 2 * sizeof(__m128i)));
+            r3 = _mm_stream_load_si128((__m128i *)(s + 3 * sizeof(__m128i)));
+            r4 = _mm_stream_load_si128((__m128i *)(s + 4 * sizeof(__m128i)));
+            r5 = _mm_stream_load_si128((__m128i *)(s + 5 * sizeof(__m128i)));
+            r6 = _mm_stream_load_si128((__m128i *)(s + 6 * sizeof(__m128i)));
+            r7 = _mm_stream_load_si128((__m128i *)(s + 7 * sizeof(__m128i)));
+            _mm_stream_si128((__m128i *)(d + 0 * sizeof(__m128i)), r0);
+            _mm_stream_si128((__m128i *)(d + 1 * sizeof(__m128i)), r1);
+            _mm_stream_si128((__m128i *)(d + 2 * sizeof(__m128i)), r2);
+            _mm_stream_si128((__m128i *)(d + 3 * sizeof(__m128i)), r3);
+            _mm_stream_si128((__m128i *)(d + 4 * sizeof(__m128i)), r4);
+            _mm_stream_si128((__m128i *)(d + 5 * sizeof(__m128i)), r5);
+            _mm_stream_si128((__m128i *)(d + 6 * sizeof(__m128i)), r6);
+            _mm_stream_si128((__m128i *)(d + 7 * sizeof(__m128i)), r7);
+            s += 8 * sizeof(__m128i);
+            d += 8 * sizeof(__m128i);
+            n -= 8 * sizeof(__m128i);
+        }
+        while (n >= sizeof(__m128i)) {
+            r0 = _mm_stream_load_si128((__m128i *)(s + 0 * sizeof(__m128i)));
+            _mm_stream_si128((__m128i *)(d + 0 * sizeof(__m128i)), r0);
+            s += sizeof(__m128i);
+            d += sizeof(__m128i);
+            n -= sizeof(__m128i);
+        }
+    }
+
+    if (n)
+        memcpy(d, s, n);
+
+    // fencing because of NT stores
+    // potential optimization: issue only when NT stores are actually emitted
+    _mm_sfence();
+
+    return ret;
+}
+
+
+static void CopyPlane(uint8_t *dst, ptrdiff_t dst_linesize,
+                    const uint8_t *src, ptrdiff_t src_linesize,
+                    ptrdiff_t bytewidth, int height)
+{
+    if (!dst || !src)
+        return;
+
+    for (;height > 0; height--) {
+        memcpy_uncached_load_sse41(dst, src, bytewidth);
+        dst += dst_linesize;
+        src += src_linesize;
     }
 }
+
+
+
 
 // TODO use better criteria
 static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
@@ -335,6 +405,8 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
         return 0;
     }
 
+    static const auto CopyPlanePtr = (av_get_cpu_flags() & AV_CPU_FLAG_SSE4) ? CopyPlane : av_image_copy_plane;
+
     static int dxva2_retrieve_data(AVCodecContext *s, AVFrame *frame)
     {
         LPDIRECT3DSURFACE9 surface = (LPDIRECT3DSURFACE9)frame->data[3];
@@ -363,11 +435,11 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
             if (ret < 0)
                 return ret;
 
-            av_image_copy_plane(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
+            CopyPlanePtr(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
                 (uint8_t*)LockedRect.pBits,
                 LockedRect.Pitch, frame->width, frame->height);
 
-            av_image_copy_plane(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
+            CopyPlanePtr(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
                 (uint8_t*)LockedRect.pBits + LockedRect.Pitch * surfaceDesc.Height,
                 LockedRect.Pitch, frame->width, frame->height / 2);
         }
@@ -381,11 +453,11 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
             if (ret < 0)
                 return ret;
 
-            av_image_copy_plane(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
+            CopyPlanePtr(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
                 (uint8_t*)LockedRect.pBits,
                 LockedRect.Pitch, frame->width * 2, frame->height);
 
-            av_image_copy_plane(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
+            CopyPlanePtr(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
                 (uint8_t*)LockedRect.pBits + LockedRect.Pitch * surfaceDesc.Height,
                 LockedRect.Pitch, frame->width * 2, frame->height / 2);
         }
@@ -402,14 +474,14 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
             uint8_t* pU = (uint8_t*)LockedRect.pBits + (((frame->height + 15) & ~15) * LockedRect.Pitch);
             uint8_t* pV = (uint8_t*)LockedRect.pBits + (((((frame->height * 3) / 2) + 15) & ~15) * LockedRect.Pitch);
 
-            av_image_copy_plane(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
+            CopyPlanePtr(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
                 (uint8_t*)LockedRect.pBits,
                 LockedRect.Pitch, frame->width, frame->height);
 
-            av_image_copy_plane(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
+            CopyPlanePtr(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
                 pU, LockedRect.Pitch, frame->width / 2, frame->height / 2);
 
-            av_image_copy_plane(ctx->tmp_frame->data[2], ctx->tmp_frame->linesize[2],
+            CopyPlanePtr(ctx->tmp_frame->data[2], ctx->tmp_frame->linesize[2],
                 pV, LockedRect.Pitch, frame->width / 2, frame->height / 2);
         }
 
