@@ -595,6 +595,17 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
         return 0;
     }
 
+    static bool isMoreThan8BytesFmt(AVPixelFormat f)
+    {
+        if (auto d = av_pix_fmt_desc_get(f))
+        {
+            for (int i = 0; i < d->nb_components; ++i)
+                if (d->comp[i].depth > 8)
+                    return true;
+        }
+        return false;
+    }
+
     static int dxva2_create_decoder(AVCodecContext *s)
     {
         InputStream  *ist = (InputStream *)s->opaque;
@@ -617,6 +628,9 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
             goto fail;
         }
 
+        const bool is10format = isMoreThan8BytesFmt(
+            (s->sw_pix_fmt == AV_PIX_FMT_NONE)? s->pix_fmt : s->sw_pix_fmt);
+
         for (i = 0; dxva2_modes[i].guid; i++) {
             D3DFORMAT *target_list = NULL;
             unsigned target_count = 0;
@@ -636,12 +650,10 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
                 continue;
             }
 
-            const bool is10format = IsEqualGUID(*mode->guid, DXVA2_ModeHEVC_VLD_Main10);
-
             for (j = 0; j < target_count; j++) {
                 const D3DFORMAT format = target_list[j];
                 if (is10format? (format == MKTAG('P', '0', '1', '0'))
-                    : (format == MKTAG('N', 'V', '1', '2') || format == MKTAG('I', 'M', 'C', '3'))) {
+                        : (format == MKTAG('N', 'V', '1', '2') || format == MKTAG('I', 'M', 'C', '3'))) {
                     target_format = format;
                     break;
                 }
