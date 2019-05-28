@@ -214,7 +214,7 @@ END
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 167, 95
+IDD_ABOUTBOX DIALOGEX 0, 0, 167, 106
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About Player"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
@@ -222,10 +222,11 @@ BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20
     LTEXT           "Player, Version 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2015-2019",IDC_STATIC,42,26,114,8
-    DEFPUSHBUTTON   "OK",IDOK,110,74,50,14,WS_GROUP
+    DEFPUSHBUTTON   "OK",IDOK,110,85,50,14,WS_GROUP
     LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,42,38,114,8
-    LTEXT           "YouTube: github.com/nficano/pytube",IDC_STATIC,16,50,122,8
-    LTEXT           "github.com/jdepoix/youtube-transcript-api",IDC_STATIC,16,62,141,8
+    LTEXT           "YouTube: github.com/nficano/pytube",IDC_STATIC,16,62,122,8
+    LTEXT           "github.com/jdepoix/youtube-transcript-api",IDC_STATIC,16,74,141,8
+    LTEXT           "www.iconfinder.com/Rudityas",IDC_STATIC,42,50,97,8
 END
 
 IDD_DIALOGBAR_PLAYER_CONTROL DIALOGEX 0, 0, 372, 22
@@ -320,7 +321,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 160
         TOPMARGIN, 7
-        BOTTOMMARGIN, 88
+        BOTTOMMARGIN, 99
     END
 
     IDD_DIALOGBAR_PLAYER_CONTROL, DIALOG
