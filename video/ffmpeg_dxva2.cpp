@@ -144,9 +144,9 @@ int memcpy_uncached_load_sse41(void *dest, const void *src, size_t n_bytes)
 }
 
 
-static void CopyPlane(uint8_t *dst, ptrdiff_t dst_linesize,
-                    const uint8_t *src, ptrdiff_t src_linesize,
-                    ptrdiff_t bytewidth, int height)
+static void CopyPlane(uint8_t *dst, int dst_linesize,
+                    const uint8_t *src, int src_linesize,
+                    int bytewidth, int height)
 {
     if (!dst || !src)
         return;
