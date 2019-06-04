@@ -55,4 +55,12 @@ Sometimes we need to go deeper and visit pytube issues list, for example https:/
 
 Just in case (I haven't checked it up yet): https://github.com/pybind/pybind11/issues/1295
 
+If you want YouTube subtitles, please note: https://github.com/microsoft/vcpkg/issues/6499 .
+For now you can revert to Python 3.6 by running this in the vcpkg folder:
+
+```
+git checkout dfef7b111656e65a7e14078b6aaffa7f0a402308 -- ports/python3
+
+```
+
 Tiny demo here: https://www.youtube.com/watch?v=dySA4yEGdEc
