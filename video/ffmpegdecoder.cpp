@@ -590,11 +590,8 @@ bool FFmpegDecoder::setupAudioProcessing()
         if (!setupAudioCodec())
             return false;
 
-        if (!m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
-            m_audioSettings.channels, &m_audioSettings.frequency))
-        {
+        if (!initAudioOutput())
             return false;
-        }
 
         audioCodecContextGuard.release();
     }
@@ -623,6 +620,12 @@ bool FFmpegDecoder::setupAudioCodec()
     }
 
     return true;
+}
+
+bool FFmpegDecoder::initAudioOutput()
+{
+    return m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
+        m_audioSettings.channels, &m_audioSettings.frequency);
 }
 
 void FFmpegDecoder::play(bool isPaused)
