@@ -256,9 +256,8 @@ bool FFmpegDecoder::handleAudioPacket(
         {
             InterlockedAdd(m_audioPTS, frame_clock);
         }
-        else if (!m_audioPlayer->WriteAudio(write_data, write_size)
-            && !initAudioOutput()
-            && !m_audioPlayer->WriteAudio(write_data, write_size))
+        else if (!(m_audioPlayer->WriteAudio(write_data, write_size)
+            || initAudioOutput() && m_audioPlayer->WriteAudio(write_data, write_size)))
         {
             result = false;
         }
