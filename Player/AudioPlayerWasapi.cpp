@@ -432,6 +432,10 @@ void AudioPlayerWasapi::DeinitializeThread()
 
 void AudioPlayerWasapi::WaveOutReset()
 {
+    if (m_AudioClient)
+    {
+        m_AudioClient->Reset();
+    }
 }
 
 void AudioPlayerWasapi::Close()

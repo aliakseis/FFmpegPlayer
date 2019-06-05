@@ -36,6 +36,7 @@ void FFmpegDecoder::audioParseRunnable()
     AVPacket packet;
 
     bool initialized = false;
+    bool failed = false;
 
     m_audioPlayer->InitializeThread();
     auto deinitializeThread = MakeGuard(
@@ -44,7 +45,7 @@ void FFmpegDecoder::audioParseRunnable()
 
     std::vector<uint8_t> resampleBuffer;
 
-    for (;;)
+    while (!boost::this_thread::interruption_requested())
     {
         if (!m_audioPacketsQueue.pop(packet))
         {
@@ -72,7 +73,18 @@ void FFmpegDecoder::audioParseRunnable()
 
         initialized = true;
 
-        handleAudioPacket(packet, resampleBuffer);
+        if (handleAudioPacket(packet, resampleBuffer))
+        {
+            if (failed)
+            {
+                m_audioPTS = (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock;
+                failed = false;
+            }
+        }
+        else
+        {
+            failed = true;
+        }
     }
 }
 
@@ -92,9 +104,10 @@ bool FFmpegDecoder::handleAudioPacket(
 
     const int ret = avcodec_send_packet(m_audioCodecContext, &packet);
     if (ret < 0)
-        return false;
+        return ret == AVERROR(EAGAIN) || ret == AVERROR_EOF;
 
     AVFramePtr audioFrame(av_frame_alloc());
+    bool result = true;
     while (avcodec_receive_frame(m_audioCodecContext, audioFrame.get()) == 0)
     {
         if (audioFrame->nb_samples <= 0)
@@ -239,11 +252,17 @@ bool FFmpegDecoder::handleAudioPacket(
             return false;
         }
 
-        if (skipAll || !m_audioPlayer->WriteAudio(write_data, write_size))
+        if (skipAll)
         {
             InterlockedAdd(m_audioPTS, frame_clock);
         }
+        else if (!m_audioPlayer->WriteAudio(write_data, write_size)
+            && !initAudioOutput()
+            && !m_audioPlayer->WriteAudio(write_data, write_size))
+        {
+            result = false;
+        }
     }
 
-    return true;
+    return result;
 }
