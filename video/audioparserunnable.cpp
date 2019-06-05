@@ -73,12 +73,13 @@ void FFmpegDecoder::audioParseRunnable()
 
         initialized = true;
 
-        if (handleAudioPacket(packet, resampleBuffer))
+        if (handleAudioPacket(packet, resampleBuffer, failed))
         {
             if (failed)
             {
-                m_audioPTS = (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock;
                 failed = false;
+                boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
+                m_audioPTS = (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock;
             }
         }
         else
@@ -90,7 +91,8 @@ void FFmpegDecoder::audioParseRunnable()
 
 bool FFmpegDecoder::handleAudioPacket(
     const AVPacket& packet,
-    std::vector<uint8_t>& resampleBuffer)
+    std::vector<uint8_t>& resampleBuffer,
+    bool failed)
 {
     if (packet.stream_index != m_audioStream->index)
     {
@@ -236,7 +238,7 @@ bool FFmpegDecoder::handleAudioPacket(
         }
 
         // Audio sync
-        if (!skipAll && fabs(delta) > 0.1)
+        if (!failed && !skipAll && fabs(delta) > 0.1)
         {
             InterlockedAdd(m_videoStartClock, delta / 2);
         }
