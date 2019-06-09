@@ -536,12 +536,24 @@ std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName)
 
 std::string getYoutubeUrl(std::string url)
 {
+    enum { ATTEMPTS_NUMBER = 2 };
+
     if (extractYoutubeUrl(url))
     {
         CWaitCursor wait;
         static YouTubeDealer buddy;
         if (buddy.isValid())
-            return buddy.getYoutubeUrl(url);
+        {
+            for (int i = 0; i < ATTEMPTS_NUMBER; ++i)
+            {
+                Sleep(1);
+                auto result = buddy.getYoutubeUrl(url);
+                if (!result.empty())
+                    return result;
+            }
+        }
+
+        return{};
     }
 
     return url;
