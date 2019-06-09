@@ -547,9 +547,8 @@ std::string getYoutubeUrl(std::string url)
         {
             for (int i = 0; i < ATTEMPTS_NUMBER; ++i)
             {
-                Sleep(1);
                 auto result = buddy.getYoutubeUrl(url);
-                if (!result.empty())
+                if (!result.empty() && HttpGetStatus(result.c_str()) == 200)
                     return result;
             }
         }
