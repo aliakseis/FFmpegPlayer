@@ -14,6 +14,8 @@
 
 #include "I420Effect.h"
 
+#include "AsyncGetUrlUnderMouseCursor.h"
+
 #include <boost/log/sinks/debug_output_backend.hpp>
 #include <boost/log/sinks/sync_frontend.hpp>
 #include <boost/log/core/core.hpp>
@@ -73,6 +75,7 @@ BEGIN_MESSAGE_MAP(CPlayerApp, CWinAppEx)
     ON_COMMAND(ID_FILE_OPEN, &CWinAppEx::OnFileOpen)
     // Standard print setup command
     ON_COMMAND(ID_FILE_PRINT_SETUP, &CWinAppEx::OnFilePrintSetup)
+    ON_THREAD_MESSAGE(WM_ON_ASYNC_URL, &CPlayerApp::OnAsyncUrl)
 END_MESSAGE_MAP()
 
 
@@ -119,6 +122,14 @@ BOOL CPlayerApp::InitInstance()
     InitCommonControlsEx(&InitCtrls);
 
     __super::InitInstance();
+
+    // Parse command line for standard shell commands, DDE, file open
+    CCommandLineInfo cmdInfo;
+    ParseCommandLine(cmdInfo);
+    if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)
+    {
+        AsyncGetUrlUnderMouseCursor();
+    }
 
 #ifdef USE_DIRECT2D_VIEW
     if (AfxGetD2DState()->GetDirect2dFactory() == NULL)
@@ -173,13 +184,6 @@ BOOL CPlayerApp::InitInstance()
         return FALSE;
     AddDocTemplate(pDocTemplate);
 
-
-    // Parse command line for standard shell commands, DDE, file open
-    CCommandLineInfo cmdInfo;
-    ParseCommandLine(cmdInfo);
-
-
-
     // Dispatch commands specified on the command line.  Will return FALSE if
     // app was launched with /RegServer, /Register, /Unregserver or /Unregister.
     if (!ProcessShellCommand(cmdInfo))
@@ -229,6 +233,21 @@ void CPlayerApp::OnAppAbout()
 {
     CAboutDlg aboutDlg;
     aboutDlg.DoModal();
+}
+
+void CPlayerApp::OnAsyncUrl(WPARAM wParam, LPARAM)
+{
+    CComBSTR url;
+    url.Attach((BSTR)wParam);
+    POSITION pos1 = GetFirstDocTemplatePosition();
+    if (CDocTemplate* templ = GetNextDocTemplate(pos1))
+    {
+        POSITION pos2 = templ->GetFirstDocPosition();
+        if (CPlayerDoc* doc = dynamic_cast<CPlayerDoc*>(templ->GetNextDoc(pos2)))
+        {
+            doc->OnAsyncUrl(CString(url));
+        }
+    }
 }
 
 // CPlayerApp message handlers

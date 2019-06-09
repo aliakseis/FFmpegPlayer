@@ -26,6 +26,7 @@ public:
 
 // Implementation
     afx_msg void OnAppAbout();
+    afx_msg void OnAsyncUrl(WPARAM wParam, LPARAM lParam);
     DECLARE_MESSAGE_MAP()
 };
 

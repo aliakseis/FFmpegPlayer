@@ -214,6 +214,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AsyncGetUrlUnderMouseCursor.h" />
     <ClInclude Include="AudioPlayerImpl.h" />
     <ClInclude Include="AudioPlayerWasapi.h" />
     <ClInclude Include="D3DFONT.H" />
@@ -236,6 +237,7 @@
     <ClInclude Include="YouTuber.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AsyncGetUrlUnderMouseCursor.cpp" />
     <ClCompile Include="AudioPlayerImpl.cpp" />
     <ClCompile Include="AudioPlayerWasapi.cpp" />
     <ClCompile Include="D3DFONT.CPP" />
