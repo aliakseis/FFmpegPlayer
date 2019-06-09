@@ -110,6 +110,8 @@ public:
 
 	bool isFullFrameRange() const;
 
+    void OnAsyncUrl(const CString& url);
+
 private:
     bool OpenSubRipFile(LPCTSTR lpszVideoPathName);
     bool OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName);

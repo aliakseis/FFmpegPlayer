@@ -136,76 +136,6 @@ CString GetUrlFromUrlFile(LPCTSTR lpszPathName)
     return url;
 }
 
-CString GetUrlUnderMouseCursor()
-{
-    POINT pt;
-    if (!GetCursorPos(&pt))
-        return{};
-
-    HWND hWnd = WindowFromPoint(pt);
-    if (NULL == hWnd)
-        return{};
-
-    TCHAR szBuffer[64];
-
-    const int classNameLength
-        = ::GetClassName(hWnd, szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]));
-
-    szBuffer[sizeof(szBuffer) / sizeof(szBuffer[0]) - 1] = _T('\0');
-
-    if (_tcscmp(szBuffer, _T("MozillaWindowClass")) != 0 && _tcscmp(szBuffer, _T("Chrome_RenderWidgetHostHWND")) != 0)
-        return{};
-
-    LRESULT lRes = 0;
-
-	// Send WM_GETOBJECT to document window
-	if (!SendMessageTimeout( hWnd, WM_GETOBJECT, 0L, OBJID_CLIENT,
-						SMTO_ABORTIFHUNG, 1000, (PDWORD_PTR) &lRes )
-			|| 0 == lRes)
-        return{};
-
-    CComPtr<IAccessible> pacc;
-    if (FAILED(ObjectFromLresult(lRes, __uuidof(IAccessible), 0, (void**)&pacc)))
-        return{};
-
-    POINT ptScreen(pt);
-    {
-        CComVariant vtChild;
-        CComQIPtr<IAccessible> paccChild;
-        for (; SUCCEEDED(pacc->accHitTest(ptScreen.x, ptScreen.y, &vtChild))
-            && VT_DISPATCH == vtChild.vt && (paccChild = vtChild.pdispVal) != NULL;
-            vtChild.Clear())
-        {
-            pacc.Attach(paccChild.Detach());
-        }
-    }
-
-    VARIANT v;
-    v.vt = VT_I4;
-    v.lVal = CHILDID_SELF;
-
-    while (pacc)
-    {
-        CComVariant vRole;
-
-        if (SUCCEEDED(pacc->get_accRole(v, &vRole)) && vRole.vt == VT_I4 && vRole.lVal == ROLE_SYSTEM_LINK)
-        {
-            CComBSTR url;
-            if (FAILED(pacc->get_accValue(v, &url)))
-                return{};
-            return url;
-        }
-
-        CComPtr<IDispatch> spDisp;
-        if (FAILED(pacc->get_accParent(&spDisp)))
-            return false;
-        CComQIPtr<IAccessible> spParent(spDisp);
-        pacc.Attach(spParent.Detach());
-    }
-
-    return{};
-}
-
 } // namespace
 
 
@@ -269,14 +199,6 @@ BOOL CPlayerDoc::OnNewDocument()
         {
             reset();
             openTopLevelUrl(dlg.m_URL, dlg.m_bParse);
-        }
-    }
-    else
-    {
-        auto url = GetUrlUnderMouseCursor();
-        if (!url.IsEmpty())
-        {
-            openTopLevelUrl(url, false);
         }
     }
 
@@ -891,6 +813,13 @@ bool CPlayerDoc::isFullFrameRange() const
     return m_startTime == m_rangeStartTime && m_endTime == m_rangeEndTime;
 }
 
+void CPlayerDoc::OnAsyncUrl(const CString& url)
+{
+    if (!url.IsEmpty() && m_strPathName.IsEmpty() && m_url.empty())
+    {
+        openTopLevelUrl(url, false);
+    }
+}
 
 void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
 {
