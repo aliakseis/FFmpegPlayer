@@ -97,7 +97,8 @@ public:
     void write(const std::string& what)
     {
         using namespace boost::log;
-        BOOST_LOG(sources::channel_logger_mt<>(keywords::channel = "python")) << what;
+        sources::channel_logger_mt<> logger(keywords::channel = "python");
+        BOOST_LOG(logger) << what;
     }
     void flush() {}
 };
