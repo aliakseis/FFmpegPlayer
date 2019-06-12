@@ -21,6 +21,7 @@
 #include <iterator>
 #include <streambuf>
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <utility>
 
@@ -541,6 +542,16 @@ std::string getYoutubeUrl(std::string url)
 
     if (extractYoutubeUrl(url))
     {
+        static std::map<std::string, std::string> mapToDownloadLinks;
+        auto it = mapToDownloadLinks.find(url);
+        if (it != mapToDownloadLinks.end())
+        {
+            if (HttpGetStatus(it->second.c_str()) == 200)
+                return it->second;
+            else
+                mapToDownloadLinks.erase(it);
+        }
+
         CWaitCursor wait;
         static YouTubeDealer buddy;
         if (buddy.isValid())
@@ -549,7 +560,10 @@ std::string getYoutubeUrl(std::string url)
             {
                 auto result = buddy.getYoutubeUrl(url);
                 if (!result.empty() && HttpGetStatus(result.c_str()) == 200)
+                {
+                    mapToDownloadLinks[url] = result;
                     return result;
+                }
             }
         }
 
