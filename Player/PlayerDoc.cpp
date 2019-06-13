@@ -31,6 +31,9 @@
 
 #include <VersionHelpers.h>
 
+#include <sensapi.h>
+#pragma comment(lib, "Sensapi")
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -214,12 +217,24 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
 
 bool CPlayerDoc::openUrlFromList()
 {
+    bool networkCkecked = false;
+
     while (!m_playList.empty())
     {
         auto buffer = m_playList.front();
         m_playList.pop_front();
         if (openUrl(buffer))
             return true;
+        else if (!networkCkecked)
+        {
+            networkCkecked = true;
+            DWORD flags = NETWORK_ALIVE_INTERNET;
+            if (!IsNetworkAlive(&flags))
+            {
+                m_playList.push_front(buffer);
+                return false;
+            }
+        }
     }
     return false;
 }
@@ -471,7 +486,7 @@ void CPlayerDoc::MoveToNextFile()
         return;
     }
 
-    if (m_looping && m_reopenFunc)
+    if (m_playList.empty() && m_looping && m_reopenFunc)
     {
         // m_reopenFunc can be reset during invocation
         auto tempReopenFunc = m_reopenFunc;
