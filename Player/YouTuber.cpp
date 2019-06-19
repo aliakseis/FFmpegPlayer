@@ -559,10 +559,15 @@ std::string getYoutubeUrl(std::string url)
             for (int i = 0; i < ATTEMPTS_NUMBER; ++i)
             {
                 auto result = buddy.getYoutubeUrl(url);
-                if (!result.empty() && HttpGetStatus(result.c_str()) == 200)
+                if (!result.empty())
                 {
-                    mapToDownloadLinks[url] = result;
-                    return result;
+                    const auto status = HttpGetStatus(result.c_str());
+                    BOOST_LOG_TRIVIAL(trace) << "Resource status: " << status;
+                    if (status == 200)
+                    {
+                        mapToDownloadLinks[url] = result;
+                        return result;
+                    }
                 }
             }
         }
