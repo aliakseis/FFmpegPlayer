@@ -108,12 +108,13 @@ public:
 const char PYTUBE_URL[] = "https://github.com/nficano/pytube/archive/master.zip";
 const char YOUTUBE_TRANSCRIPT_API_URL[] = "https://github.com/jdepoix/youtube-transcript-api/archive/master.zip";
 
-const char SCRIPT_TEMPLATE[] = R"(import sys
+const char SCRIPT_TEMPLATE[] = R"(import sys, socket
 sys.stderr = LoggerStream()
 sys.path.append("%s")
 from pytube import YouTube
 def getYoutubeUrl(url):
-	return YouTube(url).streams.filter(progressive=True).order_by('resolution').desc().first().url)";
+    socket.setdefaulttimeout(10)
+    return YouTube(url).streams.filter(progressive=True).order_by('resolution').desc().first().url)";
 
 const char TRANSCRIPT_TEMPLATE[] = R"(import sys
 sys.stderr = LoggerStream()
