@@ -123,6 +123,8 @@ BOOL CPlayerApp::InitInstance()
 
     __super::InitInstance();
 
+    AfxOleInit();
+
     // Parse command line for standard shell commands, DDE, file open
     CCommandLineInfo cmdInfo;
     ParseCommandLine(cmdInfo);
