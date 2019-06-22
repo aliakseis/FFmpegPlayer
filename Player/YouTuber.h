@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-std::vector<std::string> ParsePlaylist(const std::string& url, bool force);
+std::vector<std::string> ParsePlaylist(std::string url, bool force);
 
 std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName);
 

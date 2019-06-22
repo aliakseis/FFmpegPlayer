@@ -150,7 +150,7 @@ BOOL CPlayerDoc::OnNewDocument()
 
 bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl, bool force, const CString& pathName)
 {
-    std::string url(topLevelUrl.GetString(), topLevelUrl.GetString() + topLevelUrl.GetLength());
+    std::string url(CT2A(topLevelUrl, CP_UTF8));
 
     auto playList = ParsePlaylist(url, force);
 
