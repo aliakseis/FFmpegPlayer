@@ -135,6 +135,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 def getYoutubeTranscript(video_id):
 	return YouTubeTranscriptApi.get_transcript(video_id))";
 
+
 int from_hex(char ch)
 {
     return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
@@ -155,6 +156,49 @@ std::string UrlUnescapeString(const std::string& s)
     }
     return result;
 }
+
+// http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/package.html#encodeURIComponent()
+void hexchar(unsigned char c, unsigned char &hex1, unsigned char &hex2)
+{
+    hex1 = c / 16;
+    hex2 = c % 16;
+    hex1 += hex1 <= 9 ? '0' : 'a' - 10;
+    hex2 += hex2 <= 9 ? '0' : 'a' - 10;
+}
+
+std::string urlencode(const std::string& s)
+{
+    const char *str = s.c_str();
+    std::vector<char> v(s.size());
+    v.clear();
+    for (size_t i = 0, l = s.size(); i < l; i++)
+    {
+        char c = str[i];
+        if ((c >= '0' && c <= '9') ||
+            (c >= 'a' && c <= 'z') ||
+            (c >= 'A' && c <= 'Z') ||
+            c == '-' || c == '_' || c == '.' || c == '!' || c == '~' ||
+            c == '*' || c == '\'' || c == '(' || c == ')')
+        {
+            v.push_back(c);
+        }
+        else if (c == ' ')
+        {
+            v.push_back('+');
+        }
+        else
+        {
+            v.push_back('%');
+            unsigned char d1, d2;
+            hexchar(c, d1, d2);
+            v.push_back(d1);
+            v.push_back(d2);
+        }
+    }
+
+    return{ v.cbegin(), v.cend() };
+}
+
 
 bool extractYoutubeUrl(std::string& s)
 {
@@ -491,9 +535,23 @@ std::vector<std::string> ParsePlaylist(const char* pData, const char* const pDat
 } // namespace
 
 
-std::vector<std::string> ParsePlaylist(const std::string& url, bool force)
+std::vector<std::string> ParsePlaylist(std::string url, bool force)
 {
-    if (!force && url.find("/playlist?list=") == std::string::npos)
+    if (url.find_first_of("./") == std::string::npos)
+    {
+        std::istringstream ss(url);
+        std::string result;
+        std::getline(ss, result, ' ');
+        result = urlencode(result);
+        std::string buffer;
+        while (std::getline(ss, buffer, ' '))
+        {
+            if (!buffer.empty())
+                result += '+' + urlencode(buffer);
+        }
+        url = "https://www.youtube.com/results?search_query=" + result;
+    }
+    else if (!force && url.find("/playlist?list=") == std::string::npos)
         return{};
 
     CWaitCursor wait;
@@ -594,7 +652,7 @@ std::vector<TranscriptRecord> getYoutubeTranscripts(std::string url)
 
 #else // YOUTUBE_EXPERIMENT
 
-std::vector<std::string> ParsePlaylist(const std::string&, bool)
+std::vector<std::string> ParsePlaylist(std::string, bool)
 {
     return{};
 }
