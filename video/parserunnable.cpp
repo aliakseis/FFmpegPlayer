@@ -61,7 +61,7 @@ void FFmpegDecoder::parseRunnable()
             if (eof == UNSET && (readStatus == AVERROR_EOF || readStatus == AVERROR_INVALIDDATA))
                 eof = SET;
 
-            this_thread::sleep_for(chrono::milliseconds(10));
+            this_thread::sleep_for(chrono::milliseconds(1));
         }
 
         // Continue packet reading
