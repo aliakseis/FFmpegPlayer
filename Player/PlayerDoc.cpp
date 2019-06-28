@@ -188,6 +188,7 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
     const auto url = getYoutubeUrl(originalUrl);
     if (!url.empty() && m_frameDecoder->openUrl(url))
     {
+        m_frameDecoder->play(true);
         m_url = url;
         m_subtitles.reset();
         auto transcripts = getYoutubeTranscripts(originalUrl);
@@ -207,7 +208,7 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
                 m_subtitles = std::move(map);
             }
         }
-        m_frameDecoder->play();
+        m_frameDecoder->pauseResume();
         onPauseResume(false);
         return true;
     }
