@@ -506,7 +506,7 @@ bool FFmpegDecoder::resetVideoProcessing()
     // Find the decoder for the video stream
     if (m_videoStreamNumber >= 0)
     {
-        CHANNEL_LOG(ffmpeg_opening) << "Video steam number: " << m_videoStreamNumber;
+        CHANNEL_LOG(ffmpeg_opening) << "Video stream number: " << m_videoStreamNumber;
         m_videoCodecContext = avcodec_alloc_context3(nullptr);
         if (!m_videoCodecContext)
             return false;
@@ -580,7 +580,7 @@ bool FFmpegDecoder::setupAudioProcessing()
 
     if (m_audioStreamNumber >= 0)
     {
-        CHANNEL_LOG(ffmpeg_opening) << "Audio steam number: " << m_audioStreamNumber;
+        CHANNEL_LOG(ffmpeg_opening) << "Audio stream number: " << m_audioStreamNumber;
         m_audioCodecContext = avcodec_alloc_context3(nullptr);
         if (!m_audioCodecContext)
             return false;
