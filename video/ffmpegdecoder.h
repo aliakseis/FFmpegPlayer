@@ -121,6 +121,10 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
         const AVPacket& packet,
         double& videoClock,
         VideoParseContext& context);
+    bool handleVideoFrame(
+        AVFramePtr& frame,
+        double pts,
+        VideoParseContext& context);
 
     // IAudioPlayerCallback
     void AppendFrameClock(double frame_clock) override;

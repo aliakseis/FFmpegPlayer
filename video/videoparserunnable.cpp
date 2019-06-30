@@ -106,9 +106,6 @@ bool FFmpegDecoder::handleVideoPacket(
     double& videoClock,
     VideoParseContext& context)
 {
-    enum { MAX_SKIPPED = 4 };
-    const double MAX_DELAY = 0.2;
-
     const int ret = avcodec_send_packet(m_videoCodecContext, &packet);
     if (ret < 0)
         return false;
@@ -117,7 +114,7 @@ bool FFmpegDecoder::handleVideoPacket(
     while (avcodec_receive_frame(m_videoCodecContext, videoFrame.get()) == 0)
     {
 		const int64_t duration_stamp =
-			videoFrame->best_effort_timestamp; //av_frame_get_best_effort_timestamp(m_videoFrame);
+			videoFrame->best_effort_timestamp;
 
         // compute the exact PTS for the picture if it is omitted in the stream
         // pts1 is the dts of the pkt / pts of the frame
@@ -133,104 +130,119 @@ bool FFmpegDecoder::handleVideoPacket(
             (1. + videoFrame->repeat_pict * 0.5);
         videoClock += frameDelay;
 
-        boost::posix_time::time_duration td(boost::posix_time::pos_infin);
-        bool inNextFrame = false;
-        const bool haveVideoPackets = !m_videoPacketsQueue.empty();
+        if (!handleVideoFrame(videoFrame, pts, context))
+            break;
+    }
 
+    return true;
+}
+
+bool FFmpegDecoder::handleVideoFrame(
+    AVFramePtr& videoFrame,
+    double pts,
+    VideoParseContext& context)
+{
+    enum { MAX_SKIPPED = 4 };
+    const double MAX_DELAY = 0.2;
+
+    boost::posix_time::time_duration td(boost::posix_time::pos_infin);
+    bool inNextFrame = false;
+    const bool haveVideoPackets = !m_videoPacketsQueue.empty();
+
+    {
+        boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+
+        inNextFrame = m_isPaused && m_isVideoSeekingWhilePaused;
+        if (!context.initialized || inNextFrame)
         {
-            boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+            m_videoStartClock = (m_isPaused ? m_pauseTimer : GetHiResTime()) - pts;
+        }
 
-            inNextFrame = m_isPaused && m_isVideoSeekingWhilePaused;
-            if (!context.initialized || inNextFrame)
+        // Skipping frames
+        if (context.initialized && !inNextFrame && haveVideoPackets)
+        {
+            const double curTime = GetHiResTime();
+            if (m_videoStartClock + pts <= curTime)
             {
-                m_videoStartClock = (m_isPaused ? m_pauseTimer : GetHiResTime()) - pts;
-            }
-
-            // Skipping frames
-            if (context.initialized && !inNextFrame && haveVideoPackets)
-            {
-                const double curTime = GetHiResTime();
-                if (m_videoStartClock + pts <= curTime)
+                if (m_videoStartClock + pts < curTime - MAX_DELAY)
                 {
-                    if (m_videoStartClock + pts < curTime - MAX_DELAY)
-                    {
-                        InterlockedAdd(m_videoStartClock, MAX_DELAY);
-                    }
+                    InterlockedAdd(m_videoStartClock, MAX_DELAY);
+                }
 
-                    if (++context.numSkipped > MAX_SKIPPED)
-                    {
-                        context.numSkipped = 0;
-                    }
-                    else
-                    {
-                        CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
-
-                        // pause
-                        if (m_isPaused && !m_isVideoSeekingWhilePaused)
-                        {
-                            break;
-                        }
-
-                        continue;
-                    }
+                if (++context.numSkipped > MAX_SKIPPED)
+                {
+                    context.numSkipped = 0;
                 }
                 else
                 {
-                    int speedNumerator, speedDenominator;
-                    std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
-                    context.numSkipped = 0;
-                    td = boost::posix_time::milliseconds(
-                        int((m_videoStartClock + pts - curTime) * 1000.  * speedDenominator / speedNumerator) + 1);
+                    CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
+
+                    // pause
+                    if (m_isPaused && !m_isVideoSeekingWhilePaused)
+                    {
+                        return false;
+                    }
+
+                    return true;
                 }
             }
-        }
-
-        context.initialized = true;
-
-        {
-            boost::unique_lock<boost::mutex> locker(m_videoFramesMutex);
-
-            if (!m_videoFramesCV.timed_wait(locker, td, [this]
-                {
-                    return m_isPaused && !m_isVideoSeekingWhilePaused ||
-                        m_videoFramesQueue.canPush();
-                }))
+            else
             {
-                continue;
+                int speedNumerator, speedDenominator;
+                std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
+                context.numSkipped = 0;
+                td = boost::posix_time::milliseconds(
+                    int((m_videoStartClock + pts - curTime) * 1000.  * speedDenominator / speedNumerator) + 1);
             }
         }
-
-        {
-            boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
-            if (m_isPaused && !m_isVideoSeekingWhilePaused)
-            {
-                break;
-            }
-
-            m_isVideoSeekingWhilePaused = false;
-        }
-
-        if (inNextFrame)
-        {
-            m_isPausedCV.notify_all();
-        }
-
-        VideoFrame& current_frame = m_videoFramesQueue.back();
-        handleDirect3dData(videoFrame.get());
-        if (!frameToImage(current_frame, videoFrame, m_imageCovertContext, m_pixelFormat))
-        {
-            continue;
-        }
-
-        current_frame.m_pts = pts;
-        current_frame.m_duration = duration_stamp;
-
-        {
-            boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
-            m_videoFramesQueue.pushBack();
-        }
-        m_videoFramesCV.notify_all();
     }
+
+    context.initialized = true;
+
+    {
+        boost::unique_lock<boost::mutex> locker(m_videoFramesMutex);
+
+        if (!m_videoFramesCV.timed_wait(locker, td, [this]
+        {
+            return m_isPaused && !m_isVideoSeekingWhilePaused ||
+                m_videoFramesQueue.canPush();
+        }))
+        {
+            CHANNEL_LOG(ffmpeg_sync) << "Frame wait abandoned";
+            return true;
+        }
+    }
+
+    {
+        boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+        if (m_isPaused && !m_isVideoSeekingWhilePaused)
+        {
+            return false;
+        }
+
+        m_isVideoSeekingWhilePaused = false;
+    }
+
+    if (inNextFrame)
+    {
+        m_isPausedCV.notify_all();
+    }
+
+    VideoFrame& current_frame = m_videoFramesQueue.back();
+    handleDirect3dData(videoFrame.get());
+    if (!frameToImage(current_frame, videoFrame, m_imageCovertContext, m_pixelFormat))
+    {
+        return true;
+    }
+
+    current_frame.m_pts = pts;
+    current_frame.m_duration = videoFrame->best_effort_timestamp;
+
+    {
+        boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
+        m_videoFramesQueue.pushBack();
+    }
+    m_videoFramesCV.notify_all();
 
     return true;
 }
