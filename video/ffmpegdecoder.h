@@ -122,7 +122,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
         double& videoClock,
         VideoParseContext& context);
     bool handleVideoFrame(
-        AVFramePtr& frame,
+        AVFramePtr frame,
         double pts,
         VideoParseContext& context);
 

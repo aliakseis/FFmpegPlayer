@@ -3,7 +3,9 @@
 #include "interlockedadd.h"
 
 #include <boost/log/trivial.hpp>
+#include <boost/thread/future.hpp>
 #include <tuple>
+#include <utility>
 
 namespace {
 
@@ -60,6 +62,7 @@ struct FFmpegDecoder::VideoParseContext
 {
     bool initialized = false;
     int numSkipped = 0;
+    boost::unique_future<bool> fut;
 };
 
 void FFmpegDecoder::videoParseRunnable()
@@ -72,6 +75,8 @@ void FFmpegDecoder::videoParseRunnable()
 
     for (;;)
     {
+        context.fut.swap(boost::unique_future<bool>());
+
         if (m_isPaused && !m_isVideoSeekingWhilePaused)
         {
             boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
@@ -111,7 +116,8 @@ bool FFmpegDecoder::handleVideoPacket(
         return false;
 
     AVFramePtr videoFrame(av_frame_alloc());
-    while (avcodec_receive_frame(m_videoCodecContext, videoFrame.get()) == 0)
+    while (videoFrame = AVFramePtr(av_frame_alloc()),
+        avcodec_receive_frame(m_videoCodecContext, videoFrame.get()) == 0)
     {
 		const int64_t duration_stamp = videoFrame->best_effort_timestamp;
 
@@ -129,15 +135,27 @@ bool FFmpegDecoder::handleVideoPacket(
             (1. + videoFrame->repeat_pict * 0.5);
         videoClock += frameDelay;
 
-        if (!handleVideoFrame(videoFrame, pts, context))
+        if (context.fut.valid() && !context.fut.get())
+        {
             break;
+        }
+
+        context.fut = boost::async(
+            boost::launch::async,
+            [this, frame = std::move(videoFrame), pts, &context]() mutable
+            {
+                return handleVideoFrame(std::move(frame), pts, context);
+            });
+
+        //if (!handleVideoFrame(videoFrame, pts, context))
+        //    break;
     }
 
     return true;
 }
 
 bool FFmpegDecoder::handleVideoFrame(
-    AVFramePtr& videoFrame,
+    AVFramePtr videoFrame,
     double pts,
     VideoParseContext& context)
 {
