@@ -113,8 +113,7 @@ bool FFmpegDecoder::handleVideoPacket(
     AVFramePtr videoFrame(av_frame_alloc());
     while (avcodec_receive_frame(m_videoCodecContext, videoFrame.get()) == 0)
     {
-		const int64_t duration_stamp =
-			videoFrame->best_effort_timestamp;
+		const int64_t duration_stamp = videoFrame->best_effort_timestamp;
 
         // compute the exact PTS for the picture if it is omitted in the stream
         // pts1 is the dts of the pkt / pts of the frame
@@ -144,6 +143,8 @@ bool FFmpegDecoder::handleVideoFrame(
 {
     enum { MAX_SKIPPED = 4 };
     const double MAX_DELAY = 0.2;
+
+    const int64_t duration_stamp = videoFrame->best_effort_timestamp;
 
     boost::posix_time::time_duration td(boost::posix_time::pos_infin);
     bool inNextFrame = false;
@@ -236,7 +237,7 @@ bool FFmpegDecoder::handleVideoFrame(
     }
 
     current_frame.m_pts = pts;
-    current_frame.m_duration = videoFrame->best_effort_timestamp;
+    current_frame.m_duration = duration_stamp;
 
     {
         boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
