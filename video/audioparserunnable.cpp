@@ -118,7 +118,7 @@ bool FFmpegDecoder::handleAudioPacket(
         }
 
         const AVSampleFormat audioFrameFormat = (AVSampleFormat)audioFrame->format;
-		const int audioFrameChannels = audioFrame->channels; //av_frame_get_channels(m_audioFrame);
+	    const int audioFrameChannels = audioFrame->channels;
 
         const int original_buffer_size = av_samples_get_buffer_size(
             nullptr, audioFrameChannels,
@@ -128,33 +128,7 @@ bool FFmpegDecoder::handleAudioPacket(
         uint8_t* write_data = *getAudioData(audioFrame.get());
         int64_t write_size = original_buffer_size;
 
-        const int64_t dec_channel_layout = getChannelLayout(audioFrame.get());
-
-        int speedNumerator, speedDenominator;
-        std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
-
-        // Check if the new swr context required
-        if (audioFrameFormat != m_audioCurrentPref.format ||
-            dec_channel_layout != m_audioCurrentPref.channel_layout ||
-            (audioFrame->sample_rate * speedNumerator) / speedDenominator != m_audioCurrentPref.frequency)
-        {
-            swr_free(&m_audioSwrContext);
-            m_audioSwrContext = swr_alloc_set_opts(
-                nullptr, m_audioSettings.channel_layout, m_audioSettings.format,
-                m_audioSettings.frequency * speedDenominator,
-                dec_channel_layout, audioFrameFormat,
-                audioFrame->sample_rate * speedNumerator, 0, nullptr);
-
-            if (!m_audioSwrContext || swr_init(m_audioSwrContext) < 0)
-            {
-                BOOST_LOG_TRIVIAL(error) << "unable to initialize swr convert context";
-            }
-
-            m_audioCurrentPref.format = audioFrameFormat;
-            m_audioCurrentPref.channels = audioFrameChannels;
-            m_audioCurrentPref.channel_layout = dec_channel_layout;
-            m_audioCurrentPref.frequency = (audioFrame->sample_rate * speedNumerator) / speedDenominator;
-        }
+        setupAudioSwrContext(audioFrame.get());
 
         if (m_audioSwrContext)
         {
@@ -266,4 +240,38 @@ bool FFmpegDecoder::handleAudioPacket(
     }
 
     return result;
+}
+
+void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
+{
+    const AVSampleFormat audioFrameFormat = (AVSampleFormat)audioFrame->format;
+    const int audioFrameChannels = audioFrame->channels;
+
+    const int64_t dec_channel_layout = getChannelLayout(audioFrame);
+
+    int speedNumerator, speedDenominator;
+    std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
+
+    // Check if the new swr context required
+    if (audioFrameFormat != m_audioCurrentPref.format ||
+        dec_channel_layout != m_audioCurrentPref.channel_layout ||
+        (audioFrame->sample_rate * speedNumerator) / speedDenominator != m_audioCurrentPref.frequency)
+    {
+        swr_free(&m_audioSwrContext);
+        m_audioSwrContext = swr_alloc_set_opts(
+            nullptr, m_audioSettings.channel_layout, m_audioSettings.format,
+            m_audioSettings.frequency * speedDenominator,
+            dec_channel_layout, audioFrameFormat,
+            audioFrame->sample_rate * speedNumerator, 0, nullptr);
+
+        if (!m_audioSwrContext || swr_init(m_audioSwrContext) < 0)
+        {
+            BOOST_LOG_TRIVIAL(error) << "unable to initialize swr convert context";
+        }
+
+        m_audioCurrentPref.format = audioFrameFormat;
+        m_audioCurrentPref.channels = audioFrameChannels;
+        m_audioCurrentPref.channel_layout = dec_channel_layout;
+        m_audioCurrentPref.frequency = (audioFrame->sample_rate * speedNumerator) / speedDenominator;
+    }
 }
