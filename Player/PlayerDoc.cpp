@@ -28,6 +28,7 @@
 #include <fstream>
 
 #include <string>
+#include <cctype>
 
 #include <VersionHelpers.h>
 
@@ -600,6 +601,12 @@ bool CPlayerDoc::OpenSubRipFile(LPCTSTR lpszVideoPathName)
             m_unicodeSubtitles = buffer.length() > 2
                 && buffer[0] == char(0xEF) && buffer[1] == char(0xBB) && buffer[2] == char(0xBF);
             first = false;
+        }
+
+        if (std::find_if_not(buffer.begin(), buffer.end(), static_cast<int(*)(int)>(std::isspace))
+            == buffer.end())
+        {
+            continue;
         }
 
         if (!std::getline(s, buffer))
