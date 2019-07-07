@@ -79,7 +79,10 @@ void FFmpegDecoder::audioParseRunnable()
             {
                 failed = false;
                 boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
-                m_audioPTS = (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock;
+                if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+                {
+                    m_audioPTS = (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock;
+                }
             }
         }
         else
