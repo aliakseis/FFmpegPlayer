@@ -215,6 +215,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AsyncGetUrlUnderMouseCursor.h" />
+    <ClInclude Include="AudioPitchDecorator.h" />
     <ClInclude Include="AudioPlayerImpl.h" />
     <ClInclude Include="AudioPlayerWasapi.h" />
     <ClInclude Include="D3DFONT.H" />
@@ -233,12 +234,14 @@
     <ClInclude Include="PlayerViewD2D.h" />
     <ClInclude Include="PlayerView.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="smbPitchShift.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="YouTuber.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AsyncGetUrlUnderMouseCursor.cpp" />
+    <ClCompile Include="AudioPitchDecorator.cpp" />
     <ClCompile Include="AudioPlayerImpl.cpp" />
     <ClCompile Include="AudioPlayerWasapi.cpp" />
     <ClCompile Include="D3DFONT.CPP" />
@@ -253,6 +256,7 @@
     <ClCompile Include="PlayerDoc.cpp" />
     <ClCompile Include="PlayerViewD2D.cpp" />
     <ClCompile Include="PlayerView.cpp" />
+    <ClCompile Include="smbPitchShift.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
