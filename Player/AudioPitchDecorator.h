@@ -2,6 +2,7 @@
 
 #include "audioplayer.h"
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -11,7 +12,8 @@ class AudioPitchDecorator :
     public IAudioPlayer
 {
 public:
-    AudioPitchDecorator(std::unique_ptr<IAudioPlayer> player);
+    AudioPitchDecorator(std::unique_ptr<IAudioPlayer> player, 
+        std::function<float()> getPitchShift);
     ~AudioPitchDecorator();
 
     AudioPitchDecorator(const AudioPitchDecorator&) = delete;
@@ -33,6 +35,7 @@ public:
 
 private:
     std::unique_ptr<IAudioPlayer> m_player;
+    std::function<float()> m_getPitchShift;
     std::vector<CSmbPitchShift> m_smbPitchShifts;
 
     std::vector<float> m_buffer;

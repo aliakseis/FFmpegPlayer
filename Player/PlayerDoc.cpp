@@ -116,8 +116,11 @@ END_MESSAGE_MAP()
 CPlayerDoc::CPlayerDoc()
     : m_frameDecoder(
         GetFrameDecoder(
-            //std::make_unique<AudioPitchDecorator>
-                (GetAudioPlayer())))
+            std::make_unique<AudioPitchDecorator>(GetAudioPlayer(),
+                [this] {
+                    const auto speedRational = m_frameDecoder->getSpeedRational();
+                    return static_cast<float>(speedRational.second) / speedRational.first;
+                })))
     , m_unicodeSubtitles(false)
     , m_onEndOfStream(false)
     , m_autoPlay(false)

@@ -6,8 +6,10 @@
 #include <algorithm>
 #include <utility>
 
-AudioPitchDecorator::AudioPitchDecorator(std::unique_ptr<IAudioPlayer> player)
+AudioPitchDecorator::AudioPitchDecorator(std::unique_ptr<IAudioPlayer> player
+    , std::function<float()> getPitchShift)
     : m_player(std::move(player))
+    , m_getPitchShift(std::move(getPitchShift))
 {
 }
 
@@ -79,7 +81,8 @@ void AudioPitchDecorator::WaveOutRestart()
 
 bool AudioPitchDecorator::WriteAudio(uint8_t * write_data, int64_t write_size)
 {
-    if (m_bytesPerSample == 2)
+    const auto pitchShift = m_getPitchShift();
+    if (pitchShift != 1. && m_bytesPerSample == 2)
     {
         const auto numSamples = (write_size / m_bytesPerSample) / m_smbPitchShifts.size();
         if (m_buffer.size() < numSamples)
@@ -92,7 +95,7 @@ bool AudioPitchDecorator::WriteAudio(uint8_t * write_data, int64_t write_size)
                 m_buffer[j] = intData[j * m_smbPitchShifts.size() + i] / 32768.;
             }
             m_smbPitchShifts[i].smbPitchShift(
-                2., numSamples, 4096, 32, m_samplesPerSec, m_buffer.data(), m_buffer.data());
+                pitchShift, numSamples, 4096, 32, m_samplesPerSec, m_buffer.data(), m_buffer.data());
             for (size_t j = 0; j < numSamples; ++j)
             {
                 intData[j * m_smbPitchShifts.size() + i] = std::clamp(m_buffer[j], -1.f, 1.f) * 32767;
