@@ -102,5 +102,10 @@ bool AudioPitchDecorator::WriteAudio(uint8_t * write_data, int64_t write_size)
             }
         }
     }
+    else
+    {
+        for (auto& v : m_smbPitchShifts)
+            v.reset();
+    }
     return m_player->WriteAudio(write_data, write_size);
 }
