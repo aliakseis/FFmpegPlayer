@@ -52,6 +52,8 @@ bool AudioPitchDecorator::Open(int bytesPerSample, int channels, int * samplesPe
     m_smbPitchShifts.resize(channels);
     for (auto& v : m_smbPitchShifts)
         v.reset();
+
+    return true;
 }
 
 void AudioPitchDecorator::Reset()
