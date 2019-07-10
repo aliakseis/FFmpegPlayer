@@ -13,6 +13,7 @@
 #include "AudioPlayerImpl.h"
 #include "AudioPlayerWasapi.h"
 #include "HandleFilesSequence.h"
+#include "AudioPitchDecorator.h"
 
 #include "DialogOpenURL.h"
 
@@ -80,6 +81,13 @@ CString GetUrlFromUrlFile(LPCTSTR lpszPathName)
     return url;
 }
 
+std::unique_ptr<IAudioPlayer> GetAudioPlayer()
+{
+    if (IsWindowsVistaOrGreater())
+        return std::make_unique<AudioPlayerWasapi>();
+    return std::make_unique<AudioPlayerImpl>();
+}       
+
 } // namespace
 
 
@@ -107,9 +115,9 @@ END_MESSAGE_MAP()
 
 CPlayerDoc::CPlayerDoc()
     : m_frameDecoder(
-    IsWindowsVistaOrGreater()
-    ? GetFrameDecoder(std::make_unique<AudioPlayerWasapi>())
-    : GetFrameDecoder(std::make_unique<AudioPlayerImpl>()))
+        GetFrameDecoder(
+            //std::make_unique<AudioPitchDecorator>
+                (GetAudioPlayer())))
     , m_unicodeSubtitles(false)
     , m_onEndOfStream(false)
     , m_autoPlay(false)
