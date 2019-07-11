@@ -65,42 +65,46 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
 	of the frequencies of interest is in fftBuffer[0...fftFrameSize].
 */
 {
-	float wr, wi, arg, *p1, *p2, temp;
-	float tr, ti, ur, ui, *p1r, *p1i, *p2r, *p2i;
-	long i, bitm, j, le, le2, k;
+	//float wr, wi, arg, *p1, *p2, temp;
+	//float tr, ti, ur, ui, *p1r, *p1i, *p2r, *p2i;
+	//long i, bitm, j, le, le2, k;
 
-	for (i = 2; i < 2*fftFrameSize-2; i += 2) {
+	for (long i = 2; i < 2*fftFrameSize-2; i += 2) {
+        long bitm, j;
 		for (bitm = 2, j = 0; bitm < 2*fftFrameSize; bitm <<= 1) {
 			if (i & bitm) j++;
 			j <<= 1;
 		}
 		if (i < j) {
-			p1 = fftBuffer+i; p2 = fftBuffer+j;
-			temp = *p1; *(p1++) = *p2;
+			auto p1 = fftBuffer+i; 
+            auto p2 = fftBuffer+j;
+			auto temp = *p1; *(p1++) = *p2;
 			*(p2++) = temp; temp = *p1;
 			*p1 = *p2; *p2 = temp;
 		}
 	}
-	for (k = 0, le = 2; k < (long)(log(fftFrameSize)/log(2.)+.5); k++) {
+	for (long k = 0, le = 2; k < (long)(log(fftFrameSize)/log(2.)+.5); k++) {
 		le <<= 1;
-		le2 = le>>1;
-		ur = 1.0;
-		ui = 0.0;
-		arg = M_PI / (le2>>1);
-		wr = cos(arg);
-		wi = sign*sin(arg);
-		for (j = 0; j < le2; j += 2) {
-			p1r = fftBuffer+j; p1i = p1r+1;
-			p2r = p1r+le2; p2i = p2r+1;
-			for (i = j; i < 2*fftFrameSize; i += le) {
-				tr = *p2r * ur - *p2i * ui;
-				ti = *p2r * ui + *p2i * ur;
+		const auto le2 = le>>1;
+		float ur = 1.0;
+		float ui = 0.0;
+		const float arg = M_PI / (le2>>1);
+        const float wr = cos(arg);
+        const float wi = sign*sin(arg);
+		for (long j = 0; j < le2; j += 2) {
+			auto p1r = fftBuffer+j; 
+            auto p1i = p1r+1;
+            auto p2r = p1r+le2;
+            auto p2i = p2r+1;
+			for (long i = j; i < 2*fftFrameSize; i += le) {
+				const float tr = *p2r * ur - *p2i * ui;
+                const float ti = *p2r * ui + *p2i * ur;
 				*p2r = *p1r - tr; *p2i = *p1i - ti;
 				*p1r += tr; *p1i += ti;
 				p1r += le; p1i += le;
 				p2r += le; p2i += le;
 			}
-			tr = ur*wr - ui*wi;
+            const float tr = ur*wr - ui*wi;
 			ui = ur*wi + ui*wr;
 			ur = tr;
 		}
