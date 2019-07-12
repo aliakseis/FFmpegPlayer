@@ -47,8 +47,6 @@
 #define M_PI 3.14159265358979323846
 //#define MAX_FRAME_LENGTH 8192
 
-//void smbFft(float *fftBuffer, long fftFrameSize, long sign);
-//double smbAtan2(double x, double y);
 
 namespace {
 
@@ -65,15 +63,12 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
 	of the frequencies of interest is in fftBuffer[0...fftFrameSize].
 */
 {
-	//float wr, wi, arg, *p1, *p2, temp;
-	//float tr, ti, ur, ui, *p1r, *p1i, *p2r, *p2i;
-	//long i, bitm, j, le, le2, k;
-
 	for (long i = 2; i < 2*fftFrameSize-2; i += 2) {
         long bitm, j;
 		for (bitm = 2, j = 0; bitm < 2*fftFrameSize; bitm <<= 1) {
-			if (i & bitm) j++;
-			j <<= 1;
+			//if (i & bitm) j++;
+            j += (i & bitm) != 0;
+            j <<= 1;
 		}
 		if (i < j) {
 			auto p1 = fftBuffer+i; 
@@ -86,27 +81,57 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
 	for (long k = 0, le = 2; k < (long)(log(fftFrameSize)/log(2.)+.5); k++) {
 		le <<= 1;
 		const auto le2 = le>>1;
-		float ur = 1.0;
-		float ui = 0.0;
+        __declspec(align(8)) struct { float r, i; } u{ 1.0, 0.0 };
+
 		const float arg = M_PI / (le2>>1);
         const float wr = cos(arg);
         const float wi = sign*sin(arg);
 		for (long j = 0; j < le2; j += 2) {
 			auto p1r = fftBuffer+j; 
-            auto p1i = p1r+1;
             auto p2r = p1r+le2;
-            auto p2i = p2r+1;
-			for (long i = j; i < 2*fftFrameSize; i += le) {
-				const float tr = *p2r * ur - *p2i * ui;
-                const float ti = *p2r * ui + *p2i * ur;
-				*p2r = *p1r - tr; *p2i = *p1i - ti;
-				*p1r += tr; *p1i += ti;
-				p1r += le; p1i += le;
-				p2r += le; p2i += le;
+
+            __m128 u_ = _mm_castpd_ps(_mm_movedup_pd(_mm_load_sd((const double*)&u)));
+
+            __m128 ldup = _mm_moveldup_ps(u_);
+            __m128 hdup = _mm_movehdup_ps(u_);
+
+            long i = j;
+			for (; i < 2*fftFrameSize - le; i += le * 2) 
+            {
+                __m128 p2 = _mm_loadh_pi(_mm_castpd_ps(_mm_load_sd((const double*)p2r)), (const __m64*)(p2r + le));
+                __m128 part1 = _mm_mul_ps(p2, ldup);
+                __m128 part2 = _mm_mul_ps(p2, hdup);
+                part2 = _mm_castsi128_ps(_mm_shuffle_epi32(_mm_castps_si128(part2), _MM_SHUFFLE(2, 3, 0, 1)));
+                __m128 t = _mm_addsub_ps(part1, part2);
+
+                __m128 p1 = _mm_loadh_pi(_mm_castpd_ps(_mm_load_sd((const double*)p1r)), (const __m64*)(p1r + le));
+                __m128 buffer = _mm_sub_ps(p1, t);
+
+                _mm_storeh_pi((__m64*)(p2r + le), buffer);
+                _mm_storel_pi((__m64*)p2r, buffer);
+
+                buffer = _mm_add_ps(p1, t);
+                _mm_storeh_pi((__m64*)(p1r + le), buffer);
+                _mm_storel_pi((__m64*)p1r, buffer);
+
+				p1r += le * 2; 
+				p2r += le * 2; 
 			}
-            const float tr = ur*wr - ui*wi;
-			ui = ur*wi + ui*wr;
-			ur = tr;
+
+
+            if (i < 2 * fftFrameSize) {
+                const auto p1i = p1r + 1;
+                const auto p2i = p2r + 1;
+                const float tr = *p2r * u.r - *p2i * u.i;
+                const float ti = *p2r * u.i + *p2i * u.r;
+                *p2r = *p1r - tr; *p2i = *p1i - ti;
+                *p1r += tr; *p1i += ti;
+            }
+
+
+            const float tr = u.r*wr - u.i*wi;
+			u.i = u.r*wi + u.i*wr;
+			u.r = tr;
 		}
 	}
 }
@@ -131,18 +156,41 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
     
 */
 
-
-double smbAtan2(double x, double y)
+// https://gist.github.com/voidqk/fc5a58b7d9fc020ecf7f2f5fc907dfa5
+inline float smbAtan2(float y, float x)
 {
-  double signx;
-  if (x > 0.) signx = 1.;  
-  else signx = -1.;
-  
-  if (x == 0.) return 0.;
-  if (y == 0.) return signx * M_PI / 2.;
-  
-  return atan2(x, y);
+    static const float c1 = M_PI / 4.0;
+    static const float c2 = M_PI * 3.0 / 4.0;
+    //if (y == 0 && x == 0)
+    //    return 0;
+
+    if (y == 0) 
+        return 0;
+    if (x == 0)
+        return (y > 0) ? (M_PI / 2.) : (M_PI / 2.);
+
+    float abs_y = fabsf(y);
+    float angle;
+    if (x >= 0)
+        angle = c1 - c1 * ((x - abs_y) / (x + abs_y));
+    else
+        angle = c2 - c1 * ((x + abs_y) / (abs_y - x));
+    if (y < 0)
+        return -angle;
+    return angle;
 }
+
+//double smbAtan2(double x, double y)
+//{
+//  double signx;
+//  if (x > 0.) signx = 1.;  
+//  else signx = -1.;
+//  
+//  if (x == 0.) return 0.;
+//  if (y == 0.) return signx * M_PI / 2.;
+//  
+//  return atan2(x, y);
+//}
 
 
 } // namespace
@@ -159,19 +207,7 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
 	Author: (c)1999-2015 Stephan M. Bernsee <s.bernsee [AT] zynaptiq [DOT] com>
 */
 {
-
-	//static float gInFIFO[MAX_FRAME_LENGTH];
-	//static float gOutFIFO[MAX_FRAME_LENGTH];
-	//static float gFFTworksp[2*MAX_FRAME_LENGTH];
-	//static float gLastPhase[MAX_FRAME_LENGTH/2+1];
-	//static float gSumPhase[MAX_FRAME_LENGTH/2+1];
-	//static float gOutputAccum[2*MAX_FRAME_LENGTH];
-	//static float gAnaFreq[MAX_FRAME_LENGTH];
-	//static float gAnaMagn[MAX_FRAME_LENGTH];
-	//static float gSynFreq[MAX_FRAME_LENGTH];
-	//static float gSynMagn[MAX_FRAME_LENGTH];
-	//static long gRover = false, gInit = false;
-	double magn, phase, tmp, window, real, imag;
+	double magn, phase, tmp, window;
 	double freqPerBin, expct;
 	long i,k, qpd, index, inFifoLatency, stepSize, fftFrameSize2;
 
@@ -224,8 +260,8 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
 			for (k = 0; k <= fftFrameSize2; k++) {
 
 				/* de-interlace FFT buffer */
-				real = gFFTworksp[2*k];
-				imag = gFFTworksp[2*k+1];
+				const auto real = gFFTworksp[2*k];
+                const auto imag = gFFTworksp[2*k+1];
 
 				/* compute magnitude and phase */
 				magn = 2.*sqrt(real*real + imag*imag);
