@@ -44,6 +44,8 @@
 #include <math.h>
 #include <stdio.h>
 
+#include <vector>
+
 #define M_PI 3.14159265358979323846
 //#define MAX_FRAME_LENGTH 8192
 
@@ -63,13 +65,31 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
 	of the frequencies of interest is in fftBuffer[0...fftFrameSize].
 */
 {
-	for (long i = 2; i < 2*fftFrameSize-2; i += 2) {
-        long bitm, j;
-		for (bitm = 2, j = 0; bitm < 2*fftFrameSize; bitm <<= 1) {
-			//if (i & bitm) j++;
-            j += (i & bitm) != 0;
-            j <<= 1;
-		}
+    const auto number = 2 * fftFrameSize - 2;
+
+    static std::vector<long> cache;
+    if (cache.size() != number)
+    {
+        cache.resize(number);
+
+        for (long i = 2; i < number; i += 2) {
+            long bitm, j;
+            for (bitm = 2, j = 0; bitm < 2 * fftFrameSize; bitm <<= 1) {
+                if (i & bitm) j++;
+                j <<= 1;
+            }
+
+            cache[i] = j;
+        }
+    }
+
+	for (long i = 2; i < number; i += 2) {
+        //long bitm, j;
+		//for (bitm = 2, j = 0; bitm < 2*fftFrameSize; bitm <<= 1) {
+		//	if (i & bitm) j++;
+        //    j <<= 1;
+		//}
+        const auto j = cache[i];
 		if (i < j) {
 			auto p1 = fftBuffer+i; 
             auto p2 = fftBuffer+j;
