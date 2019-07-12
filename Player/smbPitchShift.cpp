@@ -227,9 +227,9 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
 	Author: (c)1999-2015 Stephan M. Bernsee <s.bernsee [AT] zynaptiq [DOT] com>
 */
 {
-	double magn, phase, tmp, window;
+	double magn, phase, tmp;
 	double freqPerBin, expct;
-	long i,k, qpd, index, inFifoLatency, stepSize, fftFrameSize2;
+	long k, qpd, index, inFifoLatency, stepSize, fftFrameSize2;
 
 	/* set up some handy variables */
 	fftFrameSize2 = fftFrameSize/2;
@@ -252,8 +252,17 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
 		gInit = true;
 	}
 
+    std::vector<double> window;
+    if (window.size() != fftFrameSize)
+    {
+        window.resize(fftFrameSize);
+        for (k = 0; k < fftFrameSize; k++) {
+            window[k] = -.5*cos(2.*M_PI*(double)k / (double)fftFrameSize) + .5;
+        }
+    }
+
 	/* main processing loop */
-	for (i = 0; i < numSampsToProcess; i++){
+	for (long i = 0; i < numSampsToProcess; i++){
 
 		/* As long as we have not yet collected enough data just read in */
 		gInFIFO[gRover] = indata[i];
@@ -266,8 +275,7 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
 
 			/* do windowing and re,im interleave */
 			for (k = 0; k < fftFrameSize;k++) {
-				window = -.5*cos(2.*M_PI*(double)k/(double)fftFrameSize)+.5;
-				gFFTworksp[2*k] = gInFIFO[k] * window;
+				gFFTworksp[2*k] = gInFIFO[k] * window[k];
 				gFFTworksp[2*k+1] = 0.;
 			}
 
@@ -361,8 +369,7 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
 
 			/* do windowing and add to output accumulator */ 
 			for(k=0; k < fftFrameSize; k++) {
-				window = -.5*cos(2.*M_PI*(double)k/(double)fftFrameSize)+.5;
-				gOutputAccum[k] += 2.*window*gFFTworksp[2*k]/(fftFrameSize2*osamp);
+				gOutputAccum[k] += 2. * window[k] * gFFTworksp[2*k]/(fftFrameSize2*osamp);
 			}
 			for (k = 0; k < stepSize; k++) gOutFIFO[k] = gOutputAccum[k];
 
