@@ -66,31 +66,18 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
 */
 {
     const auto number = 2 * fftFrameSize - 2;
-
-    static std::vector<long> cache;
-    if (cache.size() != number)
-    {
-        cache.resize(number);
-
-        for (long i = 2; i < number; i += 2) {
-            long bitm, j;
-            for (bitm = 2, j = 0; bitm < 2 * fftFrameSize; bitm <<= 1) {
-                if (i & bitm) j++;
-                j <<= 1;
+    for (long i = 2, j = 0; i < number; i += 2) {
+        for (long bitm = fftFrameSize; bitm != 1; bitm >>= 1)
+        {
+            if (j & bitm)
+                j &= ~bitm;
+            else
+            {
+                j |= bitm;
+                break;
             }
-
-            cache[i] = j;
         }
-    }
-
-	for (long i = 2; i < number; i += 2) {
-        //long bitm, j;
-		//for (bitm = 2, j = 0; bitm < 2*fftFrameSize; bitm <<= 1) {
-		//	if (i & bitm) j++;
-        //    j <<= 1;
-		//}
-        const auto j = cache[i];
-		if (i < j) {
+        if (i < j) {
 			auto p1 = fftBuffer+i; 
             auto p2 = fftBuffer+j;
 			auto temp = *p1; *(p1++) = *p2;
