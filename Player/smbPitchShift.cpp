@@ -214,7 +214,6 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
 	Author: (c)1999-2015 Stephan M. Bernsee <s.bernsee [AT] zynaptiq [DOT] com>
 */
 {
-	double magn, phase, tmp;
 	double freqPerBin, expct;
 	long k, qpd, index, inFifoLatency, stepSize, fftFrameSize2;
 
@@ -279,27 +278,23 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
                 const auto imag = gFFTworksp[2*k+1];
 
 				/* compute magnitude and phase */
-				magn = 2.*sqrt(real*real + imag*imag);
-				phase = smbAtan2(imag,real);
+				const auto magn = 2.*hypotf(real, imag);
+				const auto phase = smbAtan2(imag,real);
 
 				/* compute phase difference */
-				tmp = phase - gLastPhase[k];
+				double tmp = phase - gLastPhase[k];
 				gLastPhase[k] = phase;
 
 				/* subtract expected phase difference */
 				tmp -= (double)k*expct;
 
-				/* map delta phase into +/- Pi interval */
-				qpd = tmp/M_PI;
-				if (qpd >= 0) qpd += qpd&1;
-				else qpd -= qpd&1;
-				tmp -= M_PI*(double)qpd;
-
-				/* get deviation from bin frequency from the +/- Pi interval */
-				tmp = osamp*tmp/(2.*M_PI);
+                /* map delta phase into +/- Pi interval */
+                /* get deviation from bin frequency from the +/- Pi interval */
+                tmp /= (2.*M_PI);
+                tmp = osamp * (tmp - floor(tmp + 0.5)); // faster than round
 
 				/* compute the k-th partials' true frequency */
-				tmp = (double)k*freqPerBin + tmp*freqPerBin;
+				tmp = (k + tmp) * freqPerBin;
 
 				/* store magnitude and true frequency in analysis arrays */
 				gAnaMagn[k] = magn;
@@ -324,16 +319,16 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
 			for (k = 0; k <= fftFrameSize2; k++) {
 
 				/* get magnitude and true frequency from synthesis arrays */
-				magn = gSynMagn[k];
-				tmp = gSynFreq[k];
-
-				/* subtract bin mid frequency */
-				tmp -= (double)k*freqPerBin;
+				const auto magn = gSynMagn[k];
+				double tmp = gSynFreq[k];
 
 				/* get bin deviation from freq deviation */
 				tmp /= freqPerBin;
 
-				/* take osamp into account */
+                /* subtract bin mid frequency */
+                tmp -= k;
+
+                /* take osamp into account */
 				tmp = 2.*M_PI*tmp/osamp;
 
 				/* add the overlap phase advance back in */
@@ -341,11 +336,11 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
 
 				/* accumulate delta phase to get bin phase */
 				gSumPhase[k] += tmp;
-				phase = gSumPhase[k];
+				const auto phase = gSumPhase[k];
 
 				/* get real and imag part and re-interleave */
-				gFFTworksp[2*k] = magn*cos(phase);
-				gFFTworksp[2*k+1] = magn*sin(phase);
+				gFFTworksp[2*k] = magn*cosf(phase);
+				gFFTworksp[2*k+1] = magn*sinf(phase);
 			} 
 
 			/* zero negative frequencies */
