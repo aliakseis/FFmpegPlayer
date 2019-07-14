@@ -274,32 +274,26 @@ DXVA2_VideoSample GetVideoSample(
 
 #endif
 
-#ifdef _WIN64
-#define _mm_movpi64_epi64(a) _mm_set_epi64x(0, (a))
-#define __m64 __int64
-#define _mm_empty() ((void)0)
-#endif
 
 void SimdCopyAndConvert(
     __m128i* const __restrict origin0,
     __m128i* const __restrict origin1,
     const __m128i* const __restrict src00,
     const __m128i* const __restrict src01,
-    const __m64* const __restrict src0,
-    const __m64* const __restrict src1,
+    const double* const __restrict src0,
+    const double* const __restrict src1,
     size_t count)
 {
     for (size_t i = 0; i < count; ++i)
     {
         __m128i uv = _mm_unpacklo_epi8(
-            _mm_movpi64_epi64(src0[i]),
-            _mm_movpi64_epi64(src1[i]));
+            _mm_castpd_si128(_mm_load_sd(src0 + i)),
+            _mm_castpd_si128(_mm_load_sd(src1 + i)));
         _mm_stream_si128(origin0 + i * 2, _mm_unpacklo_epi8(src00[i], uv));
         _mm_stream_si128(origin0 + i * 2 + 1, _mm_unpackhi_epi8(src00[i], uv));
         _mm_stream_si128(origin1 + i * 2, _mm_unpacklo_epi8(src01[i], uv));
         _mm_stream_si128(origin1 + i * 2 + 1, _mm_unpackhi_epi8(src01[i], uv));
     }
-    _mm_empty();
 }
 
 void CopyAndConvert(
@@ -322,8 +316,8 @@ void CopyAndConvert(
             (__m128i*) origin1,
             (const __m128i*) src00,
             (const __m128i*) src01,
-            (const __m64*) src0,
-            (const __m64*) src1,
+            (const double*) src0,
+            (const double*) src1,
             simdCount);
 
         origin0 += simdCount * 8;
