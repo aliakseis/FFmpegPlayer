@@ -50,13 +50,14 @@
 #define ID_VIDEO_SPEED5                 32781
 #define ID_VIDEO_SPEED6                 32782
 #define ID_VIDEO_SPEED7                 32783
+#define ID_NIGHTCORE                    32784
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
-#define _APS_NEXT_COMMAND_VALUE         32784
+#define _APS_NEXT_COMMAND_VALUE         32785
 #define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

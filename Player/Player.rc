@@ -171,6 +171,7 @@ BEGIN
             MENUITEM "1.25x",                       ID_VIDEO_SPEED5
             MENUITEM "1.6x",                        ID_VIDEO_SPEED6
             MENUITEM "2x",                          ID_VIDEO_SPEED7
+            MENUITEM "Nightcore",                   ID_NIGHTCORE
         END
     END
     POPUP "&View"

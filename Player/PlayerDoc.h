@@ -125,6 +125,8 @@ private:
 
     void reset();
 
+    float getVideoSpeed() const;
+
 private:
     std::unique_ptr<IFrameDecoder> m_frameDecoder;
 
@@ -146,4 +148,6 @@ private:
 
     std::deque<std::string> m_playList;
     std::function<void()> m_reopenFunc;
+
+    bool m_nightcore;
 };

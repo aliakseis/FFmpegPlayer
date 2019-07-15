@@ -52,6 +52,7 @@ const std::pair<int, int> videoSpeeds[]
     { 5, 4 },
     { 8, 5 },
     { 2, 1 },
+    { 5, 4 }, //nightcore
 };
 
 
@@ -101,8 +102,8 @@ IMPLEMENT_DYNCREATE(CPlayerDoc, CDocument)
 BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND_RANGE(ID_TRACK1, ID_TRACK4, OnAudioTrack)
     ON_UPDATE_COMMAND_UI_RANGE(ID_TRACK1, ID_TRACK4, OnUpdateAudioTrack)
-    ON_COMMAND_RANGE(ID_VIDEO_SPEED1, ID_VIDEO_SPEED7, OnVideoSpeed)
-    ON_UPDATE_COMMAND_UI_RANGE(ID_VIDEO_SPEED1, ID_VIDEO_SPEED7, OnUpdateVideoSpeed)
+    ON_COMMAND_RANGE(ID_VIDEO_SPEED1, ID_NIGHTCORE, OnVideoSpeed)
+    ON_UPDATE_COMMAND_UI_RANGE(ID_VIDEO_SPEED1, ID_NIGHTCORE, OnUpdateVideoSpeed)
     ON_COMMAND(ID_AUTOPLAY, &CPlayerDoc::OnAutoplay)
     ON_UPDATE_COMMAND_UI(ID_AUTOPLAY, &CPlayerDoc::OnUpdateAutoplay)
     ON_COMMAND(ID_LOOPING, &CPlayerDoc::OnLooping)
@@ -117,14 +118,12 @@ CPlayerDoc::CPlayerDoc()
     : m_frameDecoder(
         GetFrameDecoder(
             std::make_unique<AudioPitchDecorator>(GetAudioPlayer(),
-                [this] {
-                    const auto speedRational = m_frameDecoder->getSpeedRational();
-                    return static_cast<float>(speedRational.second) / speedRational.first;
-                })))
+            std::bind(&CPlayerDoc::getVideoSpeed, this))))
     , m_unicodeSubtitles(false)
     , m_onEndOfStream(false)
     , m_autoPlay(false)
     , m_looping(false)
+    , m_nightcore(false)
 {
     m_frameDecoder->setDecoderListener(this);
 }
@@ -259,6 +258,8 @@ void CPlayerDoc::reset()
     m_reopenFunc = nullptr;
 
     m_url.clear();
+
+    m_nightcore = false;
 
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
 }
@@ -846,6 +847,7 @@ void CPlayerDoc::OnVideoSpeed(UINT id)
     if (idx >= 0 && idx < sizeof(videoSpeeds) / sizeof(videoSpeeds[0]))
     {
         m_frameDecoder->setSpeedRational(videoSpeeds[idx]);
+        m_nightcore = (id == ID_NIGHTCORE);
     }
 }
 
@@ -855,7 +857,15 @@ void CPlayerDoc::OnUpdateVideoSpeed(CCmdUI* pCmdUI)
     if (idx >= 0 && idx < sizeof(videoSpeeds) / sizeof(videoSpeeds[0]))
     {
         pCmdUI->Enable(m_frameDecoder->isPlaying());
-        pCmdUI->SetCheck(
-            m_frameDecoder->getSpeedRational() == videoSpeeds[idx]);
+        pCmdUI->SetCheck((pCmdUI->m_nID == ID_NIGHTCORE) ? m_nightcore 
+            : !m_nightcore && m_frameDecoder->getSpeedRational() == videoSpeeds[idx]);
     }
+}
+
+float CPlayerDoc::getVideoSpeed() const
+{
+    if (m_nightcore)
+        return 1.f;
+    const auto speedRational = m_frameDecoder->getSpeedRational();
+    return static_cast<float>(speedRational.second) / speedRational.first;
 }
