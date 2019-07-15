@@ -214,14 +214,13 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
 	Author: (c)1999-2015 Stephan M. Bernsee <s.bernsee [AT] zynaptiq [DOT] com>
 */
 {
-	double freqPerBin, expct;
-	long k, qpd, index, inFifoLatency, stepSize, fftFrameSize2;
+	long k, index, inFifoLatency, stepSize, fftFrameSize2;
 
 	/* set up some handy variables */
 	fftFrameSize2 = fftFrameSize/2;
 	stepSize = fftFrameSize/osamp;
-	freqPerBin = sampleRate/(double)fftFrameSize;
-	expct = 2.*M_PI*(double)stepSize/(double)fftFrameSize;
+	const double freqPerBin = sampleRate/(double)fftFrameSize;
+    const double expct = 2.*M_PI*(double)stepSize/(double)fftFrameSize;
 	inFifoLatency = fftFrameSize-stepSize;
 	if (gRover == false) gRover = inFifoLatency;
 
