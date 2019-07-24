@@ -202,6 +202,7 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
         m_frameDecoder->play(true);
         m_url = url;
         m_subtitles.reset();
+        m_nightcore = false;
         auto transcripts = getYoutubeTranscripts(originalUrl);
         if (!transcripts.empty())
         {
