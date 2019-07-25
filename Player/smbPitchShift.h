@@ -8,7 +8,7 @@ class CSmbPitchShift
 public:
     void reset()
     {
-        gRover = false;
+        gRover = 0;
         gInit = false;
     }
     void smbPitchShift(float pitchShift, long numSampsToProcess, long fftFrameSize, long osamp, float sampleRate, float *indata, float *outdata);
@@ -24,6 +24,6 @@ private:
     float gAnaMagn[MAX_FRAME_LENGTH];
     float gSynFreq[MAX_FRAME_LENGTH];
     float gSynMagn[MAX_FRAME_LENGTH];
-    long gRover = false;
-    long gInit = false;
+    long gRover = 0;
+    bool gInit = false;
 };
