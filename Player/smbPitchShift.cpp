@@ -47,22 +47,21 @@
 #include <vector>
 
 #define M_PI 3.14159265358979323846
-//#define MAX_FRAME_LENGTH 8192
 
 
 namespace {
 
 void smbFft(float *fftBuffer, long fftFrameSize, long sign)
 /* 
-	FFT routine, (C)1996 S.M.Bernsee. Sign = -1 is FFT, 1 is iFFT (inverse)
-	Fills fftBuffer[0...2*fftFrameSize-1] with the Fourier transform of the
-	time domain data in fftBuffer[0...2*fftFrameSize-1]. The FFT array takes
-	and returns the cosine and sine parts in an interleaved manner, ie.
-	fftBuffer[0] = cosPart[0], fftBuffer[1] = sinPart[0], asf. fftFrameSize
-	must be a power of 2. It expects a complex input signal (see footnote 2),
-	ie. when working with 'common' audio signals our input signal has to be
-	passed as {in[0],0.,in[1],0.,in[2],0.,...} asf. In that case, the transform
-	of the frequencies of interest is in fftBuffer[0...fftFrameSize].
+    FFT routine, (C)1996 S.M.Bernsee. Sign = -1 is FFT, 1 is iFFT (inverse)
+    Fills fftBuffer[0...2*fftFrameSize-1] with the Fourier transform of the
+    time domain data in fftBuffer[0...2*fftFrameSize-1]. The FFT array takes
+    and returns the cosine and sine parts in an interleaved manner, ie.
+    fftBuffer[0] = cosPart[0], fftBuffer[1] = sinPart[0], asf. fftFrameSize
+    must be a power of 2. It expects a complex input signal (see footnote 2),
+    ie. when working with 'common' audio signals our input signal has to be
+    passed as {in[0],0.,in[1],0.,in[2],0.,...} asf. In that case, the transform
+    of the frequencies of interest is in fftBuffer[0...fftFrameSize].
 */
 {
     const auto number = 2 * fftFrameSize - 2;
@@ -78,23 +77,23 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
             }
         }
         if (i < j) {
-			auto p1 = fftBuffer+i; 
+            auto p1 = fftBuffer+i; 
             auto p2 = fftBuffer+j;
-			auto temp = *p1; *(p1++) = *p2;
-			*(p2++) = temp; temp = *p1;
-			*p1 = *p2; *p2 = temp;
-		}
-	}
-	for (long k = 0, le = 2; k < (long)(log(fftFrameSize)/log(2.)+.5); k++) {
-		le <<= 1;
-		const auto le2 = le>>1;
+            auto temp = *p1; *(p1++) = *p2;
+            *(p2++) = temp; temp = *p1;
+            *p1 = *p2; *p2 = temp;
+        }
+    }
+    for (long k = 0, le = 2; k < (long)(log(fftFrameSize)/log(2.)+.5); k++) {
+        le <<= 1;
+        const auto le2 = le>>1;
         __declspec(align(8)) struct { float r, i; } u{ 1.0, 0.0 };
 
-		const float arg = M_PI / (le2>>1);
+        const float arg = M_PI / (le2>>1);
         const float wr = cos(arg);
         const float wi = sign*sin(arg);
-		for (long j = 0; j < le2; j += 2) {
-			auto p1r = fftBuffer+j; 
+        for (long j = 0; j < le2; j += 2) {
+            auto p1r = fftBuffer+j; 
             auto p2r = p1r+le2;
 
             __m128 u_ = _mm_castpd_ps(_mm_movedup_pd(_mm_load_sd((const double*)&u)));
@@ -103,7 +102,7 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
             __m128 hdup = _mm_movehdup_ps(u_);
 
             long i = j;
-			for (; i < 2*fftFrameSize - le; i += le * 2) 
+            for (; i < 2*fftFrameSize - le; i += le * 2) 
             {
                 __m128 p2 = _mm_loadh_pi(_mm_castpd_ps(_mm_load_sd((const double*)p2r)), (const __m64*)(p2r + le));
                 __m128 part1 = _mm_mul_ps(p2, ldup);
@@ -121,9 +120,9 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
                 _mm_storeh_pi((__m64*)(p1r + le), buffer);
                 _mm_storel_pi((__m64*)p1r, buffer);
 
-				p1r += le * 2; 
-				p2r += le * 2; 
-			}
+                p1r += le * 2; 
+                p2r += le * 2; 
+            }
 
 
             if (i < 2 * fftFrameSize) {
@@ -137,10 +136,10 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
 
 
             const float tr = u.r*wr - u.i*wi;
-			u.i = u.r*wi + u.i*wr;
-			u.r = tr;
-		}
-	}
+            u.i = u.r*wi + u.i*wr;
+            u.r = tr;
+        }
+    }
 }
 
 
@@ -208,159 +207,158 @@ inline float smbAtan2(float y, float x)
 
 void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, long fftFrameSize, long osamp, float sampleRate, float *indata, float *outdata)
 /*
-	Routine smbPitchShift(). See top of file for explanation
-	Purpose: doing pitch shifting while maintaining duration using the Short
-	Time Fourier Transform.
-	Author: (c)1999-2015 Stephan M. Bernsee <s.bernsee [AT] zynaptiq [DOT] com>
+    Routine smbPitchShift(). See top of file for explanation
+    Purpose: doing pitch shifting while maintaining duration using the Short
+    Time Fourier Transform.
+    Author: (c)1999-2015 Stephan M. Bernsee <s.bernsee [AT] zynaptiq [DOT] com>
 */
 {
-	long k, index, inFifoLatency, stepSize, fftFrameSize2;
-
-	/* set up some handy variables */
-	fftFrameSize2 = fftFrameSize/2;
-	stepSize = fftFrameSize/osamp;
-	const double freqPerBin = sampleRate/(double)fftFrameSize;
+    /* set up some handy variables */
+    const long fftFrameSize2 = fftFrameSize/2;
+    const long stepSize = fftFrameSize/osamp;
+    const double freqPerBin = sampleRate/(double)fftFrameSize;
     const double expct = 2.*M_PI*(double)stepSize/(double)fftFrameSize;
-	inFifoLatency = fftFrameSize-stepSize;
-	if (gRover == false) gRover = inFifoLatency;
+    const long inFifoLatency = fftFrameSize-stepSize;
+    if (!gRover) 
+        gRover = inFifoLatency;
 
-	/* initialize our static arrays */
-	if (gInit == false) {
-		memset(gInFIFO, 0, MAX_FRAME_LENGTH*sizeof(float));
-		memset(gOutFIFO, 0, MAX_FRAME_LENGTH*sizeof(float));
-		memset(gFFTworksp, 0, 2*MAX_FRAME_LENGTH*sizeof(float));
-		memset(gLastPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(float));
-		memset(gSumPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(float));
-		memset(gOutputAccum, 0, 2*MAX_FRAME_LENGTH*sizeof(float));
-		memset(gAnaFreq, 0, MAX_FRAME_LENGTH*sizeof(float));
-		memset(gAnaMagn, 0, MAX_FRAME_LENGTH*sizeof(float));
-		gInit = true;
-	}
+    /* initialize our static arrays */
+    if (!gInit) {
+        memset(gInFIFO, 0, MAX_FRAME_LENGTH*sizeof(float));
+        memset(gOutFIFO, 0, MAX_FRAME_LENGTH*sizeof(float));
+        memset(gFFTworksp, 0, 2*MAX_FRAME_LENGTH*sizeof(float));
+        memset(gLastPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(float));
+        memset(gSumPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(float));
+        memset(gOutputAccum, 0, 2*MAX_FRAME_LENGTH*sizeof(float));
+        memset(gAnaFreq, 0, MAX_FRAME_LENGTH*sizeof(float));
+        memset(gAnaMagn, 0, MAX_FRAME_LENGTH*sizeof(float));
+        gInit = true;
+    }
 
     std::vector<double> window;
     if (window.size() != fftFrameSize)
     {
         window.resize(fftFrameSize);
-        for (k = 0; k < fftFrameSize; k++) {
+        for (long k = 0; k < fftFrameSize; k++) {
             window[k] = -.5*cos(2.*M_PI*(double)k / (double)fftFrameSize) + .5;
         }
     }
 
-	/* main processing loop */
-	for (long i = 0; i < numSampsToProcess; i++){
+    /* main processing loop */
+    for (long i = 0; i < numSampsToProcess; i++){
 
-		/* As long as we have not yet collected enough data just read in */
-		gInFIFO[gRover] = indata[i];
-		outdata[i] = gOutFIFO[gRover-inFifoLatency];
-		gRover++;
+        /* As long as we have not yet collected enough data just read in */
+        gInFIFO[gRover] = indata[i];
+        outdata[i] = gOutFIFO[gRover-inFifoLatency];
+        gRover++;
 
-		/* now we have enough data for processing */
-		if (gRover >= fftFrameSize) {
-			gRover = inFifoLatency;
+        /* now we have enough data for processing */
+        if (gRover >= fftFrameSize) {
+            gRover = inFifoLatency;
 
-			/* do windowing and re,im interleave */
-			for (k = 0; k < fftFrameSize;k++) {
-				gFFTworksp[2*k] = gInFIFO[k] * window[k];
-				gFFTworksp[2*k+1] = 0.;
-			}
+            /* do windowing and re,im interleave */
+            for (long k = 0; k < fftFrameSize;k++) {
+                gFFTworksp[2*k] = gInFIFO[k] * window[k];
+                gFFTworksp[2*k+1] = 0.;
+            }
 
 
-			/* ***************** ANALYSIS ******************* */
-			/* do transform */
-			smbFft(gFFTworksp, fftFrameSize, -1);
+            /* ***************** ANALYSIS ******************* */
+            /* do transform */
+            smbFft(gFFTworksp, fftFrameSize, -1);
 
-			/* this is the analysis step */
-			for (k = 0; k <= fftFrameSize2; k++) {
+            /* this is the analysis step */
+            for (long k = 0; k <= fftFrameSize2; k++) {
 
-				/* de-interlace FFT buffer */
-				const auto real = gFFTworksp[2*k];
+                /* de-interlace FFT buffer */
+                const auto real = gFFTworksp[2*k];
                 const auto imag = gFFTworksp[2*k+1];
 
-				/* compute magnitude and phase */
-				const auto magn = 2.*hypotf(real, imag);
-				const auto phase = smbAtan2(imag,real);
+                /* compute magnitude and phase */
+                const auto magn = 2.*hypotf(real, imag);
+                const auto phase = smbAtan2(imag,real);
 
-				/* compute phase difference */
-				double tmp = phase - gLastPhase[k];
-				gLastPhase[k] = phase;
+                /* compute phase difference */
+                double tmp = phase - gLastPhase[k];
+                gLastPhase[k] = phase;
 
-				/* subtract expected phase difference */
-				tmp -= (double)k*expct;
+                /* subtract expected phase difference */
+                tmp -= (double)k*expct;
 
                 /* map delta phase into +/- Pi interval */
                 /* get deviation from bin frequency from the +/- Pi interval */
                 tmp /= (2.*M_PI);
                 tmp = osamp * (tmp - floor(tmp + 0.5)); // faster than round
 
-				/* compute the k-th partials' true frequency */
-				tmp = (k + tmp) * freqPerBin;
+                /* compute the k-th partials' true frequency */
+                tmp = (k + tmp) * freqPerBin;
 
-				/* store magnitude and true frequency in analysis arrays */
-				gAnaMagn[k] = magn;
-				gAnaFreq[k] = tmp;
+                /* store magnitude and true frequency in analysis arrays */
+                gAnaMagn[k] = magn;
+                gAnaFreq[k] = tmp;
 
-			}
+            }
 
-			/* ***************** PROCESSING ******************* */
-			/* this does the actual pitch shifting */
-			memset(gSynMagn, 0, fftFrameSize*sizeof(float));
-			memset(gSynFreq, 0, fftFrameSize*sizeof(float));
-			for (k = 0; k <= fftFrameSize2; k++) { 
-				index = k*pitchShift;
-				if (index <= fftFrameSize2) { 
-					gSynMagn[index] += gAnaMagn[k]; 
-					gSynFreq[index] = gAnaFreq[k] * pitchShift; 
-				} 
-			}
-			
-			/* ***************** SYNTHESIS ******************* */
-			/* this is the synthesis step */
-			for (k = 0; k <= fftFrameSize2; k++) {
+            /* ***************** PROCESSING ******************* */
+            /* this does the actual pitch shifting */
+            memset(gSynMagn, 0, fftFrameSize*sizeof(float));
+            memset(gSynFreq, 0, fftFrameSize*sizeof(float));
+            for (long k = 0; k <= fftFrameSize2; k++) {
+                const long index = k*pitchShift;
+                if (index <= fftFrameSize2) { 
+                    gSynMagn[index] += gAnaMagn[k]; 
+                    gSynFreq[index] = gAnaFreq[k] * pitchShift; 
+                } 
+            }
+            
+            /* ***************** SYNTHESIS ******************* */
+            /* this is the synthesis step */
+            for (long k = 0; k <= fftFrameSize2; k++) {
 
-				/* get magnitude and true frequency from synthesis arrays */
-				const auto magn = gSynMagn[k];
-				double tmp = gSynFreq[k];
+                /* get magnitude and true frequency from synthesis arrays */
+                const auto magn = gSynMagn[k];
+                double tmp = gSynFreq[k];
 
-				/* get bin deviation from freq deviation */
-				tmp /= freqPerBin;
+                /* get bin deviation from freq deviation */
+                tmp /= freqPerBin;
 
                 /* subtract bin mid frequency */
                 tmp -= k;
 
                 /* take osamp into account */
-				tmp = 2.*M_PI*tmp/osamp;
+                tmp = 2.*M_PI*tmp/osamp;
 
-				/* add the overlap phase advance back in */
-				tmp += (double)k*expct;
+                /* add the overlap phase advance back in */
+                tmp += (double)k*expct;
 
-				/* accumulate delta phase to get bin phase */
-				gSumPhase[k] += tmp;
-				const auto phase = gSumPhase[k];
+                /* accumulate delta phase to get bin phase */
+                gSumPhase[k] += tmp;
+                const auto phase = gSumPhase[k];
 
-				/* get real and imag part and re-interleave */
-				gFFTworksp[2*k] = magn*cosf(phase);
-				gFFTworksp[2*k+1] = magn*sinf(phase);
-			} 
+                /* get real and imag part and re-interleave */
+                gFFTworksp[2*k] = magn*cosf(phase);
+                gFFTworksp[2*k+1] = magn*sinf(phase);
+            } 
 
-			/* zero negative frequencies */
-			for (k = fftFrameSize+2; k < 2*fftFrameSize; k++) gFFTworksp[k] = 0.;
+            /* zero negative frequencies */
+            for (long k = fftFrameSize+2; k < 2*fftFrameSize; k++) gFFTworksp[k] = 0.;
 
-			/* do inverse transform */
-			smbFft(gFFTworksp, fftFrameSize, 1);
+            /* do inverse transform */
+            smbFft(gFFTworksp, fftFrameSize, 1);
 
-			/* do windowing and add to output accumulator */ 
-			for(k=0; k < fftFrameSize; k++) {
-				gOutputAccum[k] += 2. * window[k] * gFFTworksp[2*k]/(fftFrameSize2*osamp);
-			}
-			for (k = 0; k < stepSize; k++) gOutFIFO[k] = gOutputAccum[k];
+            /* do windowing and add to output accumulator */ 
+            for(long k=0; k < fftFrameSize; k++) {
+                gOutputAccum[k] += 2. * window[k] * gFFTworksp[2*k]/(fftFrameSize2*osamp);
+            }
+            for (long k = 0; k < stepSize; k++) gOutFIFO[k] = gOutputAccum[k];
 
-			/* shift accumulator */
-			memmove(gOutputAccum, gOutputAccum+stepSize, fftFrameSize*sizeof(float));
+            /* shift accumulator */
+            memmove(gOutputAccum, gOutputAccum+stepSize, fftFrameSize*sizeof(float));
 
-			/* move input FIFO */
-			for (k = 0; k < inFifoLatency; k++) gInFIFO[k] = gInFIFO[k+stepSize];
-		}
-	}
+            /* move input FIFO */
+            for (long k = 0; k < inFifoLatency; k++) gInFIFO[k] = gInFIFO[k+stepSize];
+        }
+    }
 }
 
 // -----------------------------------------------------------------------------------------------------------------
