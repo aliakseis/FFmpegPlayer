@@ -1,6 +1,8 @@
 #include "ffmpegdecoder.h"
 #include "makeguard.h"
 
+#include <algorithm>
+
 void FFmpegDecoder::parseRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Parse thread started";
@@ -91,7 +93,8 @@ void FFmpegDecoder::dispatchPacket(AVPacket& packet)
             return; // guard frees packet
         }
     }
-    else if (packet.stream_index == m_audioStreamNumber)
+    else if (std::find(m_audioIndices.begin(), m_audioIndices.end(), packet.stream_index) 
+        != m_audioIndices.end())
     { 
         if (!m_audioPacketsQueue.push(packet, seekLambda))
         {

@@ -54,6 +54,11 @@ void FFmpegDecoder::audioParseRunnable()
 
         auto packetGuard = MakeGuard(&packet, av_packet_unref);
 
+        if (m_audioStreamNumber != packet.stream_index)
+        {
+            continue;
+        }
+
         if (!initialized)
         {
             if (packet.pts != AV_NOPTS_VALUE)
