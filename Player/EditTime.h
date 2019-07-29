@@ -31,11 +31,12 @@ public:
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CEditTime)
-	afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
-	//}}AFX_MSG
+    //{{AFX_MSG(CEditTime)
+    afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
+    afx_msg LRESULT OnReset(WPARAM wParam, LPARAM lParam);
+    //}}AFX_MSG
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 
 private:
 	CFont m_Font;

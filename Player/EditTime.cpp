@@ -10,6 +10,8 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+enum { WM_RESET = WM_USER + 101 };
+
 /////////////////////////////////////////////////////////////////////////////
 // CEditTime
 
@@ -23,9 +25,10 @@ CEditTime::~CEditTime()
 
 
 BEGIN_MESSAGE_MAP(CEditTime, CEdit)
-	//{{AFX_MSG_MAP(CEditTime)
-	ON_WM_CHAR()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CEditTime)
+    ON_WM_CHAR()
+    ON_MESSAGE(WM_RESET, &CEditTime::OnReset)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CEditTime::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
@@ -59,7 +62,7 @@ void CEditTime::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 void CEditTime::Reset()
 {
-	SetWindowText(_T(""));
+    SendNotifyMessage(WM_RESET, 0, 0);
 }
 
 void CEditTime::SetValue(double fTime)
@@ -81,4 +84,10 @@ bool CEditTime::IsEmpty() const
     CString strBuf;
     GetWindowText(strBuf);
     return strBuf.IsEmpty();
+}
+
+LRESULT CEditTime::OnReset(WPARAM, LPARAM)
+{
+    SetWindowText(_T(""));
+    return 0;
 }
