@@ -228,10 +228,16 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 
 void FFmpegDecoder::fixDuration()
 {
-    AVPacket packet;
     if (m_duration <= 0)
     {
         m_duration = 0;
+        if ((m_formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE)
+            || !m_formatContext->pb || !(m_formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL))
+        {
+            return;
+        }
+
+        AVPacket packet;
         while (av_read_frame(m_formatContext, &packet) >= 0)
         {
             if (packet.stream_index == m_videoStreamNumber)
