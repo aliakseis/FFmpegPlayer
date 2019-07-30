@@ -231,8 +231,11 @@ void FFmpegDecoder::fixDuration()
     if (m_duration <= 0)
     {
         m_duration = 0;
-        if ((m_formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE)
-            || !m_formatContext->pb || !(m_formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL))
+        if (
+#ifdef AVFMTCTX_UNSEEKABLE
+            (m_formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE) ||
+#endif
+            !m_formatContext->pb || !(m_formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL))
         {
             return;
         }
