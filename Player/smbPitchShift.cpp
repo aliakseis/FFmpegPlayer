@@ -360,5 +360,3 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
         }
     }
 }
-
-// -----------------------------------------------------------------------------------------------------------------
