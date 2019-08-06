@@ -199,11 +199,6 @@
             "ComponentsUrl" = "8:"
                 "Items"
                 {
-                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.5"
-                    {
-                    "Name" = "8:Microsoft .NET Framework 4.5 (x86 and x64)"
-                    "ProductCode" = "8:.NETFramework,Version=v4.5"
-                    }
                 }
             }
         }
@@ -624,14 +619,14 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:FFmpeg Player"
         "ProductCode" = "8:{75A04463-09D1-4BE7-A045-58CACA8F9664}"
-        "PackageCode" = "8:{D2F4DED7-2998-49BF-828A-FAA1397DB381}"
+        "PackageCode" = "8:{CB28B12E-773C-4D8A-A799-B6393B1114F2}"
         "UpgradeCode" = "8:{0D785376-AABE-42D5-B21F-916C345075C2}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.1.0"
+        "ProductVersion" = "8:0.1.1"
         "Manufacturer" = "8:aliakseis"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
