@@ -3,6 +3,19 @@
 
 #include <algorithm>
 
+namespace {
+
+bool isSeekable(AVFormatContext* formatContext)
+{
+    return
+#ifdef AVFMTCTX_UNSEEKABLE
+        !(formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE) &&
+#endif
+        formatContext->pb && (formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL);
+}
+
+} // namespace
+
 void FFmpegDecoder::parseRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Parse thread started";
@@ -143,7 +156,8 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 
     const bool hasVideo = m_mainVideoThread != nullptr;
 
-    if (avformat_seek_file(m_formatContext, 
+    if (isSeekable(m_formatContext)
+        && avformat_seek_file(m_formatContext, 
                            hasVideo ? m_videoStreamNumber : m_audioStreamNumber,
                            0, seekDuration, seekDuration, AVSEEK_FLAG_FRAME) < 0
         && (seekDuration >= 0 || avformat_seek_file(m_formatContext, 
@@ -231,11 +245,7 @@ void FFmpegDecoder::fixDuration()
     if (m_duration <= 0)
     {
         m_duration = 0;
-        if (
-#ifdef AVFMTCTX_UNSEEKABLE
-            (m_formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE) ||
-#endif
-            !m_formatContext->pb || !(m_formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL))
+        if (!isSeekable(m_formatContext))
         {
             return;
         }
