@@ -220,18 +220,16 @@ bool extractYoutubeUrl(std::string& s)
 
 bool extractYoutubeId(std::string& s)
 {
-    std::regex txt_regex(R"((?:v=|\/)([0-9A-Za-z_-]{11}).*)");
     std::string copy = s;
-    for (int unescaped = 0; unescaped < 2; ++unescaped)
+    if (!extractYoutubeUrl(copy))
+        return false;
+
+    std::regex txt_regex(R"((?:v=|\/)([0-9A-Za-z_-]{11}).*)");
+    std::smatch m;
+    if (std::regex_search(copy, m, txt_regex) && m.size() == 2)
     {
-        std::smatch m;
-        if (std::regex_search(copy, m, txt_regex) && m.size() == 2)
-        {
-            s = m[1];
-            return true;
-        }
-        if (!unescaped)
-            copy = UrlUnescapeString(copy);
+        s = m[1];
+        return true;
     }
 
     return false;
