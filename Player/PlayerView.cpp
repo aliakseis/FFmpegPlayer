@@ -1269,7 +1269,9 @@ void CPlayerView::updateFrame()
 
     if (data.surface)
     {
-        std::swap(m_pMainStream.p, *data.surface);
+        IDirect3DSurface9* temp = m_pMainStream;
+        m_pMainStream = *data.surface;
+        *data.surface = temp;
     }
     else
     {

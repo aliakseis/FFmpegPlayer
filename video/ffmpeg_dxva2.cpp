@@ -324,10 +324,9 @@ static void dxva2_destroy_decoder(AVCodecContext *s)
 {
     InputStream  *ist = (InputStream *)s->opaque;
     DXVA2Context *ctx = (DXVA2Context *)ist->hwaccel_ctx;
-    int i;
 
     if (ctx->surfaces) {
-        for (i = 0; i < ctx->num_surfaces; i++) {
+        for (int i = 0; i < ctx->num_surfaces; i++) {
             if (ctx->surfaces[i])
                 IDirect3DSurface9_Release(ctx->surfaces[i]);
         }
@@ -338,7 +337,6 @@ static void dxva2_destroy_decoder(AVCodecContext *s)
     ctx->surface_age = 0;
 
     if (ctx->decoder) {
-        //IDirectXVideoDecoder_Release(ctx->decoder);
         ctx->decoder->Release();
         ctx->decoder = NULL;
     }
