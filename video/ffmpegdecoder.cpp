@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <tuple>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/log/trivial.hpp>
 
 #define USE_HWACCEL
@@ -405,8 +406,11 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     else
     {
         av_dict_set(&streamOpts, "stimeout", "5000000", 0); // 5 seconds rtsp timeout.
-        av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
         av_dict_set(&streamOpts, "rw_timeout", "5000000", 0); // 5 seconds I/O timeout.
+        if (boost::starts_with(url, "https://") || boost::starts_with(url, "http://")) // seems to be a bug
+        {
+            av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
+        }
     }
 
     m_formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
