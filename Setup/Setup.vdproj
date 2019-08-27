@@ -58,6 +58,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_432363CD76D0480AA7084E8FF9F2BE71"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_740F7AA29F5C40B18255AD34A953BF73"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -83,6 +89,12 @@
         "Entry"
         {
         "MsmKey" = "8:_9E71E5D2E8484C0384CA3DEF09957766"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_A4B43CDF9CA54C19AF7D23DB37A100AC"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -342,6 +354,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_432363CD76D0480AA7084E8FF9F2BE71"
+            {
+            "SourcePath" = "8:..\\remove_youtube_transcript_api.cmd"
+            "TargetName" = "8:remove_youtube_transcript_api.cmd"
+            "Tag" = "8:"
+            "Folder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_740F7AA29F5C40B18255AD34A953BF73"
             {
             "SourcePath" = "8:..\\Release\\boost_context-vc141-mt-1_65_1.dll"
@@ -426,6 +458,26 @@
             {
             "SourcePath" = "8:..\\Release\\boost_filesystem-vc141-mt-1_65_1.dll"
             "TargetName" = "8:boost_filesystem-vc141-mt-1_65_1.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A4B43CDF9CA54C19AF7D23DB37A100AC"
+            {
+            "SourcePath" = "8:..\\remove_pytube.cmd"
+            "TargetName" = "8:remove_pytube.cmd"
             "Tag" = "8:"
             "Folder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
             "Condition" = "8:"
@@ -626,7 +678,7 @@
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.1.1"
+        "ProductVersion" = "8:0.1.2"
         "Manufacturer" = "8:aliakseis"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
