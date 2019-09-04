@@ -318,12 +318,27 @@ void CMainFrame::Dump(CDumpContext& dc) const
 void CMainFrame::OnFullScreen()
 {
     ModifyStyle(WS_OVERLAPPEDWINDOW, 0, SWP_FRAMECHANGED);
+    const bool semiTransparentMode
+        = GetAsyncKeyState(VK_SHIFT) < 0 && GetAsyncKeyState(VK_CONTROL) < 0;
+    if (semiTransparentMode)
+    {
+        SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        ModifyStyleEx(0, WS_EX_LAYERED | WS_EX_TRANSPARENT);
+        SetLayeredWindowAttributes(0, (255 * 40) / 100, LWA_ALPHA);
+    }
     ShowFullScreen();
     if (CMFCToolBar* toolBar = static_cast<FullScreenMgrAccessor&>(m_Impl).GetFullScreenBar())
     {
         if (auto pFrame = toolBar->GetParentMiniFrame())
         {
-            pFrame->ShowWindow(SW_HIDE);
+            if (semiTransparentMode)
+            {
+                m_dockManager.RemoveMiniFrame(pFrame);
+            }
+            else
+            {
+                pFrame->ShowWindow(SW_HIDE);
+            }
         }
     }
 }
@@ -347,8 +362,12 @@ void CMainFrame::OnWindowPosChanged(WINDOWPOS* lpwndpos)
 
     // message handler code here
     if (!IsFullScreen() && m_bFullScreen)
+    {
         ModifyStyle(0, WS_OVERLAPPEDWINDOW, 0);
-
+        // clear semi transparent settings
+        SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        ModifyStyleEx(WS_EX_LAYERED | WS_EX_TRANSPARENT, 0);
+    }
     m_bFullScreen = IsFullScreen();
 }
 
