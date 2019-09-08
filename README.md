@@ -3,6 +3,8 @@
 A simple FFmpeg based player. The player core is made with multiplatformity in mind. UI / video / audio layer is MFC/Win32 specific.
 Note that D2D mode (the one that is turned on by uncommenting define USE_DIRECT2D_VIEW) has become unstable after related MFC changes. It demonstrated comparatively bad performance on my PC anyway, so it is here basically for demonstration purposes. 
 
+Semi transparent, click through full screen mode introduced. It is invokable by holding ctrl+shift while pressing full screen button.
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
@@ -51,7 +53,8 @@ vcpkg install --featurepackages --recurse boost[python]
 
 You may need to remove pytube stuff from your profile folder for the player application to set up the latest version, for example, by invoking remove_pytube.cmd.
 
-Sometimes we need to go deeper and visit pytube issues list, for example 
+Sometimes we need to go deeper, visit pytube issues list and apply fixes, for example 
+- https://github.com/nficano/pytube/pull/425
 - https://github.com/nficano/pytube/pull/395
 - https://github.com/nficano/pytube/issues/381
 
