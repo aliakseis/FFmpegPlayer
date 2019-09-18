@@ -4,6 +4,9 @@
 
 namespace {
 
+const wchar_t USER_AGENT[]
+    = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.75 Safari/537.36";
+
 class CComUsageScope
 {
     bool m_bInitialized;
@@ -35,6 +38,7 @@ long HttpGetStatus(const char * url)
 
     if (SUCCEEDED(result = pIWinHttpRequest.CoCreateInstance(L"WinHttp.WinHttpRequest.5.1", NULL, CLSCTX_INPROC_SERVER))
         && SUCCEEDED(result = pIWinHttpRequest->Open(CComBSTR(L"HEAD"), CComBSTR(static_cast<const char*>(url)), varFalse))
+        && SUCCEEDED(result = pIWinHttpRequest->SetRequestHeader(CComBSTR(L"User-Agent"), CComBSTR(USER_AGENT)))
         && SUCCEEDED(result = pIWinHttpRequest->Send(varEmpty)))
     {
         pIWinHttpRequest->get_Status(&result);
@@ -56,6 +60,7 @@ CComVariant HttpGet(const char * url)
 
     if (SUCCEEDED(pIWinHttpRequest.CoCreateInstance(L"WinHttp.WinHttpRequest.5.1", NULL, CLSCTX_INPROC_SERVER))
         && SUCCEEDED(pIWinHttpRequest->Open(CComBSTR(L"GET"), CComBSTR(static_cast<const char*>(url)), varFalse))
+        && SUCCEEDED(pIWinHttpRequest->SetRequestHeader(CComBSTR(L"User-Agent"), CComBSTR(USER_AGENT)))
         && SUCCEEDED(pIWinHttpRequest->Send(varEmpty)))
     {
         pIWinHttpRequest->get_ResponseBody(&varBody);
