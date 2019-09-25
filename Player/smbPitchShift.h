@@ -24,6 +24,9 @@ private:
     float gAnaMagn[MAX_FRAME_LENGTH];
     float gSynFreq[MAX_FRAME_LENGTH];
     float gSynMagn[MAX_FRAME_LENGTH];
+
+    float gErrors[MAX_FRAME_LENGTH];
+
     long gRover = 0;
     bool gInit = false;
 };

@@ -232,6 +232,9 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
         memset(gOutputAccum, 0, 2*MAX_FRAME_LENGTH*sizeof(float));
         memset(gAnaFreq, 0, MAX_FRAME_LENGTH*sizeof(float));
         memset(gAnaMagn, 0, MAX_FRAME_LENGTH*sizeof(float));
+
+        memset(gErrors, 0, MAX_FRAME_LENGTH * sizeof(float));
+
         gInit = true;
     }
 
@@ -304,7 +307,12 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
             memset(gSynMagn, 0, fftFrameSize*sizeof(float));
             memset(gSynFreq, 0, fftFrameSize*sizeof(float));
             for (long k = 0; k <= fftFrameSize2; k++) {
-                const long index = k*pitchShift;
+
+                //const long index = k*pitchShift;
+                const auto originalIndex = k*pitchShift + gErrors[k];
+                const long index = originalIndex;
+                gErrors[k] = originalIndex - index;
+
                 if (index <= fftFrameSize2) { 
                     gSynMagn[index] += gAnaMagn[k]; 
                     gSynFreq[index] = gAnaFreq[k] * pitchShift; 
