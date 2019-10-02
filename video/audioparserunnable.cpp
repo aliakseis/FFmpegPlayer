@@ -125,12 +125,10 @@ bool FFmpegDecoder::handleAudioPacket(
             continue;
         }
 
-        const AVSampleFormat audioFrameFormat = (AVSampleFormat)audioFrame->format;
-	    const int audioFrameChannels = audioFrame->channels;
-
         const int original_buffer_size = av_samples_get_buffer_size(
-            nullptr, audioFrameChannels,
-            audioFrame->nb_samples, audioFrameFormat, 1);
+            nullptr, audioFrame->channels,
+            audioFrame->nb_samples,
+            static_cast<AVSampleFormat>(audioFrame->format), 1);
 
         // write buffer
         uint8_t* write_data = *getAudioData(audioFrame.get());
