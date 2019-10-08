@@ -523,6 +523,12 @@ void CPlayerDoc::changedFramePosition(long long start, long long frame, long lon
     const double currentTime = m_frameDecoder->getDurationSecs(frame);
     m_currentTime = currentTime;
     currentTimeUpdated(currentTime);
+
+    if (m_looping && !m_autoPlay && !isFullFrameRange() && m_currentTime >= m_rangeEndTime)
+    {
+        const double percent = (m_rangeStartTime - m_startTime) / (m_endTime - m_startTime);
+        m_frameDecoder->seekByPercent(percent);
+    }
 }
 
 void CPlayerDoc::fileLoaded(long long start, long long total)
@@ -544,6 +550,13 @@ void CPlayerDoc::fileLoaded(long long start, long long total)
 
 void CPlayerDoc::onEndOfStream()
 {
+    if (m_looping && !m_autoPlay && !isFullFrameRange())
+    {
+        const double percent = (m_rangeStartTime - m_startTime) / (m_endTime - m_startTime);
+        if (m_frameDecoder->seekByPercent(percent))
+            return;
+    }
+
     m_onEndOfStream = true;
 
     if (CWnd* pMainWnd = AfxGetApp()->GetMainWnd())
