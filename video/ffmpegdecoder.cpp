@@ -198,6 +198,7 @@ FFmpegDecoder::IOContext::IOContext(const PathType &s)
 
 FFmpegDecoder::IOContext::~IOContext()
 {
+    CHANNEL_LOG(ffmpeg_closing) << "In IOContext::~IOContext()";
     if (fh)
         fclose(fh);
 
