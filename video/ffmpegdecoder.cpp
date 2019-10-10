@@ -665,7 +665,7 @@ void FFmpegDecoder::AppendFrameClock(double frame_clock)
     }
 
     int speedNumerator, speedDenominator;
-    std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
+    std::tie(speedNumerator, speedDenominator) = getSpeedRational();
     InterlockedAdd(m_audioPTS, frame_clock * speedNumerator / speedDenominator);
 }
 
@@ -893,7 +893,7 @@ void FFmpegDecoder::setSpeedRational(const std::pair<int, int>& speed)
     const auto time = GetHiResTime();
     m_speedRational = speed;
     int speedNumerator, speedDenominator;
-    std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(speed);
+    std::tie(speedNumerator, speedDenominator) = speed;
 
     m_referenceTime = (boost::chrono::high_resolution_clock::now()
             - boost::chrono::microseconds(int64_t(time * speedDenominator / speedNumerator * 1000000.)))
@@ -915,7 +915,7 @@ void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame)
 double FFmpegDecoder::GetHiResTime()
 {
     int speedNumerator, speedDenominator;
-    std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
+    std::tie(speedNumerator, speedDenominator) = getSpeedRational();
     return boost::chrono::duration_cast<boost::chrono::microseconds>(
         boost::chrono::high_resolution_clock::now() - boost::chrono::high_resolution_clock::time_point(m_referenceTime)).count()
             / 1000000. * speedNumerator / speedDenominator;

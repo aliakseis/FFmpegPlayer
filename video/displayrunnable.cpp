@@ -37,7 +37,7 @@ void FFmpegDecoder::displayRunnable()
         }
 
         int speedNumerator, speedDenominator;
-        std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
+        std::tie(speedNumerator, speedDenominator) = getSpeedRational();
 
         for (;;)
         {

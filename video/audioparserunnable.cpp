@@ -256,7 +256,7 @@ void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
     const int64_t dec_channel_layout = getChannelLayout(audioFrame);
 
     int speedNumerator, speedDenominator;
-    std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
+    std::tie(speedNumerator, speedDenominator) = getSpeedRational();
 
     // Check if the new swr context required
     if (audioFrameFormat != m_audioCurrentPref.format ||

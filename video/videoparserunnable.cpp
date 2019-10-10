@@ -190,7 +190,7 @@ bool FFmpegDecoder::handleVideoFrame(
             else
             {
                 int speedNumerator, speedDenominator;
-                std::tie(speedNumerator, speedDenominator) = static_cast<const std::pair<int, int>&>(m_speedRational);
+                std::tie(speedNumerator, speedDenominator) = getSpeedRational();
                 context.numSkipped = 0;
                 td = boost::posix_time::milliseconds(
                     int((m_videoStartClock + pts - curTime) * 1000.  * speedDenominator / speedNumerator) + 1);
