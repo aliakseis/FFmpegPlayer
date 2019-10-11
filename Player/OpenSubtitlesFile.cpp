@@ -9,8 +9,8 @@
 #include <string>
 
 bool OpenSubRipFile(const TCHAR* lpszVideoPathName,
-    AddIntervalCallback addIntervalCallback,
-    bool& unicodeSubtitles)
+    bool& unicodeSubtitles,
+    AddIntervalCallback addIntervalCallback)
 {
     CString subRipPathName(lpszVideoPathName);
     PathRemoveExtension(subRipPathName.GetBuffer());
@@ -73,8 +73,8 @@ bool OpenSubRipFile(const TCHAR* lpszVideoPathName,
 }
 
 bool OpenSubStationAlphaFile(const TCHAR* lpszVideoPathName,
-    AddIntervalCallback addIntervalCallback,
-    bool& unicodeSubtitles)
+    bool& unicodeSubtitles,
+    AddIntervalCallback addIntervalCallback)
 {
     for (auto ext : { _T(".ass"), _T(".ssa") })
     {

@@ -7,9 +7,9 @@
 typedef std::function<void(double, double, const std::string&)> AddIntervalCallback;
 
 bool OpenSubRipFile(const TCHAR* lpszVideoPathName,
-    AddIntervalCallback addIntervalCallback,
-    bool& unicodeSubtitles);
+    bool& unicodeSubtitles,
+    AddIntervalCallback addIntervalCallback);
 
 bool OpenSubStationAlphaFile(const TCHAR* lpszVideoPathName,
-    AddIntervalCallback addIntervalCallback,
-    bool& unicodeSubtitles);
+    bool& unicodeSubtitles,
+    AddIntervalCallback addIntervalCallback);

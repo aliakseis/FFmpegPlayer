@@ -113,9 +113,6 @@ public:
     void OnAsyncUrl(const CString& url);
 
 private:
-    bool OpenSubRipFile(LPCTSTR lpszVideoPathName);
-    bool OpenSubStationAlphaFile(LPCTSTR lpszVideoPathName);
-
     void MoveToNextFile();
 
     bool openDocument(LPCTSTR lpszPathName);

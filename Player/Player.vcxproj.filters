@@ -90,6 +90,9 @@
     <ClInclude Include="AudioPitchDecorator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="OpenSubtitlesFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Player.cpp">
@@ -147,6 +150,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AudioPitchDecorator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenSubtitlesFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

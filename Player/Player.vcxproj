@@ -229,6 +229,7 @@
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="MakeDelegate.h" />
     <ClInclude Include="MemoryMappedFile.h" />
+    <ClInclude Include="OpenSubtitlesFile.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerDoc.h" />
     <ClInclude Include="PlayerViewD2D.h" />
@@ -252,6 +253,7 @@
     <ClCompile Include="HandleFilesSequence.cpp" />
     <ClCompile Include="I420Effect.cpp" />
     <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="OpenSubtitlesFile.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerDoc.cpp" />
     <ClCompile Include="PlayerViewD2D.cpp" />
