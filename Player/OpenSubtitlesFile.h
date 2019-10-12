@@ -6,10 +6,10 @@
 
 typedef std::function<void(double, double, const std::string&)> AddIntervalCallback;
 
-bool OpenSubRipFile(const TCHAR* lpszVideoPathName,
+bool OpenSubRipFile(const TCHAR* videoPathName,
     bool& unicodeSubtitles,
     AddIntervalCallback addIntervalCallback);
 
-bool OpenSubStationAlphaFile(const TCHAR* lpszVideoPathName,
+bool OpenSubStationAlphaFile(const TCHAR* videoPathName,
     bool& unicodeSubtitles,
     AddIntervalCallback addIntervalCallback);

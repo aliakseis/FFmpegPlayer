@@ -8,16 +8,31 @@
 #include <sstream>
 #include <string>
 
-bool OpenSubRipFile(const TCHAR* lpszVideoPathName,
+namespace {
+
+CString ChangePathExtension(const TCHAR* videoPathName, const TCHAR* ext)
+{
+    CString subRipPathName(videoPathName);
+    PathRemoveExtension(subRipPathName.GetBuffer());
+    subRipPathName.ReleaseBuffer();
+    subRipPathName += ext;
+    return subRipPathName;
+}
+
+bool IsUTF8(const std::string& buffer)
+{
+    return buffer.length() > 2
+        && buffer[0] == char(0xEF) && buffer[1] == char(0xBB) && buffer[2] == char(0xBF);
+}
+
+} // namespace
+
+
+bool OpenSubRipFile(const TCHAR* videoPathName,
     bool& unicodeSubtitles,
     AddIntervalCallback addIntervalCallback)
 {
-    CString subRipPathName(lpszVideoPathName);
-    PathRemoveExtension(subRipPathName.GetBuffer());
-    subRipPathName.ReleaseBuffer();
-    subRipPathName += _T(".srt");
-
-    std::ifstream s(subRipPathName);
+    std::ifstream s(ChangePathExtension(videoPathName, _T(".srt")));
     if (!s)
         return false;
 
@@ -27,8 +42,7 @@ bool OpenSubRipFile(const TCHAR* lpszVideoPathName,
     {
         if (first)
         {
-            unicodeSubtitles = buffer.length() > 2
-                && buffer[0] == char(0xEF) && buffer[1] == char(0xBB) && buffer[2] == char(0xBF);
+            unicodeSubtitles = IsUTF8(buffer);
             first = false;
         }
 
@@ -72,18 +86,13 @@ bool OpenSubRipFile(const TCHAR* lpszVideoPathName,
     return true;
 }
 
-bool OpenSubStationAlphaFile(const TCHAR* lpszVideoPathName,
+bool OpenSubStationAlphaFile(const TCHAR* videoPathName,
     bool& unicodeSubtitles,
     AddIntervalCallback addIntervalCallback)
 {
     for (auto ext : { _T(".ass"), _T(".ssa") })
     {
-        CString subRipPathName(lpszVideoPathName);
-        PathRemoveExtension(subRipPathName.GetBuffer());
-        subRipPathName.ReleaseBuffer();
-        subRipPathName += ext;
-
-        std::ifstream s(subRipPathName);
+        std::ifstream s(ChangePathExtension(videoPathName, ext));
         if (!s)
             continue;
 
@@ -93,8 +102,7 @@ bool OpenSubStationAlphaFile(const TCHAR* lpszVideoPathName,
         {
             if (first)
             {
-                unicodeSubtitles = buffer.length() > 2
-                    && buffer[0] == char(0xEF) && buffer[1] == char(0xBB) && buffer[2] == char(0xBF);
+                unicodeSubtitles = IsUTF8(buffer);
                 first = false;
             }
 
