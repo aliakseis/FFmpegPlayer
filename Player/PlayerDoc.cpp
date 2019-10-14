@@ -204,22 +204,16 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
         m_url = url;
         m_subtitles.reset();
         m_nightcore = false;
-        auto transcripts = getYoutubeTranscripts(originalUrl);
-        if (!transcripts.empty())
-        {
-            // TODO refactor
-            m_unicodeSubtitles = true;
-            auto map(std::make_unique<SubtitlesMap>());
-            for (const auto& v : transcripts)
-            {
+        auto map(std::make_unique<SubtitlesMap>());
+        if (getYoutubeTranscripts(originalUrl, 
+            [&map](double start, double duration, const std::string& text) {
                 map->add({
-                    boost::icl::interval<double>::closed(v.start, v.start + v.duration),
-                    boost::algorithm::trim_copy(v.text) + '\n' });
-            }
-            if (!map->empty())
-            {
-                m_subtitles = std::move(map);
-            }
+                    boost::icl::interval<double>::closed(start, start + duration),
+                    boost::algorithm::trim_copy(text) + '\n' });
+            }))
+        {
+            m_unicodeSubtitles = true;
+            m_subtitles = std::move(map);
         }
         m_frameDecoder->pauseResume();
         onPauseResume(false);

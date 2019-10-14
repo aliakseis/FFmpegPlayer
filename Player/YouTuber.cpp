@@ -417,7 +417,7 @@ public:
     ~YouTubeTranscriptDealer();
 
     bool isValid() const { return !!m_obj; }
-    std::vector<TranscriptRecord> getYoutubeTranscripts(const std::string& id);
+    bool getYoutubeTranscripts(const std::string& id, AddYoutubeTranscriptCallback cb);
 
 private:
     boost::python::object m_obj;
@@ -477,24 +477,22 @@ YouTubeTranscriptDealer::~YouTubeTranscriptDealer()
 }
 
 
-std::vector<TranscriptRecord> YouTubeTranscriptDealer::getYoutubeTranscripts(const std::string& id)
+bool YouTubeTranscriptDealer::getYoutubeTranscripts(const std::string& id, AddYoutubeTranscriptCallback cb)
 {
     BOOST_LOG_TRIVIAL(trace) << "getYoutubeTranscripts() id = \"" << id << "\"";
     using namespace boost::python;
     try
     {
         const auto v = m_obj(id);
-        std::vector<TranscriptRecord> result;
         const auto length = len(v);
         for (int i = 0; i < length; ++i)
         {
             const auto& el = v[i];
-            result.push_back({
-                extract<std::string>(el["text"]),
-                extract<double>(el["start"]),
-                extract<double>(el["duration"]) });
+            cb(extract<double>(el["start"]),
+               extract<double>(el["duration"]),
+               extract<std::string>(el["text"]));
         }
-        return result;
+        return true;
     }
     catch (const std::exception& ex)
     {
@@ -505,7 +503,7 @@ std::vector<TranscriptRecord> YouTubeTranscriptDealer::getYoutubeTranscripts(con
         BOOST_LOG_TRIVIAL(error) << "getYoutubeTranscripts() error \"" << parse_python_exception() << "\"";
     }
 
-    return{};
+    return false;
 }
 
 
@@ -634,14 +632,14 @@ std::string getYoutubeUrl(std::string url)
     return url;
 }
 
-std::vector<TranscriptRecord> getYoutubeTranscripts(std::string url)
+bool getYoutubeTranscripts(std::string url, AddYoutubeTranscriptCallback cb)
 {
     if (extractYoutubeId(url))
     {
         CWaitCursor wait;
         static YouTubeTranscriptDealer buddy;
         if (buddy.isValid())
-            return buddy.getYoutubeTranscripts(url);
+            return buddy.getYoutubeTranscripts(url, cb);
     }
 
     return{};
@@ -664,9 +662,9 @@ std::string getYoutubeUrl(std::string url)
     return url;
 }
 
-std::vector<TranscriptRecord> getYoutubeTranscripts(std::string url)
+bool getYoutubeTranscripts(std::string, AddYoutubeTranscriptCallback)
 {
-    return{};
+    return false;
 }
 
 #endif // YOUTUBE_EXPERIMENT
