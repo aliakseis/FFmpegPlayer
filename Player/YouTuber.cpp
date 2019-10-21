@@ -536,10 +536,10 @@ std::vector<std::string> ParsePlaylist(std::string url, bool force)
     {
         std::istringstream ss(url);
         std::string result;
-        std::getline(ss, result, ' ');
+        ss >> result;
         result = urlencode(result);
         std::string buffer;
-        while (std::getline(ss, buffer, ' '))
+        while (ss >> buffer)
         {
             if (!buffer.empty())
                 result += '+' + urlencode(buffer);
