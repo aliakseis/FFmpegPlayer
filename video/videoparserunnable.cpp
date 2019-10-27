@@ -141,7 +141,8 @@ bool FFmpegDecoder::handleVideoFrame(
     double pts,
     VideoParseContext& context)
 {
-    enum { MAX_SKIPPED = 4 };
+    enum { MAX_SKIPPED_TILL_REDRAW = 5 };
+    enum { SKIP_LOOP_FILTER_THRESHOLD = 50 };
     const double MAX_DELAY = 0.2;
 
     const int64_t duration_stamp = videoFrame->best_effort_timestamp;
@@ -170,11 +171,14 @@ bool FFmpegDecoder::handleVideoFrame(
                     InterlockedAdd(m_videoStartClock, MAX_DELAY);
                 }
 
-                if (++context.numSkipped > MAX_SKIPPED)
+                ++context.numSkipped;
+                if (context.numSkipped == SKIP_LOOP_FILTER_THRESHOLD)
                 {
-                    context.numSkipped = 0;
+                    // https://trac.kodi.tv/ticket/4943
+                    CHANNEL_LOG(ffmpeg_sync) << "skip_loop_filter = AVDISCARD_ALL";
+                    m_videoCodecContext->skip_loop_filter = AVDISCARD_ALL;
                 }
-                else
+                if ((context.numSkipped % MAX_SKIPPED_TILL_REDRAW) != 0)
                 {
                     CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
 
