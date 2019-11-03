@@ -174,9 +174,12 @@ bool FFmpegDecoder::handleVideoFrame(
                 ++context.numSkipped;
                 if (context.numSkipped == SKIP_LOOP_FILTER_THRESHOLD)
                 {
-                    // https://trac.kodi.tv/ticket/4943
-                    CHANNEL_LOG(ffmpeg_sync) << "skip_loop_filter = AVDISCARD_ALL";
-                    m_videoCodecContext->skip_loop_filter = AVDISCARD_ALL;
+                    if (m_videoCodecContext->skip_loop_filter != AVDISCARD_ALL)
+                    {
+                        // https://trac.kodi.tv/ticket/4943
+                        CHANNEL_LOG(ffmpeg_sync) << "skip_loop_filter = AVDISCARD_ALL";
+                        m_videoCodecContext->skip_loop_filter = AVDISCARD_ALL;
+                    }
                 }
                 if ((context.numSkipped % MAX_SKIPPED_TILL_REDRAW) != 0)
                 {

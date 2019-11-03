@@ -3,7 +3,7 @@
 A simple FFmpeg based player. The player core is made with multiplatformity in mind. UI / video / audio layer is MFC/Win32 specific.
 Note that D2D mode (the one that is turned on by uncommenting define USE_DIRECT2D_VIEW) has become unstable after related MFC changes. It demonstrated comparatively bad performance on my PC anyway, so it is here basically for demonstration purposes. 
 
-Semi transparent, click through full screen mode introduced. It is invokable by holding ctrl+shift while pressing full screen button.
+[Semi transparent, click through full screen mode introduced.](https://bit.ly/2JLTbQn) It is invokable by holding ctrl+shift while pressing full screen button.
 
 ## Getting Started
 

@@ -35,7 +35,7 @@ BOOL CEditTime::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT n
 {
 	if(CEdit::Create(dwStyle, rect, pParentWnd, nID))
 	{
-		SetLimitText(6);
+		SetLimitText(8);
 		SetWindowText(_T("0.00"));
 		return TRUE;
 	}
