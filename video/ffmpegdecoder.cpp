@@ -72,12 +72,14 @@ void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
     if (level <= AV_LOG_ERROR)
     {
         char buffer[4096];
-        vsprintf_s(buffer, fmt, vargs);
-        auto length = strlen(buffer);
-        for (; length > 0 && isspace(buffer[length - 1]); --length)
-            ;
-        buffer[length] = '\0';
-        CHANNEL_LOG(ffmpeg_internal) << buffer;
+        int length = vsprintf_s(buffer, fmt, vargs);
+        if (length > 0)
+        {
+            for (; length > 0 && isspace(buffer[length - 1]); --length)
+                ;
+            buffer[length] = '\0';
+            CHANNEL_LOG(ffmpeg_internal) << buffer;
+        }
     }
 }
 
