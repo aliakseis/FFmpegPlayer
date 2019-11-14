@@ -871,15 +871,6 @@ int dxva2_init(AVCodecContext *s)
 {
     InputStream *ist = (InputStream *)s->opaque;
     int loglevel = (ist->hwaccel_id == HWACCEL_AUTO) ? AV_LOG_VERBOSE : AV_LOG_ERROR;
-    DXVA2Context *ctx;
-    int ret;
-
-    if (!ist->hwaccel_ctx) {
-        ret = dxva2_alloc(s);
-        if (ret < 0)
-            return ret;
-    }
-    ctx = (DXVA2Context *)ist->hwaccel_ctx;
 
     if (s->codec_id == AV_CODEC_ID_H264 &&
         (s->profile & ~FF_PROFILE_H264_CONSTRAINED) > FF_PROFILE_H264_HIGH) {
@@ -893,12 +884,23 @@ int dxva2_init(AVCodecContext *s)
         return AVERROR(EINVAL);
     }
 
+    int ret;
+
+    if (!ist->hwaccel_ctx) {
+        ret = dxva2_alloc(s);
+        if (ret < 0)
+            return ret;
+    }
+
+    DXVA2Context *ctx = (DXVA2Context *)ist->hwaccel_ctx;
+
     if (ctx->decoder)
         dxva2_destroy_decoder(s);
 
     ret = dxva2_create_decoder(s);
     if (ret < 0) {
         av_log(NULL, loglevel, "Error creating the DXVA2 decoder\n");
+        dxva2_uninit(s);
         return ret;
     }
 
