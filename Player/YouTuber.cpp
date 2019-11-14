@@ -443,7 +443,7 @@ YouTubeTranscriptDealer::YouTubeTranscriptDealer()
         // Retrieve the main module's namespace
         object global(main.attr("__dict__"));
 
-        global["LoggerStream"] = getLoggerStream();
+        //global["LoggerStream"] = getLoggerStream();
 
         char script[4096];
         sprintf_s(script, TRANSCRIPT_TEMPLATE, packagePath.c_str());
