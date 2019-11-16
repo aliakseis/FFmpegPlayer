@@ -169,13 +169,10 @@ void hexchar(unsigned char c, unsigned char &hex1, unsigned char &hex2)
 
 std::string urlencode(const std::string& s)
 {
-    const char *str = s.c_str();
-    std::vector<char> v(s.size());
-    v.clear();
-    for (size_t i = 0, l = s.size(); i < l; i++)
+    std::string v;
+    for (char c : s)
     {
-        char c = str[i];
-        if (std::isalnum(c) ||
+        if (std::isalnum(static_cast<unsigned char>(c)) ||
             c == '-' || c == '_' || c == '.' || c == '!' || c == '~' ||
             c == '*' || c == '\'' || c == '(' || c == ')')
         {
@@ -195,7 +192,7 @@ std::string urlencode(const std::string& s)
         }
     }
 
-    return{ v.cbegin(), v.cend() };
+    return v;
 }
 
 
