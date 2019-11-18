@@ -226,9 +226,9 @@ BEGIN
     LTEXT           "Copyright (C) 2015-2019",IDC_STATIC,191,26,114,8
     LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,191,38,114,8
     LTEXT           "www.iconfinder.com/Rudityas",IDC_STATIC,191,50,97,8
-    LTEXT           "YouTube: github.com/nficano/pytube", IDC_STATIC, 191, 62, 122, 8
-    LTEXT           "github.com/jdepoix/youtube-transcript-api", IDC_STATIC, 191, 74, 141, 8
-    LTEXT           "Pitch shifting by Stephan M. Bernsee", IDC_STATIC, 191, 86, 141, 8
+    LTEXT           "YouTube: github.com/nficano/pytube",IDC_STATIC,191,62,122,8
+    LTEXT           "github.com/jdepoix/youtube-transcript-api",IDC_STATIC,191,74,141,8
+    LTEXT           "Pitch shifting by Stephan M. Bernsee",IDC_STATIC,191,86,141,8
 END
 
 IDD_DIALOGBAR_PLAYER_CONTROL DIALOGEX 0, 0, 372, 22
@@ -257,17 +257,17 @@ BEGIN
     CONTROL         "Parse",IDC_PARSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,42,34,10
 END
 
-IDD_DIALOGBAR_RANGE DIALOGEX 0, 0, 374, 18
+IDD_DIALOGBAR_RANGE DIALOGEX 0, 0, 374, 16
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    PUSHBUTTON      "Start",IDC_START,7,2,50,14
-    EDITTEXT        IDC_EDIT_START,62,2,40,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "Reset",IDC_START_RESET,107,2,50,14
-    PUSHBUTTON      "End",IDC_END,162,2,50,14
-    EDITTEXT        IDC_EDIT_END,217,2,40,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "Reset",IDC_END_RESET,262,2,50,14
-    PUSHBUTTON      "Save",ID_FILE_SAVE_COPY_AS,317,2,50,14
+    PUSHBUTTON      "Start",IDC_START,7,1,50,14
+    EDITTEXT        IDC_EDIT_START,62,1,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Reset",IDC_START_RESET,107,1,50,14
+    PUSHBUTTON      "End",IDC_END,162,1,50,14
+    EDITTEXT        IDC_EDIT_END,217,1,40,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Reset",IDC_END_RESET,262,1,50,14
+    PUSHBUTTON      "Save",ID_FILE_SAVE_COPY_AS,317,1,50,14
 END
 
 
