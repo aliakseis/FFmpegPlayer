@@ -58,7 +58,7 @@ Sometimes we need to go deeper, visit pytube issues list and apply fixes, for ex
 - https://github.com/nficano/pytube/pull/395
 - https://github.com/nficano/pytube/issues/381
 
-Just in case (I haven't checked it up yet): https://github.com/pybind/pybind11/issues/1295
+Just in case: "In fact in boost-python, the default behavior is that even when debug boost libraries are created, these libraries are linked to the release pythonX.dll/lib - by intention, according to the docs." https://github.com/pybind/pybind11/issues/1295
 
 If you want YouTube subtitles, please note: https://github.com/microsoft/vcpkg/issues/6499 .
 For now you can revert to Python 3.6 by running this in the vcpkg folder:
