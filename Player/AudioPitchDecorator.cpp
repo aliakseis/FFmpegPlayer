@@ -100,7 +100,8 @@ bool AudioPitchDecorator::WriteAudio(uint8_t * write_data, int64_t write_size)
                 pitchShift, numSamples, 4096, 16, m_samplesPerSec, m_buffer.data(), m_buffer.data());
             for (size_t j = 0; j < numSamples; ++j)
             {
-                intData[j * m_smbPitchShifts.size() + i] = std::clamp(m_buffer[j], -1.f, 1.f) * 32767;
+                // decrease level to avoid clipping distortions
+                intData[j * m_smbPitchShifts.size() + i] = std::clamp(m_buffer[j], -2.f, 2.f) * (32767. / 2);
             }
         }
     }

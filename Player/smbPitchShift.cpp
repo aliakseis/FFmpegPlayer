@@ -314,7 +314,6 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
                 gErrors[k] = originalIndex - index;
 
                 if (index <= fftFrameSize2) {
-                    assert(gAnaMagn[k] >= 0);
                     const bool useSynFreq = gSynMagn[index] < gAnaMagn[k];
 
                     gSynMagn[index] += gAnaMagn[k];
