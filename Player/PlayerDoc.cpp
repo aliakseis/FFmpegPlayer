@@ -649,15 +649,36 @@ void CPlayerDoc::OnAsyncUrl(const CString& url)
 
 void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
 {
-    TCHAR lpszFileName[MAX_PATH];
-    if (DragQueryFile(hDropInfo, 0, lpszFileName, MAX_PATH)
-        && openDocument(lpszFileName))
+    const UINT cFiles = DragQueryFile(hDropInfo, (UINT)-1, NULL, 0);
+    if (cFiles == 0)
+        return;
+
+    if (cFiles == 1)
     {
-        SetPathName(lpszFileName, TRUE);
+        TCHAR lpszFileName[MAX_PATH];
+        if (DragQueryFile(hDropInfo, 0, lpszFileName, MAX_PATH)
+            && openDocument(lpszFileName))
+        {
+            SetPathName(lpszFileName, TRUE);
+        }
+    }
+    else
+    {
+        std::vector<std::string> playList;
+        for (UINT i = 0; i < cFiles; ++i)
+        {
+            TCHAR lpszFileName[MAX_PATH]{};
+            if (DragQueryFile(hDropInfo, i, lpszFileName, MAX_PATH))
+                playList.push_back(std::string(CT2A(lpszFileName)));
+        }
+        if (!playList.empty())
+        {
+            openUrlFromList(playList);
+        }
     }
 }
 
-void CPlayerDoc::OnEditPaste(const const std::string& text)
+void CPlayerDoc::OnEditPaste(const std::string& text)
 {
     auto playList = ParsePlaylistText(text);
     if (!playList.empty())
