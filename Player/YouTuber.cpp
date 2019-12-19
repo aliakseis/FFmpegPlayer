@@ -586,6 +586,15 @@ std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName)
     return ParsePlaylist(pData, pData + memoryMappedFile.size());
 }
 
+std::vector<std::string> ParsePlaylistText(const std::string& text)
+{
+    if (text.empty())
+    {
+        return{};
+    }
+    auto* const pData = text.data();
+    return ParsePlaylist(pData, pData + text.size());
+}
 
 std::string getYoutubeUrl(std::string url)
 {
@@ -650,6 +659,11 @@ std::vector<std::string> ParsePlaylist(std::string, bool)
 }
 
 std::vector<std::string> ParsePlaylistFile(const TCHAR*)
+{
+    return{};
+}
+
+std::vector<std::string> ParsePlaylistText(const std::string&)
 {
     return{};
 }

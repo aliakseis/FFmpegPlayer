@@ -8,6 +8,8 @@ std::vector<std::string> ParsePlaylist(std::string url, bool force);
 
 std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName);
 
+std::vector<std::string> ParsePlaylistText(const std::string& text);
+
 std::string getYoutubeUrl(std::string url);
 
 // start, duration, text

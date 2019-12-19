@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "PlayerView.h"
 #include "PlayerDoc.h"
+#include "GetClipboardText.h"
 
 #include "decoderinterface.h"
 
@@ -561,6 +562,7 @@ CPlayerView::~CPlayerView()
 }
 
 BEGIN_MESSAGE_MAP(CPlayerView, CView)
+    ON_COMMAND(ID_EDIT_PASTE, &CPlayerView::OnEditPaste)
     ON_WM_PAINT()
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
@@ -1156,6 +1158,14 @@ void CPlayerView::OnDraw(CDC* /*pDC*/)
     // TODO: add draw code here
 }
 
+void CPlayerView::OnEditPaste()
+{
+    const auto text = GetClipboardText();
+    if (!text.empty())
+    {
+        GetDocument()->OnEditPaste(text);
+    }
+}
 
 // CPlayerView diagnostics
 

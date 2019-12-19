@@ -100,6 +100,7 @@ public:
     bool isUnicodeSubtitles() const { return m_unicodeSubtitles; }
 
     void OnDropFiles(HDROP hDropInfo);
+    void OnEditPaste(const std::string& text);
 
     double getCurrentTime() const { return m_currentTime; }
 	double getStartTime() const { return m_startTime; }
@@ -116,9 +117,10 @@ private:
     void MoveToNextFile();
 
     bool openDocument(LPCTSTR lpszPathName);
-    bool openTopLevelUrl(const CString& url, bool force, const CString& pathName = CString());
+    bool openTopLevelUrl(const CString& url, bool force, const CString& pathName = {});
     bool openUrl(const std::string& url);
     bool openUrlFromList();
+    bool openUrlFromList(const std::vector<std::string>& playList, const CString& pathName = {});
 
     void reset();
 

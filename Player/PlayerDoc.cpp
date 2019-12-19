@@ -168,18 +168,8 @@ bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl, bool force, const C
 
     if (!playList.empty())
     {
-        m_playList = { playList.begin(), playList.end() };
-
-        if (openUrlFromList())
-        {
-            m_reopenFunc = [this, playList, pathName] {
-                UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
-                m_playList = { playList.begin(), playList.end() };
-                if (openUrlFromList() && !pathName.IsEmpty())
-                    SetPathName(pathName, FALSE);
-            };
+        if (openUrlFromList(playList, pathName))
             return true;
-        }
     }
     else if (openUrl(url))
     {
@@ -243,6 +233,23 @@ bool CPlayerDoc::openUrlFromList()
                 return false;
             }
         }
+    }
+    return false;
+}
+
+bool CPlayerDoc::openUrlFromList(const std::vector<std::string>& playList, const CString& pathName)
+{
+    m_playList = { playList.begin(), playList.end() };
+
+    if (openUrlFromList())
+    {
+        m_reopenFunc = [this, playList, pathName] {
+            UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
+            m_playList = { playList.begin(), playList.end() };
+            if (openUrlFromList() && !pathName.IsEmpty())
+                SetPathName(pathName, FALSE);
+        };
+        return true;
     }
     return false;
 }
@@ -427,18 +434,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
             auto playList = ParsePlaylistFile(lpszPathName);
             if (!playList.empty())
             {
-                m_playList = { playList.begin(), playList.end() };
-
-                if (openUrlFromList())
-                {
-                    m_reopenFunc = [this, playList] {
-                        UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
-                        m_playList = { playList.begin(), playList.end() };
-                        openUrlFromList();
-                    };
-                    return true;
-                }
-                return false;
+                return openUrlFromList(playList);
             }
         }
 
@@ -659,6 +655,12 @@ void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
     {
         SetPathName(lpszFileName, TRUE);
     }
+}
+
+void CPlayerDoc::OnEditPaste(const const std::string& text)
+{
+    auto playList = ParsePlaylistText(text);
+    openUrlFromList(playList);
 }
 
 void CPlayerDoc::OnAudioTrack(UINT id)

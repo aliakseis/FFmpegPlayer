@@ -11,6 +11,8 @@
 
 #include "I420Effect.h"
 
+#include "GetClipboardText.h"
+
 #include "decoderinterface.h"
 
 #include <d2d1_2.h>
@@ -81,6 +83,7 @@ IMPLEMENT_DYNCREATE(CPlayerViewD2D, CView)
 
 BEGIN_MESSAGE_MAP(CPlayerViewD2D, CView)
     // Standard printing commands
+    ON_COMMAND(ID_EDIT_PASTE, &CPlayerViewD2D::OnEditPaste)
     ON_COMMAND(ID_FILE_PRINT, &CView::OnFilePrint)
     ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
     ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CView::OnFilePrintPreview)
@@ -112,6 +115,15 @@ BOOL CPlayerViewD2D::PreCreateWindow(CREATESTRUCT& cs)
     cs.dwExStyle &= ~WS_EX_CLIENTEDGE;
 
     return CView::PreCreateWindow(cs);
+}
+
+void CPlayerViewD2D::OnEditPaste()
+{
+    const auto text = GetClipboardText();
+    if (!text.empty())
+    {
+        GetDocument()->OnEditPaste(text);
+    }
 }
 
 // CPlayerViewD2D drawing

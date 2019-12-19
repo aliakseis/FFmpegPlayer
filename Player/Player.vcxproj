@@ -223,6 +223,7 @@
     <ClInclude Include="DialogBarRange.h" />
     <ClInclude Include="DialogOpenURL.h" />
     <ClInclude Include="EditTime.h" />
+    <ClInclude Include="GetClipboardText.h" />
     <ClInclude Include="HandleFilesSequence.h" />
     <ClInclude Include="I420Effect.h" />
     <ClInclude Include="IEraseableArea.h" />
