@@ -660,7 +660,10 @@ void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
 void CPlayerDoc::OnEditPaste(const const std::string& text)
 {
     auto playList = ParsePlaylistText(text);
-    openUrlFromList(playList);
+    if (!playList.empty())
+    {
+        openUrlFromList(playList);
+    }
 }
 
 void CPlayerDoc::OnAudioTrack(UINT id)
