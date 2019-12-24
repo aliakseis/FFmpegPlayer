@@ -49,7 +49,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 {
    public:
     FFmpegDecoder(std::unique_ptr<IAudioPlayer> audioPlayer);
-    ~FFmpegDecoder();
+    ~FFmpegDecoder() override;
 
     FFmpegDecoder(const FFmpegDecoder&) = delete;
     FFmpegDecoder& operator=(const FFmpegDecoder&) = delete;

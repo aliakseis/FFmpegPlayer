@@ -1,6 +1,6 @@
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 
 // Video frame struct for RGB24 frame (used by displays)
 class VQueue

@@ -11,14 +11,13 @@ typedef std::unique_ptr<AVFrame, AVFrameDeleter> AVFramePtr;
 
 struct VideoFrame
 {
-    double m_pts;
-    int64_t m_duration;
+    double m_pts{0};
+    int64_t m_duration{0};
     AVFramePtr m_image;
 
     VideoFrame() 
-        : m_pts(0)
-        , m_duration(0)
-        , m_image(av_frame_alloc()) 
+        : 
+         m_image(av_frame_alloc()) 
     {}
 
     VideoFrame(const VideoFrame&) = delete;

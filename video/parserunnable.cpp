@@ -2,6 +2,7 @@
 #include "makeguard.h"
 
 #include <algorithm>
+#include <memory>
 
 namespace {
 
@@ -9,9 +10,9 @@ bool isSeekable(AVFormatContext* formatContext)
 {
     return
 #ifdef AVFMTCTX_UNSEEKABLE
-        !(formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE) &&
+        ((formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE) == 0) &&
 #endif
-        formatContext->pb && (formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL);
+        (formatContext->pb != nullptr) && ((formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL) != 0);
 }
 
 } // namespace
@@ -25,7 +26,7 @@ void FFmpegDecoder::parseRunnable()
     // detect real framesize
     fixDuration();
 
-    if (m_decoderListener)
+    if (m_decoderListener != nullptr)
     {
         m_decoderListener->fileLoaded(m_startTime, m_duration + m_startTime);
         m_decoderListener->changedFramePosition(m_startTime, m_startTime, m_duration + m_startTime);
@@ -49,8 +50,9 @@ void FFmpegDecoder::parseRunnable()
         seekDuration = m_videoResetDuration.exchange(AV_NOPTS_VALUE);
         if (seekDuration != AV_NOPTS_VALUE)
         {
-            if (!resetDecoding(seekDuration, true))
+            if (!resetDecoding(seekDuration, true)) {
                 return;
+            }
         }
 
         const int readStatus = av_read_frame(m_formatContext, &packet);
@@ -64,7 +66,7 @@ void FFmpegDecoder::parseRunnable()
             using namespace boost;
             if (eof == SET)
             {
-                if (m_decoderListener
+                if ((m_decoderListener != nullptr)
                     && m_videoPacketsQueue.empty()
                     && m_audioPacketsQueue.empty()
                     && (lock_guard<mutex>(m_videoFramesMutex), !m_videoFramesQueue.canPop()))
@@ -73,8 +75,9 @@ void FFmpegDecoder::parseRunnable()
                     eof = REPORTED;
                 }
             }
-            if (eof == UNSET && (readStatus == AVERROR_EOF || readStatus == AVERROR_INVALIDDATA))
+            if (eof == UNSET && (readStatus == AVERROR_EOF || readStatus == AVERROR_INVALIDDATA)) {
                 eof = SET;
+            }
 
             this_thread::sleep_for(chrono::milliseconds(1));
         }
@@ -138,7 +141,7 @@ void FFmpegDecoder::startAudioThread()
 {
     if (m_audioStreamNumber >= 0)
     {
-        m_mainAudioThread.reset(new boost::thread(&FFmpegDecoder::audioParseRunnable, this));
+        m_mainAudioThread = std::make_unique<boost::thread>(&FFmpegDecoder::audioParseRunnable, this);
     }
 }
 
@@ -146,7 +149,7 @@ void FFmpegDecoder::startVideoThread()
 {
     if (m_videoStreamNumber >= 0)
     {
-        m_mainVideoThread.reset(new boost::thread(&FFmpegDecoder::videoParseRunnable, this));
+        m_mainVideoThread = std::make_unique<boost::thread>(&FFmpegDecoder::videoParseRunnable, this);
     }
 }
 
@@ -212,21 +215,23 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
         return false;
     }
 
-    m_mainDisplayThread.reset(new boost::thread(&FFmpegDecoder::displayRunnable, this));
+    m_mainDisplayThread = std::make_unique<boost::thread>(&FFmpegDecoder::displayRunnable, this);
 
     if (hasVideo)
     {
-        if (m_videoCodecContext)
+        if (m_videoCodecContext != nullptr) {
             avcodec_flush_buffers(m_videoCodecContext);
+        }
     }
     if (hasAudio)
     {
-        if (m_audioCodecContext)
+        if (m_audioCodecContext != nullptr) {
             avcodec_flush_buffers(m_audioCodecContext);
+        }
         m_audioPlayer->WaveOutReset();
     }
 
-    if (m_decoderListener)
+    if (m_decoderListener != nullptr)
     {
         m_decoderListener->changedFramePosition(m_startTime, seekDuration, m_duration + m_startTime);
     }

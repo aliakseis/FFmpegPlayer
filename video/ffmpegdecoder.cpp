@@ -1,11 +1,12 @@
 ﻿#include "ffmpegdecoder.h"
-#include <limits.h>
-#include <stdint.h>
+#include <climits>
+#include <cstdint>
 
 #include "makeguard.h"
 #include "interlockedadd.h"
 
 #include <boost/chrono.hpp>
+#include <memory>
 #include <utility>
 #include <algorithm>
 #include <tuple>
@@ -26,13 +27,14 @@ namespace
 void FreeVideoCodecContext(AVCodecContext*& videoCodecContext)
 {
 #ifdef USE_HWACCEL
-    if (videoCodecContext)
+    if (videoCodecContext != nullptr)
     {
         if (auto stream = static_cast<InputStream*>(videoCodecContext->opaque))
         {
             avcodec_close(videoCodecContext);
-            if (stream->hwaccel_uninit)
+            if (stream->hwaccel_uninit != nullptr) {
                 stream->hwaccel_uninit(videoCodecContext);
+            }
             delete stream;
         }
         videoCodecContext->opaque = nullptr;
@@ -46,7 +48,7 @@ void FreeVideoCodecContext(AVCodecContext*& videoCodecContext)
 #ifdef USE_HWACCEL
 AVPixelFormat GetHwFormat(AVCodecContext *s, const AVPixelFormat *pix_fmts)
 {
-    InputStream* ist = (InputStream*)s->opaque;
+    auto* ist = static_cast<InputStream*>(s->opaque);
     ist->active_hwaccel_id = HWACCEL_DXVA2;
     ist->hwaccel_pix_fmt = AV_PIX_FMT_DXVA2_VLD;
     return ist->hwaccel_pix_fmt;
@@ -62,9 +64,9 @@ inline void Shutdown(const std::unique_ptr<boost::thread>& th)
     }
 }
 
-int ThisThreadInterruptionRequested(void*)
+int ThisThreadInterruptionRequested(void* /*unused*/)
 {
-    return boost::this_thread::interruption_requested();
+    return static_cast<int>(boost::this_thread::interruption_requested());
 }
 
 void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
@@ -75,8 +77,9 @@ void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
         int length = vsprintf_s(buffer, fmt, vargs);
         if (length > 0)
         {
-            for (; length > 0 && isspace(buffer[length - 1]); --length)
+            for (; length > 0 && (isspace(buffer[length - 1]) != 0); --length) {
                 ;
+            }
             buffer[length] = '\0';
             CHANNEL_LOG(ffmpeg_internal) << buffer;
         }
@@ -120,7 +123,7 @@ public:
     IOContext(const PathType &datafile);
     ~IOContext();
 
-    void initAVFormatContext(AVFormatContext *);
+    void initAVFormatContext(AVFormatContext * /*pCtx*/);
 
     bool valid() const { return fh != nullptr; }
 
@@ -131,21 +134,21 @@ public:
 // static
 int FFmpegDecoder::IOContext::IOReadFunc(void *data, uint8_t *buf, int buf_size)
 {
-    IOContext *hctx = (IOContext *)data;
+    auto *hctx = static_cast<IOContext *>(data);
     size_t len = fread(buf, 1, buf_size, hctx->fh);
     if (len == 0)
     {
         // Let FFmpeg know that we have reached EOF, or do something else
         return AVERROR_EOF;
     }
-    return (int)len;
+    return static_cast<int>(len);
 }
 
 // whence: SEEK_SET, SEEK_CUR, SEEK_END (like fseek) and AVSEEK_SIZE
 // static
 int64_t FFmpegDecoder::IOContext::IOSeekFunc(void *data, int64_t pos, int whence)
 {
-    IOContext *hctx = (IOContext *)data;
+    auto *hctx = static_cast<IOContext *>(data);
 
     if (whence == AVSEEK_SIZE)
     {
@@ -173,16 +176,16 @@ FFmpegDecoder::IOContext::IOContext(const PathType &s)
 {
     // allocate buffer
     bufferSize = 1024 * 64;                     // FIXME: not sure what size to use
-    buffer = (uint8_t *)av_malloc(bufferSize);  // see destructor for details
+    buffer = static_cast<uint8_t *>(av_malloc(bufferSize));  // see destructor for details
 
                                                 // open file
-    if (!(fh = 
+    if ((fh = 
 #ifdef _WIN32
         _wfsopen(s.c_str(), L"rb", _SH_DENYNO)
 #else
         _fsopen(s.c_str(), "rb", _SH_DENYNO)
 #endif
-    ))
+    ) == nullptr)
     {
         // fprintf(stderr, "MyIOContext: failed to open file %s\n", s.c_str());
         BOOST_LOG_TRIVIAL(error) << "MyIOContext: failed to open file";
@@ -194,15 +197,16 @@ FFmpegDecoder::IOContext::IOContext(const PathType &s)
             0,                   // write flag (1=true,0=false)
             (void *)this,  // user data, will be passed to our callback functions
             IOReadFunc,
-            0,  // no writing
+            nullptr,  // no writing
             IOSeekFunc);
 }
 
 FFmpegDecoder::IOContext::~IOContext()
 {
     CHANNEL_LOG(ffmpeg_closing) << "In IOContext::~IOContext()";
-    if (fh)
+    if (fh != nullptr) {
         fclose(fh);
+    }
 
     // NOTE: ffmpeg messes up the buffer
     // so free the buffer first then free the context
@@ -221,11 +225,12 @@ void FFmpegDecoder::IOContext::initAVFormatContext(AVFormatContext *pCtx)
 
     // or read some of the file and let ffmpeg do the guessing
     size_t len = fread(buffer, 1, bufferSize, fh);
-    if (len == 0)
+    if (len == 0) {
         return;
+    }
     _fseeki64(fh, 0, SEEK_SET);  // reset to beginning of file
 
-    AVProbeData probeData = { 0 };
+    AVProbeData probeData = { nullptr };
     probeData.buf = buffer;
     probeData.buf_size = bufferSize - 1;
     probeData.filename = "";
@@ -314,13 +319,15 @@ void FFmpegDecoder::close()
 
     m_audioPlayer->Close();
 
-    if (m_frameListener)
+    if (m_frameListener != nullptr) {
         m_frameListener->decoderClosing();
+    }
 
     closeProcessing();
 
-    if (m_decoderListener)
+    if (m_decoderListener != nullptr) {
         m_decoderListener->playingFinished();
+    }
 }
 
 void FFmpegDecoder::closeProcessing()
@@ -342,7 +349,7 @@ void FFmpegDecoder::closeProcessing()
 
     sws_freeContext(m_imageCovertContext);
 
-    if (m_audioSwrContext)
+    if (m_audioSwrContext != nullptr)
     {
         swr_free(&m_audioSwrContext);
     }
@@ -355,7 +362,7 @@ void FFmpegDecoder::closeProcessing()
     bool isFileReallyClosed = false;
 
     // Close video file
-    if (m_formatContext)
+    if (m_formatContext != nullptr)
     {
         avformat_close_input(&m_formatContext);
         isFileReallyClosed = true;
@@ -367,8 +374,9 @@ void FFmpegDecoder::closeProcessing()
 
     resetVariables();
 
-    if (m_decoderListener)
+    if (m_decoderListener != nullptr) {
         m_decoderListener->decoderClosed(isFileReallyClosed);
+    }
 }
 
 bool FFmpegDecoder::openFile(const PathType& filename)
@@ -390,7 +398,7 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     std::unique_ptr<IOContext> ioCtx;
     if (isFile)
     {
-        ioCtx.reset(new IOContext(file));
+        ioCtx = std::make_unique<IOContext>(file);
         if (!ioCtx->valid())
         {
             BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file";
@@ -439,7 +447,7 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
     // Find the first video stream
     m_videoStreamNumber = -1;
     m_audioStreamNumber = -1;
-    for (unsigned i = m_formatContext->nb_streams; i--;)
+    for (unsigned i = m_formatContext->nb_streams; (i--) != 0u;)
     {
         switch (m_formatContext->streams[i]->codecpar->codec_type)
         {
@@ -515,13 +523,15 @@ bool FFmpegDecoder::resetVideoProcessing()
     {
         CHANNEL_LOG(ffmpeg_opening) << "Video stream number: " << m_videoStreamNumber;
         m_videoCodecContext = avcodec_alloc_context3(nullptr);
-        if (!m_videoCodecContext)
+        if (m_videoCodecContext == nullptr) {
             return false;
+        }
 
         auto videoCodecContextGuard = MakeGuard(&m_videoCodecContext, avcodec_free_context);
 
-        if (avcodec_parameters_to_context(m_videoCodecContext, m_videoStream->codecpar) < 0)
+        if (avcodec_parameters_to_context(m_videoCodecContext, m_videoStream->codecpar) < 0) {
             return false;
+        }
 
         m_videoCodec = avcodec_find_decoder(m_videoCodecContext->codec_id);
         if (m_videoCodec == nullptr)
@@ -535,7 +545,7 @@ bool FFmpegDecoder::resetVideoProcessing()
         m_videoCodecContext->coded_height = m_videoCodecContext->height;
 
         m_videoCodecContext->thread_count = 1;  // Multithreading is apparently not compatible with hardware decoding
-        InputStream *ist = new InputStream();
+        auto *ist = new InputStream();
         ist->hwaccel_id = HWACCEL_AUTO;
         ist->dec = m_videoCodec;
         ist->dec_ctx = m_videoCodecContext;
@@ -589,16 +599,19 @@ bool FFmpegDecoder::setupAudioProcessing()
     {
         CHANNEL_LOG(ffmpeg_opening) << "Audio stream number: " << m_audioStreamNumber;
         m_audioCodecContext = avcodec_alloc_context3(nullptr);
-        if (!m_audioCodecContext)
+        if (m_audioCodecContext == nullptr) {
             return false;
+        }
 
         auto audioCodecContextGuard = MakeGuard(&m_audioCodecContext, avcodec_free_context);
 
-        if (!setupAudioCodec())
+        if (!setupAudioCodec()) {
             return false;
+        }
 
-        if (!initAudioOutput())
+        if (!initAudioOutput()) {
             return false;
+        }
 
         audioCodecContextGuard.release();
     }
@@ -608,8 +621,9 @@ bool FFmpegDecoder::setupAudioProcessing()
 
 bool FFmpegDecoder::setupAudioCodec()
 {
-    if (avcodec_parameters_to_context(m_audioCodecContext, m_audioStream->codecpar) < 0)
+    if (avcodec_parameters_to_context(m_audioCodecContext, m_audioStream->codecpar) < 0) {
         return false;
+    }
 
     // Find audio codec
     m_audioCodec = avcodec_find_decoder(m_audioCodecContext->codec_id);
@@ -650,15 +664,15 @@ void FFmpegDecoder::play(bool isPaused)
     if (!m_mainParseThread)
     {
         m_isPlaying = true;
-        m_mainParseThread.reset(new boost::thread(&FFmpegDecoder::parseRunnable, this));
-        m_mainDisplayThread.reset(new boost::thread(&FFmpegDecoder::displayRunnable, this));
+        m_mainParseThread = std::make_unique<boost::thread>(&FFmpegDecoder::parseRunnable, this);
+        m_mainDisplayThread = std::make_unique<boost::thread>(&FFmpegDecoder::displayRunnable, this);
         CHANNEL_LOG(ffmpeg_opening) << "Playing";
     }
 }
 
 void FFmpegDecoder::AppendFrameClock(double frame_clock)
 {
-    if (!m_mainVideoThread && m_decoderListener && m_seekDuration == AV_NOPTS_VALUE)
+    if (!m_mainVideoThread && (m_decoderListener != nullptr) && m_seekDuration == AV_NOPTS_VALUE)
     {
         m_decoderListener->changedFramePosition(
             m_startTime,
@@ -666,7 +680,8 @@ void FFmpegDecoder::AppendFrameClock(double frame_clock)
             m_duration + m_startTime);
     }
 
-    int speedNumerator, speedDenominator;
+    int speedNumerator;
+    int speedDenominator;
     std::tie(speedNumerator, speedDenominator) = getSpeedRational();
     InterlockedAdd(m_audioPTS, frame_clock * speedNumerator / speedDenominator);
 }
@@ -682,8 +697,9 @@ void FFmpegDecoder::setVolume(double volume)
 
     m_audioPlayer->SetVolume(volume);
 
-    if (m_decoderListener)
+    if (m_decoderListener != nullptr) {
         m_decoderListener->volumeChanged(volume);
+    }
 }
 
 double FFmpegDecoder::volume() const { return m_audioPlayer->GetVolume(); }
@@ -694,7 +710,7 @@ void FFmpegDecoder::SetFrameFormat(FrameFormat format, bool allowDirect3dData)
     static_assert(PIX_FMT_YUYV422 == AV_PIX_FMT_YUYV422, "FrameFormat and AVPixelFormat values must coincide.");
     static_assert(PIX_FMT_RGB24 == AV_PIX_FMT_RGB24,     "FrameFormat and AVPixelFormat values must coincide.");
 
-    m_pixelFormat = (AVPixelFormat)format;
+    m_pixelFormat = static_cast<AVPixelFormat>(format);
     m_allowDirect3dData = allowDirect3dData;
 }
 
@@ -745,8 +761,9 @@ void FFmpegDecoder::seekWhilePaused()
     const bool paused = m_isPaused;
     if (paused)
     {
-        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED) {
             InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
+        }
         m_pauseTimer = GetHiResTime();
     }
 
@@ -766,7 +783,7 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
     }
 
     VideoFrame &current_frame = m_videoFramesQueue.front();
-    if (!current_frame.m_image->data)
+    if (current_frame.m_image->data == nullptr)
     {
         return false;
     }
@@ -790,7 +807,7 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
     if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
     {
         data->d3d9device = get_device(m_videoCodecContext);
-        data->surface = (IDirect3DSurface9**)&current_frame.m_image->data[3];
+        data->surface = reinterpret_cast<IDirect3DSurface9**>(&current_frame.m_image->data[3]);
     }
 #endif
 
@@ -822,8 +839,9 @@ bool FFmpegDecoder::pauseResume()
     CHANNEL_LOG(ffmpeg_pause) << "Resume";
     {
         boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
-        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
-        InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
+        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED) {
+            InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
+        }
         m_isPaused = false;
     }
     m_isPausedCV.notify_all();
@@ -853,8 +871,9 @@ bool FFmpegDecoder::nextFrame()
         }
  
         const auto currentTime = GetHiResTime();
-        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+        if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED) {
             InterlockedAdd(m_videoStartClock, currentTime - m_pauseTimer);
+        }
         m_pauseTimer = currentTime;
 
         m_isVideoSeekingWhilePaused = true;
@@ -879,8 +898,9 @@ int FFmpegDecoder::getAudioTrack() const
 
 void FFmpegDecoder::setAudioTrack(int idx)
 {
-    if (idx >= 0 && idx < m_audioIndices.size())
+    if (idx >= 0 && idx < m_audioIndices.size()) {
         m_audioStreamNumber = m_audioIndices[idx];
+    }
 }
 
 std::pair<int, int> FFmpegDecoder::getSpeedRational() const
@@ -894,7 +914,8 @@ void FFmpegDecoder::setSpeedRational(const std::pair<int, int>& speed)
 
     const auto time = GetHiResTime();
     m_speedRational = speed;
-    int speedNumerator, speedDenominator;
+    int speedNumerator;
+    int speedDenominator;
     std::tie(speedNumerator, speedDenominator) = speed;
 
     m_referenceTime = (boost::chrono::high_resolution_clock::now()
@@ -916,7 +937,8 @@ void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame)
 
 double FFmpegDecoder::GetHiResTime()
 {
-    int speedNumerator, speedDenominator;
+    int speedNumerator;
+    int speedDenominator;
     std::tie(speedNumerator, speedDenominator) = getSpeedRational();
     return boost::chrono::duration_cast<boost::chrono::microseconds>(
         boost::chrono::high_resolution_clock::now() - boost::chrono::high_resolution_clock::time_point(m_referenceTime)).count()

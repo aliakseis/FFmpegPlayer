@@ -8,7 +8,7 @@ template<size_t MAX_QUEUE_SIZE, size_t MAX_FRAMES>
 class FQueue
 {
 public:
-    FQueue() : m_packetsSize(0) {}
+    FQueue()  {}
     FQueue(const FQueue&) = delete;
     FQueue& operator=(const FQueue&) = delete;
 
@@ -110,7 +110,7 @@ private:
     }
 
 private:
-    int64_t	m_packetsSize;
+    int64_t	m_packetsSize{0};
     std::deque<AVPacket> m_queue;
 
     boost::mutex m_mutex;

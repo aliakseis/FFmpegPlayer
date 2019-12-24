@@ -28,7 +28,7 @@ bool frameToImage(
         // Prepare image conversion
         m_imageCovertContext =
             sws_getCachedContext(m_imageCovertContext, m_videoFrame->width, m_videoFrame->height,
-            (AVPixelFormat)m_videoFrame->format, width, height, m_pixelFormat,
+            static_cast<AVPixelFormat>(m_videoFrame->format), width, height, m_pixelFormat,
             0, nullptr, nullptr, nullptr);
 
         assert(m_imageCovertContext != nullptr);
@@ -107,8 +107,9 @@ bool FFmpegDecoder::handleVideoPacket(
     VideoParseContext& context)
 {
     const int ret = avcodec_send_packet(m_videoCodecContext, &packet);
-    if (ret < 0)
+    if (ret < 0) {
         return false;
+    }
 
     AVFramePtr videoFrame(av_frame_alloc());
     while (avcodec_receive_frame(m_videoCodecContext, videoFrame.get()) == 0)
@@ -129,8 +130,9 @@ bool FFmpegDecoder::handleVideoPacket(
             (1. + videoFrame->repeat_pict * 0.5);
         videoClock += frameDelay;
 
-        if (!handleVideoFrame(videoFrame, pts, context))
+        if (!handleVideoFrame(videoFrame, pts, context)) {
             break;
+        }
     }
 
     return true;
@@ -186,17 +188,13 @@ bool FFmpegDecoder::handleVideoFrame(
                     CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
 
                     // pause
-                    if (m_isPaused && !m_isVideoSeekingWhilePaused)
-                    {
-                        return false;
-                    }
-
-                    return true;
+                    return !(m_isPaused && !m_isVideoSeekingWhilePaused);
                 }
             }
             else
             {
-                int speedNumerator, speedDenominator;
+                int speedNumerator;
+                int speedDenominator;
                 std::tie(speedNumerator, speedDenominator) = getSpeedRational();
                 context.numSkipped = 0;
                 td = boost::posix_time::milliseconds(

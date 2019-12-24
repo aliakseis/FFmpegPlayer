@@ -13,7 +13,7 @@ namespace {
 
 uint8_t** getAudioData(AVFrame* audioFrame)
 {
-    return audioFrame->extended_data
+    return audioFrame->extended_data != nullptr
         ? audioFrame->extended_data
         : &audioFrame->data[0];
 }
@@ -21,7 +21,7 @@ uint8_t** getAudioData(AVFrame* audioFrame)
 int64_t getChannelLayout(AVFrame* audioFrame)
 {
 	const int audioFrameChannels = audioFrame->channels; //av_frame_get_channels(audioFrame);
-    return (audioFrame->channel_layout &&
+    return ((audioFrame->channel_layout != 0u) &&
         audioFrameChannels == av_get_channel_layout_nb_channels(audioFrame->channel_layout))
         ? audioFrame->channel_layout
         : av_get_default_channel_layout(audioFrameChannels);
@@ -113,8 +113,9 @@ bool FFmpegDecoder::handleAudioPacket(
     }
 
     const int ret = avcodec_send_packet(m_audioCodecContext, &packet);
-    if (ret < 0)
+    if (ret < 0) {
         return ret == AVERROR(EAGAIN) || ret == AVERROR_EOF;
+    }
 
     AVFramePtr audioFrame(av_frame_alloc());
     bool result = true;
@@ -136,11 +137,11 @@ bool FFmpegDecoder::handleAudioPacket(
 
         setupAudioSwrContext(audioFrame.get());
 
-        if (m_audioSwrContext)
+        if (m_audioSwrContext != nullptr)
         {
             enum { EXTRA_SPACE = 256 };
 
-            const int out_count = (int64_t)audioFrame->nb_samples *
+            const int out_count = static_cast<int64_t>(audioFrame->nb_samples) *
                 m_audioSettings.frequency /
                 m_audioCurrentPref.frequency + EXTRA_SPACE;
 
@@ -182,7 +183,7 @@ bool FFmpegDecoder::handleAudioPacket(
         }
 
         const double frame_clock 
-            = audioFrame->sample_rate? double(audioFrame->nb_samples) / audioFrame->sample_rate : 0;
+            = audioFrame->sample_rate != 0? double(audioFrame->nb_samples) / audioFrame->sample_rate : 0;
 
         bool skipAll = false;
         double delta = 0;
@@ -250,12 +251,13 @@ bool FFmpegDecoder::handleAudioPacket(
 
 void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
 {
-    const AVSampleFormat audioFrameFormat = (AVSampleFormat)audioFrame->format;
+    const auto audioFrameFormat = static_cast<AVSampleFormat>(audioFrame->format);
     const int audioFrameChannels = audioFrame->channels;
 
     const int64_t dec_channel_layout = getChannelLayout(audioFrame);
 
-    int speedNumerator, speedDenominator;
+    int speedNumerator;
+    int speedDenominator;
     std::tie(speedNumerator, speedDenominator) = getSpeedRational();
 
     // Check if the new swr context required
@@ -270,7 +272,7 @@ void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
             dec_channel_layout, audioFrameFormat,
             audioFrame->sample_rate * speedNumerator, 0, nullptr);
 
-        if (!m_audioSwrContext || swr_init(m_audioSwrContext) < 0)
+        if ((m_audioSwrContext == nullptr) || swr_init(m_audioSwrContext) < 0)
         {
             BOOST_LOG_TRIVIAL(error) << "unable to initialize swr convert context";
         }

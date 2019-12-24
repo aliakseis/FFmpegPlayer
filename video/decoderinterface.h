@@ -1,14 +1,14 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 
 #ifdef _WIN32
-typedef std::wstring PathType;
+using PathType = std::wstring;
 #else
-typedef std::string PathType;
+using PathType = std::string;
 #endif
 
 struct IDirect3DDevice9;
@@ -31,7 +31,7 @@ struct FrameRenderingData
 
 struct IFrameListener
 {
-    virtual ~IFrameListener() {}
+    virtual ~IFrameListener() = default;
     virtual void updateFrame() = 0;
     virtual void drawFrame(IFrameDecoder* decoder, unsigned int generation) = 0; // decoder->finishedDisplayingFrame() must be called
     virtual void decoderClosing() = 0;
@@ -39,7 +39,7 @@ struct IFrameListener
 
 struct FrameDecoderListener
 {
-    virtual ~FrameDecoderListener() {}
+    virtual ~FrameDecoderListener() = default;
 
     virtual void changedFramePosition(
         long long /*start*/, long long /*frame*/, long long /*total*/) {}
@@ -60,7 +60,7 @@ struct IFrameDecoder
         PIX_FMT_RGB24,     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
     };
 
-    virtual ~IFrameDecoder() {}
+    virtual ~IFrameDecoder() = default;
 
     virtual void SetFrameFormat(FrameFormat format, bool allowDirect3dData) = 0;
 

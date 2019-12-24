@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 struct IAudioPlayerCallback
 {
@@ -9,7 +9,7 @@ struct IAudioPlayerCallback
 
 struct IAudioPlayer
 {
-    virtual ~IAudioPlayer() {}
+    virtual ~IAudioPlayer() = default;
     virtual void SetCallback(IAudioPlayerCallback* callback) = 0;
 
     virtual void InitializeThread() = 0;
