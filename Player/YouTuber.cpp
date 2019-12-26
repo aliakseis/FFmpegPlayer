@@ -16,6 +16,8 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/sources/channel_logger.hpp>
 
+#include <boost/algorithm/string.hpp>
+
 #include <regex>
 #include <fstream>
 #include <iterator>
@@ -234,6 +236,30 @@ bool extractYoutubeId(std::string& s)
 
 bool DownloadAndExtractZip(const char* zipfile, const TCHAR* root)
 {
+    std::string urlSubst;
+    {
+        TCHAR configPath[MAX_PATH];
+        _tcscpy_s(configPath, root);
+        PathAppend(configPath, _T("git-subst.cfg"));
+
+        std::ifstream istr(configPath);
+        std::string buffer;
+        while (std::getline(istr, buffer))
+        {
+            std::istringstream ss(buffer);
+            std::string key;
+            std::getline(ss, key, '=');
+            ss >> urlSubst;
+            boost::algorithm::trim(key);
+            boost::algorithm::trim(urlSubst);
+            if (key == zipfile)
+            {
+                zipfile = urlSubst.c_str();
+                break;
+            }
+        }
+    }
+
     unzFile uf = unzOpen((voidpf)zipfile);
     if (!uf)
     {
