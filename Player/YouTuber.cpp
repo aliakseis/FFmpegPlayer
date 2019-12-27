@@ -37,6 +37,25 @@
 
 namespace {
 
+bool getValueFromPropertiesFile(const TCHAR* configPath, const char* key, std::string& value)
+{
+    std::ifstream istr(configPath);
+    std::string buffer;
+    while (std::getline(istr, buffer))
+    {
+        std::istringstream ss(buffer);
+        std::getline(ss, buffer, '=');
+        boost::algorithm::trim(buffer);
+        if (buffer == key)
+        {
+            std::getline(ss, value);
+            boost::algorithm::trim(value);
+            return true;
+        }
+    }
+    return false;
+}
+
 // http://thejosephturner.com/blog/post/embedding-python-in-c-applications-with-boostpython-part-2/
 // Parses the value of the active python exception
 // NOTE SHOULD NOT BE CALLED IF NO EXCEPTION
@@ -241,22 +260,8 @@ bool DownloadAndExtractZip(const char* zipfile, const TCHAR* root)
         TCHAR configPath[MAX_PATH];
         _tcscpy_s(configPath, root);
         PathAppend(configPath, _T("git-subst.cfg"));
-
-        std::ifstream istr(configPath);
-        std::string buffer;
-        while (std::getline(istr, buffer))
-        {
-            std::istringstream ss(buffer);
-            std::string key;
-            std::getline(ss, key, '=');
-            ss >> urlSubst;
-            boost::algorithm::trim(key);
-            boost::algorithm::trim(urlSubst);
-            if (key == zipfile)
-            {
-                zipfile = urlSubst.c_str();
-                break;
-            }
+        if (getValueFromPropertiesFile(configPath, zipfile, urlSubst)) {
+            zipfile = urlSubst.c_str();
         }
     }
 
