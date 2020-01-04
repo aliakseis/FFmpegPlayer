@@ -223,7 +223,7 @@ bool CPlayerDoc::openUrlFromList()
         m_playList.pop_front();
         if (openUrl(buffer))
             return true;
-        else if (!networkCkecked)
+        else if (!networkCkecked && PathIsURLA(buffer.c_str()))
         {
             networkCkecked = true;
             DWORD flags = NETWORK_ALIVE_INTERNET;
