@@ -53,6 +53,12 @@ vcpkg install --featurepackages --recurse boost[python]
 
 You may need to remove pytube stuff from your profile folder for the player application to set up the latest version, for example, by invoking remove_pytube.cmd.
 
+You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mapping file that contains, for example,
+
+```
+https://github.com/nficano/pytube/archive/master.zip = https://github.com/swiftyy-mage/pytube/archive/master.zip
+```
+
 Sometimes we need to go deeper, visit pytube issues list and apply fixes, for example 
 - https://github.com/nficano/pytube/issues/467#issuecomment-567560796
 - https://github.com/nficano/pytube/pull/425
