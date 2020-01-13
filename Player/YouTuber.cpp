@@ -91,7 +91,7 @@ std::string parse_python_exception()
         if(returned.check())
             ret +=  ": " + returned();
         else
-            ret += std::string(": Unparseable Python error: ");
+            ret += ": Unparseable Python error: ";
     }
     // Parse lines from the traceback using the Python traceback module
     if(traceback_ptr != NULL){
@@ -108,7 +108,7 @@ std::string parse_python_exception()
         if(returned.check())
             ret += ": " + returned();
         else
-            ret += std::string(": Unparseable Python traceback");
+            ret += ": Unparseable Python traceback";
     }
     return ret;
 }
