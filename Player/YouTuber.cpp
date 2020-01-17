@@ -61,7 +61,6 @@ bool getValueFromPropertiesFile(const TCHAR* configPath, const char* key, std::s
 // NOTE SHOULD NOT BE CALLED IF NO EXCEPTION
 std::string parse_python_exception()
 {
-
     namespace py = boost::python;
 
     PyObject *type_ptr = NULL, *value_ptr = NULL, *traceback_ptr = NULL;
@@ -88,10 +87,15 @@ std::string parse_python_exception()
         py::handle<> h_val(value_ptr);
         py::str a(h_val);
         py::extract<std::string> returned(a);
-        if(returned.check())
-            ret +=  ": " + returned();
-        else
+        try {
+            if (returned.check())
+                ret += ": " + returned();
+            else
+                ret += ": Unparseable Python error: ";
+        }
+        catch (const py::error_already_set&) {
             ret += ": Unparseable Python error: ";
+        }
     }
     // Parse lines from the traceback using the Python traceback module
     if(traceback_ptr != NULL){
