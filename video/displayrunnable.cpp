@@ -36,9 +36,7 @@ void FFmpegDecoder::displayRunnable()
             m_frameListener->updateFrame();
         }
 
-        int speedNumerator;
-        int speedDenominator;
-        std::tie(speedNumerator, speedDenominator) = getSpeedRational();
+        const auto speed = getSpeedRational();
 
         for (;;)
         {
@@ -49,12 +47,12 @@ void FFmpegDecoder::displayRunnable()
             if (delay > 0.1)
             {
                 boost::this_thread::sleep_for(
-                    boost::chrono::milliseconds(100 * speedDenominator / speedNumerator));
+                    boost::chrono::milliseconds(100 * speed.denominator / speed.numerator));
                 continue;
             }
 
             boost::this_thread::sleep_for(
-                boost::chrono::milliseconds(int(delay * 1000. * speedDenominator / speedNumerator)));
+                boost::chrono::milliseconds(int(delay * 1000. * speed.denominator / speed.numerator)));
             break;
         }
 

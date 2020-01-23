@@ -94,8 +94,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     int getAudioTrack() const override;
     void setAudioTrack(int idx) override;
 
-    std::pair<int, int> getSpeedRational() const override;
-    void setSpeedRational(const std::pair<int, int>& speed) override;
+    RationalNumber getSpeedRational() const override;
+    void setSpeedRational(const RationalNumber& speed) override;
 
    private:
     class IOContext;
@@ -242,5 +242,5 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     boost::atomic<boost::chrono::high_resolution_clock::duration> m_referenceTime;
 
-    boost::atomic<std::pair<int, int>> m_speedRational; // Numerator, Denominator
+    boost::atomic<RationalNumber> m_speedRational; // Numerator, Denominator
 };

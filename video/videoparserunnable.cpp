@@ -193,12 +193,10 @@ bool FFmpegDecoder::handleVideoFrame(
             }
             else
             {
-                int speedNumerator;
-                int speedDenominator;
-                std::tie(speedNumerator, speedDenominator) = getSpeedRational();
+                const auto speed = getSpeedRational();
                 context.numSkipped = 0;
                 td = boost::posix_time::milliseconds(
-                    int((m_videoStartClock + pts - curTime) * 1000.  * speedDenominator / speedNumerator) + 1);
+                    int((m_videoStartClock + pts - curTime) * 1000.  * speed.denominator / speed.numerator) + 1);
             }
         }
     }

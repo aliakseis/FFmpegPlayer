@@ -44,7 +44,7 @@
 
 namespace {
 
-const std::pair<int, int> videoSpeeds[] 
+const RationalNumber videoSpeeds[]
 {
     { 1, 2 },
     { 5, 8 },
@@ -748,5 +748,5 @@ float CPlayerDoc::getVideoSpeed() const
     if (m_nightcore)
         return 1.f;
     const auto speedRational = m_frameDecoder->getSpeedRational();
-    return static_cast<float>(speedRational.second) / speedRational.first;
+    return static_cast<float>(speedRational.denominator) / speedRational.numerator;
 }

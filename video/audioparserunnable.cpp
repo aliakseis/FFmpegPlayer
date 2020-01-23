@@ -256,21 +256,19 @@ void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
 
     const int64_t dec_channel_layout = getChannelLayout(audioFrame);
 
-    int speedNumerator;
-    int speedDenominator;
-    std::tie(speedNumerator, speedDenominator) = getSpeedRational();
+    const auto speed = getSpeedRational();
 
     // Check if the new swr context required
     if (audioFrameFormat != m_audioCurrentPref.format ||
         dec_channel_layout != m_audioCurrentPref.channel_layout ||
-        (audioFrame->sample_rate * speedNumerator) / speedDenominator != m_audioCurrentPref.frequency)
+        (audioFrame->sample_rate * speed.numerator) / speed.denominator != m_audioCurrentPref.frequency)
     {
         swr_free(&m_audioSwrContext);
         m_audioSwrContext = swr_alloc_set_opts(
             nullptr, m_audioSettings.channel_layout, m_audioSettings.format,
-            m_audioSettings.frequency * speedDenominator,
+            m_audioSettings.frequency * speed.denominator,
             dec_channel_layout, audioFrameFormat,
-            audioFrame->sample_rate * speedNumerator, 0, nullptr);
+            audioFrame->sample_rate * speed.numerator, 0, nullptr);
 
         if ((m_audioSwrContext == nullptr) || swr_init(m_audioSwrContext) < 0)
         {
@@ -280,6 +278,6 @@ void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
         m_audioCurrentPref.format = audioFrameFormat;
         m_audioCurrentPref.channels = audioFrameChannels;
         m_audioCurrentPref.channel_layout = dec_channel_layout;
-        m_audioCurrentPref.frequency = (audioFrame->sample_rate * speedNumerator) / speedDenominator;
+        m_audioCurrentPref.frequency = (audioFrame->sample_rate * speed.numerator) / speed.denominator;
     }
 }

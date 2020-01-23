@@ -52,6 +52,17 @@ struct FrameDecoderListener
     virtual void playingFinished() {}
 };
 
+struct RationalNumber
+{
+    int numerator;
+    int denominator;
+};
+
+inline bool operator == (const RationalNumber& left, const RationalNumber& right)
+{
+    return left.numerator == right.numerator && left.denominator == right.denominator;
+}
+
 struct IFrameDecoder
 {
     enum FrameFormat {
@@ -92,8 +103,8 @@ struct IFrameDecoder
     virtual int getAudioTrack() const = 0;
     virtual void setAudioTrack(int idx) = 0;
 
-    virtual std::pair<int, int> getSpeedRational() const = 0;
-    virtual void setSpeedRational(const std::pair<int, int>& speed) = 0;
+    virtual RationalNumber getSpeedRational() const = 0;
+    virtual void setSpeedRational(const RationalNumber& speed) = 0;
 };
 
 struct IAudioPlayer;

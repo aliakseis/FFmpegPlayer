@@ -680,10 +680,8 @@ void FFmpegDecoder::AppendFrameClock(double frame_clock)
             m_duration + m_startTime);
     }
 
-    int speedNumerator;
-    int speedDenominator;
-    std::tie(speedNumerator, speedDenominator) = getSpeedRational();
-    InterlockedAdd(m_audioPTS, frame_clock * speedNumerator / speedDenominator);
+    const auto speed = getSpeedRational();
+    InterlockedAdd(m_audioPTS, frame_clock * speed.numerator / speed.denominator);
 }
 
 void FFmpegDecoder::setVolume(double volume)
@@ -903,23 +901,20 @@ void FFmpegDecoder::setAudioTrack(int idx)
     }
 }
 
-std::pair<int, int> FFmpegDecoder::getSpeedRational() const
+RationalNumber FFmpegDecoder::getSpeedRational() const
 {
     return m_speedRational;
 }
 
-void FFmpegDecoder::setSpeedRational(const std::pair<int, int>& speed)
+void FFmpegDecoder::setSpeedRational(const RationalNumber& speed)
 {
     boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
 
     const auto time = GetHiResTime();
     m_speedRational = speed;
-    int speedNumerator;
-    int speedDenominator;
-    std::tie(speedNumerator, speedDenominator) = speed;
 
     m_referenceTime = (boost::chrono::high_resolution_clock::now()
-            - boost::chrono::microseconds(int64_t(time * speedDenominator / speedNumerator * 1000000.)))
+            - boost::chrono::microseconds(int64_t(time * speed.denominator / speed.numerator * 1000000.)))
         .time_since_epoch();
 }
 
@@ -937,10 +932,8 @@ void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame)
 
 double FFmpegDecoder::GetHiResTime()
 {
-    int speedNumerator;
-    int speedDenominator;
-    std::tie(speedNumerator, speedDenominator) = getSpeedRational();
+    const auto speed = getSpeedRational();
     return boost::chrono::duration_cast<boost::chrono::microseconds>(
         boost::chrono::high_resolution_clock::now() - boost::chrono::high_resolution_clock::time_point(m_referenceTime)).count()
-            / 1000000. * speedNumerator / speedDenominator;
+            / 1000000. * speed.numerator / speed.denominator;
 }
