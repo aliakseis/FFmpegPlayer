@@ -136,14 +136,6 @@ const char YOUTUBE_TRANSCRIPT_API_URL[] = "https://github.com/jdepoix/youtube-tr
 
 const char SCRIPT_TEMPLATE[] = R"(import sys, socket
 sys.stderr = LoggerStream()
-sys.path.append("%s")
-from pytube import YouTube
-def getYoutubeUrl(url):
-    socket.setdefaulttimeout(10)
-    return YouTube(url).streams.filter(progressive=True).order_by('resolution').desc().first().url)";
-
-const char TRANSCRIPT_TEMPLATE[] = R"(import sys
-sys.stderr = LoggerStream()
 
 def install_and_import(package):
     import importlib
@@ -154,6 +146,16 @@ def install_and_import(package):
         subprocess.call(["pip", "install", package])
     finally:
         globals()[package] = importlib.import_module(package)
+
+install_and_import('typing_extensions')
+sys.path.append("%s")
+from pytube import YouTube
+def getYoutubeUrl(url):
+    socket.setdefaulttimeout(10)
+    return YouTube(url).streams.filter(progressive=True).order_by('resolution').desc().first().url)";
+
+const char TRANSCRIPT_TEMPLATE[] = R"(import sys
+sys.stderr = LoggerStream()
 
 install_and_import('requests')
 sys.path.append("%s")
@@ -257,7 +259,7 @@ bool extractYoutubeId(std::string& s)
     return false;
 }
 
-bool DownloadAndExtractZip(const char* zipfile, const TCHAR* root)
+bool DownloadAndExtractZip(const char* zipfile, const TCHAR* root, const TCHAR* name)
 {
     std::string urlSubst;
     {
@@ -276,13 +278,18 @@ bool DownloadAndExtractZip(const char* zipfile, const TCHAR* root)
     }
     unzGoToFirstFile(uf);
     do {
+        TCHAR path[MAX_PATH];
+        _tcscpy_s(path, root);
+
+        PathAppend(path, name);
+
         char filename[MAX_PATH];
         unzGetCurrentFileInfo(uf, 0, filename, sizeof(filename), 0, 0, 0, 0);
 
-        TCHAR path[MAX_PATH];
-        _tcscpy_s(path, root);
-        PathAppend(path, CA2T(filename, CP_UTF8));
-
+        if (auto substr = strchr(filename, '/'))
+        {
+            PathAppend(path, CA2T(substr, CP_UTF8));
+        }
         auto pathlen = _tcslen(path);
         if (pathlen > 0 && (path[pathlen - 1] == _T('/') || path[pathlen - 1] == _T('\\')))
         {
@@ -330,7 +337,7 @@ std::string getPathWithPackage(const char* url, const TCHAR* name)
     PathAppend(strPath, name);
 
     if (-1 == _taccess(strPath, 0)
-        && (!DownloadAndExtractZip(url, localAppdataPath)
+        && (!DownloadAndExtractZip(url, localAppdataPath, name)
             || -1 == _taccess(strPath, 0)))
     {
         return{};
