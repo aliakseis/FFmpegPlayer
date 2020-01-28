@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #ifdef _WIN32
 using PathType = std::wstring;
@@ -105,6 +106,8 @@ struct IFrameDecoder
 
     virtual RationalNumber getSpeedRational() const = 0;
     virtual void setSpeedRational(const RationalNumber& speed) = 0;
+
+    virtual std::vector<std::string> getProperties() = 0;
 };
 
 struct IAudioPlayer;

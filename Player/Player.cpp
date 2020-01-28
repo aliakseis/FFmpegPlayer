@@ -210,6 +210,8 @@ public:
 // Dialog Data
     enum { IDD = IDD_ABOUTBOX };
 
+    CString m_videoProperties;
+
 protected:
     virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
@@ -225,15 +227,41 @@ CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
+    DDX_Text(pDX, IDC_VIDEO_PROPERTIES, m_videoProperties);
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
+CPlayerDoc* CPlayerApp::GetPlayerDocument()
+{
+    POSITION pos1 = GetFirstDocTemplatePosition();
+    if (CDocTemplate* templ = GetNextDocTemplate(pos1))
+    {
+        POSITION pos2 = templ->GetFirstDocPosition();
+        return dynamic_cast<CPlayerDoc*>(templ->GetNextDoc(pos2));
+    }
+
+    return nullptr;
+}
+
+
 // App command to run the dialog
 void CPlayerApp::OnAppAbout()
 {
     CAboutDlg aboutDlg;
+
+    if (CPlayerDoc* doc = GetPlayerDocument())
+    {
+        const auto properties = doc->getFrameDecoder()->getProperties();
+        for (const auto& prop : properties)
+        {
+            if (!aboutDlg.m_videoProperties.IsEmpty())
+                aboutDlg.m_videoProperties += '\n';
+            aboutDlg.m_videoProperties += prop.c_str();
+        }
+    }
+
     aboutDlg.DoModal();
 }
 
@@ -241,18 +269,11 @@ void CPlayerApp::OnAsyncUrl(WPARAM wParam, LPARAM)
 {
     CComBSTR url;
     url.Attach((BSTR)wParam);
-    POSITION pos1 = GetFirstDocTemplatePosition();
-    if (CDocTemplate* templ = GetNextDocTemplate(pos1))
+    if (CPlayerDoc* doc = GetPlayerDocument())
     {
-        POSITION pos2 = templ->GetFirstDocPosition();
-        if (CPlayerDoc* doc = dynamic_cast<CPlayerDoc*>(templ->GetNextDoc(pos2)))
-        {
-            doc->OnAsyncUrl(CString(url));
-        }
+        doc->OnAsyncUrl(CString(url));
     }
 }
 
 // CPlayerApp message handlers
-
-
 

@@ -9,6 +9,7 @@
 
 #include "resource.h"       // main symbols
 
+class CPlayerDoc;
 
 // CPlayerApp:
 // See Player.cpp for the implementation of this class
@@ -28,6 +29,8 @@ public:
     afx_msg void OnAppAbout();
     afx_msg void OnAsyncUrl(WPARAM wParam, LPARAM lParam);
     DECLARE_MESSAGE_MAP()
+
+    CPlayerDoc* GetPlayerDocument();
 };
 
 extern CPlayerApp theApp;

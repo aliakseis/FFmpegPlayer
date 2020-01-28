@@ -220,15 +220,16 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "About Player"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20,SS_REALSIZEIMAGE
+    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20,SS_REALSIZEIMAGE
     DEFPUSHBUTTON   "OK",IDOK,284,157,50,14,WS_GROUP
-    LTEXT           "Player, Version 1.0",IDC_STATIC,191,14,114,8,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2015-2019",IDC_STATIC,191,26,114,8
-    LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,191,38,114,8
-    LTEXT           "www.iconfinder.com/Rudityas",IDC_STATIC,191,50,97,8
-    LTEXT           "YouTube: github.com/nficano/pytube",IDC_STATIC,191,62,122,8
-    LTEXT           "github.com/jdepoix/youtube-transcript-api",IDC_STATIC,191,74,141,8
-    LTEXT           "Pitch shifting by Stephan M. Bernsee",IDC_STATIC,191,86,141,8
+    LTEXT           "Player, Version 1.0",IDC_STATIC,183,14,114,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2015-2019",IDC_STATIC,183,26,114,8
+    LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,183,38,114,8
+    LTEXT           "www.iconfinder.com/Rudityas",IDC_STATIC,183,50,97,8
+    LTEXT           "YouTube: github.com/nficano/pytube",IDC_STATIC,183,62,122,8
+    LTEXT           "github.com/jdepoix/youtube-transcript-api",IDC_STATIC,183,74,141,8
+    LTEXT           "Pitch shifting by Stephan M. Bernsee",IDC_STATIC,183,86,141,8
+    LTEXT           "",IDC_VIDEO_PROPERTIES,183,109,151,38
 END
 
 IDD_DIALOGBAR_PLAYER_CONTROL DIALOGEX 0, 0, 372, 22

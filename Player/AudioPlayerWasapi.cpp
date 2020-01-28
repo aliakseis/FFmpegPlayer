@@ -43,8 +43,7 @@ namespace CoreAudioUtil
 
     CComPtr<IMMDeviceEnumerator> CreateDeviceEnumerator() {
         //ASSERT(IsSupported());
-        CComPtr<IMMDeviceEnumerator> device_enumerator =
-            CreateDeviceEnumeratorInternal(true);
+        auto device_enumerator = CreateDeviceEnumeratorInternal(true);
         ASSERT(device_enumerator);
         return device_enumerator;
     }
@@ -54,7 +53,7 @@ namespace CoreAudioUtil
         //ASSERT(IsSupported());
         CComPtr<IMMDevice> endpoint_device;
         // Create the IMMDeviceEnumerator interface.
-        CComPtr<IMMDeviceEnumerator> device_enumerator = CreateDeviceEnumerator();
+        auto device_enumerator = CreateDeviceEnumerator();
         if (!device_enumerator)
             return endpoint_device;
         // Retrieve the default audio endpoint for the specified data-flow
@@ -84,8 +83,7 @@ namespace CoreAudioUtil
         //ASSERT(IsSupported());
         CComPtr<IMMDevice> endpoint_device;
         // Create the IMMDeviceEnumerator interface.
-        CComPtr<IMMDeviceEnumerator> device_enumerator =
-            CreateDeviceEnumerator();
+        auto device_enumerator = CreateDeviceEnumerator();
         if (!device_enumerator)
             return endpoint_device;
         // Retrieve an audio device specified by an endpoint device-identification
@@ -118,9 +116,10 @@ namespace CoreAudioUtil
     CComPtr<IAudioClient> CreateDefaultClient(
     EDataFlow data_flow, ERole role) {
         //ASSERT(IsSupported());
-        CComPtr<IMMDevice> default_device(CreateDefaultDevice(data_flow, role));
-        return (default_device ? CreateClient(default_device)
-            : CComPtr<IAudioClient>());
+        auto default_device = CreateDefaultDevice(data_flow, role);
+        if (!default_device)
+            return {};
+        return CreateClient(default_device);
     }
 
 
@@ -128,9 +127,9 @@ namespace CoreAudioUtil
         const std::string& device_id, EDataFlow data_flow, ERole role) {
         if (device_id.empty())
             return CreateDefaultClient(data_flow, role);
-        CComPtr<IMMDevice> device(CreateDevice(device_id));
+        auto device = CreateDevice(device_id);
         if (!device)
-            return CComPtr<IAudioClient>();
+            return {};
         return CreateClient(device);
     }
 
@@ -150,8 +149,7 @@ namespace CoreAudioUtil
 
     DWORD GetChannelConfig(const std::string& device_id,
         EDataFlow data_flow) {
-        CComPtr<IAudioClient> client(
-            CreateClient(device_id, data_flow, eConsole));
+        auto client = CreateClient(device_id, data_flow, eConsole);
         WAVEFORMATPCMEX format = { 0 };
         if (!client || FAILED(GetSharedModeMixFormat(client, &format)))
             return 0;
@@ -254,7 +252,7 @@ bool AudioPlayerWasapi::Open(int bytesPerSample, int channels, int* samplesPerSe
     const bool communications_device = (device_role_ == eCommunications);
 
     // Create an IAudioClient interface for the default rendering IMMDevice.
-    CComPtr<IAudioClient> audio_client = CoreAudioUtil::CreateDefaultClient(eRender, device_role_);
+    auto audio_client = CoreAudioUtil::CreateDefaultClient(eRender, device_role_);
     if (!audio_client)
         return false;
 
@@ -299,8 +297,7 @@ bool AudioPlayerWasapi::Open(int bytesPerSample, int channels, int* samplesPerSe
     // Create an IAudioRenderClient client for an initialized IAudioClient.
     // The IAudioRenderClient interface enables us to write output data to
     // a rendering endpoint buffer.
-    CComPtr<IAudioRenderClient> audio_render_client =
-        CoreAudioUtil::CreateRenderClient(audio_client);
+    auto audio_render_client = CoreAudioUtil::CreateRenderClient(audio_client);
     if (!audio_render_client)
         return false;
     // Store valid COM interfaces.
@@ -383,8 +380,7 @@ void AudioPlayerWasapi::InitializeThread()
     TRACE("Old audio thread priority = %d\n", GetThreadPriority(GetCurrentThread()));
     VERIFY(SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL));
 
-    const HMODULE avrtHandle = GetAvrtHandle();
-    if (avrtHandle) 
+    if (auto avrtHandle = GetAvrtHandle())
     {
         DWORD mmcssTaskIndex = 0;
         AVRT_FUNC_PTR(AvSetMmThreadCharacteristicsW);
@@ -409,8 +405,7 @@ void AudioPlayerWasapi::DeinitializeThread()
 {
     if (m_mmcssHandle)
     {
-        const HMODULE avrtHandle = GetAvrtHandle();
-        if (avrtHandle)
+        if (auto avrtHandle = GetAvrtHandle())
         {
             AVRT_FUNC_PTR(AvRevertMmThreadCharacteristics);
             if (AvRevertMmThreadCharacteristicsPtr)

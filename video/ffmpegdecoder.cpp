@@ -918,6 +918,20 @@ void FFmpegDecoder::setSpeedRational(const RationalNumber& speed)
         .time_since_epoch();
 }
 
+std::vector<std::string> FFmpegDecoder::getProperties()
+{
+    std::vector<std::string> result;
+
+    if (m_formatContext && m_formatContext->iformat && m_formatContext->iformat->long_name)
+        result.push_back(m_formatContext->iformat->long_name);
+    if (m_videoCodec && m_videoCodec->long_name)
+        result.push_back(m_videoCodec->long_name);
+    if (m_audioCodec && m_audioCodec->long_name)
+        result.push_back(m_audioCodec->long_name);
+
+    return result;
+}
+
 
 void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame)
 {

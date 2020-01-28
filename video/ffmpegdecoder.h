@@ -97,6 +97,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     RationalNumber getSpeedRational() const override;
     void setSpeedRational(const RationalNumber& speed) override;
 
+    std::vector<std::string> getProperties() override;
+
    private:
     class IOContext;
     struct VideoParseContext;
