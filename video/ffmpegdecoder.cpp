@@ -1,4 +1,5 @@
 ﻿#include "ffmpegdecoder.h"
+
 #include <climits>
 #include <cstdint>
 
@@ -13,6 +14,11 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/log/trivial.hpp>
+
+extern "C"
+{
+#include "libavutil/pixdesc.h"
+}
 
 #define USE_HWACCEL
 
@@ -924,8 +930,43 @@ std::vector<std::string> FFmpegDecoder::getProperties()
 
     if (m_formatContext && m_formatContext->iformat && m_formatContext->iformat->long_name)
         result.push_back(m_formatContext->iformat->long_name);
+
     if (m_videoCodec && m_videoCodec->long_name)
         result.push_back(m_videoCodec->long_name);
+
+    if (m_videoStream && m_videoCodecContext)
+    {
+        const auto eps_zero = 0.000025;
+
+        double fps = 0;
+        if (m_videoStream->r_frame_rate.den)
+            fps = av_q2d(m_videoStream->r_frame_rate);
+
+        if (fps < eps_zero && m_videoStream->avg_frame_rate.den)
+            fps = av_q2d(m_videoStream->avg_frame_rate);
+
+        if (fps < eps_zero && m_videoStream->time_base.num && m_videoStream->time_base.den)
+            fps = 1.0 / av_q2d(m_videoStream->time_base);
+
+        int bpp = 0;
+        int depth = 0;
+        if (auto av_pix_fmt_desc = av_pix_fmt_desc_get(
+            (m_videoCodecContext->sw_pix_fmt == AV_PIX_FMT_NONE)
+                ? m_videoCodecContext->pix_fmt : m_videoCodecContext->sw_pix_fmt))
+        {
+            bpp = av_get_bits_per_pixel(av_pix_fmt_desc);
+            for (int i = 0; i < av_pix_fmt_desc->nb_components; ++i)
+                if (av_pix_fmt_desc->comp[i].depth > depth)
+                    depth = av_pix_fmt_desc->comp[i].depth;
+        }
+
+        char buffer[1000];
+        sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]),
+            "%d / %d @ %.2f FPS %d BPP %d bits", 
+            m_videoCodecContext->width, m_videoCodecContext->height, fps, bpp, depth);
+        result.push_back(buffer);
+    }
+
     if (m_audioCodec && m_audioCodec->long_name)
         result.push_back(m_audioCodec->long_name);
 
