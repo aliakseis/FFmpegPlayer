@@ -19,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HttpDownload", "HttpDownloa
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{72C57644-86FB-4587-9EE5-092F360D146C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls", "Dlls\Dlls.csproj", "{BC1BC9F1-893D-4715-818A-F37F74EB5710}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -99,6 +101,22 @@ Global
 		{72C57644-86FB-4587-9EE5-092F360D146C}.Release|x64.ActiveCfg = Release
 		{72C57644-86FB-4587-9EE5-092F360D146C}.RelWithDebInfo|Win32.ActiveCfg = Release
 		{72C57644-86FB-4587-9EE5-092F360D146C}.RelWithDebInfo|x64.ActiveCfg = Release
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.Debug|Win32.Build.0 = Debug|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.Debug|x64.Build.0 = Debug|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.MinSizeRel|Win32.ActiveCfg = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.MinSizeRel|Win32.Build.0 = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.MinSizeRel|x64.ActiveCfg = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.MinSizeRel|x64.Build.0 = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.Release|Win32.ActiveCfg = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.Release|Win32.Build.0 = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.Release|x64.ActiveCfg = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.Release|x64.Build.0 = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.RelWithDebInfo|Win32.ActiveCfg = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.RelWithDebInfo|Win32.Build.0 = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
+		{BC1BC9F1-893D-4715-818A-F37F74EB5710}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
