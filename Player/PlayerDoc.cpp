@@ -673,6 +673,8 @@ void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
         }
         if (!playList.empty())
         {
+            GetDocTemplate()->SetDefaultTitle(this);
+            ClearPathName();
             openUrlFromList(playList);
         }
     }
@@ -683,6 +685,8 @@ void CPlayerDoc::OnEditPaste(const std::string& text)
     auto playList = ParsePlaylistText(text);
     if (!playList.empty())
     {
+        GetDocTemplate()->SetDefaultTitle(this);
+        ClearPathName();
         openUrlFromList(playList);
     }
 }
