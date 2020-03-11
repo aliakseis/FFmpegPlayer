@@ -75,4 +75,4 @@ git checkout dfef7b111656e65a7e14078b6aaffa7f0a402308 -- ports/python3
 
 ```
 
-Tiny demo here: https://www.youtube.com/watch?v=dySA4yEGdEc
+Tiny demos here: https://www.youtube.com/watch?v=dySA4yEGdEc https://www.youtube.com/watch?v=t5iW2ZsEzrA
