@@ -391,7 +391,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
     {
         strFile = _T("ffmpeg.exe");
         strParams.Format(
-            _T("-ss %.3f -t %.3f -i \"%s\" \"%s\""),
+            _T("-ss %.3f -t %.3f -i \"%s\" -q:v 2 \"%s\""),
             m_rangeStartTime,
             m_rangeEndTime - m_rangeStartTime,
             source,
@@ -669,7 +669,7 @@ void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
         {
             TCHAR lpszFileName[MAX_PATH]{};
             if (DragQueryFile(hDropInfo, i, lpszFileName, MAX_PATH))
-                playList.push_back(std::string(CT2A(lpszFileName)));
+                playList.emplace_back(CT2A(lpszFileName));
         }
         if (!playList.empty())
         {
