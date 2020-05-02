@@ -105,7 +105,7 @@ bool FFmpegDecoder::handleAudioPacket(
     if (packet.stream_index != m_audioStream->index)
     {
         avcodec_close(m_audioCodecContext);
-        m_audioStream = m_formatContext->streams[packet.stream_index];
+        m_audioStream = m_formatContexts[m_audioContextIndex]->streams[packet.stream_index];
         if (!setupAudioCodec())
         {
             return false;

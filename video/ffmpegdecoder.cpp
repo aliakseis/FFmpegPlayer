@@ -275,7 +275,7 @@ FFmpegDecoder::~FFmpegDecoder() { close(); }
 void FFmpegDecoder::resetVariables()
 {
     m_videoCodec = nullptr;
-    m_formatContext = nullptr;
+    m_formatContexts.clear();
     m_videoCodecContext = nullptr;
     m_audioCodecContext = nullptr;
     m_audioSwrContext = nullptr;
@@ -299,6 +299,9 @@ void FFmpegDecoder::resetVariables()
     m_seekDuration = AV_NOPTS_VALUE;
     m_videoResetDuration = AV_NOPTS_VALUE;
 
+    m_seekRendezVous.count = 0;
+    m_videoResetRendezVous.count = 0;
+
     m_videoResetting = false;
 
     m_isVideoSeekingWhilePaused = false;
@@ -318,7 +321,11 @@ void FFmpegDecoder::close()
     CHANNEL_LOG(ffmpeg_closing) << "Start file closing";
 
     CHANNEL_LOG(ffmpeg_closing) << "Aborting threads";
-    Shutdown(m_mainParseThread);  // controls other threads, hence stop first
+    // controls other threads, hence stop first
+    for (auto& mainParseThread : m_mainParseThreads)
+    {
+        Shutdown(mainParseThread);
+    }
     Shutdown(m_mainVideoThread);
     Shutdown(m_mainAudioThread);
     Shutdown(m_mainDisplayThread);
@@ -345,7 +352,7 @@ void FFmpegDecoder::closeProcessing()
 
     m_mainVideoThread.reset();
     m_mainAudioThread.reset();
-    m_mainParseThread.reset();
+    m_mainParseThreads.clear();
     m_mainDisplayThread.reset();
 
     m_audioPlayer->Reset();
@@ -368,13 +375,13 @@ void FFmpegDecoder::closeProcessing()
     bool isFileReallyClosed = false;
 
     // Close video file
-    if (m_formatContext != nullptr)
+    for (auto& formatContext : m_formatContexts)
+    if (formatContext != nullptr)
     {
-        avformat_close_input(&m_formatContext);
+        avformat_close_input(&formatContext);
         isFileReallyClosed = true;
     }
 
-    m_ioCtx.reset();
 
     CHANNEL_LOG(ffmpeg_closing) << "Old file closed";
 
@@ -385,87 +392,81 @@ void FFmpegDecoder::closeProcessing()
     }
 }
 
-bool FFmpegDecoder::openFile(const PathType& filename)
-{
-    return openDecoder(filename, std::string(), true);
-}
 
-bool FFmpegDecoder::openUrl(const std::string& url)
-{
-    return openDecoder(PathType(), url, false);
-}
-
-bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bool isFile)
+bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls)
 {
     close();
 
     m_referenceTime = boost::chrono::high_resolution_clock::now().time_since_epoch();
 
-    std::unique_ptr<IOContext> ioCtx;
-    if (isFile)
-    {
-        ioCtx = std::make_unique<IOContext>(file);
-        if (!ioCtx->valid())
-        {
-            BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file";
-            return false;
-        }
-    }
-
     AVDictionary *streamOpts = nullptr;
     auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
 
-    m_formatContext = avformat_alloc_context();
-    if (isFile)
+    //m_formatContexts.resize(urls.size());
+    m_formatContexts.clear();
+
+    for (const auto& url : urls)
     {
-        ioCtx->initAVFormatContext(m_formatContext);
-    }
-    else
-    {
+        auto formatContext = avformat_alloc_context();
+
         av_dict_set(&streamOpts, "stimeout", "5000000", 0); // 5 seconds rtsp timeout.
         av_dict_set(&streamOpts, "rw_timeout", "5000000", 0); // 5 seconds I/O timeout.
         if (boost::starts_with(url, "https://") || boost::starts_with(url, "http://")) // seems to be a bug
         {
             av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
         }
-    }
 
-    m_formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
+        formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
 
-    auto formatContextGuard = MakeGuard(&m_formatContext, avformat_close_input);
+        auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
 
-    // Open video file
-    const int error = avformat_open_input(&m_formatContext, url.c_str(), nullptr, &streamOpts);
-    if (error != 0)
-    {
-        BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error: " << error;
-        return false;
-    }
-    CHANNEL_LOG(ffmpeg_opening) << "Opening video/audio file...";
+        // Open video file
+        const int error = avformat_open_input(&formatContext, url.c_str(), nullptr, &streamOpts);
+        if (error != 0)
+        {
+            BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error: " << error;
+            return false;
+        }
+        CHANNEL_LOG(ffmpeg_opening) << "Opening video/audio file...";
 
-    // Retrieve stream information
-    if (avformat_find_stream_info(m_formatContext, nullptr) < 0)
-    {
-        CHANNEL_LOG(ffmpeg_opening) << "Couldn't find stream information";
-        return false;
+        // Retrieve stream information
+        if (avformat_find_stream_info(formatContext, nullptr) < 0)
+        {
+            CHANNEL_LOG(ffmpeg_opening) << "Couldn't find stream information";
+            return false;
+        }
+
+        m_formatContexts.push_back(formatContext);
+        formatContextGuard.release();
     }
 
     // Find the first video stream
+    m_videoContextIndex = -1;
     m_videoStreamNumber = -1;
+    m_audioContextIndex = -1;
     m_audioStreamNumber = -1;
-    for (unsigned i = m_formatContext->nb_streams; (i--) != 0u;)
+    for (int contextIdx = m_formatContexts.size(); --contextIdx >= 0;)
     {
-        switch (m_formatContext->streams[i]->codecpar->codec_type)
+        const auto formatContext = m_formatContexts[contextIdx];
+        for (int i = formatContext->nb_streams; --i >= 0;)
         {
-        case AVMEDIA_TYPE_VIDEO:
-            m_videoStream = m_formatContext->streams[i];
-            m_videoStreamNumber = i;
-            break;
-        case AVMEDIA_TYPE_AUDIO:
-            m_audioIndices.push_back(i);
-            m_audioStream = m_formatContext->streams[i];
-            m_audioStreamNumber = i;
-            break;
+            switch (formatContext->streams[i]->codecpar->codec_type)
+            {
+            case AVMEDIA_TYPE_VIDEO:
+                m_videoStream = formatContext->streams[i];
+                m_videoContextIndex = contextIdx;
+                m_videoStreamNumber = i;
+                break;
+            case AVMEDIA_TYPE_AUDIO:
+                if (m_audioContextIndex == -1 || m_audioContextIndex == contextIdx)
+                {
+                    m_audioIndices.push_back(i);
+                    m_audioStream = formatContext->streams[i];
+                    m_audioContextIndex = contextIdx;
+                    m_audioStreamNumber = i;
+                }
+                break;
+            }
         }
     }
     std::reverse(m_audioIndices.begin(), m_audioIndices.end());
@@ -497,12 +498,12 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
 
     m_startTime = (timeStream->start_time > 0)
         ? timeStream->start_time
-        : ((m_formatContext->start_time == AV_NOPTS_VALUE)? 0 
-            : int64_t((m_formatContext->start_time / av_q2d(timeStream->time_base)) / 1000000LL));
+        : ((m_formatContexts[0]->start_time == AV_NOPTS_VALUE)? 0 
+            : int64_t((m_formatContexts[0]->start_time / av_q2d(timeStream->time_base)) / 1000000LL));
     m_duration = (timeStream->duration > 0)
         ? timeStream->duration
-        : ((m_formatContext->duration == AV_NOPTS_VALUE)? 0 
-            : int64_t((m_formatContext->duration / av_q2d(timeStream->time_base)) / 1000000LL));
+        : ((m_formatContexts[0]->duration == AV_NOPTS_VALUE)? 0
+            : int64_t((m_formatContexts[0]->duration / av_q2d(timeStream->time_base)) / 1000000LL));
 
     if (!resetVideoProcessing())
     {
@@ -514,8 +515,6 @@ bool FFmpegDecoder::openDecoder(const PathType &file, const std::string& url, bo
         return false;
     }
 
-    formatContextGuard.release();
-    m_ioCtx = std::move(ioCtx);
 
     return true;
 }
@@ -601,9 +600,10 @@ bool FFmpegDecoder::setupAudioProcessing()
 {
     m_audioCurrentPref = m_audioSettings;
 
-    if (m_audioStreamNumber >= 0)
+    const auto audioStreamNumber = m_audioStreamNumber.load();
+    if (audioStreamNumber >= 0)
     {
-        CHANNEL_LOG(ffmpeg_opening) << "Audio stream number: " << m_audioStreamNumber;
+        CHANNEL_LOG(ffmpeg_opening) << "Audio stream number: " << audioStreamNumber;
         m_audioCodecContext = avcodec_alloc_context3(nullptr);
         if (m_audioCodecContext == nullptr) {
             return false;
@@ -667,10 +667,13 @@ void FFmpegDecoder::play(bool isPaused)
         m_pauseTimer = GetHiResTime();
     }
 
-    if (!m_mainParseThread)
+    if (m_mainParseThreads.empty())
     {
         m_isPlaying = true;
-        m_mainParseThread = std::make_unique<boost::thread>(&FFmpegDecoder::parseRunnable, this);
+        for (int i = 0; i < m_formatContexts.size(); ++i)
+        {
+            m_mainParseThreads.push_back(std::make_unique<boost::thread>(&FFmpegDecoder::parseRunnable, this, i));
+        }
         m_mainDisplayThread = std::make_unique<boost::thread>(&FFmpegDecoder::displayRunnable, this);
         CHANNEL_LOG(ffmpeg_opening) << "Playing";
     }
@@ -739,7 +742,7 @@ void FFmpegDecoder::finishedDisplayingFrame(unsigned int generation)
 
 bool FFmpegDecoder::seekDuration(int64_t duration)
 {
-    if (m_mainParseThread && m_seekDuration.exchange(duration) == AV_NOPTS_VALUE)
+    if (!m_mainParseThreads.empty() && m_seekDuration.exchange(duration) == AV_NOPTS_VALUE)
     {
         m_videoPacketsQueue.notify();
         m_audioPacketsQueue.notify();
@@ -751,7 +754,7 @@ bool FFmpegDecoder::seekDuration(int64_t duration)
 void FFmpegDecoder::videoReset()
 {
     m_videoResetting = true;
-    if (m_mainParseThread && m_videoResetDuration.exchange(m_currentTime) == AV_NOPTS_VALUE)
+    if (!m_mainParseThreads.empty() && m_videoResetDuration.exchange(m_currentTime) == AV_NOPTS_VALUE)
     {
         m_videoPacketsQueue.notify();
         m_audioPacketsQueue.notify();
@@ -781,7 +784,7 @@ bool FFmpegDecoder::seekByPercent(double percent)
 
 bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
 {
-    if (!m_frameDisplayingRequested || m_mainParseThread == nullptr || m_videoResetting)
+    if (!m_frameDisplayingRequested || m_mainParseThreads.empty() || m_videoResetting)
     {
         return false;
     }
@@ -820,7 +823,7 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
 
 bool FFmpegDecoder::pauseResume()
 {
-    if (m_mainParseThread == nullptr)
+    if (m_mainParseThreads.empty())
     {
         return false;
     }
@@ -855,7 +858,7 @@ bool FFmpegDecoder::pauseResume()
 
 bool FFmpegDecoder::nextFrame()
 {
-    if (m_mainParseThread == nullptr)
+    if (m_mainParseThreads.empty())
     {
         return false;
     }
@@ -894,9 +897,9 @@ int FFmpegDecoder::getNumAudioTracks() const
 
 int FFmpegDecoder::getAudioTrack() const
 {
-    const int audioStreamNumber = m_audioStreamNumber;
+    const auto audioStreamNumber = m_audioStreamNumber.load();
     return (audioStreamNumber < 0)
-        ? -1 
+        ? -1
         : std::find(m_audioIndices.begin(), m_audioIndices.end(), audioStreamNumber) - m_audioIndices.begin();
 }
 
@@ -928,8 +931,11 @@ std::vector<std::string> FFmpegDecoder::getProperties()
 {
     std::vector<std::string> result;
 
-    if (m_formatContext && m_formatContext->iformat && m_formatContext->iformat->long_name)
-        result.push_back(m_formatContext->iformat->long_name);
+    for (auto formatContext : m_formatContexts)
+    {
+        if (formatContext && formatContext->iformat && formatContext->iformat->long_name)
+            result.push_back(formatContext->iformat->long_name);
+    }
 
     if (m_videoCodec && m_videoCodec->long_name)
         result.push_back(m_videoCodec->long_name);
