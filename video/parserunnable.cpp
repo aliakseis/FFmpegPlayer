@@ -17,11 +17,21 @@ bool isSeekable(AVFormatContext* formatContext)
 
 template<typename T>
 bool RendezVous(
-    //boost::mutex& mtx, unsigned int& generation, unsigned int& count, boost::condition_variable& cond,
     boost::atomic_int64_t& duration,
     RendezVousData& data,
     unsigned int threshold, T func)
 {
+    if (threshold == 1)
+    {
+        const auto prevDuration = duration.exchange(AV_NOPTS_VALUE);
+        if (prevDuration != AV_NOPTS_VALUE)
+        {
+            return func(prevDuration);
+        }
+
+        return true;
+    }
+
     boost::mutex::scoped_lock lock(data.mtx);
 
     if (duration == AV_NOPTS_VALUE)
@@ -55,17 +65,20 @@ void FFmpegDecoder::parseRunnable(int idx)
     AVPacket packet;
     enum { UNSET, SET, REPORTED } eof = UNSET;
 
-    // detect real framesize
-    fixDuration();
-
-    if (m_decoderListener != nullptr)
+    if (idx == 0)
     {
-        m_decoderListener->fileLoaded(m_startTime, m_duration + m_startTime);
-        m_decoderListener->changedFramePosition(m_startTime, m_startTime, m_duration + m_startTime);
-    }
+        // detect real framesize
+        fixDuration();
 
-    startAudioThread();
-    startVideoThread();
+        if (m_decoderListener != nullptr)
+        {
+            m_decoderListener->fileLoaded(m_startTime, m_duration + m_startTime);
+            m_decoderListener->changedFramePosition(m_startTime, m_startTime, m_duration + m_startTime);
+        }
+
+        startAudioThread();
+        startVideoThread();
+    }
 
     for (;;)
     {
@@ -74,21 +87,8 @@ void FFmpegDecoder::parseRunnable(int idx)
             return;
         }
 
-        //int64_t seekDuration = m_seekDuration.exchange(AV_NOPTS_VALUE);
-        //if (seekDuration != AV_NOPTS_VALUE)
-        //{
-        //    resetDecoding(seekDuration, false);
-        //}
         RendezVous(m_seekDuration, m_seekRendezVous, m_formatContexts.size(),
             std::bind(&FFmpegDecoder::resetDecoding, this, std::placeholders::_1, false));
-
-        //seekDuration = m_videoResetDuration.exchange(AV_NOPTS_VALUE);
-        //if (seekDuration != AV_NOPTS_VALUE)
-        //{
-        //    if (!resetDecoding(seekDuration, true)) {
-        //        return;
-        //    }
-        //}
 
         if (!RendezVous(m_videoResetDuration, m_videoResetRendezVous, m_formatContexts.size(),
                 std::bind(&FFmpegDecoder::resetDecoding, this, std::placeholders::_1, true))) {
@@ -199,14 +199,22 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 
     const bool hasVideo = m_mainVideoThread != nullptr;
 
-    for (auto formatContext : m_formatContexts)
+    //for (auto formatContext : m_formatContexts)
+    for (int i = 0; i < m_formatContexts.size(); ++i)
     {
+        auto formatContext = m_formatContexts[i];
+        const int streamNumber = (i == m_videoContextIndex) ? m_videoStreamNumber : m_audioStreamNumber;
+
+        auto convertedSeekDuration = seekDuration;
+        if (i != m_videoContextIndex && m_videoContextIndex != -1)
+        {
+            convertedSeekDuration = seekDuration * av_q2d(m_videoStream->time_base) / av_q2d(m_audioStream->time_base);
+        }
+
         if (isSeekable(formatContext)
-            && avformat_seek_file(formatContext,
-                hasVideo ? m_videoStreamNumber : m_audioStreamNumber,
-                0, seekDuration, seekDuration, AVSEEK_FLAG_FRAME) < 0
-            && (seekDuration >= 0 || avformat_seek_file(formatContext,
-                hasVideo ? m_videoStreamNumber : m_audioStreamNumber,
+            && avformat_seek_file(formatContext, streamNumber,
+                0, convertedSeekDuration, convertedSeekDuration, AVSEEK_FLAG_FRAME) < 0
+            && (convertedSeekDuration >= 0 || avformat_seek_file(formatContext, streamNumber,
                 0, 0, 0, AVSEEK_FLAG_FRAME) < 0))
         {
             CHANNEL_LOG(ffmpeg_seek) << "Seek failed";

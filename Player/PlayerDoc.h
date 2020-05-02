@@ -145,6 +145,8 @@ private:
 
     std::string m_url;
 
+    CString m_separateFilePath;
+
     std::deque<std::string> m_playList;
     std::function<void()> m_reopenFunc;
 

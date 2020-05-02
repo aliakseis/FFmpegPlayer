@@ -262,6 +262,8 @@ void CPlayerDoc::reset()
 
     m_url.clear();
 
+    m_separateFilePath.Empty();
+
     m_nightcore = false;
 
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
@@ -404,6 +406,9 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
 {
+    const bool openSeparateFile = GetAsyncKeyState(VK_SHIFT) < 0
+        && GetAsyncKeyState(VK_CONTROL) < 0;
+
     reset();
 
     const auto extension = PathFindExtension(lpszPathName);
@@ -438,7 +443,20 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
             }
         }
 
-        if (!m_frameDecoder->openUrls({ std::string(CT2A(lpszPathName, CP_UTF8)) }))
+        if (openSeparateFile) {
+            CFileDialog dlg(TRUE);
+            if (dlg.DoModal() != IDOK)
+            {
+                return false;
+            }
+            m_separateFilePath = dlg.GetPathName();
+            if (!m_frameDecoder->openUrls({ 
+                    std::string(CT2A(lpszPathName, CP_UTF8)),
+                    std::string(CT2A(m_separateFilePath, CP_UTF8))
+            }))
+                return false;
+        }
+        else if (!m_frameDecoder->openUrls({ std::string(CT2A(lpszPathName, CP_UTF8)) }))
             return false;
         m_playList.clear();
 
