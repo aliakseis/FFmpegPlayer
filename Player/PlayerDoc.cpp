@@ -687,7 +687,7 @@ void CPlayerDoc::OnDropFiles(HDROP hDropInfo)
         {
             TCHAR lpszFileName[MAX_PATH]{};
             if (DragQueryFile(hDropInfo, i, lpszFileName, MAX_PATH))
-                playList.emplace_back(CT2A(lpszFileName));
+                playList.emplace_back(CT2A(lpszFileName, CP_UTF8));
         }
         if (!playList.empty())
         {
