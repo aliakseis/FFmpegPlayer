@@ -42,6 +42,13 @@ extern boost::log::sources::channel_logger_mt<>
 #include "videoframe.h"
 #include "vqueue.h"
 
+struct RendezVousData
+{
+    boost::mutex mtx;
+    unsigned int generation{};
+    unsigned int count{};
+    boost::condition_variable cond;
+};
 
 // Inspired by http://dranger.com/ffmpeg/ffmpeg.html
 
@@ -56,8 +63,8 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     void SetFrameFormat(FrameFormat format, bool allowDirect3dData) override;
 
-    bool openFile(const PathType& file) override;
-    bool openUrl(const std::string& url) override;
+    //bool openFile(const PathType& file) override;
+    bool openUrls(std::initializer_list<std::string> urls) override;
     bool seekDuration(int64_t duration);
     bool seekByPercent(double percent) override;
 
@@ -104,12 +111,12 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     struct VideoParseContext;
 
     // Threads
-    void parseRunnable();
+    void parseRunnable(int idx);
     void audioParseRunnable();
     void videoParseRunnable();
     void displayRunnable();
 
-    void dispatchPacket(AVPacket& packet);
+    void dispatchPacket(int idx, AVPacket& packet);
     void startAudioThread();
     void startVideoThread();
     //void seek();
@@ -135,7 +142,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     void resetVariables();
     void closeProcessing();
 
-    bool openDecoder(const PathType& file, const std::string& url, bool isFile);
+    //bool openDecoder(const PathType& file, const std::string& url, bool isFile);
 
     bool resetVideoProcessing();
     bool setupAudioProcessing();
@@ -158,7 +165,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
 
     std::unique_ptr<boost::thread> m_mainVideoThread;
     std::unique_ptr<boost::thread> m_mainAudioThread;
-    std::unique_ptr<boost::thread> m_mainParseThread;
+    std::vector<std::unique_ptr<boost::thread>> m_mainParseThreads;
     std::unique_ptr<boost::thread> m_mainDisplayThread;
 
     // Synchronization
@@ -170,10 +177,13 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     int64_t m_duration;
 
     // Basic stuff
-    AVFormatContext* m_formatContext;
+    std::vector<AVFormatContext*> m_formatContexts;
 
     boost::atomic_int64_t m_seekDuration;
     boost::atomic_int64_t m_videoResetDuration;
+
+    RendezVousData m_seekRendezVous;
+    RendezVousData m_videoResetRendezVous;
 
     boost::atomic_bool m_videoResetting;
 
@@ -184,12 +194,14 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     AVCodec* m_videoCodec;
     AVCodecContext* m_videoCodecContext;
     AVStream* m_videoStream;
+    int m_videoContextIndex;
     int m_videoStreamNumber;
 
     // Audio Stuff
     AVCodec* m_audioCodec;
     AVCodecContext* m_audioCodecContext;
     AVStream* m_audioStream;
+    int m_audioContextIndex;
     boost::atomic<int> m_audioStreamNumber;
     SwrContext* m_audioSwrContext;
 
@@ -239,8 +251,6 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
     bool m_audioPaused;
 
     std::vector<int> m_audioIndices;
-
-    std::unique_ptr<IOContext> m_ioCtx;
 
     boost::atomic<boost::chrono::high_resolution_clock::duration> m_referenceTime;
 

@@ -188,7 +188,7 @@ bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl, bool force, const C
 bool CPlayerDoc::openUrl(const std::string& originalUrl)
 {
     const auto url = getYoutubeUrl(originalUrl);
-    if (!url.empty() && m_frameDecoder->openUrl(url))
+    if (!url.empty() && m_frameDecoder->openUrls({ url }))
     {
         m_frameDecoder->play(true);
         m_url = url;
@@ -261,6 +261,8 @@ void CPlayerDoc::reset()
     m_reopenFunc = nullptr;
 
     m_url.clear();
+
+    m_separateFilePath.Empty();
 
     m_nightcore = false;
 
@@ -404,6 +406,9 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
 {
+    const bool openSeparateFile = GetAsyncKeyState(VK_SHIFT) < 0
+        && GetAsyncKeyState(VK_CONTROL) < 0;
+
     reset();
 
     const auto extension = PathFindExtension(lpszPathName);
@@ -438,7 +443,20 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
             }
         }
 
-        if (!m_frameDecoder->openFile(lpszPathName))
+        if (openSeparateFile) {
+            CFileDialog dlg(TRUE);
+            if (dlg.DoModal() != IDOK)
+            {
+                return false;
+            }
+            m_separateFilePath = dlg.GetPathName();
+            if (!m_frameDecoder->openUrls({ 
+                    std::string(CT2A(lpszPathName, CP_UTF8)),
+                    std::string(CT2A(m_separateFilePath, CP_UTF8))
+            }))
+                return false;
+        }
+        else if (!m_frameDecoder->openUrls({ std::string(CT2A(lpszPathName, CP_UTF8)) }))
             return false;
         m_playList.clear();
 
