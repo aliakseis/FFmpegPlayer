@@ -63,7 +63,7 @@ void FFmpegDecoder::parseRunnable(int idx)
 {
     CHANNEL_LOG(ffmpeg_threads) << "Parse thread started";
     AVPacket packet;
-    enum { UNSET, SET, REPORTED } eof = UNSET;
+    enum { UNSET, SET_EOF, SET_INVALID, REPORTED } eof = UNSET;
 
     if (idx == 0)
     {
@@ -104,19 +104,19 @@ void FFmpegDecoder::parseRunnable(int idx)
         else
         {
             using namespace boost;
-            if (eof == SET)
+            if (eof == SET_EOF || eof == SET_INVALID)
             {
                 if ((m_decoderListener != nullptr)
                     && m_videoPacketsQueue.empty()
                     && m_audioPacketsQueue.empty()
                     && (lock_guard<mutex>(m_videoFramesMutex), !m_videoFramesQueue.canPop()))
                 {
-                    m_decoderListener->onEndOfStream();
+                    m_decoderListener->onEndOfStream(eof == SET_INVALID);
                     eof = REPORTED;
                 }
             }
             if (eof == UNSET && (readStatus == AVERROR_EOF || readStatus == AVERROR_INVALIDDATA)) {
-                eof = SET;
+                eof = (readStatus == AVERROR_EOF)? SET_EOF : SET_INVALID;
             }
 
             this_thread::sleep_for(chrono::milliseconds(1));
@@ -199,7 +199,6 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 
     const bool hasVideo = m_mainVideoThread != nullptr;
 
-    //for (auto formatContext : m_formatContexts)
     for (int i = 0; i < m_formatContexts.size(); ++i)
     {
         auto formatContext = m_formatContexts[i];

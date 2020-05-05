@@ -570,9 +570,9 @@ void CPlayerDoc::fileLoaded(long long start, long long total)
         pMainWnd->PostMessage(WM_KICKIDLE); // trigger idle update
 }
 
-void CPlayerDoc::onEndOfStream()
+void CPlayerDoc::onEndOfStream(bool error)
 {
-    if (m_looping && !m_autoPlay && !isFullFrameRange())
+    if (!error && m_looping && !m_autoPlay && !isFullFrameRange())
     {
         const double percent = (m_rangeStartTime - m_startTime) / (m_endTime - m_startTime);
         if (m_frameDecoder->seekByPercent(percent))

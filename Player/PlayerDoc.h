@@ -52,7 +52,7 @@ public:
 protected:
     void changedFramePosition(long long start, long long frame, long long total) override;
     void fileLoaded(long long start, long long total) override;
-    void onEndOfStream() override;
+    void onEndOfStream(bool error) override;
 
 // Generated message map functions
 protected:
