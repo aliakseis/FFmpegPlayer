@@ -118,6 +118,26 @@ std::string parse_python_exception()
 }
 
 
+boost::python::object LoadScriptAndGetFunction(const char* script, const char* funcName,
+    std::initializer_list<std::pair<const char*, boost::python::object>> globals)
+{
+    using namespace boost::python;
+    // Retrieve the main module.
+    object main = import("__main__");
+
+    // Retrieve the main module's namespace
+    object global(main.attr("__dict__"));
+
+    for (auto& v : globals)
+        global[v.first] = v.second;
+
+    // Define function in Python.
+    object exec_result = exec(script, global, global);
+
+    return global[funcName];
+}
+
+
 class LoggerStream
 {
 public:
@@ -385,22 +405,12 @@ YouTubeDealer::YouTubeDealer()
 
     Py_Initialize();
     try {
-        // Retrieve the main module.
-        object main = import("__main__");
-
-        // Retrieve the main module's namespace
-        object global(main.attr("__dict__"));
-
-        global["LoggerStream"] = getLoggerStream();
-
         char script[4096];
         sprintf_s(script, SCRIPT_TEMPLATE, packagePath.c_str());
 
-        // Define function in Python.
-        object exec_result = exec(script, global, global);
+        m_obj = LoadScriptAndGetFunction(script, "getYoutubeUrl",
+            { { "LoggerStream", getLoggerStream() } });
 
-        // Create a reference to it.
-        m_obj = global["getYoutubeUrl"];
         if (!m_obj)
             Py_Finalize();
     }
@@ -476,22 +486,10 @@ YouTubeTranscriptDealer::YouTubeTranscriptDealer()
 
     //Py_Initialize();
     try {
-        // Retrieve the main module.
-        object main = import("__main__");
-
-        // Retrieve the main module's namespace
-        object global(main.attr("__dict__"));
-
-        //global["LoggerStream"] = getLoggerStream();
-
         char script[4096];
         sprintf_s(script, TRANSCRIPT_TEMPLATE, packagePath.c_str());
 
-        // Define function in Python.
-        object exec_result = exec(script, global, global);
-
-        // Create a reference to it.
-        m_obj = global["getYoutubeTranscript"];
+        m_obj = LoadScriptAndGetFunction(script, "getYoutubeTranscript", {});
         //if (!m_obj)
         //    Py_Finalize();
     }

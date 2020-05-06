@@ -223,7 +223,7 @@ BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,9,14,21,20,SS_REALSIZEIMAGE
     DEFPUSHBUTTON   "OK",IDOK,284,157,50,14,WS_GROUP
     LTEXT           "Player, Version 1.0",IDC_STATIC,178,14,114,8,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2015-2019",IDC_STATIC,178,26,114,8
+    LTEXT           L"\x00A9 2015-2020 Sank\x014D",IDC_STATIC,178,26,114,8
     LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,178,38,114,8
     LTEXT           "www.iconfinder.com/Rudityas",IDC_STATIC,178,50,97,8
     LTEXT           "YouTube: github.com/nficano/pytube",IDC_STATIC,178,62,122,8
