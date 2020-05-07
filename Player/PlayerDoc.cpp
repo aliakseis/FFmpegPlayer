@@ -57,14 +57,12 @@ const RationalNumber videoSpeeds[]
 };
 
 
-bool IsDeletingItemFromMruList()
+bool IsCalledFromMruList()
 {
     auto msg = AfxGetCurrentMessage();
     return msg && msg->message == WM_COMMAND
         && msg->wParam >= ID_FILE_MRU_FILE1
-        && msg->wParam < ID_FILE_MRU_FILE1 + _AFX_MRU_MAX_COUNT
-        && GetAsyncKeyState(VK_SHIFT) < 0
-        && GetAsyncKeyState(VK_CONTROL) < 0;
+        && msg->wParam < ID_FILE_MRU_FILE1 + _AFX_MRU_MAX_COUNT;
 }
 
 CString GetUrlFromUrlFile(LPCTSTR lpszPathName)
@@ -357,10 +355,12 @@ void CPlayerDoc::Dump(CDumpContext& dc) const
 
 BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
-    if (IsDeletingItemFromMruList())
+    const bool shiftAndControlPressed = GetAsyncKeyState(VK_SHIFT) < 0
+        && GetAsyncKeyState(VK_CONTROL) < 0;
+    if (shiftAndControlPressed && IsCalledFromMruList())
         return false;
 
-    return openDocument(lpszPathName);
+    return openDocument(lpszPathName, shiftAndControlPressed);
 }
 
 BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
@@ -404,11 +404,8 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 }
 
 
-bool CPlayerDoc::openDocument(LPCTSTR lpszPathName)
+bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= false*/)
 {
-    const bool openSeparateFile = GetAsyncKeyState(VK_SHIFT) < 0
-        && GetAsyncKeyState(VK_CONTROL) < 0;
-
     reset();
 
     const auto extension = PathFindExtension(lpszPathName);
