@@ -26,6 +26,9 @@
 #include <boost/icl/interval_map.hpp>
 #include <boost/algorithm/string.hpp>
 
+// vcpkg install dtl
+#include <dtl/dtl.hpp>
+
 #include <algorithm>
 #include <fstream>
 
@@ -93,6 +96,11 @@ std::unique_ptr<IAudioPlayer> GetAudioPlayer()
 
 class CPlayerDoc::SubtitlesMap : public boost::icl::interval_map<double, std::string>
 {};
+
+class CPlayerDoc::StringDifference : public dtl::Diff<TCHAR, std::basic_string<TCHAR>>
+{
+    using Diff::Diff;
+};
 
 // CPlayerDoc
 
@@ -259,8 +267,6 @@ void CPlayerDoc::reset()
     m_reopenFunc = nullptr;
 
     m_url.clear();
-
-    m_separateFilePath.Empty();
 
     m_nightcore = false;
 
@@ -440,18 +446,39 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
             }
         }
 
+        std::string separateFilePath;
+
         if (openSeparateFile) {
             CFileDialog dlg(TRUE);
             if (dlg.DoModal() != IDOK)
             {
                 return false;
             }
-            m_separateFilePath = dlg.GetPathName();
-            if (!m_frameDecoder->openUrls({ 
-                    std::string(CT2A(lpszPathName, CP_UTF8)),
-                    std::string(CT2A(m_separateFilePath, CP_UTF8))
-            }))
+            separateFilePath = CT2A(dlg.GetPathName(), CP_UTF8);
+            m_separateFileDiff = std::make_unique<StringDifference>(
+                lpszPathName, static_cast<LPCTSTR>(dlg.GetPathName()));
+            m_separateFileDiff->compose();
+        } 
+        else if (m_autoPlay && m_separateFileDiff) {
+            const auto s = m_separateFileDiff->patch(lpszPathName);
+            if (!s.empty() && 0 == _taccess(s.c_str(), 04)) {
+                separateFilePath = CT2A(s.c_str(), CP_UTF8);
+            }
+            else {
+                m_separateFileDiff.reset();
+            }
+        }
+        else {
+            m_separateFileDiff.reset();
+        }
+
+        if (!separateFilePath.empty()) {
+            if (!m_frameDecoder->openUrls({
+                std::string(CT2A(lpszPathName, CP_UTF8)),
+                separateFilePath
+            })) {
                 return false;
+            }
         }
         else if (!m_frameDecoder->openUrls({ std::string(CT2A(lpszPathName, CP_UTF8)) }))
             return false;

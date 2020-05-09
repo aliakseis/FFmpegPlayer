@@ -145,7 +145,8 @@ private:
 
     std::string m_url;
 
-    CString m_separateFilePath;
+    class StringDifference;
+    std::unique_ptr<StringDifference> m_separateFileDiff;
 
     std::deque<std::string> m_playList;
     std::function<void()> m_reopenFunc;
