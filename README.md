@@ -56,7 +56,7 @@ You may need to remove pytube stuff from your profile folder for the player appl
 You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mapping file that contains, for example,
 
 ```
-https://github.com/nficano/pytube/archive/master.zip = https://github.com/hbmartin/pytube3/archive/master.zip
+https://github.com/nficano/pytube/archive/master.zip = https://github.com/pytube3/pytube3/archive/master.zip
 ```
 
 Sometimes we need to go deeper, visit pytube issues list and apply fixes, for example 
@@ -76,3 +76,5 @@ git checkout dfef7b111656e65a7e14078b6aaffa7f0a402308 -- ports/python3
 ```
 
 Tiny demos here: https://www.youtube.com/watch?v=dySA4yEGdEc https://www.youtube.com/watch?v=t5iW2ZsEzrA
+
+Hint: hold Ctrl+Shift while submitting File Open dialog to choose a separate audio file.
