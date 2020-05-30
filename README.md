@@ -60,10 +60,7 @@ https://github.com/nficano/pytube/archive/master.zip = https://github.com/pytube
 ```
 
 Sometimes we need to go deeper, visit pytube issues list and apply fixes, for example 
-- https://github.com/nficano/pytube/issues/467#issuecomment-567560796
-- https://github.com/nficano/pytube/pull/425
-- https://github.com/nficano/pytube/pull/395
-- https://github.com/nficano/pytube/issues/381
+- https://github.com/get-pytube/pytube3/issues/81
 
 Just in case: "In fact in boost-python, the default behavior is that even when debug boost libraries are created, these libraries are linked to the release pythonX.dll/lib - by intention, according to the docs." https://github.com/pybind/pybind11/issues/1295
 
