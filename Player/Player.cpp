@@ -207,6 +207,8 @@ class CAboutDlg : public CDialogEx
 public:
     CAboutDlg();
 
+    BOOL OnInitDialog() override;
+
 // Dialog Data
     enum { IDD = IDD_ABOUTBOX };
 
@@ -222,6 +224,13 @@ protected:
 
 CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
 {
+}
+
+BOOL CAboutDlg::OnInitDialog()
+{
+    ModifyStyleEx(0, WS_EX_LAYERED);
+    SetLayeredWindowAttributes(0, (255 * 75) / 100, LWA_ALPHA);
+    return __super::OnInitDialog();
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
