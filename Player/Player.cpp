@@ -191,6 +191,16 @@ BOOL CPlayerApp::InitInstance()
     if (!ProcessShellCommand(cmdInfo))
         return FALSE;
 
+    // Remove deleted files from MRU list
+    if (m_pRecentFileList != nullptr)
+    {
+        for (int i = m_pRecentFileList->GetSize(); --i >= 0;)
+        {
+            if (_taccess((*m_pRecentFileList)[i], 04) != 0)
+                m_pRecentFileList->Remove(i);
+        }
+    }
+
     // The one and only window has been initialized, so show and update it
     m_pMainWnd->ShowWindow(SW_SHOW);
     m_pMainWnd->UpdateWindow();
