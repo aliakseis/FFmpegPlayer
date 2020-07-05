@@ -448,17 +448,27 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
 
         std::string separateFilePath;
 
+        CString mappedAudioFile;
+
         if (openSeparateFile) {
             CFileDialog dlg(TRUE);
             if (dlg.DoModal() != IDOK)
             {
                 return false;
             }
-            separateFilePath = CT2A(dlg.GetPathName(), CP_UTF8);
+            mappedAudioFile = dlg.GetPathName();
+            static_cast<CPlayerApp*>(AfxGetApp())->SetMappedAudioFile(lpszPathName, dlg.GetPathName());
+        }
+        else {
+            mappedAudioFile = static_cast<CPlayerApp*>(AfxGetApp())->GetMappedAudioFile(lpszPathName);
+        }
+
+        if (!mappedAudioFile.IsEmpty()) {
+            separateFilePath = CT2A(mappedAudioFile, CP_UTF8);
             m_separateFileDiff = std::make_unique<StringDifference>(
-                lpszPathName, static_cast<LPCTSTR>(dlg.GetPathName()));
+                lpszPathName, static_cast<LPCTSTR>(mappedAudioFile));
             m_separateFileDiff->compose();
-        } 
+        }
         else if (m_autoPlay && m_separateFileDiff) {
             const auto s = m_separateFileDiff->patch(lpszPathName);
             if (!s.empty() && 0 == _taccess(s.c_str(), 04)) {

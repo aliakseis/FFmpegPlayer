@@ -25,6 +25,7 @@
 
 #include <boost/log/trivial.hpp>
 
+#include <zlib.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -33,6 +34,53 @@
 //#define USE_DIRECT2D_VIEW
 
 namespace {
+
+// https://www.experts-exchange.com/articles/3189/In-Memory-Compression-and-Decompression-Using-ZLIB.html
+int GetMaxCompressedLen(int nLenSrc)
+{
+    int n16kBlocks = (nLenSrc + 16383) / 16384; // round up any fraction of a block
+    return (nLenSrc + 6 + (n16kBlocks * 5));
+}
+
+int CompressData(const BYTE* abSrc, int nLenSrc, BYTE* abDst, int nLenDst)
+{
+    z_stream zInfo { };
+    zInfo.total_in = zInfo.avail_in = nLenSrc;
+    zInfo.total_out = zInfo.avail_out = nLenDst;
+    zInfo.next_in = const_cast<BYTE*>(abSrc);
+    zInfo.next_out = abDst;
+
+    int nRet = -1;
+    int nErr = deflateInit(&zInfo, Z_BEST_COMPRESSION); // zlib function
+    if (nErr == Z_OK) {
+        nErr = deflate(&zInfo, Z_FINISH);              // zlib function
+        if (nErr == Z_STREAM_END) {
+            nRet = zInfo.total_out;
+        }
+    }
+    deflateEnd(&zInfo);    // zlib function
+    return nRet;
+}
+
+int UncompressData(const BYTE* abSrc, int nLenSrc, BYTE* abDst, int nLenDst)
+{
+    z_stream zInfo { };
+    zInfo.total_in = zInfo.avail_in = nLenSrc;
+    zInfo.total_out = zInfo.avail_out = nLenDst;
+    zInfo.next_in = const_cast<BYTE*>(abSrc);
+    zInfo.next_out = abDst;
+
+    int nRet = -1;
+    int nErr = inflateInit(&zInfo);               // zlib function
+    if (nErr == Z_OK) {
+        nErr = inflate(&zInfo, Z_FINISH);     // zlib function
+        if (nErr == Z_STREAM_END) {
+            nRet = zInfo.total_out;
+        }
+    }
+    inflateEnd(&zInfo);   // zlib function
+    return nRet; // -1 or len of output
+}
 
 void init_logging()
 {
@@ -186,20 +234,12 @@ BOOL CPlayerApp::InitInstance()
         return FALSE;
     AddDocTemplate(pDocTemplate);
 
+    HandleMruList();
+
     // Dispatch commands specified on the command line.  Will return FALSE if
     // app was launched with /RegServer, /Register, /Unregserver or /Unregister.
     if (!ProcessShellCommand(cmdInfo))
         return FALSE;
-
-    // Remove deleted files from MRU list
-    if (m_pRecentFileList != nullptr)
-    {
-        for (int i = m_pRecentFileList->GetSize(); --i >= 0;)
-        {
-            if (_taccess((*m_pRecentFileList)[i], 04) != 0)
-                m_pRecentFileList->Remove(i);
-        }
-    }
 
     // The one and only window has been initialized, so show and update it
     m_pMainWnd->ShowWindow(SW_SHOW);
@@ -284,6 +324,8 @@ void CPlayerApp::OnAppAbout()
     aboutDlg.DoModal();
 }
 
+// CPlayerApp message handlers
+
 void CPlayerApp::OnAsyncUrl(WPARAM wParam, LPARAM)
 {
     CComBSTR url;
@@ -294,5 +336,107 @@ void CPlayerApp::OnAsyncUrl(WPARAM wParam, LPARAM)
     }
 }
 
-// CPlayerApp message handlers
 
+const TCHAR szMappedAudioFilesEntry[] = _T("MappedAudioFiles");
+const int MappedAudioFilesEntryVersion = 2;
+
+bool CPlayerApp::GetMappedAudioFiles(CMapStringToString& map)
+{
+    map.RemoveAll();
+
+    LPBYTE pData = nullptr;
+    UINT bytes = 0;
+    if (!GetBinary(szMappedAudioFilesEntry, &pData, &bytes) || bytes == 0)
+        return false;
+
+    const auto size = 65536;
+
+    std::vector<BYTE> unpacked(size);
+    int nLen = UncompressData(pData, bytes, unpacked.data(), size);
+
+    delete[] pData;
+
+    CMemFile mf(unpacked.data(), size);
+    {
+        CArchive ar(&mf, CArchive::load);
+
+        int version = 0;
+        ar >> version;
+        if (version != MappedAudioFilesEntryVersion)
+            return false;
+        map.Serialize(ar);
+    }
+    mf.Detach();
+
+    return true;
+}
+
+void CPlayerApp::SetMappedAudioFiles(CMapStringToString& map)
+{
+    CMemFile mf;
+    {
+        CArchive ar(&mf, CArchive::store);
+        ar << MappedAudioFilesEntryVersion;
+
+        map.Serialize(ar);
+    }
+
+    UINT uiDataSize = static_cast<UINT>(mf.GetLength());
+    LPBYTE lpbData = mf.Detach();
+    if (lpbData == nullptr)
+        return;
+
+    int nLenDst = GetMaxCompressedLen(uiDataSize);
+    std::vector<BYTE> packed(nLenDst);
+
+    int nLenPacked = CompressData(lpbData, uiDataSize, packed.data(), nLenDst);
+    free(lpbData);
+    if (nLenPacked == -1)
+        return;  // error
+
+    WriteBinary(szMappedAudioFilesEntry, packed.data(), nLenPacked);
+}
+
+void CPlayerApp::HandleMruList()
+{
+    CMapStringToString oldMappedAudioFiles;
+    GetMappedAudioFiles(oldMappedAudioFiles);
+
+    CMapStringToString newMappedAudioFiles;
+
+    if (m_pRecentFileList != nullptr)
+    {
+        for (int i = m_pRecentFileList->GetSize(); --i >= 0;)
+        {
+            const auto& key = (*m_pRecentFileList)[i];
+            if (_taccess(key, 04) != 0)
+                m_pRecentFileList->Remove(i);
+            else
+            {
+                CString value;
+                if (oldMappedAudioFiles.Lookup(key, value))
+                    newMappedAudioFiles[key] = value;
+            }
+        }
+    }
+
+    if (oldMappedAudioFiles.GetSize() != newMappedAudioFiles.GetSize())
+        SetMappedAudioFiles(newMappedAudioFiles);
+}
+
+CString CPlayerApp::GetMappedAudioFile(LPCTSTR key)
+{
+    CMapStringToString mappedAudioFiles;
+    GetMappedAudioFiles(mappedAudioFiles);
+    CString result;
+    mappedAudioFiles.Lookup(key, result);
+    return result;
+}
+
+void CPlayerApp::SetMappedAudioFile(LPCTSTR key, LPCTSTR value)
+{
+    CMapStringToString mappedAudioFiles;
+    GetMappedAudioFiles(mappedAudioFiles);
+    mappedAudioFiles[key] = value;
+    SetMappedAudioFiles(mappedAudioFiles);
+}

@@ -25,12 +25,21 @@ public:
 public:
     BOOL InitInstance() override;
 
+    CString GetMappedAudioFile(LPCTSTR key);
+    void SetMappedAudioFile(LPCTSTR key, LPCTSTR value);
+
 // Implementation
     afx_msg void OnAppAbout();
     afx_msg void OnAsyncUrl(WPARAM wParam, LPARAM lParam);
     DECLARE_MESSAGE_MAP()
 
     CPlayerDoc* GetPlayerDocument();
+
+private:
+    bool GetMappedAudioFiles(CMapStringToString& map);
+    void SetMappedAudioFiles(CMapStringToString& map);
+
+    void HandleMruList();
 };
 
 extern CPlayerApp theApp;
