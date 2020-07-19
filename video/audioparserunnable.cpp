@@ -83,7 +83,7 @@ void FFmpegDecoder::audioParseRunnable()
             if (failed)
             {
                 failed = false;
-                boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
+                boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
                 if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
                 {
                     m_audioPTS = (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock;
@@ -190,7 +190,7 @@ bool FFmpegDecoder::handleAudioPacket(
         bool isPaused = false;
 
         {
-            boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
+            boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
             isPaused = m_isPaused;
             if (!isPaused)
             {
