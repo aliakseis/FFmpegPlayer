@@ -173,6 +173,7 @@ BEGIN
             MENUITEM "2x",                          ID_VIDEO_SPEED7
             MENUITEM "Nightcore",                   ID_NIGHTCORE
         END
+        MENUITEM "Open Subtitles File...",      ID_OPENSUBTITLESFILE
     END
     POPUP "&View"
     BEGIN

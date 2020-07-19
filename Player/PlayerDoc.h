@@ -147,9 +147,13 @@ private:
 
     class StringDifference;
     std::unique_ptr<StringDifference> m_separateFileDiff;
+    std::unique_ptr<StringDifference> m_subtitlesFileDiff;
 
     std::deque<std::string> m_playList;
     std::function<void()> m_reopenFunc;
 
     bool m_nightcore;
+public:
+    afx_msg void OnOpensubtitlesfile();
+    afx_msg void OnUpdateOpensubtitlesfile(CCmdUI *pCmdUI);
 };

@@ -91,6 +91,15 @@ std::unique_ptr<IAudioPlayer> GetAudioPlayer()
     return std::make_unique<AudioPlayerImpl>();
 }       
 
+template<typename T>
+auto GetAddToSubtitlesMapLambda(T& map)
+{
+    return [&map](double start, double end, const std::string& subtitle) {
+        map->add({ boost::icl::interval<double>::closed(start, end), subtitle });
+    };
+}
+
+
 } // namespace
 
 
@@ -116,6 +125,8 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND(ID_LOOPING, &CPlayerDoc::OnLooping)
     ON_UPDATE_COMMAND_UI(ID_LOOPING, &CPlayerDoc::OnUpdateLooping)
     ON_COMMAND(ID_FILE_SAVE_COPY_AS, &CPlayerDoc::OnFileSaveCopyAs)
+    ON_COMMAND(ID_OPENSUBTITLESFILE, &CPlayerDoc::OnOpensubtitlesfile)
+    ON_UPDATE_COMMAND_UI(ID_OPENSUBTITLESFILE, &CPlayerDoc::OnUpdateOpensubtitlesfile)
 END_MESSAGE_MAP()
 
 
@@ -495,16 +506,26 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
         m_playList.clear();
 
         m_subtitles.reset();
-        for (auto func : { OpenSubRipFile, OpenSubStationAlphaFile })
-        {
+
+        if (m_autoPlay && m_subtitlesFileDiff) {
+            const auto s = m_subtitlesFileDiff->patch(lpszPathName);
             auto map(std::make_unique<SubtitlesMap>());
-            if (func(lpszPathName, m_unicodeSubtitles,
-                [&map](double start, double end, const std::string& subtitle) {
-                    map->add({ boost::icl::interval<double>::closed(start, end), subtitle });
-                }))
+            if (!s.empty() && OpenSubtitlesFile(s.c_str(), m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map))) {
+                m_subtitles = std::move(map);
+            }
+            else {
+                m_subtitlesFileDiff.reset();
+            }
+        }
+        else {
+            m_subtitlesFileDiff.reset();
+        }
+
+        if (!m_subtitles) {
+            auto map(std::make_unique<SubtitlesMap>());
+            if (OpenMatchingSubtitlesFile(lpszPathName, m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map)))
             {
                 m_subtitles = std::move(map);
-                break;
             }
         }
 
@@ -805,4 +826,29 @@ float CPlayerDoc::getVideoSpeed() const
         return 1.f;
     const auto speedRational = m_frameDecoder->getSpeedRational();
     return static_cast<float>(speedRational.denominator) / speedRational.numerator;
+}
+
+
+void CPlayerDoc::OnOpensubtitlesfile()
+{
+    CFileDialog dlg(TRUE); // TODO extensions
+    if (dlg.DoModal() != IDOK)
+    {
+        return;
+    }
+
+    auto map(std::make_unique<SubtitlesMap>());
+    if (OpenSubtitlesFile(dlg.GetPathName(), m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map)))
+    {
+        m_subtitles = std::move(map);
+        m_subtitlesFileDiff = std::make_unique<StringDifference>(
+            static_cast<LPCTSTR>(m_strPathName), static_cast<LPCTSTR>(dlg.GetPathName()));
+        m_subtitlesFileDiff->compose();
+    }
+}
+
+
+void CPlayerDoc::OnUpdateOpensubtitlesfile(CCmdUI *pCmdUI)
+{
+    pCmdUI->Enable(isPlaying() && m_url.empty() && !m_subtitles);
 }
