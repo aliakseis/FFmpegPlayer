@@ -100,6 +100,13 @@ auto GetAddToSubtitlesMapLambda(T& map)
 }
 
 
+auto SafePathString(const TCHAR* path)
+{
+    std::basic_string<TCHAR> result(path);
+    result.append(_MAX_PATH, _T('\0'));
+    return result;
+}
+
 } // namespace
 
 
@@ -481,7 +488,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
             m_separateFileDiff->compose();
         }
         else if (m_autoPlay && m_separateFileDiff) {
-            const auto s = m_separateFileDiff->patch(lpszPathName);
+            const auto s = m_separateFileDiff->patch(SafePathString(lpszPathName));
             if (!s.empty() && 0 == _taccess(s.c_str(), 04)) {
                 separateFilePath = CT2A(s.c_str(), CP_UTF8);
             }
@@ -508,7 +515,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
         m_subtitles.reset();
 
         if (m_autoPlay && m_subtitlesFileDiff) {
-            const auto s = m_subtitlesFileDiff->patch(lpszPathName);
+            const auto s = m_subtitlesFileDiff->patch(SafePathString(lpszPathName));
             auto map(std::make_unique<SubtitlesMap>());
             if (!s.empty() && OpenSubtitlesFile(s.c_str(), m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map))) {
                 m_subtitles = std::move(map);
