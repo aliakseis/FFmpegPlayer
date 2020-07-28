@@ -35,6 +35,8 @@
 #include <string>
 #include <cctype>
 
+#include <atomic>
+
 #include <VersionHelpers.h>
 
 #include <sensapi.h>
@@ -847,6 +849,7 @@ void CPlayerDoc::OnOpensubtitlesfile()
     auto map(std::make_unique<SubtitlesMap>());
     if (OpenSubtitlesFile(dlg.GetPathName(), m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map)))
     {
+        std::atomic_thread_fence(std::memory_order_acq_rel);
         m_subtitles = std::move(map);
         m_subtitlesFileDiff = std::make_unique<StringDifference>(
             static_cast<LPCTSTR>(m_strPathName), static_cast<LPCTSTR>(dlg.GetPathName()));
