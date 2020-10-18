@@ -419,11 +419,29 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
     {
         strFile = _T("ffmpeg.exe");
         strParams.Format(
-            _T("-ss %.3f -t %.3f -i \"%s\" -q:v 2 \"%s\""),
+            _T("-ss %.3f -t %.3f -i \"%s\""),
             m_rangeStartTime,
             m_rangeEndTime - m_rangeStartTime,
-            source,
-            lpszPathName);
+            source);
+
+        if (m_separateFileDiff)
+        {
+            const auto s = m_separateFileDiff->patch(SafePathString(source));
+            if (!s.empty() && 0 == _taccess(s.c_str(), 04)) {
+                CString strAudioParams;
+                strAudioParams.Format(
+                    _T(" -ss %.3f -t %.3f -i \"%s\" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0"),
+                    m_rangeStartTime,
+                    m_rangeEndTime - m_rangeStartTime,
+                    s.c_str());
+
+                strParams += strAudioParams;
+            }
+        }
+
+        strParams += _T(" -q:v 2 \"");
+        strParams += lpszPathName;
+        strParams += _T('"');
     }
     const  auto result = ShellExecute(NULL, NULL, strFile, strParams, NULL, SW_MINIMIZE);
     return int(result) > 32;
