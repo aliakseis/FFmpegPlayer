@@ -63,6 +63,8 @@ Sometimes we need to go deeper, visit pytube issues list and apply fixes, for ex
 - https://github.com/get-pytube/pytube3/issues/81
 - https://github.com/H4KKR/pytubeX/pull/5/commits
 
+Take into account https://www.psiphon3.com
+
 Just in case: "In fact in boost-python, the default behavior is that even when debug boost libraries are created, these libraries are linked to the release pythonX.dll/lib - by intention, according to the docs." https://github.com/pybind/pybind11/issues/1295
 
 If you want YouTube subtitles, please note: https://github.com/microsoft/vcpkg/issues/6499 .
