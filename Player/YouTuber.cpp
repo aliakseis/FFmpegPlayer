@@ -669,6 +669,8 @@ std::string getYoutubeUrl(std::string url)
                         mapToDownloadLinks[url] = result;
                         return result;
                     }
+
+                    Sleep(50);
                 }
             }
         }

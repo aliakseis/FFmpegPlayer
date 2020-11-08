@@ -44,7 +44,7 @@ bool OpenSubRipFile(const TCHAR* videoPathName,
             first = false;
         }
 
-        if (std::find_if_not(buffer.begin(), buffer.end(), static_cast<int(*)(int)>(std::isspace))
+        if (std::find_if(buffer.begin(), buffer.end(), [](unsigned char c) { return !std::isspace(c); })
             == buffer.end())
         {
             continue;

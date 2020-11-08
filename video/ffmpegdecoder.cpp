@@ -83,7 +83,7 @@ void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
         int length = vsprintf_s(buffer, fmt, vargs);
         if (length > 0)
         {
-            for (; length > 0 && (isspace(buffer[length - 1]) != 0); --length) {
+            for (; length > 0 && (isspace(static_cast<unsigned char>(buffer[length - 1])) != 0); --length) {
                 ;
             }
             buffer[length] = '\0';
