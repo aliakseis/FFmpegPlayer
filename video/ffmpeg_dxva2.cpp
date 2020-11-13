@@ -449,11 +449,8 @@ static int dxva2_get_buffer(AVCodecContext *s, AVFrame *frame, int flags)
 
 static const auto CopyPlanePtr = (av_get_cpu_flags() & AV_CPU_FLAG_SSE4) ? CopyPlane : av_image_copy_plane;
 
-static int dxva2_retrieve_data(AVCodecContext *s, AVFrame *frame)
+int dxva2_convert_data(IDirect3DSurface9* surface, AVFrame *tmp_frame, int width, int height)
 {
-    LPDIRECT3DSURFACE9 surface = (LPDIRECT3DSURFACE9)frame->data[3];
-    InputStream        *ist = (InputStream *)s->opaque;
-    DXVA2Context       *ctx = (DXVA2Context *)ist->hwaccel_ctx;
     D3DSURFACE_DESC    surfaceDesc;
     D3DLOCKED_RECT     LockedRect;
     HRESULT            hr;
@@ -467,79 +464,98 @@ static int dxva2_retrieve_data(AVCodecContext *s, AVFrame *frame)
         return AVERROR_UNKNOWN;
     }
 
-    if (ist->target_format == MKTAG('N', 'V', '1', '2'))
+    tmp_frame->width = width;
+    tmp_frame->height = height;
+    switch (surfaceDesc.Format)
     {
-        ctx->tmp_frame->width = frame->width;
-        ctx->tmp_frame->height = frame->height;
-        ctx->tmp_frame->format = AV_PIX_FMT_NV12;
+    case MKTAG('N', 'V', '1', '2'):
+        tmp_frame->format = AV_PIX_FMT_NV12;
 
-        ret = av_frame_get_buffer(ctx->tmp_frame, 32);
-        if (ret < 0)
-            return ret;
+        ret = av_frame_get_buffer(tmp_frame, 32);
+        if (ret == 0)
+        {
+            CopyPlanePtr(tmp_frame->data[0], tmp_frame->linesize[0],
+                (uint8_t*)LockedRect.pBits,
+                LockedRect.Pitch, width, height);
 
-        CopyPlanePtr(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
-            (uint8_t*)LockedRect.pBits,
-            LockedRect.Pitch, frame->width, frame->height);
+            CopyPlanePtr(tmp_frame->data[1], tmp_frame->linesize[1],
+                (uint8_t*)LockedRect.pBits + LockedRect.Pitch * surfaceDesc.Height,
+                LockedRect.Pitch, width, height / 2);
+        }
+        break;
+    case MKTAG('P', '0', '1', '0'):
+        tmp_frame->format = AV_PIX_FMT_P010;
 
-        CopyPlanePtr(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
-            (uint8_t*)LockedRect.pBits + LockedRect.Pitch * surfaceDesc.Height,
-            LockedRect.Pitch, frame->width, frame->height / 2);
-    }
-    else if (ist->target_format == MKTAG('P', '0', '1', '0'))
-    {
-        ctx->tmp_frame->width = frame->width;
-        ctx->tmp_frame->height = frame->height;
-        ctx->tmp_frame->format = AV_PIX_FMT_P010;
+        ret = av_frame_get_buffer(tmp_frame, 32);
+        if (ret == 0)
+        {
+            CopyPlanePtr(tmp_frame->data[0], tmp_frame->linesize[0],
+                (uint8_t*)LockedRect.pBits,
+                LockedRect.Pitch, width * 2, height);
 
-        ret = av_frame_get_buffer(ctx->tmp_frame, 32);
-        if (ret < 0)
-            return ret;
+            CopyPlanePtr(tmp_frame->data[1], tmp_frame->linesize[1],
+                (uint8_t*)LockedRect.pBits + LockedRect.Pitch * surfaceDesc.Height,
+                LockedRect.Pitch, width * 2, height / 2);
+        }
+        break;
+    case D3DFMT_YUY2:
+        tmp_frame->format = AV_PIX_FMT_YUYV422;
 
-        CopyPlanePtr(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
-            (uint8_t*)LockedRect.pBits,
-            LockedRect.Pitch, frame->width * 2, frame->height);
+        ret = av_frame_get_buffer(tmp_frame, 32);
+        if (ret == 0)
+        {
+            CopyPlanePtr(tmp_frame->data[0], tmp_frame->linesize[0],
+                (uint8_t*)LockedRect.pBits,
+                LockedRect.Pitch, width, height * 2);
+        }
+        break;
+    default: // IMC3
+        tmp_frame->format = AV_PIX_FMT_YUV420P;
 
-        CopyPlanePtr(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
-            (uint8_t*)LockedRect.pBits + LockedRect.Pitch * surfaceDesc.Height,
-            LockedRect.Pitch, frame->width * 2, frame->height / 2);
-    }
-    else // IMC3
-    {
-        ctx->tmp_frame->width = frame->width;
-        ctx->tmp_frame->height = frame->height;
-        ctx->tmp_frame->format = AV_PIX_FMT_YUV420P;
+        ret = av_frame_get_buffer(tmp_frame, 32);
+        if (ret == 0)
+        {
+            uint8_t* pU = (uint8_t*)LockedRect.pBits + (((height + 15) & ~15) * LockedRect.Pitch);
+            uint8_t* pV = (uint8_t*)LockedRect.pBits + (((((height * 3) / 2) + 15) & ~15) * LockedRect.Pitch);
 
-        ret = av_frame_get_buffer(ctx->tmp_frame, 32);
-        if (ret < 0)
-            return ret;
+            CopyPlanePtr(tmp_frame->data[0], tmp_frame->linesize[0],
+                (uint8_t*)LockedRect.pBits,
+                LockedRect.Pitch, width, height);
 
-        uint8_t* pU = (uint8_t*)LockedRect.pBits + (((frame->height + 15) & ~15) * LockedRect.Pitch);
-        uint8_t* pV = (uint8_t*)LockedRect.pBits + (((((frame->height * 3) / 2) + 15) & ~15) * LockedRect.Pitch);
+            CopyPlanePtr(tmp_frame->data[1], tmp_frame->linesize[1],
+                pU, LockedRect.Pitch, width / 2, height / 2);
 
-        CopyPlanePtr(ctx->tmp_frame->data[0], ctx->tmp_frame->linesize[0],
-            (uint8_t*)LockedRect.pBits,
-            LockedRect.Pitch, frame->width, frame->height);
-
-        CopyPlanePtr(ctx->tmp_frame->data[1], ctx->tmp_frame->linesize[1],
-            pU, LockedRect.Pitch, frame->width / 2, frame->height / 2);
-
-        CopyPlanePtr(ctx->tmp_frame->data[2], ctx->tmp_frame->linesize[2],
-            pV, LockedRect.Pitch, frame->width / 2, frame->height / 2);
+            CopyPlanePtr(tmp_frame->data[2], tmp_frame->linesize[2],
+                pV, LockedRect.Pitch, width / 2, height / 2);
+        }
     }
 
     IDirect3DSurface9_UnlockRect(surface);
 
+    return ret;
+}
+
+int dxva2_retrieve_data(AVCodecContext *s, AVFrame *frame)
+{
+    LPDIRECT3DSURFACE9 surface = (LPDIRECT3DSURFACE9)frame->data[3];
+    InputStream        *ist = (InputStream *)s->opaque;
+    DXVA2Context       *ctx = (DXVA2Context *)ist->hwaccel_ctx;
+
+    int ret = dxva2_convert_data(surface, ctx->tmp_frame, frame->width, frame->height);
+    if (ret < 0)
+        return ret;
+
     ret = av_frame_copy_props(ctx->tmp_frame, frame);
     if (ret < 0)
-        goto fail;
+    {
+        av_frame_unref(ctx->tmp_frame);
+        return ret;
+    }
 
     av_frame_unref(frame);
     av_frame_move_ref(frame, ctx->tmp_frame);
 
     return 0;
-fail:
-    av_frame_unref(ctx->tmp_frame);
-    return ret;
 }
 
 static int dxva2_alloc(AVCodecContext *s)
@@ -785,8 +801,6 @@ static int dxva2_create_decoder(AVCodecContext *s)
         goto fail;
     }
 
-    ist->target_format = target_format;
-
     desc.SampleWidth = s->coded_width;
     desc.SampleHeight = s->coded_height;
     desc.Format = target_format;
@@ -907,10 +921,6 @@ int dxva2_init(AVCodecContext *s)
     return 0;
 }
 
-int dxva2_retrieve_data_call(AVCodecContext *s, AVFrame *frame)
-{
-    return dxva2_retrieve_data(s, frame);
-}
 
 IDirect3DDevice9* get_device(AVCodecContext *s)
 {

@@ -44,6 +44,7 @@ typedef struct AVFrame AVFrame;
 typedef struct AVDictionary AVDictionary;
 
 typedef struct IDirect3DDevice9 IDirect3DDevice9;
+typedef struct IDirect3DSurface9 IDirect3DSurface9;
 
 typedef struct InputStream {
     int file_index;
@@ -138,13 +139,12 @@ typedef struct InputStream {
     uint64_t frames_decoded;
     uint64_t samples_decoded;
 
-    int target_format;
-
 } InputStream;
 
 
 int dxva2_init(AVCodecContext *s);
-int dxva2_retrieve_data_call(AVCodecContext *s, AVFrame *frame);
+int dxva2_convert_data(IDirect3DSurface9* surface, AVFrame *tmp_frame, int width, int height);
+int dxva2_retrieve_data(AVCodecContext *s, AVFrame *frame);
 
 IDirect3DDevice9* get_device(AVCodecContext *s);
 

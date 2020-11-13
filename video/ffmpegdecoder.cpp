@@ -985,7 +985,7 @@ void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame)
 #ifdef USE_HWACCEL
     if (!m_allowDirect3dData && videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
     {
-        dxva2_retrieve_data_call(m_videoCodecContext, videoFrame);
+        dxva2_retrieve_data(m_videoCodecContext, videoFrame);
         assert(videoFrame->format != AV_PIX_FMT_DXVA2_VLD);
     }
 #endif
