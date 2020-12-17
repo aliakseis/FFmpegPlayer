@@ -219,6 +219,11 @@ bool FFmpegDecoder::handleAudioPacket(
                 m_isPausedCV.wait(locker);
             }
         }
+        else if (delta > 1 && m_formatContexts.size() > 1 && delta > frame_clock)
+        {
+            CHANNEL_LOG(ffmpeg_sync) << "Skip audio frame";
+            skipAll = true;
+        }
 
         // Audio sync
         if (!failed && !skipAll && fabs(delta) > 0.1)
