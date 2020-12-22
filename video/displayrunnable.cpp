@@ -6,6 +6,14 @@ void FFmpegDecoder::displayRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Displaying thread started";
 
+#ifdef TRACE_DELAY_STATS
+    double sumIndications = 0;
+    double sqSumIndications = 0;
+
+    enum { MAX_INDICATIONS = 200 };
+    int numIndications = 0;
+#endif
+
     for (;;)
     {
         {
@@ -68,6 +76,22 @@ void FFmpegDecoder::displayRunnable()
                     m_duration + m_startTime);
             }
         }
+
+#ifdef TRACE_DELAY_STATS
+        const double delay = m_videoStartClock + current_frame.m_pts - GetHiResTime();
+        sumIndications += delay;
+        sqSumIndications += delay * delay;
+        if (++numIndications >= MAX_INDICATIONS)
+        {
+            const double avg = sumIndications / numIndications;
+            CHANNEL_LOG(ffmpeg_threads) << "Average frame delay: " << avg
+                << "; frame delay deviation: " << sqrt(sqSumIndications / numIndications - avg * avg);
+            sumIndications = 0;
+            sqSumIndications = 0;
+            numIndications = 0;
+        }
+#endif
+
         if (m_frameListener != nullptr)
         {
             m_frameListener->drawFrame(this, m_generation);

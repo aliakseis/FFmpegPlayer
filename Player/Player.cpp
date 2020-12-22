@@ -241,6 +241,12 @@ BOOL CPlayerApp::InitInstance()
     if (!ProcessShellCommand(cmdInfo))
         return FALSE;
 
+    //enum { TIME_PERIOD = 1 };
+    //if (timeBeginPeriod(TIME_PERIOD) == TIMERR_NOERROR)
+    //{
+    //    atexit([] { timeEndPeriod(TIME_PERIOD); });
+    //}
+
     // The one and only window has been initialized, so show and update it
     m_pMainWnd->ShowWindow(SW_SHOW);
     m_pMainWnd->UpdateWindow();
