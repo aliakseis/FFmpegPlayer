@@ -185,71 +185,9 @@ bool FFmpegDecoder::handleAudioPacket(
         const double frame_clock 
             = audioFrame->sample_rate != 0? double(audioFrame->nb_samples) / audioFrame->sample_rate : 0;
 
-        bool skipAll = false;
-        double delta = 0;
-        bool isPaused = false;
-
-        {
-            boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
-            isPaused = m_isPaused;
-            if (!isPaused)
-            {
-                delta = (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
-                    ? GetHiResTime() - m_videoStartClock - m_audioPTS : 0;
-            }
-        }
-
-        if (isPaused)
-        {
-            if (!m_audioPaused)
-            {
-                m_audioPlayer->WaveOutPause();
-                m_audioPaused = true;
-            }
-
-            const bool hasVideo = m_mainVideoThread != nullptr;
-
-            boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
-
-            while (m_isVideoSeekingWhilePaused && hasVideo
-                || (delta = (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
-                    ? (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock - m_audioPTS : 0
-                , m_isPaused && !(skipAll = delta >= frame_clock)))
-            {
-                m_isPausedCV.wait(locker);
-            }
-        }
-        else if (delta > 1 && m_formatContexts.size() > 1 && delta > frame_clock)
-        {
-            CHANNEL_LOG(ffmpeg_sync) << "Skip audio frame";
-            skipAll = true;
-        }
-
-        // Audio sync
-        if (!failed && !skipAll && fabs(delta) > 0.1)
-        {
-            InterlockedAdd(m_videoStartClock, delta / 2);
-        }
-
-        if (m_audioPaused && !skipAll)
-        {
-            m_audioPlayer->WaveOutRestart();
-            m_audioPaused = false;
-        }
-
-        if (boost::this_thread::interruption_requested())
+        if (!handleAudioFrame(frame_clock, write_data, write_size, failed, result))
         {
             return false;
-        }
-
-        if (skipAll)
-        {
-            InterlockedAdd(m_audioPTS, frame_clock);
-        }
-        else if (!(m_audioPlayer->WriteAudio(write_data, write_size)
-            || initAudioOutput() && m_audioPlayer->WriteAudio(write_data, write_size)))
-        {
-            result = false;
         }
     }
 
@@ -287,4 +225,78 @@ void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
         m_audioCurrentPref.channel_layout = dec_channel_layout;
         m_audioCurrentPref.frequency = (audioFrame->sample_rate * speed.numerator) / speed.denominator;
     }
+}
+
+bool FFmpegDecoder::handleAudioFrame(
+    double frame_clock, uint8_t* write_data, int64_t write_size,
+    bool failed, bool& result)
+{
+    bool skipAll = false;
+    double delta = 0;
+    bool isPaused = false;
+
+    {
+        boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+        isPaused = m_isPaused;
+        if (!isPaused)
+        {
+            delta = (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+                ? GetHiResTime() - m_videoStartClock - m_audioPTS : 0;
+        }
+    }
+
+    if (isPaused)
+    {
+        if (!m_audioPaused)
+        {
+            m_audioPlayer->WaveOutPause();
+            m_audioPaused = true;
+        }
+
+        const bool hasVideo = m_mainVideoThread != nullptr;
+
+        boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
+
+        while (m_isVideoSeekingWhilePaused && hasVideo
+            || (delta = (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+                ? (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock - m_audioPTS : 0
+                , m_isPaused && !(skipAll = delta >= frame_clock)))
+        {
+            m_isPausedCV.wait(locker);
+        }
+    }
+    else if (delta > 1 && m_formatContexts.size() > 1 && delta > frame_clock)
+    {
+        CHANNEL_LOG(ffmpeg_sync) << "Skip audio frame";
+        skipAll = true;
+    }
+
+    // Audio sync
+    if (!failed && !skipAll && fabs(delta) > 0.1)
+    {
+        InterlockedAdd(m_videoStartClock, delta / 2);
+    }
+
+    if (m_audioPaused && !skipAll)
+    {
+        m_audioPlayer->WaveOutRestart();
+        m_audioPaused = false;
+    }
+
+    if (boost::this_thread::interruption_requested())
+    {
+        return false;
+    }
+
+    if (skipAll)
+    {
+        InterlockedAdd(m_audioPTS, frame_clock);
+    }
+    else if (!(m_audioPlayer->WriteAudio(write_data, write_size)
+        || initAudioOutput() && m_audioPlayer->WriteAudio(write_data, write_size)))
+    {
+        result = false;
+    }
+
+    return true;
 }
