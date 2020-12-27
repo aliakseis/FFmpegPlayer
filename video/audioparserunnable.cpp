@@ -45,6 +45,28 @@ void FFmpegDecoder::audioParseRunnable()
 
     std::vector<uint8_t> resampleBuffer;
 
+    double scheduledEndTime = 0;
+
+    auto useHandleAudioResultLam = [this, &failed](bool result)
+    {
+        if (result)
+        {
+            if (failed)
+            {
+                failed = false;
+                boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+                if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+                {
+                    m_audioPTS = (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock;
+                }
+            }
+        }
+        else
+        {
+            failed = true;
+        }
+    };
+
     while (!boost::this_thread::interruption_requested())
     {
         if (!m_audioPacketsQueue.pop(packet))
@@ -61,39 +83,46 @@ void FFmpegDecoder::audioParseRunnable()
 
         if (!initialized)
         {
-            if (packet.pts != AV_NOPTS_VALUE)
-            {
-                const double pts = av_q2d(m_audioStream->time_base) * packet.pts;
-                m_audioPTS = pts;
-            }
-            else
+            if (packet.pts == AV_NOPTS_VALUE)
             {
                 assert(false && "No audio pts found");
                 return;
             }
+            const double pts = av_q2d(m_audioStream->time_base) * packet.pts;
+            m_audioPTS = pts;
 
             // invoke changedFramePosition() if needed
             //AppendFrameClock(0);
         }
-
-        initialized = true;
-
-        if (handleAudioPacket(packet, resampleBuffer, failed))
+        else if (packet.pts != AV_NOPTS_VALUE)
         {
-            if (failed)
+            const double diff = av_q2d(m_audioStream->time_base) * packet.pts - scheduledEndTime;
+            if (diff > 0.01)
             {
-                failed = false;
-                boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
-                if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+                CHANNEL_LOG(ffmpeg_sync) << "Patching audio frame diff: " << diff;
+
+                const int size_multiplier = m_audioSettings.channels *
+                    av_get_bytes_per_sample(m_audioSettings.format);
+
+                const int numSteps = (diff + 0.1) / 0.1;
+                const auto frame_clock = diff / numSteps;
+                for (int i = 0; i < numSteps; ++i)
                 {
-                    m_audioPTS = (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock;
+                    const auto speed = getSpeedRational();
+                    const int nb_samples = frame_clock * m_audioSettings.frequency * speed.denominator / speed.numerator;
+                    const auto write_size = nb_samples * size_multiplier;
+                    std::vector<uint8_t> buf(write_size, 0);
+                    useHandleAudioResultLam(handleAudioFrame(frame_clock, buf.data(), write_size, failed));
                 }
             }
         }
-        else
-        {
-            failed = true;
-        }
+
+        initialized = true;
+
+        if (packet.pts != AV_NOPTS_VALUE)
+            scheduledEndTime = av_q2d(m_audioStream->time_base) * (packet.pts + packet.duration);
+
+        useHandleAudioResultLam(handleAudioPacket(packet, resampleBuffer, failed));
     }
 }
 
@@ -185,9 +214,9 @@ bool FFmpegDecoder::handleAudioPacket(
         const double frame_clock 
             = audioFrame->sample_rate != 0? double(audioFrame->nb_samples) / audioFrame->sample_rate : 0;
 
-        if (!handleAudioFrame(frame_clock, write_data, write_size, failed, result))
+        if (!handleAudioFrame(frame_clock, write_data, write_size, failed))
         {
-            return false;
+            result = false;
         }
     }
 
@@ -228,8 +257,7 @@ void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
 }
 
 bool FFmpegDecoder::handleAudioFrame(
-    double frame_clock, uint8_t* write_data, int64_t write_size,
-    bool failed, bool& result)
+    double frame_clock, uint8_t* write_data, int64_t write_size, bool failed)
 {
     bool skipAll = false;
     double delta = 0;
@@ -283,10 +311,7 @@ bool FFmpegDecoder::handleAudioFrame(
         m_audioPaused = false;
     }
 
-    if (boost::this_thread::interruption_requested())
-    {
-        return false;
-    }
+    boost::this_thread::interruption_point();
 
     if (skipAll)
     {
@@ -295,7 +320,7 @@ bool FFmpegDecoder::handleAudioFrame(
     else if (!(m_audioPlayer->WriteAudio(write_data, write_size)
         || initAudioOutput() && m_audioPlayer->WriteAudio(write_data, write_size)))
     {
-        result = false;
+        return false;
     }
 
     return true;

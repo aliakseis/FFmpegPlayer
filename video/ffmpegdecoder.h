@@ -128,8 +128,7 @@ class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
         bool failed);
     void setupAudioSwrContext(AVFrame* audioFrame);
     bool handleAudioFrame(
-        double frame_clock, uint8_t* write_data, int64_t write_size, 
-        bool failed, bool& result);
+        double frame_clock, uint8_t* write_data, int64_t write_size, bool failed);
     bool handleVideoPacket(
         const AVPacket& packet,
         double& videoClock,
