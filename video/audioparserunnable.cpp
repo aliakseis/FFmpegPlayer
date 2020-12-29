@@ -90,7 +90,7 @@ void FFmpegDecoder::audioParseRunnable()
             }
             const double pts = av_q2d(m_audioStream->time_base) * packet.pts;
             m_audioPTS = pts;
-
+            scheduledEndTime = pts;
             // invoke changedFramePosition() if needed
             //AppendFrameClock(0);
         }
@@ -115,21 +115,20 @@ void FFmpegDecoder::audioParseRunnable()
                     useHandleAudioResultLam(handleAudioFrame(frame_clock, buf.data(), write_size, failed));
                 }
             }
+
+            scheduledEndTime += diff;
         }
 
         initialized = true;
 
-        if (packet.pts != AV_NOPTS_VALUE)
-            scheduledEndTime = av_q2d(m_audioStream->time_base) * (packet.pts + packet.duration);
-
-        useHandleAudioResultLam(handleAudioPacket(packet, resampleBuffer, failed));
+        useHandleAudioResultLam(handleAudioPacket(packet, resampleBuffer, failed, scheduledEndTime));
     }
 }
 
 bool FFmpegDecoder::handleAudioPacket(
     const AVPacket& packet,
     std::vector<uint8_t>& resampleBuffer,
-    bool failed)
+    bool failed, double& scheduledEndTime)
 {
     if (packet.stream_index != m_audioStream->index)
     {
@@ -213,6 +212,8 @@ bool FFmpegDecoder::handleAudioPacket(
 
         const double frame_clock 
             = audioFrame->sample_rate != 0? double(audioFrame->nb_samples) / audioFrame->sample_rate : 0;
+
+        scheduledEndTime += frame_clock;
 
         if (!handleAudioFrame(frame_clock, write_data, write_size, failed))
         {
