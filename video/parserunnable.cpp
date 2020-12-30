@@ -139,42 +139,38 @@ void FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
 
     if (seekLambda())
     {
-        return; // guard frees packet
+        return;
     }
 
     if (idx == m_videoContextIndex && packet.stream_index == m_videoStreamNumber)
     { 
-        if (!m_videoPacketsQueue.push(packet, seekLambda))
+        if (m_videoPacketsQueue.push(packet, seekLambda))
         {
-            return; // guard frees packet
+            guard.release();
         }
     }
     else if (idx == m_audioContextIndex
         && std::find(m_audioIndices.begin(), m_audioIndices.end(), packet.stream_index) != m_audioIndices.end())
     { 
-        if (!m_audioPacketsQueue.push(packet, seekLambda))
+        if (m_audioPacketsQueue.push(packet, seekLambda))
         {
-            return; // guard frees packet
+            guard.release();
         }
     }
-    else
-    {
-        //auto codec = m_formatContext->streams[packet.stream_index]->codec;
-        //if (codec->codec_type == AVMEDIA_TYPE_SUBTITLE)
-        //{
-        //    AVSubtitle subtitle {};
-        //    int has_subtitle = 0;
-        //    avcodec_decode_subtitle2(codec, &subtitle, &has_subtitle, &packet);
-        //    if (has_subtitle)
-        //    {
-        //        auto format = subtitle.format;
-        //    }
-        //}
-
-        return; // guard frees packet
-    }
-
-    guard.release();
+    //else
+    //{
+    //    auto codec = m_formatContext->streams[packet.stream_index]->codec;
+    //    if (codec->codec_type == AVMEDIA_TYPE_SUBTITLE)
+    //    {
+    //        AVSubtitle subtitle {};
+    //        int has_subtitle = 0;
+    //        avcodec_decode_subtitle2(codec, &subtitle, &has_subtitle, &packet);
+    //        if (has_subtitle)
+    //        {
+    //            auto format = subtitle.format;
+    //        }
+    //    }
+    //}
 }
 
 void FFmpegDecoder::startAudioThread()
