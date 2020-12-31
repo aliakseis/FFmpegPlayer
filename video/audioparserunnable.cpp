@@ -100,19 +100,26 @@ void FFmpegDecoder::audioParseRunnable()
             if (diff > 0.01)
             {
                 CHANNEL_LOG(ffmpeg_sync) << "Patching audio frame diff: " << diff;
-
-                const int size_multiplier = m_audioSettings.channels *
-                    av_get_bytes_per_sample(m_audioSettings.format);
-
-                const int numSteps = (diff + 0.1) / 0.1;
-                const auto frame_clock = diff / numSteps;
-                for (int i = 0; i < numSteps; ++i)
+                if (m_formatContexts.size() == 1 && m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
                 {
-                    const auto speed = getSpeedRational();
-                    const int nb_samples = frame_clock * m_audioSettings.frequency * speed.denominator / speed.numerator;
-                    const auto write_size = nb_samples * size_multiplier;
-                    std::vector<uint8_t> buf(write_size, 0);
-                    useHandleAudioResultLam(handleAudioFrame(frame_clock, buf.data(), write_size, failed));
+                    InterlockedAdd(m_videoStartClock, -diff);
+                    InterlockedAdd(m_audioPTS, diff);
+                }
+                else
+                {
+                    const int size_multiplier = m_audioSettings.channels *
+                        av_get_bytes_per_sample(m_audioSettings.format);
+
+                    const int numSteps = (diff + 0.1) / 0.1;
+                    const auto frame_clock = diff / numSteps;
+                    for (int i = 0; i < numSteps; ++i)
+                    {
+                        const auto speed = getSpeedRational();
+                        const int nb_samples = frame_clock * m_audioSettings.frequency * speed.denominator / speed.numerator;
+                        const auto write_size = nb_samples * size_multiplier;
+                        std::vector<uint8_t> buf(write_size, 0);
+                        useHandleAudioResultLam(handleAudioFrame(frame_clock, buf.data(), write_size, failed));
+                    }
                 }
             }
 
