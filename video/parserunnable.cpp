@@ -111,6 +111,8 @@ void FFmpegDecoder::parseRunnable(int idx)
                     && m_audioPacketsQueue.empty()
                     && (lock_guard<mutex>(m_videoFramesMutex), !m_videoFramesQueue.canPop()))
                 {
+                    if (eof == SET_EOF)
+                        flush();
                     m_decoderListener->onEndOfStream(eof == SET_INVALID);
                     eof = REPORTED;
                 }
@@ -171,6 +173,26 @@ void FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
     //        }
     //    }
     //}
+}
+
+void FFmpegDecoder::flush()
+{
+    if (m_videoStreamNumber >= 0)
+    {
+        AVPacket packet{};
+        packet.stream_index = m_videoStreamNumber;
+        packet.pts = AV_NOPTS_VALUE;
+        packet.dts = AV_NOPTS_VALUE;
+        dispatchPacket(m_videoContextIndex, packet);
+    }
+    if (m_audioStreamNumber >= 0)
+    {
+        AVPacket packet{};
+        packet.stream_index = m_audioStreamNumber;
+        packet.pts = AV_NOPTS_VALUE;
+        packet.dts = AV_NOPTS_VALUE;
+        dispatchPacket(m_audioContextIndex, packet);
+    }
 }
 
 void FFmpegDecoder::startAudioThread()

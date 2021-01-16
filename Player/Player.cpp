@@ -25,6 +25,8 @@
 
 #include <boost/log/trivial.hpp>
 
+#include <boost/log/support/date_time.hpp>
+
 #include <zlib.h>
 
 #ifdef _DEBUG
@@ -94,6 +96,7 @@ void init_logging()
     auto sink(boost::make_shared<boost::log::sinks::synchronous_sink<boost::log::sinks::debug_output_backend>>());
 
     sink->set_formatter(expr::stream
+        //<< '[' << expr::format_date_time< boost::posix_time::ptime >("TimeStamp", "%H:%M:%S.%f") << ']'
         << expr::if_(expr::has_attr("Severity"))
         [
             expr::stream << '[' << expr::attr< boost::log::trivial::severity_level >("Severity") << ']'

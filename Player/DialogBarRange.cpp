@@ -9,23 +9,6 @@
 
 #include "MakeDelegate.h"
 
-namespace {
-
-CSize CalcDialogSize(UINT nResourceId) 
-{ 
-    CSize size;
-    HRSRC hRsrc = ::FindResource(AfxGetApp()->m_hInstance, MAKEINTRESOURCE(nResourceId), RT_DIALOG);
-    ASSERT(hRsrc != NULL); 
-    HGLOBAL hTemplate = ::LoadResource(AfxGetApp()->m_hInstance, hRsrc);
-    ASSERT(hTemplate != NULL);
-
-    CDialogTemplate dlgtemplate(hTemplate);
-    dlgtemplate.GetSizeInPixels(&size); 
-
-    return size;
-}
-
-} // namespace
 
 // CDialogBarRange
 
@@ -34,7 +17,13 @@ IMPLEMENT_DYNAMIC(CDialogBarRange, CPaneDialog)
 CDialogBarRange::CDialogBarRange()
 : m_pDoc(nullptr)
 {
-    SetMinSize(CalcDialogSize(IDD));
+    CDialogTemplate dlgtemplate;
+    if (dlgtemplate.Load(MAKEINTRESOURCE(IDD)))
+    {
+        CSize size;
+        dlgtemplate.GetSizeInPixels(&size);
+        SetMinSize(size);
+    }
 }
 
 CDialogBarRange::~CDialogBarRange()
