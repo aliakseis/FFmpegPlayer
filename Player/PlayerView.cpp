@@ -1279,9 +1279,7 @@ void CPlayerView::updateFrame()
 
     if (data.surface)
     {
-        IDirect3DSurface9* temp = m_pMainStream;
-        m_pMainStream = *data.surface;
-        *data.surface = temp;
+        m_pMainStream = data.surface;
     }
     else
     {

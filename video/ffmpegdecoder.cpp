@@ -794,6 +794,19 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
     {
         return false;
     }
+#ifdef USE_HWACCEL
+    if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
+    {
+        data->d3d9device = get_device(m_videoCodecContext);
+        auto surface = static_cast<IDirect3DSurface9*>(static_cast<void*>(current_frame.m_image->data[3]));
+        if (surface == nullptr)
+        {
+            return false;
+        }
+        data->surface = surface;
+    }
+#endif
+
     data->image = current_frame.m_image->data;
     data->pitch = current_frame.m_image->linesize;
     data->width = current_frame.m_image->width;
@@ -809,14 +822,6 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
         data->aspectNum = 1;
         data->aspectDen = 1;
     }
-
-#ifdef USE_HWACCEL
-    if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
-    {
-        data->d3d9device = get_device(m_videoCodecContext);
-        data->surface = reinterpret_cast<IDirect3DSurface9**>(&current_frame.m_image->data[3]);
-    }
-#endif
 
     return true;
 }
