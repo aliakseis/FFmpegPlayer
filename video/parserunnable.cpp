@@ -111,9 +111,12 @@ void FFmpegDecoder::parseRunnable(int idx)
                     && m_audioPacketsQueue.empty()
                     && (lock_guard<mutex>(m_videoFramesMutex), !m_videoFramesQueue.canPop()))
                 {
-                    if (eof == SET_EOF)
-                        flush();
-                    m_decoderListener->onEndOfStream(eof == SET_INVALID);
+                    if (idx == 0)
+                    {
+                        if (eof == SET_EOF)
+                            flush();
+                        m_decoderListener->onEndOfStream(eof == SET_INVALID);
+                    }
                     eof = REPORTED;
                 }
             }
