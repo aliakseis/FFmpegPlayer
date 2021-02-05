@@ -439,7 +439,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
             }
         }
 
-        strParams += _T(" -q:v 2 \"");
+        strParams += _T(" -q:v 4 \"");
         strParams += lpszPathName;
         strParams += _T('"');
     }
