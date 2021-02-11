@@ -64,6 +64,9 @@ protected:
     afx_msg void OnUpdateAutoplay(CCmdUI *pCmdUI);
     afx_msg void OnLooping();
     afx_msg void OnUpdateLooping(CCmdUI *pCmdUI);
+    afx_msg void OnOpensubtitlesfile();
+    afx_msg void OnUpdateOpensubtitlesfile(CCmdUI *pCmdUI);
+    afx_msg void OnCopyUrlToClipboard();
     DECLARE_MESSAGE_MAP()
 
 #ifdef SHARED_HANDLERS
@@ -143,6 +146,7 @@ private:
     bool m_autoPlay;
     bool m_looping;
 
+    std::string m_originalUrl;
     std::string m_url;
 
     class StringDifference;
@@ -153,7 +157,4 @@ private:
     std::function<void()> m_reopenFunc;
 
     bool m_nightcore;
-public:
-    afx_msg void OnOpensubtitlesfile();
-    afx_msg void OnUpdateOpensubtitlesfile(CCmdUI *pCmdUI);
 };

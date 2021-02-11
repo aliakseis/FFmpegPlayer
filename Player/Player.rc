@@ -142,12 +142,10 @@ BEGIN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save Copy &As...",            ID_FILE_SAVE_COPY_AS
         MENUITEM SEPARATOR
+        MENUITEM "Copy URL To Clipboard", ID_COPY_URL_TO_CLIPBOARD
+        MENUITEM SEPARATOR        
         MENUITEM "Autoplay",                    ID_AUTOPLAY
         MENUITEM "Looping",                     ID_LOOPING
-        MENUITEM SEPARATOR
-        MENUITEM "&Print...\tCtrl+P",           ID_FILE_PRINT
-        MENUITEM "Print Pre&view",              ID_FILE_PRINT_PREVIEW
-        MENUITEM "P&rint Setup...",             ID_FILE_PRINT_SETUP
         MENUITEM SEPARATOR
         MENUITEM "Recent File",                 ID_FILE_MRU_FILE1, GRAYED
         MENUITEM SEPARATOR

@@ -136,6 +136,7 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND(ID_FILE_SAVE_COPY_AS, &CPlayerDoc::OnFileSaveCopyAs)
     ON_COMMAND(ID_OPENSUBTITLESFILE, &CPlayerDoc::OnOpensubtitlesfile)
     ON_UPDATE_COMMAND_UI(ID_OPENSUBTITLESFILE, &CPlayerDoc::OnUpdateOpensubtitlesfile)
+    ON_COMMAND(ID_COPY_URL_TO_CLIPBOARD, &CPlayerDoc::OnCopyUrlToClipboard)
 END_MESSAGE_MAP()
 
 
@@ -217,6 +218,7 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
     if (!url.empty() && m_frameDecoder->openUrls({ url }))
     {
         m_frameDecoder->play(true);
+        m_originalUrl = originalUrl;
         m_url = url;
         m_subtitles.reset();
         m_nightcore = false;
@@ -286,6 +288,7 @@ void CPlayerDoc::reset()
     m_subtitles.reset();
     m_reopenFunc = nullptr;
 
+    m_originalUrl.clear();
     m_url.clear();
 
     m_nightcore = false;
@@ -879,4 +882,34 @@ void CPlayerDoc::OnOpensubtitlesfile()
 void CPlayerDoc::OnUpdateOpensubtitlesfile(CCmdUI *pCmdUI)
 {
     pCmdUI->Enable(isPlaying() && m_url.empty() && !m_subtitles);
+}
+
+#ifdef _UNICODE
+#define AFX_TCF_TEXT CF_UNICODETEXT
+#else
+#define AFX_TCF_TEXT CF_TEXT
+#endif
+
+void CPlayerDoc::OnCopyUrlToClipboard()
+{
+    CString strText(m_originalUrl.empty()
+        ? m_strPathName
+        : CString(m_originalUrl.data(), m_originalUrl.length()));
+
+    if (!strText.IsEmpty() && AfxGetMainWnd()->OpenClipboard())
+    {
+        EmptyClipboard();
+
+        const auto textSize = (strText.GetLength() + 1) * sizeof(TCHAR);
+        if (HGLOBAL hClipbuffer = ::GlobalAlloc(GMEM_MOVEABLE, textSize))
+        {
+            if (LPTSTR lpszBuffer = (LPTSTR)GlobalLock(hClipbuffer))
+            {
+                memcpy(lpszBuffer, (LPCTSTR)strText, textSize);
+                ::GlobalUnlock(hClipbuffer);
+            }
+            ::SetClipboardData(AFX_TCF_TEXT, hClipbuffer);
+        }
+        CloseClipboard();
+    }
 }
