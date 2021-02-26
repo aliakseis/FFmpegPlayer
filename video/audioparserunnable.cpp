@@ -85,6 +85,9 @@ void FFmpegDecoder::audioParseRunnable()
         {
             if (packet.pts == AV_NOPTS_VALUE)
             {
+                if (packet.data == nullptr)
+                    continue;
+
                 assert(false && "No audio pts found");
                 return;
             }

@@ -218,11 +218,17 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
 {
     CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " resetVideo=" << resetVideo;
 
-    const bool hasVideo = m_mainVideoThread != nullptr;
+    AVPacket packet{};
+    auto guard = MakeGuard(&packet, av_packet_unref);
 
     for (int i = 0; i < m_formatContexts.size(); ++i)
     {
         auto formatContext = m_formatContexts[i];
+        if (!isSeekable(formatContext))
+            continue;
+
+        const int64_t currentTime = m_currentTime;
+        const bool backward = seekDuration < currentTime;
         const int streamNumber = (i == m_videoContextIndex) ? m_videoStreamNumber : m_audioStreamNumber;
 
         auto convertedSeekDuration = seekDuration;
@@ -231,16 +237,43 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
             convertedSeekDuration = seekDuration * av_q2d(m_videoStream->time_base) / av_q2d(m_audioStream->time_base);
         }
 
-        if (isSeekable(formatContext)
-            && avformat_seek_file(formatContext, streamNumber,
-                0, convertedSeekDuration, convertedSeekDuration, AVSEEK_FLAG_FRAME) < 0
-            && (convertedSeekDuration >= 0 || avformat_seek_file(formatContext, streamNumber,
-                0, 0, 0, AVSEEK_FLAG_FRAME) < 0))
+        if (av_seek_frame(formatContext, streamNumber, convertedSeekDuration, 0) < 0
+            && (convertedSeekDuration >= 0 || av_seek_frame(formatContext, streamNumber, 0, 0) < 0))
         {
             CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
             return false;
         }
+
+        if (!resetVideo && backward && i == m_videoContextIndex && convertedSeekDuration > 0)
+        {
+            const int readStatus = av_read_frame(formatContext, &packet);
+            if (readStatus >= 0)
+            {
+                auto pts = packet.pts;
+                if (pts != AV_NOPTS_VALUE)
+                {
+                    if (packet.stream_index != m_videoStreamNumber)
+                    {
+                        const auto& time_base = formatContext->streams[packet.stream_index]->time_base;
+                        pts = (time_base.den && time_base.num)
+                            ? pts * av_q2d(time_base) / av_q2d(m_videoStream->time_base) : 0;
+                    }
+                    if (pts > currentTime)
+                    {
+                        av_packet_unref(&packet);
+                        if (av_seek_frame(formatContext, streamNumber, 0, 0) < 0
+                            || av_seek_frame(formatContext, streamNumber, convertedSeekDuration, 0) < 0)
+                        {
+                            CHANNEL_LOG(ffmpeg_seek) << "Seek correction failed";
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
     }
+
+    const bool hasVideo = m_mainVideoThread != nullptr;
     const bool hasAudio = m_mainAudioThread != nullptr;
 
     if (hasVideo)
@@ -311,6 +344,12 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
     // Restart
     startAudioThread();
     startVideoThread();
+
+    if (packet.data != nullptr)
+    {
+        guard.release();
+        dispatchPacket(m_videoContextIndex, packet);
+    }
 
     return true;
 }
