@@ -151,7 +151,7 @@ public:
 };
 
 
-const char PYTUBE_URL[] = "https://github.com/nficano/pytube/archive/master.zip";
+const char PYTUBE_URL[] = "https://github.com/pytube/pytube/archive/master.zip";
 const char YOUTUBE_TRANSCRIPT_API_URL[] = "https://github.com/jdepoix/youtube-transcript-api/archive/master.zip";
 
 const char SCRIPT_TEMPLATE[] = R"(import sys, socket
