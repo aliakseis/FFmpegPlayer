@@ -892,9 +892,12 @@ void CPlayerDoc::OnUpdateOpensubtitlesfile(CCmdUI *pCmdUI)
 
 void CPlayerDoc::OnCopyUrlToClipboard()
 {
-    CString strText(m_originalUrl.empty()
-        ? m_strPathName
-        : CString(m_originalUrl.data(), m_originalUrl.length()));
+    const bool shiftAndControlPressed = GetAsyncKeyState(VK_SHIFT) < 0
+        && GetAsyncKeyState(VK_CONTROL) < 0;
+
+    const auto& url = shiftAndControlPressed ? m_url : m_originalUrl;
+
+    CString strText(url.empty() ? m_strPathName : CString(url.data(), url.length()));
 
     if (!strText.IsEmpty() && AfxGetMainWnd()->OpenClipboard())
     {
