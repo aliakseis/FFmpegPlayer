@@ -512,7 +512,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
         }
         else if (m_autoPlay && m_separateFileDiff) {
             const auto s = m_separateFileDiff->patch(SafePathString(lpszPathName));
-            if (!s.empty() && 0 == _taccess(s.c_str(), 04)) {
+            if (!s.empty() && 0 != _tcscmp(s.c_str(), lpszPathName) && 0 == _taccess(s.c_str(), 04)) {
                 separateFilePath = CT2A(s.c_str(), CP_UTF8);
             }
             else {
@@ -540,7 +540,8 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
         if (m_autoPlay && m_subtitlesFileDiff) {
             const auto s = m_subtitlesFileDiff->patch(SafePathString(lpszPathName));
             auto map(std::make_unique<SubtitlesMap>());
-            if (!s.empty() && OpenSubtitlesFile(s.c_str(), m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map))) {
+            if (!s.empty() && 0 != _tcscmp(s.c_str(), lpszPathName)
+                    && OpenSubtitlesFile(s.c_str(), m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map))) {
                 m_subtitles = std::move(map);
             }
             else {

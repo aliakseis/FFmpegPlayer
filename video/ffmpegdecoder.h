@@ -52,7 +52,7 @@ struct RendezVousData
 
 // Inspired by http://dranger.com/ffmpeg/ffmpeg.html
 
-class FFmpegDecoder : public IFrameDecoder, public IAudioPlayerCallback
+class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 {
    public:
     FFmpegDecoder(std::unique_ptr<IAudioPlayer> audioPlayer);

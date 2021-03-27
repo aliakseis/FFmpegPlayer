@@ -32,25 +32,24 @@ bool RendezVous(
         return true;
     }
 
-    boost::mutex::scoped_lock lock(data.mtx);
-
     if (duration == AV_NOPTS_VALUE)
         return true;
 
-    const unsigned int gen = data.generation;
+    boost::mutex::scoped_lock lock(data.mtx);
 
     if (data.count == threshold - 1)
     {
         ++data.generation;
         data.count = 0;
         const auto prevDuration = duration.exchange(AV_NOPTS_VALUE);
-        bool result = func(prevDuration);
+        const bool result = func(prevDuration);
+        lock.unlock();
         data.cond.notify_all();
         return result;
     }
-    else
-        ++data.count;
 
+    ++data.count;
+    const unsigned int gen = data.generation;
     while (gen == data.generation)
         data.cond.wait(lock);
 

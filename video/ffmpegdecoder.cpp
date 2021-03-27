@@ -376,11 +376,11 @@ void FFmpegDecoder::closeProcessing()
 
     // Close video file
     for (auto& formatContext : m_formatContexts)
-    if (formatContext != nullptr)
-    {
-        avformat_close_input(&formatContext);
-        isFileReallyClosed = true;
-    }
+        if (formatContext != nullptr)
+        {
+            avformat_close_input(&formatContext);
+            isFileReallyClosed = true;
+        }
 
 
     CHANNEL_LOG(ffmpeg_closing) << "Old file closed";
@@ -790,7 +790,7 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
     }
 
     VideoFrame &current_frame = m_videoFramesQueue.front();
-    if (current_frame.m_image->data == nullptr)
+    if (current_frame.m_image == nullptr)
     {
         return false;
     }
