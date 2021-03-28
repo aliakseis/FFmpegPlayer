@@ -499,11 +499,11 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls)
     m_startTime = (timeStream->start_time > 0)
         ? timeStream->start_time
         : ((m_formatContexts[0]->start_time == AV_NOPTS_VALUE)? 0 
-            : int64_t((m_formatContexts[0]->start_time / av_q2d(timeStream->time_base)) / 1000000LL));
+            : int64_t((m_formatContexts[0]->start_time / av_q2d(timeStream->time_base)) / AV_TIME_BASE));
     m_duration = (timeStream->duration > 0)
         ? timeStream->duration
         : ((m_formatContexts[0]->duration == AV_NOPTS_VALUE)? 0
-            : int64_t((m_formatContexts[0]->duration / av_q2d(timeStream->time_base)) / 1000000LL));
+            : int64_t((m_formatContexts[0]->duration / av_q2d(timeStream->time_base)) / AV_TIME_BASE));
 
     if (!resetVideoProcessing())
     {

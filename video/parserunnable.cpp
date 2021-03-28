@@ -237,13 +237,15 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
         }
 
         if (av_seek_frame(formatContext, streamNumber, convertedSeekDuration, 0) < 0
-            && (convertedSeekDuration >= 0 || av_seek_frame(formatContext, streamNumber, 0, 0) < 0))
+            && ((convertedSeekDuration >= 0
+                ? av_seek_frame(formatContext, streamNumber, convertedSeekDuration, AVSEEK_FLAG_BACKWARD)
+                : av_seek_frame(formatContext, streamNumber, 0, 0)) < 0))
         {
             CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
             return false;
         }
 
-        if (!resetVideo && backward && i == m_videoContextIndex && convertedSeekDuration > 0)
+        if (!resetVideo && backward && i == m_videoContextIndex && convertedSeekDuration > m_startTime)
         {
             const int readStatus = av_read_frame(formatContext, &packet);
             if (readStatus >= 0)
@@ -260,7 +262,7 @@ bool FFmpegDecoder::resetDecoding(int64_t seekDuration, bool resetVideo)
                     if (pts > currentTime)
                     {
                         av_packet_unref(&packet);
-                        if (av_seek_frame(formatContext, streamNumber, 0, 0) < 0
+                        if (av_seek_frame(formatContext, streamNumber, m_startTime, 0) < 0
                             || av_seek_frame(formatContext, streamNumber, convertedSeekDuration, 0) < 0)
                         {
                             CHANNEL_LOG(ffmpeg_seek) << "Seek correction failed";
