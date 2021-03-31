@@ -572,7 +572,7 @@ bool FFmpegDecoder::resetVideoProcessing()
         }
 #else
         m_videoCodecContext->thread_count = 2;
-        m_videoCodecContext->flags2 |= CODEC_FLAG2_FAST;
+        m_videoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
 #endif
 
 
