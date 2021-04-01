@@ -49,7 +49,7 @@ extern "C"
 
 // src is WC MMIO of GPU BAR
 // dest is host memory
-int memcpy_uncached_load_sse41(void *dest, const void *src, size_t n_bytes)
+static int memcpy_uncached_load_sse41(void *dest, const void *src, size_t n_bytes)
 {
     int ret = 0;
 
