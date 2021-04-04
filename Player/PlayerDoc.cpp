@@ -411,11 +411,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
     CString strParams;
     if (isFullFrameRange())
     {
-        TCHAR pszPath[MAX_PATH] = { 0 };
-        GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
-        PathRemoveFileSpec(pszPath);
-        PathAppend(pszPath, _T("HttpDownload.exe"));
-        strFile = pszPath;
+        strFile = _T("HttpDownload.exe");
         strParams = source + _T(" \"") + lpszPathName + _T('"');
     }
     else
@@ -446,7 +442,10 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         strParams += lpszPathName;
         strParams += _T('"');
     }
-    const  auto result = ShellExecute(NULL, NULL, strFile, strParams, NULL, SW_MINIMIZE);
+    TCHAR pszPath[MAX_PATH] = { 0 };
+    GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
+    PathRemoveFileSpec(pszPath);
+    const  auto result = ShellExecute(NULL, NULL, strFile, strParams, pszPath, SW_MINIMIZE);
     return int(result) > 32;
 }
 
