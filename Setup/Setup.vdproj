@@ -88,6 +88,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_7BBE6F8C77DD46679E86F836865E5268"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_854599C408B14066937C40F97C68BD97"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -502,6 +508,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7BBE6F8C77DD46679E86F836865E5268"
+            {
+            "SourcePath" = "8:..\\Player\\res\\Player.ico"
+            "TargetName" = "8:Player.ico"
+            "Tag" = "8:"
+            "Folder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_854599C408B14066937C40F97C68BD97"
             {
             "SourcePath" = "8:C:\\python-3.6.8-embed-win32\\select.pyd"
@@ -848,6 +874,17 @@
             "Property" = "8:ProgramMenuFolder"
                 "Folders"
                 {
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_9B328E46D8A9465692C2C0A26ECD0EB4"
+                    {
+                    "Name" = "8:FFmpeg Player"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_E74CB00121364B60BD4599770E8BB2F0"
+                        "Folders"
+                        {
+                        }
+                    }
                 }
             }
             "{3C67513D-01DD-4637-8A68-80971EB9504F}:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
@@ -879,7 +916,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:FFmpeg Player"
         "ProductCode" = "8:{75A04463-09D1-4BE7-A045-58CACA8F9664}"
-        "PackageCode" = "8:{7D59E776-E25F-417D-845C-DCD84EB1E5DD}"
+        "PackageCode" = "8:{57B22650-2052-4727-AE3D-CDD383C49979}"
         "UpgradeCode" = "8:{0D785376-AABE-42D5-B21F-916C345075C2}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -999,6 +1036,62 @@
         }
         "Shortcut"
         {
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_0279D2BC938B460AB0B3840652A35B5E"
+            {
+            "Name" = "8:Shortcut to remove_pytube.cmd"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_A4B43CDF9CA54C19AF7D23DB37A100AC"
+            "Folder" = "8:_9B328E46D8A9465692C2C0A26ECD0EB4"
+            "WorkingFolder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
+            "Icon" = "8:"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_029CAA7D4EB448C98C4D939B2F49B1AE"
+            {
+            "Name" = "8:FFmpeg Player"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_FA750DBCBC084FE991EDD407C9629097"
+            "Folder" = "8:_9B328E46D8A9465692C2C0A26ECD0EB4"
+            "WorkingFolder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
+            "Icon" = "8:_7BBE6F8C77DD46679E86F836865E5268"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_39657F46CF514780A9D5D8B756C09F30"
+            {
+            "Name" = "8:Shortcut to remove_youtube_transcript_api.cmd"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_432363CD76D0480AA7084E8FF9F2BE71"
+            "Folder" = "8:_9B328E46D8A9465692C2C0A26ECD0EB4"
+            "WorkingFolder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
+            "Icon" = "8:"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_868418E8894F4D2F9641A497BCEE6D47"
+            {
+            "Name" = "8:FFmpeg Player"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_FA750DBCBC084FE991EDD407C9629097"
+            "Folder" = "8:_164318547FB24CA28F6F77C529476D36"
+            "WorkingFolder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
+            "Icon" = "8:_7BBE6F8C77DD46679E86F836865E5268"
+            "Feature" = "8:"
+            }
         }
         "UserInterface"
         {
