@@ -186,6 +186,7 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
 #include <initguid.h>
 
 // https://docs.microsoft.com/windows-hardware/drivers/display/providing-capabilities-for-video-decoding
+// https://gix.github.io/media-types/
 
 DEFINE_GUID(IID_IDirectXVideoDecoderService, 0xfc51a551, 0xd5e7, 0x11d9, 0xaf, 0x55, 0x00, 0x05, 0x4e, 0x43, 0xff, 0x02);
 
