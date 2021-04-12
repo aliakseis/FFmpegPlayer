@@ -69,6 +69,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_NCPAINT()
     ON_WM_POWERBROADCAST()
     ON_REGISTERED_MESSAGE(s_uTBBC, &CMainFrame::CreateThumbnailToolbar)
+    ON_WM_NCHITTEST()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -162,12 +163,12 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     //	return -1;      // fail to create
     //}
 
-    if (!m_wndStatusBar.Create(this))
-    {
-        TRACE0("Failed to create status bar\n");
-        return -1;      // fail to create
-    }
-    m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
+    //if (!m_wndStatusBar.Create(this))
+    //{
+    //    TRACE0("Failed to create status bar\n");
+    //    return -1;      // fail to create
+    //}
+    //m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
 
     if (!m_wndPlayerControl.Create(
         this, 
@@ -394,4 +395,24 @@ UINT CMainFrame::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
         }
     }
     return CFrameWndEx::OnPowerBroadcast(nPowerEvent, nEventData);
+}
+
+LRESULT CMainFrame::OnNcHitTest(CPoint point)
+{
+    enum { SPOT_SIZE = 8 };
+    CRect rect;
+    GetClientRect(rect);
+    rect.left = rect.right - SPOT_SIZE;
+    rect.top = rect.bottom - SPOT_SIZE;
+    rect.right += SPOT_SIZE;
+    rect.bottom += SPOT_SIZE;
+    ClientToScreen(&rect);
+
+    if (rect.PtInRect(point))
+    {
+        BOOL bRTL = GetExStyle() & WS_EX_LAYOUTRTL;
+        return bRTL ? HTBOTTOMLEFT : HTBOTTOMRIGHT;
+    }
+
+    return __super::OnNcHitTest(point);
 }

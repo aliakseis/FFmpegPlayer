@@ -50,7 +50,7 @@ public:
 protected:  // control bar embedded members
     CMFCMenuBar       m_wndMenuBar;
     //CMFCToolBar          m_wndToolBar;
-    CMFCStatusBar        m_wndStatusBar;
+    //CMFCStatusBar        m_wndStatusBar;
     CDialogBarPlayerControl m_wndPlayerControl;
     CDialogBarRange m_wndRange;
 
@@ -71,7 +71,6 @@ protected:
     afx_msg void OnWindowPosChanged(WINDOWPOS* lpwndpos);
     afx_msg void OnNcPaint();
     afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
+    afx_msg LRESULT OnNcHitTest(CPoint point);
     DECLARE_MESSAGE_MAP()
 };
-
-
