@@ -216,17 +216,17 @@ END
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 341, 178
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About Player"
+CAPTION "About FFmpeg Player"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,9,14,21,20,SS_REALSIZEIMAGE
     DEFPUSHBUTTON   "OK",IDOK,284,157,50,14,WS_GROUP
-    LTEXT           "Player, Version 1.0",IDC_STATIC,178,14,114,8,SS_NOPREFIX
-    LTEXT           L"\x00A9 2015-2020 Sank\x014D",IDC_STATIC,178,26,114,8
+    LTEXT           "FFmpeg Player, Version 1.0",IDC_STATIC,178,14,114,8,SS_NOPREFIX
+    LTEXT           "github.com/aliakseis/FFmpegPlayer",IDC_STATIC,178,22,114,8
     LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,178,38,114,8
-    LTEXT           "www.iconfinder.com/Rudityas",IDC_STATIC,178,50,97,8
+    LTEXT           "www.iconfinder.com/Rudityas",IDC_STATIC,178,46,97,8
     LTEXT           "YouTube: github.com/nficano/pytube",IDC_STATIC,178,62,122,8
-    LTEXT           "github.com/jdepoix/youtube-transcript-api",IDC_STATIC,178,74,141,8
+    LTEXT           "github.com/jdepoix/youtube-transcript-api",IDC_STATIC,178,70,141,8
     LTEXT           "Pitch shifting by Stephan M. Bernsee",IDC_STATIC,178,86,141,8
     LTEXT           "",IDC_VIDEO_PROPERTIES,178,109,156,48
 END
@@ -293,13 +293,13 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
-            VALUE "CompanyName", "TODO: <Company name>"
-            VALUE "FileDescription", "Player"
+            VALUE "CompanyName", L"Sank\x014D"
+            VALUE "FileDescription", "FFmpeg Player"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "Player.exe"
-            VALUE "LegalCopyright", "TODO: (c) <Company name>.  All rights reserved."
+            VALUE "LegalCopyright", L"\x00A9 2015-2021 Sank\x014D.  All rights reserved."
             VALUE "OriginalFilename", "Player.exe"
-            VALUE "ProductName", "TODO: <Product name>"
+            VALUE "ProductName", "FFmpeg Player"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END
