@@ -174,7 +174,7 @@ def getYoutubeUrl(url, adaptive):
     socket.setdefaulttimeout(10)
     s=YouTube(url).streams
     if(adaptive):
-        return s.filter(only_video=True).order_by('resolution').last().url, s.get_audio_only().url
+        return [s.get_audio_only().url] + [x.url for x in s.filter(only_video=True).order_by('resolution').desc()] 
     else:
         return s.get_highest_resolution().url)";
 
@@ -391,7 +391,7 @@ public:
     ~YouTubeDealer();
 
     bool isValid() const { return !!m_obj; }
-    std::pair<std::string, std::string> getYoutubeUrl(const std::string& url, bool adaptive);
+    std::vector<std::string> getYoutubeUrl(const std::string& url, bool adaptive);
 
 private:
     boost::python::object m_obj;
@@ -440,21 +440,25 @@ YouTubeDealer::~YouTubeDealer()
 }
 
 
-std::pair<std::string, std::string> YouTubeDealer::getYoutubeUrl(const std::string& url, bool adaptive)
+std::vector<std::string> YouTubeDealer::getYoutubeUrl(const std::string& url, bool adaptive)
 {
     BOOST_LOG_TRIVIAL(trace) << "getYoutubeUrl() url = \"" << url << "\"";
     using namespace boost::python;
-    std::string result, audio;
     try
     {
         if (adaptive)
-        { 
+        {
+            std::vector<std::string> result;
             const auto v = m_obj(url, true);
-            result = extract<std::string>(v[0]);
-            audio = extract<std::string>(v[1]);
+            const auto length = len(v);
+            for (int i = 0; i < length; ++i)
+            {
+                result.push_back(extract<std::string>(v[i]));
+            }
+            return result;
         }
         else
-            result = extract<std::string>(m_obj(url, false));
+            return{ extract<std::string>(m_obj(url, false)) };
     }
     catch (const std::exception& ex)
     {
@@ -465,9 +469,7 @@ std::pair<std::string, std::string> YouTubeDealer::getYoutubeUrl(const std::stri
         BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() error \"" << parse_python_exception() << "\"";
     }
 
-    BOOST_LOG_TRIVIAL(trace) << "getYoutubeUrl() returning \"" << result << "\"";
-
-    return{ result, audio };
+    return{ };
 }
 
 
@@ -672,17 +674,30 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
         {
             for (int i = 0; i < ATTEMPTS_NUMBER; ++i)
             {
-                auto result = buddy.getYoutubeUrl(url, adaptive);
-                if (!result.first.empty())
+                auto urls = buddy.getYoutubeUrl(url, adaptive);
+                if (!urls.empty())
                 {
-                    const auto status = HttpGetStatus(result.first.c_str());
+                    const auto status = HttpGetStatus(urls[0].c_str());
                     BOOST_LOG_TRIVIAL(trace) << "Resource status: " << status;
                     if (status == 200)
                     {
-                        mapToDownloadLinks[adaptive][url] = result;
-                        return result;
+                        if (adaptive)
+                        {
+                            for (int i = 1; i < urls.size(); ++i)
+                            {
+                                const auto status = HttpGetStatus(urls[i].c_str());
+                                BOOST_LOG_TRIVIAL(trace) << "Resource status: " << status;
+                                if (status == 200)
+                                {
+                                    return mapToDownloadLinks[adaptive][url] = { urls[i], urls[0] };
+                                }
+                            }
+                        }
+                        else
+                        {
+                            return mapToDownloadLinks[adaptive][url] = { urls[0],{} };
+                        }
                     }
-
                     Sleep(50);
                 }
             }
