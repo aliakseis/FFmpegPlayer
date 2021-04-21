@@ -142,8 +142,8 @@ BEGIN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save Copy &As...",            ID_FILE_SAVE_COPY_AS
         MENUITEM SEPARATOR
-        MENUITEM "Copy URL To Clipboard", ID_COPY_URL_TO_CLIPBOARD
-        MENUITEM SEPARATOR        
+        MENUITEM "Copy URL To Clipboard",       ID_COPY_URL_TO_CLIPBOARD
+        MENUITEM SEPARATOR
         MENUITEM "Autoplay",                    ID_AUTOPLAY
         MENUITEM "Looping",                     ID_LOOPING
         MENUITEM SEPARATOR
@@ -171,6 +171,7 @@ BEGIN
             MENUITEM "2x",                          ID_VIDEO_SPEED7
             MENUITEM "Nightcore",                   ID_NIGHTCORE
         END
+        MENUITEM "Maximal resolution",          ID_MAXIMALRESOLUTION
         MENUITEM "Open Subtitles File...",      ID_OPENSUBTITLESFILE
     END
     POPUP "&View"
@@ -293,11 +294,11 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
-            VALUE "CompanyName", L"Sank\x014D"
+            VALUE "CompanyName", "Sanko"
             VALUE "FileDescription", "FFmpeg Player"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "Player.exe"
-            VALUE "LegalCopyright", L"\x00A9 2015-2021 Sank\x014D.  All rights reserved."
+            VALUE "LegalCopyright", "© 2015-2021 Sanko.  All rights reserved."
             VALUE "OriginalFilename", "Player.exe"
             VALUE "ProductName", "FFmpeg Player"
             VALUE "ProductVersion", "1.0.0.1"

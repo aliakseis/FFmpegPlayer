@@ -119,7 +119,7 @@ void FFmpegDecoder::parseRunnable(int idx)
                     eof = REPORTED;
                 }
             }
-            if (eof == UNSET && (readStatus == AVERROR_EOF || readStatus == AVERROR_INVALIDDATA)) {
+            if (eof == UNSET) {
                 eof = (readStatus == AVERROR_EOF)? SET_EOF : SET_INVALID;
             }
 

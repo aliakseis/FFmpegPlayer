@@ -105,7 +105,8 @@ auto GetAddToSubtitlesMapLambda(T& map)
 auto SafePathString(const TCHAR* path)
 {
     std::basic_string<TCHAR> result(path);
-    result.append(_MAX_PATH, _T('\0'));
+    enum { MAX_DIFF_SIZE = 2048 };
+    result.append(MAX_DIFF_SIZE, _T('\0'));
     return result;
 }
 
@@ -137,6 +138,8 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND(ID_OPENSUBTITLESFILE, &CPlayerDoc::OnOpensubtitlesfile)
     ON_UPDATE_COMMAND_UI(ID_OPENSUBTITLESFILE, &CPlayerDoc::OnUpdateOpensubtitlesfile)
     ON_COMMAND(ID_COPY_URL_TO_CLIPBOARD, &CPlayerDoc::OnCopyUrlToClipboard)
+    ON_COMMAND(ID_MAXIMALRESOLUTION, &CPlayerDoc::OnMaximalresolution)
+    ON_UPDATE_COMMAND_UI(ID_MAXIMALRESOLUTION, &CPlayerDoc::OnUpdateMaximalresolution)
 END_MESSAGE_MAP()
 
 
@@ -152,6 +155,7 @@ CPlayerDoc::CPlayerDoc()
     , m_autoPlay(false)
     , m_looping(false)
     , m_nightcore(false)
+    , m_maximalResolution(false)
 {
     m_frameDecoder->setDecoderListener(this);
 }
@@ -214,14 +218,27 @@ bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl, bool force, const C
 
 bool CPlayerDoc::openUrl(const std::string& originalUrl)
 {
-    const auto url = getYoutubeUrl(originalUrl);
-    if (!url.empty() && m_frameDecoder->openUrls({ url }))
+    const auto urls = getYoutubeUrl(originalUrl, m_maximalResolution);
+    if (!urls.first.empty() && (m_maximalResolution && !urls.second.empty())
+            ? m_frameDecoder->openUrls({ urls.first, urls.second }) 
+            : m_frameDecoder->openUrls({ urls.first }))
     {
         m_frameDecoder->play(true);
         m_originalUrl = originalUrl;
-        m_url = url;
-        m_subtitles.reset();
+        m_url = urls.first;
+
+        if (m_maximalResolution && !urls.second.empty()) {
+            m_separateFileDiff = std::make_unique<StringDifference>(
+                std::basic_string<TCHAR>(urls.first.begin(), urls.first.end()),
+                std::basic_string<TCHAR>(urls.second.begin(), urls.second.end()));
+            m_separateFileDiff->compose();
+        }
+        else {
+            m_separateFileDiff.reset();
+        }
+
         m_nightcore = false;
+        m_subtitles.reset();
         auto map(std::make_unique<SubtitlesMap>());
         if (getYoutubeTranscripts(originalUrl, 
             [&map](double start, double duration, const std::string& text) {
@@ -409,32 +426,31 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
     CString strFile;
     CString strParams;
-    if (isFullFrameRange())
+    if (isFullFrameRange() && !m_separateFileDiff)
     {
         strFile = _T("HttpDownload.exe");
         strParams = source + _T(" \"") + lpszPathName + _T('"');
     }
     else
     {
+        CString timeClause;
+        if (!isFullFrameRange())
+        {
+            timeClause.Format(
+                _T("-ss %.3f -t %.3f "),
+                m_rangeStartTime,
+                m_rangeEndTime - m_rangeStartTime);
+
+        }
         strFile = _T("ffmpeg.exe");
-        strParams.Format(
-            _T("-ss %.3f -t %.3f -i \"%s\""),
-            m_rangeStartTime,
-            m_rangeEndTime - m_rangeStartTime,
-            source);
+        strParams = timeClause + _T("-i \"") + source + _T('"');
 
         if (m_separateFileDiff)
         {
             const auto s = m_separateFileDiff->patch(SafePathString(source));
-            if (!s.empty() && 0 == _taccess(s.c_str(), 04)) {
-                CString strAudioParams;
-                strAudioParams.Format(
-                    _T(" -ss %.3f -t %.3f -i \"%s\" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0"),
-                    m_rangeStartTime,
-                    m_rangeEndTime - m_rangeStartTime,
-                    s.c_str());
-
-                strParams += strAudioParams;
+            if (!s.empty()) {
+                strParams += _T(" ") + timeClause + _T("-i \"") + s.c_str() 
+                    + _T("\" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0");
             }
         }
 
@@ -915,4 +931,16 @@ void CPlayerDoc::OnCopyUrlToClipboard()
         }
         CloseClipboard();
     }
+}
+
+
+void CPlayerDoc::OnMaximalresolution()
+{
+    m_maximalResolution = !m_maximalResolution;
+}
+
+
+void CPlayerDoc::OnUpdateMaximalresolution(CCmdUI *pCmdUI)
+{
+    pCmdUI->SetCheck(m_maximalResolution);
 }

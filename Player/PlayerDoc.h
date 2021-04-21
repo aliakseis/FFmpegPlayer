@@ -157,4 +157,9 @@ private:
     std::function<void()> m_reopenFunc;
 
     bool m_nightcore;
+
+    bool m_maximalResolution;
+public:
+    afx_msg void OnMaximalresolution();
+    afx_msg void OnUpdateMaximalresolution(CCmdUI *pCmdUI);
 };
