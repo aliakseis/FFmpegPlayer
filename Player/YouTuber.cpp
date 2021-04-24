@@ -174,7 +174,9 @@ def getYoutubeUrl(url, adaptive):
     socket.setdefaulttimeout(10)
     s=YouTube(url).streams
     if(adaptive):
-        return [s.get_audio_only().url] + [x.url for x in s.filter(only_video=True).order_by('resolution').desc()] 
+        return [s.get_audio_only().url] \
+            + [x.url for x in s.filter(only_video=True).order_by('resolution').desc() \
+            if not x.video_codec.startswith("av01")] 
     else:
         return s.get_highest_resolution().url)";
 
