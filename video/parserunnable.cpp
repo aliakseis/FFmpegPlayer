@@ -79,6 +79,9 @@ void FFmpegDecoder::parseRunnable(int idx)
         startVideoThread();
     }
 
+    int64_t lastTime = m_currentTime;
+    enum { TO_RECOVER, RECOVERING, RECOVERED } recovering = RECOVERED;
+
     for (;;)
     {
         if (boost::this_thread::interruption_requested())
@@ -99,6 +102,23 @@ void FFmpegDecoder::parseRunnable(int idx)
         {
             dispatchPacket(idx, packet);
             eof = UNSET;
+
+            if (recovering == TO_RECOVER && m_currentTime > lastTime)
+            {
+                lastTime = m_currentTime;
+                recovering = RECOVERING;
+            }
+            else if (recovering == RECOVERING && m_currentTime > lastTime)
+            {
+                recovering = RECOVERED;
+            }
+        }
+        else if ((readStatus == AVERROR(10054) || readStatus == AVERROR_INVALIDDATA) && recovering == RECOVERED) // WSAECONNRESET TODO generic
+        {
+            CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " Trying to recover from " << readStatus;
+            recovering = TO_RECOVER;
+            lastTime = m_currentTime;
+            seekDuration(lastTime);
         }
         else
         {
