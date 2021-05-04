@@ -99,7 +99,7 @@ namespace channel_logger
 
 using boost::log::keywords::channel;
 
-boost::log::sources::channel_logger_mt<> 
+ChannelLogger
     ffmpeg_closing(channel = "ffmpeg_closing"),
     ffmpeg_opening(channel = "ffmpeg_opening"),
     ffmpeg_pause(channel = "ffmpeg_pause"),

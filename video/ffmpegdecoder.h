@@ -24,7 +24,24 @@ extern "C" {
 namespace channel_logger
 {
 
-extern boost::log::sources::channel_logger_mt<> 
+// Weird x64 debug build crash fixed
+class ChannelLogger : public boost::log::sources::channel_logger_mt<>
+{
+public:
+    using channel_logger_mt<>::channel_logger_mt;
+    boost::log::record open_record()
+    {
+        // Perform a quick check first
+        if (this->core()->get_logging_enabled())
+        {
+            open_record_lock lock(this->get_threading_model());
+            return basic_logger::open_record_unlocked();
+        }
+        return boost::log::record();
+    }
+};
+
+extern ChannelLogger
     ffmpeg_closing, 
     ffmpeg_opening, 
     ffmpeg_pause,
