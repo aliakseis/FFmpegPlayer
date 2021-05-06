@@ -27,6 +27,11 @@ namespace channel_logger
 // Weird x64 debug build crash fixed
 class ChannelLogger : public boost::log::sources::channel_logger_mt<>
 {
+    template<typename... T>
+    auto open_record_unlocked(basic_logger<T...>*)
+    {
+        return basic_logger<T...>::open_record_unlocked();
+    }
 public:
     using channel_logger_mt<>::channel_logger_mt;
     boost::log::record open_record()
@@ -35,7 +40,7 @@ public:
         if (this->core()->get_logging_enabled())
         {
             open_record_lock lock(this->get_threading_model());
-            return basic_logger::open_record_unlocked();
+            return open_record_unlocked(this);
         }
         return boost::log::record();
     }
