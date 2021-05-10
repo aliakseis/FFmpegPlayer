@@ -507,7 +507,7 @@ int dxva2_convert_data(IDirect3DSurface9* surface, AVFrame *tmp_frame, int width
         {
             CopyPlanePtr(tmp_frame->data[0], tmp_frame->linesize[0],
                 (uint8_t*)LockedRect.pBits,
-                LockedRect.Pitch, width, height * 2);
+                LockedRect.Pitch, width * 2, height);
         }
         break;
     default: // IMC3
