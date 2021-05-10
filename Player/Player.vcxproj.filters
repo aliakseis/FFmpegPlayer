@@ -96,6 +96,9 @@
     <ClInclude Include="GetClipboardText.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FrameToHglobal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Player.cpp">
@@ -156,6 +159,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="OpenSubtitlesFile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameToHglobal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

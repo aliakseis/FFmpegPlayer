@@ -91,4 +91,5 @@ public:
     virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
     afx_msg void OnDropFiles(HDROP hDropInfo);
     afx_msg void OnEditPaste();
+    afx_msg void OnEditCopy();
 };

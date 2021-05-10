@@ -6,6 +6,7 @@
 #include "PlayerView.h"
 #include "PlayerDoc.h"
 #include "GetClipboardText.h"
+#include "FrameToHglobal.h"
 
 #include "decoderinterface.h"
 
@@ -567,6 +568,7 @@ BEGIN_MESSAGE_MAP(CPlayerView, CView)
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
     ON_WM_DROPFILES()
+    ON_COMMAND(ID_EDIT_COPY, &CPlayerView::OnEditCopy)
 END_MESSAGE_MAP()
 
 
@@ -1407,4 +1409,21 @@ void CPlayerView::OnDropFiles(HDROP hDropInfo)
 {
     GetDocument()->OnDropFiles(hDropInfo);
     __super::OnDropFiles(hDropInfo);
+}
+
+
+void CPlayerView::OnEditCopy()
+{
+    if (!m_pMainStream)
+        return;
+
+    if (!OpenClipboard())
+        return;
+
+    if (HGLOBAL hglbl = FrameToHglobal(m_pMainStream, m_sourceSize.cx, m_sourceSize.cy))
+    {
+        EmptyClipboard();
+        SetClipboardData(CF_DIB, hglbl);
+    }
+    CloseClipboard();
 }

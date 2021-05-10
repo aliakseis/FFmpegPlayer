@@ -223,6 +223,7 @@
     <ClInclude Include="DialogBarRange.h" />
     <ClInclude Include="DialogOpenURL.h" />
     <ClInclude Include="EditTime.h" />
+    <ClInclude Include="FrameToHglobal.h" />
     <ClInclude Include="GetClipboardText.h" />
     <ClInclude Include="HandleFilesSequence.h" />
     <ClInclude Include="I420Effect.h" />
@@ -251,6 +252,7 @@
     <ClCompile Include="DialogBarRange.cpp" />
     <ClCompile Include="DialogOpenURL.cpp" />
     <ClCompile Include="EditTime.cpp" />
+    <ClCompile Include="FrameToHglobal.cpp" />
     <ClCompile Include="HandleFilesSequence.cpp" />
     <ClCompile Include="I420Effect.cpp" />
     <ClCompile Include="MainFrm.cpp" />
