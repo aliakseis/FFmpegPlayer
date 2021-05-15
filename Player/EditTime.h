@@ -17,8 +17,6 @@ public:
     bool IsEmpty() const;
 
 // Operations
-public:
-	BOOL Create( DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID );
 
 // Overrides
 	// ClassWizard generated virtual function overrides
