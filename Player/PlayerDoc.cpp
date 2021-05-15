@@ -743,12 +743,16 @@ std::string CPlayerDoc::getSubtitle() const
 
 void CPlayerDoc::setRangeStartTime(double time)
 {
+    if (time < 0)
+        time = m_endTime + time;
     m_rangeStartTime = time;
     rangeStartTimeChanged(time - m_startTime, m_endTime - m_startTime);
 }
 
 void CPlayerDoc::setRangeEndTime(double time)
 {
+    if (time < 0)
+        time = m_endTime + time;
     m_rangeEndTime = time;
     rangeEndTimeChanged(time - m_startTime, m_endTime - m_startTime);
 }
