@@ -24,8 +24,6 @@ using std::setw;
 
 enum { RANGE_MAX = 0x7FFF };
 
-enum { ICON_SIZE = 24 };
-
 enum { WM_SET_TIME = WM_USER + 101 };
 
 namespace {
@@ -46,13 +44,13 @@ std::basic_string<TCHAR> secondsToString(int seconds)
     return buffer.str();
 }
 
-HICON LoadIcon(int idr)
+HICON LoadIcon(int idr, int iconSize)
 {
     return (HICON) LoadImage(
         AfxGetApp()->m_hInstance,
         MAKEINTRESOURCE(idr),
         IMAGE_ICON,
-        ICON_SIZE, ICON_SIZE, // use actual size
+        iconSize, iconSize, // use actual size
         LR_DEFAULTCOLOR);
 }
 
@@ -90,7 +88,13 @@ CDialogBarPlayerControl::CDialogBarPlayerControl()
 , m_oldCurrentTime(-1) // unset
 , m_tracking(false)
 {
-    SetMinSize(CSize(500, 40));
+    CDialogTemplate dlgtemplate;
+    if (dlgtemplate.Load(MAKEINTRESOURCE(IDD)))
+    {
+        CSize size;
+        dlgtemplate.GetSizeInPixels(&size);
+        SetMinSize(size);
+    }
 }
 
 CDialogBarPlayerControl::~CDialogBarPlayerControl()
@@ -137,11 +141,18 @@ LRESULT CDialogBarPlayerControl::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 {
     __super::HandleInitDialog(wParam, lParam);
 
-    m_hPlay = LoadIcon(IDI_PLAY);
-    m_hPause = LoadIcon(IDI_PAUSE);
-    m_hAudio = LoadIcon(IDI_AUDIO);
-    m_hAudioOff = LoadIcon(IDI_AUDIO_OFF);
-    m_hFullScreen = LoadIcon(IDI_FULL_SCREEN);
+    CRect btnRect;
+    GetDlgItem(IDC_PLAY_PAUSE)->GetClientRect(btnRect);
+    const int iconSizeLimit = min(btnRect.Width() - 2 * GetSystemMetrics(SM_CXBORDER),
+        btnRect.Height() - 2 * GetSystemMetrics(SM_CYBORDER)) * 4 / 5;
+
+    const int iconSize = min(iconSizeLimit & ((iconSizeLimit > 32)? ~15 : ~7), 48);
+
+    m_hPlay = LoadIcon(IDI_PLAY, iconSize);
+    m_hPause = LoadIcon(IDI_PAUSE, iconSize);
+    m_hAudio = LoadIcon(IDI_AUDIO, iconSize);
+    m_hAudioOff = LoadIcon(IDI_AUDIO_OFF, iconSize);
+    m_hFullScreen = LoadIcon(IDI_FULL_SCREEN, iconSize);
 
     static_cast<CButton*>(GetDlgItem(IDC_PLAY_PAUSE))->SetIcon(m_hPlay);
     static_cast<CButton*>(GetDlgItem(IDC_AUDIO_ON_OFF))->SetIcon(m_hAudio);
