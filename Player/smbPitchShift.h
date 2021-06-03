@@ -1,5 +1,6 @@
 #pragma once
 
+// http://blogs.zynaptiq.com/bernsee/pitch-shifting-using-the-ft/
 
 class CSmbPitchShift
 {
