@@ -244,6 +244,7 @@ BOOL CPlayerApp::InitInstance()
     if (!ProcessShellCommand(cmdInfo))
         return FALSE;
 
+    // https://stackoverflow.com/a/56079903/10472202
     //enum { TIME_PERIOD = 1 };
     //if (timeBeginPeriod(TIME_PERIOD) == TIMERR_NOERROR)
     //{
