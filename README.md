@@ -67,14 +67,6 @@ Take into account https://www.psiphon3.com if you encounter HTTP Error 429.
 
 Just in case: "In fact in boost-python, the default behavior is that even when debug boost libraries are created, these libraries are linked to the release pythonX.dll/lib - by intention, according to the docs." https://github.com/pybind/pybind11/issues/1295
 
-If you want YouTube subtitles, please note: https://github.com/microsoft/vcpkg/issues/6499 .
-For now you can revert to Python 3.6 by running this in the vcpkg folder:
-
-```
-git checkout dfef7b111656e65a7e14078b6aaffa7f0a402308 -- ports/python3
-
-```
-
 Tiny demos here: https://www.youtube.com/watch?v=dySA4yEGdEc https://www.youtube.com/watch?v=t5iW2ZsEzrA
 
 Hint: hold Ctrl+Shift while submitting File Open dialog to choose a separate audio file. It works for the file opening from the Windows Explorer as well.
