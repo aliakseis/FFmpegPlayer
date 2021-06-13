@@ -35,7 +35,7 @@ vcpkg install ffmpeg ffmpeg:x86-windows
 
 If libbz2.dll is missing from the player debug directory, then vcpkg/installed/x86-windows/debug/bin/libbz2d.dll file is to be copied into that. 
 
-YouTube view support using https://github.com/nficano/pytube.git can be turned on by uncommenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. Python is also needed in this case:
+YouTube view support using https://github.com/pytube/pytube.git can be turned on by uncommenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. Python is also needed in this case:
 
 ```
 vcpkg install python3
