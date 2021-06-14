@@ -266,7 +266,11 @@ bool CPlayerDoc::openUrlFromList()
     {
         auto buffer = m_playList.front();
         m_playList.pop_front();
-        if (openUrl(buffer))
+
+        auto playList = ParsePlaylist(buffer, false);
+        if (!playList.empty())
+            m_playList.insert(m_playList.begin(), playList.begin(), playList.end());
+        else if (openUrl(buffer))
             return true;
         else if (!networkCkecked && PathIsURLA(buffer.c_str()))
         {
