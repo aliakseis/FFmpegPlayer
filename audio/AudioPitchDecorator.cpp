@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "AudioPitchDecorator.h"
 
 #include "smbPitchShift.h"

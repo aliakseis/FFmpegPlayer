@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "AudioPlayerImpl.h"
 
 #include <malloc.h>
@@ -54,8 +53,8 @@ AudioPlayerImpl::~AudioPlayerImpl()
 
 void AudioPlayerImpl::InitializeThread()
 {
-    TRACE("Old audio thread priority = %d\n", GetThreadPriority(GetCurrentThread()));
-    VERIFY(SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL));
+    ATLTRACE("Old audio thread priority = %d\n", GetThreadPriority(GetCurrentThread()));
+    ATLVERIFY(SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL));
 }
 
 void AudioPlayerImpl::DeinitializeThread()
@@ -108,11 +107,11 @@ bool AudioPlayerImpl::Open(int bytesPerSample, int channels, int* samplesPerSec)
     waveFormat.nAvgBytesPerSec = waveFormat.nBlockAlign * waveFormat.nSamplesPerSec;
     m_bytesPerSecond = waveFormat.nAvgBytesPerSec;
 
-    TRACE("Bits per sample = %d\n", waveFormat.wBitsPerSample);
-    TRACE("Samples per second = %d\n", waveFormat.nSamplesPerSec);
-    TRACE("Channels = %d\n", waveFormat.nChannels);
-    TRACE("Block align = %d\n", waveFormat.nBlockAlign);
-    TRACE("Average bit rate = %d\n", waveFormat.nAvgBytesPerSec);
+    ATLTRACE("Bits per sample = %d\n", waveFormat.wBitsPerSample);
+    ATLTRACE("Samples per second = %d\n", waveFormat.nSamplesPerSec);
+    ATLTRACE("Channels = %d\n", waveFormat.nChannels);
+    ATLTRACE("Block align = %d\n", waveFormat.nBlockAlign);
+    ATLTRACE("Average bit rate = %d\n", waveFormat.nAvgBytesPerSec);
 
     if (waveOutOpen(
         &m_waveOutput,
@@ -123,7 +122,7 @@ bool AudioPlayerImpl::Open(int bytesPerSample, int channels, int* samplesPerSec)
         CALLBACK_FUNCTION
         ) != MMSYSERR_NOERROR)
     {
-        TRACE("Unable to open WAVE_MAPPER device.\n");
+        ATLTRACE("Unable to open WAVE_MAPPER device.\n");
         return false;
     }
 
@@ -187,7 +186,7 @@ bool AudioPlayerImpl::WriteAudio(uint8_t* write_data, int64_t write_size)
         write_size -= remain;
         write_data += remain;
 
-        ASSERT(current->dwBufferLength == BLOCK_SIZE);
+        ATLASSERT(current->dwBufferLength == BLOCK_SIZE);
         if (current->dwFlags & WHDR_PREPARED || waveOutPrepareHeader(m_waveOutput, current, sizeof(WAVEHDR)) == MMSYSERR_NOERROR)
         {
             if (-1 == InterlockedDecrement(&m_waveFreeBlockCount))

@@ -93,7 +93,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -123,7 +123,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -154,7 +154,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <AdditionalOptions>/std:c++latest /D_HAS_CXX17=1 %(AdditionalOptions)</AdditionalOptions>
@@ -187,7 +187,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <AdditionalOptions>/std:c++latest /D_HAS_CXX17=1 %(AdditionalOptions)</AdditionalOptions>
@@ -215,9 +215,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AsyncGetUrlUnderMouseCursor.h" />
-    <ClInclude Include="AudioPitchDecorator.h" />
-    <ClInclude Include="AudioPlayerImpl.h" />
-    <ClInclude Include="AudioPlayerWasapi.h" />
     <ClInclude Include="D3DFONT.H" />
     <ClInclude Include="DialogBarPlayerControl.h" />
     <ClInclude Include="DialogBarRange.h" />
@@ -237,16 +234,12 @@
     <ClInclude Include="PlayerViewD2D.h" />
     <ClInclude Include="PlayerView.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="smbPitchShift.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="YouTuber.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AsyncGetUrlUnderMouseCursor.cpp" />
-    <ClCompile Include="AudioPitchDecorator.cpp" />
-    <ClCompile Include="AudioPlayerImpl.cpp" />
-    <ClCompile Include="AudioPlayerWasapi.cpp" />
     <ClCompile Include="D3DFONT.CPP" />
     <ClCompile Include="DialogBarPlayerControl.cpp" />
     <ClCompile Include="DialogBarRange.cpp" />
@@ -261,7 +254,6 @@
     <ClCompile Include="PlayerDoc.cpp" />
     <ClCompile Include="PlayerViewD2D.cpp" />
     <ClCompile Include="PlayerView.cpp" />
-    <ClCompile Include="smbPitchShift.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -315,6 +307,9 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\audio\audio.vcxproj">
+      <Project>{8b955995-b5ec-41f0-940a-48a6f17bcbb8}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\networking\networking.vcxproj">
       <Project>{3de6c2d2-fdfc-4745-8282-981df7561405}</Project>
     </ProjectReference>

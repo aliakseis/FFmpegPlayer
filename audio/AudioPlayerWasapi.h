@@ -1,18 +1,22 @@
 #pragma once
 
-#include "audioplayer.h"
+#include "../video/audioplayer.h"
 
-#include <mmsystem.h>
+#include <atlbase.h>
 
-class AudioPlayerImpl :
+struct IAudioClient;
+struct IAudioRenderClient;
+struct ISimpleAudioVolume;
+
+class AudioPlayerWasapi :
     public IAudioPlayer
 {
 public:
-    AudioPlayerImpl();
-    ~AudioPlayerImpl() override;
+    AudioPlayerWasapi();
+    ~AudioPlayerWasapi() override;
 
-    AudioPlayerImpl(const AudioPlayerImpl&) = delete;
-    AudioPlayerImpl& operator=(const AudioPlayerImpl&) = delete;
+    AudioPlayerWasapi(const AudioPlayerWasapi&) = delete;
+    AudioPlayerWasapi& operator=(const AudioPlayerWasapi&) = delete;
 
     void SetCallback(IAudioPlayerCallback* callback) override
     {
@@ -39,15 +43,17 @@ public:
 private:
     IAudioPlayerCallback* m_callback;
 
-    HWAVEOUT			m_waveOutput;
+    HANDLE m_hAudioSamplesRenderEvent;
 
-    static void CALLBACK waveOutProc(HWAVEOUT, UINT, DWORD, DWORD, DWORD);
+    CComPtr<IAudioClient> m_AudioClient;
+    CComPtr<IAudioRenderClient> m_RenderClient;
+    CComPtr<ISimpleAudioVolume> m_SimpleAudioVolume;
 
-    WAVEHDR*			m_waveBlocks;
-    volatile long		m_waveFreeBlockCount {};
-    HANDLE				m_evtHasFreeBlocks;
-    int					m_waveCurrentBlock {};
+    unsigned int m_BufferSize;
+    unsigned int m_FrameSize;
+    unsigned int m_samplesPerSec;
 
-    int					m_bytesPerSecond;
+    HANDLE m_mmcssHandle;
+
+    bool m_coUnitialize;
 };
-

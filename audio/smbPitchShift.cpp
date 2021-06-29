@@ -36,8 +36,6 @@
 *
 *****************************************************************************/ 
 
-#include "stdafx.h"
-
 #include "smbPitchShift.h"
 
 #include <string.h>

@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "AudioPlayerWasapi.h"
 
 #include <Audioclient.h>
@@ -6,6 +5,7 @@
 #include <Avrt.h>
 
 #include <string>
+#include <atlstr.h>
 
 namespace {
 
@@ -27,7 +27,7 @@ namespace CoreAudioUtil
         HRESULT hr = device_enumerator.CoCreateInstance(__uuidof(MMDeviceEnumerator),
             NULL, CLSCTX_INPROC_SERVER);
         if (hr == CO_E_NOTINITIALIZED && allow_reinitialize) {
-            TRACE("CoCreateInstance fails with CO_E_NOTINITIALIZED\n");
+            ATLTRACE("CoCreateInstance fails with CO_E_NOTINITIALIZED\n");
             // We have seen crashes which indicates that this method can in fact
             // fail with CO_E_NOTINITIALIZED in combination with certain 3rd party
             // modules. Calling CoInitializeEx is an attempt to resolve the reported
@@ -44,7 +44,7 @@ namespace CoreAudioUtil
     CComPtr<IMMDeviceEnumerator> CreateDeviceEnumerator() {
         //ASSERT(IsSupported());
         auto device_enumerator = CreateDeviceEnumeratorInternal(true);
-        ASSERT(device_enumerator);
+        ATLASSERT(device_enumerator);
         return device_enumerator;
     }
 
@@ -61,7 +61,7 @@ namespace CoreAudioUtil
         HRESULT hr = device_enumerator->GetDefaultAudioEndpoint(
             data_flow, role, &endpoint_device);
         if (FAILED(hr)) {
-            TRACE("IMMDeviceEnumerator::GetDefaultAudioEndpoint: %x\n", hr);
+            ATLTRACE("IMMDeviceEnumerator::GetDefaultAudioEndpoint: %x\n", hr);
             return endpoint_device;
         }
 
@@ -71,7 +71,7 @@ namespace CoreAudioUtil
         hr = endpoint_device->GetState(&state);
         if (SUCCEEDED(hr)) {
             if (!(state & DEVICE_STATE_ACTIVE)) {
-                TRACE("Selected endpoint device is not active\n");
+                ATLTRACE("Selected endpoint device is not active\n");
                 endpoint_device.Release();
             }
         }
@@ -88,9 +88,9 @@ namespace CoreAudioUtil
             return endpoint_device;
         // Retrieve an audio device specified by an endpoint device-identification
         // string.
-        HRESULT hr = device_enumerator->GetDevice(CStringW(device_id.c_str()), &endpoint_device);
+        HRESULT hr = device_enumerator->GetDevice(CAtlStringW(device_id.c_str()), &endpoint_device);
         if (FAILED(hr)) {
-            TRACE("IMMDeviceEnumerator::GetDevice: %x\n", hr);
+            ATLTRACE("IMMDeviceEnumerator::GetDevice: %x\n", hr);
         }
         return endpoint_device;
     }
@@ -106,7 +106,7 @@ namespace CoreAudioUtil
             NULL,
             (void**)&audio_client);
         if (FAILED(hr)) {
-            TRACE("IMMDevice::Activate: %x\n", hr);
+            ATLTRACE("IMMDevice::Activate: %x\n", hr);
         }
 
         return audio_client;
@@ -142,7 +142,7 @@ namespace CoreAudioUtil
         if (FAILED(hr))
             return hr;
         size_t bytes = sizeof(WAVEFORMATEX) + format_pcmex->Format.cbSize;
-        ASSERT(bytes == sizeof(WAVEFORMATPCMEX));
+        ATLASSERT(bytes == sizeof(WAVEFORMATPCMEX));
         memcpy(format, format_pcmex, bytes);
         return hr;
     }
@@ -175,7 +175,7 @@ namespace CoreAudioUtil
             event_handle != INVALID_HANDLE_VALUE);
         if (use_event)
             stream_flags |= AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
-        TRACE("stream_flags: 0x%x\n", stream_flags);
+        ATLTRACE("stream_flags: 0x%x\n", stream_flags);
         // Initialize the shared mode client for minimal delay.
         HRESULT hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED,
             stream_flags,
@@ -184,24 +184,24 @@ namespace CoreAudioUtil
             reinterpret_cast<const WAVEFORMATEX*>(format),
             session_guid);
         if (FAILED(hr)) {
-            TRACE("IAudioClient::Initialize: %x\n", hr);
+            ATLTRACE("IAudioClient::Initialize: %x\n", hr);
             return hr;
         }
         if (use_event) {
             hr = client->SetEventHandle(event_handle);
             if (FAILED(hr)) {
-                TRACE("IAudioClient::SetEventHandle: %x\n", hr);
+                ATLTRACE("IAudioClient::SetEventHandle: %x\n", hr);
                 return hr;
             }
         }
         UINT32 buffer_size_in_frames = 0;
         hr = client->GetBufferSize(&buffer_size_in_frames);
         if (FAILED(hr)) {
-            TRACE("IAudioClient::GetBufferSize: %x\n", hr);
+            ATLTRACE("IAudioClient::GetBufferSize: %x\n", hr);
             return hr;
         }
         *endpoint_buffer_size = buffer_size_in_frames;
-        TRACE("endpoint buffer size: %d\n", buffer_size_in_frames);
+        ATLTRACE("endpoint buffer size: %d\n", buffer_size_in_frames);
 
         return hr;
     }
@@ -215,7 +215,7 @@ namespace CoreAudioUtil
         HRESULT hr = client->GetService(__uuidof(IAudioRenderClient),
             (void**) &audio_render_client);
         if (FAILED(hr)) {
-            TRACE("IAudioClient::GetService: %x\n", hr);
+            ATLTRACE("IAudioClient::GetService: %x\n", hr);
             return CComPtr<IAudioRenderClient>();
         }
         return audio_render_client;
@@ -321,7 +321,7 @@ bool AudioPlayerWasapi::WriteAudio(uint8_t* write_data, int64_t write_size)
         HRESULT hr = m_AudioClient->GetCurrentPadding(&padding);
         if (FAILED(hr))
         {
-            TRACE("Unable to get padding: %x\n", hr);
+            ATLTRACE("Unable to get padding: %x\n", hr);
             return false;
         }
 
@@ -341,7 +341,7 @@ bool AudioPlayerWasapi::WriteAudio(uint8_t* write_data, int64_t write_size)
                 hr = m_RenderClient->ReleaseBuffer(framesToWrite, 0);
                 if (!SUCCEEDED(hr))
                 {
-                    TRACE("Unable to release buffer: %x\n", hr);
+                    ATLTRACE("Unable to release buffer: %x\n", hr);
                 }
 
                 // count audio pts
@@ -350,7 +350,7 @@ bool AudioPlayerWasapi::WriteAudio(uint8_t* write_data, int64_t write_size)
             }
             else
             {
-                TRACE("Unable to get buffer: %x\n", hr);
+                ATLTRACE("Unable to get buffer: %x\n", hr);
             }
             write_size -= remain;
             write_data += remain;
@@ -374,11 +374,11 @@ void AudioPlayerWasapi::InitializeThread()
     m_coUnitialize = (S_OK == hr);
     if (FAILED(hr))
     {
-        TRACE("Unable to initialize COM in render thread: %x\n", hr);
+        ATLTRACE("Unable to initialize COM in render thread: %x\n", hr);
     }
 
-    TRACE("Old audio thread priority = %d\n", GetThreadPriority(GetCurrentThread()));
-    VERIFY(SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL));
+    ATLTRACE("Old audio thread priority = %d\n", GetThreadPriority(GetCurrentThread()));
+    ATLVERIFY(SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL));
 
     if (auto avrtHandle = GetAvrtHandle())
     {
@@ -389,13 +389,13 @@ void AudioPlayerWasapi::InitializeThread()
             m_mmcssHandle = AvSetMmThreadCharacteristicsWPtr(L"Pro Audio", &mmcssTaskIndex);
             if (m_mmcssHandle == NULL)
             {
-                TRACE("Unable to enable MMCSS on render thread: %d\n", GetLastError());
+                ATLTRACE("Unable to enable MMCSS on render thread: %d\n", GetLastError());
             }
             else
             {
                 AVRT_FUNC_PTR(AvSetMmThreadPriority);
                 if (AvSetMmThreadPriorityPtr)
-                    VERIFY(AvSetMmThreadPriorityPtr(m_mmcssHandle, AVRT_PRIORITY_CRITICAL));
+                    ATLVERIFY(AvSetMmThreadPriorityPtr(m_mmcssHandle, AVRT_PRIORITY_CRITICAL));
             }
         }
     }
@@ -410,7 +410,7 @@ void AudioPlayerWasapi::DeinitializeThread()
             AVRT_FUNC_PTR(AvRevertMmThreadCharacteristics);
             if (AvRevertMmThreadCharacteristicsPtr)
             {
-                VERIFY(AvRevertMmThreadCharacteristicsPtr(m_mmcssHandle));
+                ATLVERIFY(AvRevertMmThreadCharacteristicsPtr(m_mmcssHandle));
                 m_mmcssHandle = NULL;
             }
         }
