@@ -560,21 +560,29 @@ bool YouTubeTranscriptDealer::getYoutubeTranscripts(const std::string& id, AddYo
 }
 
 
-std::vector<std::string> ParsePlaylist(const char* pData, const char* const pDataEnd)
+std::vector<std::string> DoParsePlaylist(
+    const char* const pDataBegin, const char* const pDataEnd, bool includeLists = true)
 {
-    const char watch[] = "/watch?v=";
-
     std::vector<std::string> result;
 
-    while ((pData = std::search(pData, pDataEnd, std::begin(watch), std::prev(std::end(watch)))) != pDataEnd)
+    auto doSearch = [pDataBegin, pDataEnd, &result](const auto& watch) {
+        auto pData = pDataBegin;
+        while ((pData = std::search(pData, pDataEnd, std::begin(watch), std::prev(std::end(watch)))) != pDataEnd)
+        {
+            const auto localEnd = std::find_if(pData, pDataEnd, [](char ch) {
+                return ch == '&' || ch == '"' || ch == '\'' || ch == '\\' || std::isspace(static_cast<unsigned char>(ch));
+            });
+            auto el = "https://www.youtube.com" + std::string(pData, localEnd);
+            if (std::find(result.begin(), result.end(), el) == result.end())
+                result.push_back(std::move(el));
+            pData += sizeof(watch) / sizeof(watch[0]) - 1;
+        }
+    };
+
+    doSearch("/watch?v=");
+    if (includeLists)
     {
-        const auto localEnd = std::find_if(pData, pDataEnd, [](char ch) {
-            return ch == '&' || ch == '"' || ch == '\'' || ch == '\\' || std::isspace(static_cast<unsigned char>(ch));
-        });
-        auto el = "https://www.youtube.com" + std::string(pData, localEnd);
-        if (std::find(result.begin(), result.end(), el) == result.end())
-            result.push_back(std::move(el));
-        pData += sizeof(watch) / sizeof(watch[0]) - 1;
+        doSearch("/playlist?list=");
     }
 
     return result;
@@ -586,6 +594,7 @@ std::vector<std::string> ParsePlaylist(const char* pData, const char* const pDat
 
 std::vector<std::string> ParsePlaylist(std::string url, bool force)
 {
+    bool isList = false;
     if (url.find_first_of("./") == std::string::npos)
     {
         std::istringstream ss(url);
@@ -600,8 +609,12 @@ std::vector<std::string> ParsePlaylist(std::string url, bool force)
         }
         url = "https://www.youtube.com/results?search_query=" + result;
     }
-    else if (!force && url.find("/playlist?list=") == std::string::npos)
-        return{};
+    else
+    {
+        isList = url.find("/playlist?list=") != std::string::npos;
+        if (!force && !isList)
+            return{};
+    }
 
     CWaitCursor wait;
     CComVariant varBody = HttpGet(url.c_str());
@@ -627,7 +640,7 @@ std::vector<std::string> ParsePlaylist(std::string url, bool force)
 
     std::unique_ptr<SAFEARRAY, decltype(&SafeArrayUnaccessData)> guard(
         psa, SafeArrayUnaccessData);
-    return ParsePlaylist(pData, pDataEnd);
+    return DoParsePlaylist(pData, pDataEnd, !isList);
 }
 
 std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName)
@@ -640,7 +653,7 @@ std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName)
     if (!memoryMappedFile.MapFlie(fileName))
         return{};
     auto* const pData = static_cast<const char*>(memoryMappedFile.data());
-    return ParsePlaylist(pData, pData + memoryMappedFile.size());
+    return DoParsePlaylist(pData, pData + memoryMappedFile.size());
 }
 
 std::vector<std::string> ParsePlaylistText(const std::string& text)
@@ -650,7 +663,7 @@ std::vector<std::string> ParsePlaylistText(const std::string& text)
         return{};
     }
     auto* const pData = text.data();
-    return ParsePlaylist(pData, pData + text.size());
+    return DoParsePlaylist(pData, pData + text.size());
 }
 
 std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive)
