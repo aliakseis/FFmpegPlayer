@@ -61,7 +61,7 @@ static int memcpy_uncached_load_sse41(void *dest, const void *src, size_t n_byte
 
     // align src to 128-bits
     if (s_int & 0xf) {
-        size_t nh = std::min(0x10 - (s_int & 0x0f), n);
+        size_t nh = (std::min)(0x10 - (s_int & 0x0f), n);
         memcpy(d, s, nh);
         d += nh; d_int += nh;
         s += nh; s_int += nh;
@@ -583,12 +583,12 @@ static int dxva2_alloc(AVCodecContext *s)
     ist->hwaccel_get_buffer = dxva2_get_buffer;
     ist->hwaccel_retrieve_data = dxva2_retrieve_data;
 
-    ctx->d3dlib = LoadLibrary(L"d3d9.dll");
+    ctx->d3dlib = LoadLibraryW(L"d3d9.dll");
     if (!ctx->d3dlib) {
         av_log(NULL, loglevel, "Failed to load D3D9 library\n");
         goto fail;
     }
-    ctx->dxva2lib = LoadLibrary(L"dxva2.dll");
+    ctx->dxva2lib = LoadLibraryW(L"dxva2.dll");
     if (!ctx->dxva2lib) {
         av_log(NULL, loglevel, "Failed to load DXVA2 library\n");
         goto fail;

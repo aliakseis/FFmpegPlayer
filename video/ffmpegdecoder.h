@@ -25,6 +25,9 @@ namespace channel_logger
 {
 
 // Weird x64 debug build crash fixed
+
+#if defined(_MSC_VER) && _MSC_VER < 1910
+
 class ChannelLogger : public boost::log::sources::channel_logger_mt<>
 {
     template<typename... T>
@@ -45,6 +48,12 @@ public:
         return boost::log::record();
     }
 };
+
+#else
+
+using ChannelLogger = boost::log::sources::channel_logger_mt<>;
+
+#endif
 
 extern ChannelLogger
     ffmpeg_closing, 

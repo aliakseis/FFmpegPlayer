@@ -44,6 +44,10 @@
 
 #include <vector>
 
+#include <emmintrin.h>
+#include <pmmintrin.h>
+#include <xmmintrin.h>
+
 #define M_PI 3.14159265358979323846
 
 
