@@ -716,6 +716,7 @@ void FFmpegDecoder::SetFrameFormat(FrameFormat format, bool allowDirect3dData)
     static_assert(PIX_FMT_YUV420P == AV_PIX_FMT_YUV420P, "FrameFormat and AVPixelFormat values must coincide.");
     static_assert(PIX_FMT_YUYV422 == AV_PIX_FMT_YUYV422, "FrameFormat and AVPixelFormat values must coincide.");
     static_assert(PIX_FMT_RGB24 == AV_PIX_FMT_RGB24,     "FrameFormat and AVPixelFormat values must coincide.");
+    static_assert(PIX_FMT_BGR24 == AV_PIX_FMT_BGR24,     "FrameFormat and AVPixelFormat values must coincide.");
 
     m_pixelFormat = static_cast<AVPixelFormat>(format);
     m_allowDirect3dData = allowDirect3dData;
