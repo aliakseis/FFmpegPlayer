@@ -140,6 +140,8 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND(ID_COPY_URL_TO_CLIPBOARD, &CPlayerDoc::OnCopyUrlToClipboard)
     ON_COMMAND(ID_MAXIMALRESOLUTION, &CPlayerDoc::OnMaximalresolution)
     ON_UPDATE_COMMAND_UI(ID_MAXIMALRESOLUTION, &CPlayerDoc::OnUpdateMaximalresolution)
+    ON_COMMAND(ID_HW_ACCELERATION, &CPlayerDoc::OnHwAcceleration)
+    ON_UPDATE_COMMAND_UI(ID_HW_ACCELERATION, &CPlayerDoc::OnUpdateHwAcceleration)
 END_MESSAGE_MAP()
 
 
@@ -951,4 +953,16 @@ void CPlayerDoc::OnMaximalresolution()
 void CPlayerDoc::OnUpdateMaximalresolution(CCmdUI *pCmdUI)
 {
     pCmdUI->SetCheck(m_maximalResolution);
+}
+
+
+void CPlayerDoc::OnHwAcceleration()
+{
+    m_frameDecoder->setHwAccelerated(!m_frameDecoder->getHwAccelerated());
+}
+
+
+void CPlayerDoc::OnUpdateHwAcceleration(CCmdUI *pCmdUI)
+{
+    pCmdUI->SetCheck(m_frameDecoder->getHwAccelerated());
 }

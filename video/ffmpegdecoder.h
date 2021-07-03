@@ -135,6 +135,9 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     RationalNumber getSpeedRational() const override;
     void setSpeedRational(const RationalNumber& speed) override;
 
+    bool getHwAccelerated() const override;
+    void setHwAccelerated(bool hwAccelerated) override;
+
     std::vector<std::string> getProperties() override;
 
    private:
@@ -289,4 +292,6 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     boost::atomic<boost::chrono::high_resolution_clock::duration> m_referenceTime;
 
     boost::atomic<RationalNumber> m_speedRational; // Numerator, Denominator
+
+    bool m_hwAccelerated;
 };

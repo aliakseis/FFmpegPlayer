@@ -251,7 +251,8 @@ FFmpegDecoder::FFmpegDecoder(std::unique_ptr<IAudioPlayer> audioPlayer)
       m_audioSettings({48000, 2, av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16}),
       m_pixelFormat(AV_PIX_FMT_YUV420P),
       m_allowDirect3dData(false),
-      m_audioPlayer(std::move(audioPlayer))
+      m_audioPlayer(std::move(audioPlayer)),
+      m_hwAccelerated(true)
 {
     av_log_set_level(AV_LOG_ERROR);
     av_log_set_callback(log_callback);
@@ -546,34 +547,39 @@ bool FFmpegDecoder::resetVideoProcessing()
         }
 
 #ifdef USE_HWACCEL
-        m_videoCodecContext->coded_width = m_videoCodecContext->width;
-        m_videoCodecContext->coded_height = m_videoCodecContext->height;
-
-        m_videoCodecContext->thread_count = 1;  // Multithreading is apparently not compatible with hardware decoding
-        auto *ist = new InputStream();
-        ist->hwaccel_id = HWACCEL_AUTO;
-        ist->dec = m_videoCodec;
-        ist->dec_ctx = m_videoCodecContext;
-
-        m_videoCodecContext->opaque = ist;
-        if (dxva2_init(m_videoCodecContext) >= 0)
+        if (m_hwAccelerated)
         {
-            m_videoCodecContext->get_buffer2 = ist->hwaccel_get_buffer;
-            m_videoCodecContext->get_format = GetHwFormat;
-            m_videoCodecContext->thread_safe_callbacks = 1;
+            m_videoCodecContext->coded_width = m_videoCodecContext->width;
+            m_videoCodecContext->coded_height = m_videoCodecContext->height;
+
+            m_videoCodecContext->thread_count = 1;  // Multithreading is apparently not compatible with hardware decoding
+            auto *ist = new InputStream();
+            ist->hwaccel_id = HWACCEL_AUTO;
+            ist->dec = m_videoCodec;
+            ist->dec_ctx = m_videoCodecContext;
+
+            m_videoCodecContext->opaque = ist;
+            if (dxva2_init(m_videoCodecContext) >= 0)
+            {
+                m_videoCodecContext->get_buffer2 = ist->hwaccel_get_buffer;
+                m_videoCodecContext->get_format = GetHwFormat;
+                m_videoCodecContext->thread_safe_callbacks = 1;
+            }
+            else
+            {
+                delete ist;
+                m_videoCodecContext->opaque = nullptr;
+
+                m_videoCodecContext->thread_count = 2;
+                m_videoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
+            }
         }
         else
+#endif
         {
-            delete ist;
-            m_videoCodecContext->opaque = nullptr;
-
             m_videoCodecContext->thread_count = 2;
             m_videoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
         }
-#else
-        m_videoCodecContext->thread_count = 2;
-        m_videoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
-#endif
 
 
     // Open codec
@@ -1003,4 +1009,14 @@ double FFmpegDecoder::GetHiResTime()
     return boost::chrono::duration_cast<boost::chrono::microseconds>(
         boost::chrono::high_resolution_clock::now() - boost::chrono::high_resolution_clock::time_point(m_referenceTime)).count()
             / 1000000. * speed.numerator / speed.denominator;
+}
+
+bool FFmpegDecoder::getHwAccelerated() const
+{
+    return m_hwAccelerated;
+}
+
+void FFmpegDecoder::setHwAccelerated(bool hwAccelerated)
+{
+    m_hwAccelerated = hwAccelerated;
 }

@@ -171,7 +171,8 @@ BEGIN
             MENUITEM "2x",                          ID_VIDEO_SPEED7
             MENUITEM "Nightcore",                   ID_NIGHTCORE
         END
-        MENUITEM "Maximal resolution",          ID_MAXIMALRESOLUTION
+        MENUITEM "Maximal Resolution",          ID_MAXIMALRESOLUTION
+        MENUITEM "Hardware Acceleration",       ID_HW_ACCELERATION
         MENUITEM "Open Subtitles File...",      ID_OPENSUBTITLESFILE
     END
     POPUP "&View"

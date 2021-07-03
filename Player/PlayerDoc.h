@@ -162,4 +162,6 @@ private:
 public:
     afx_msg void OnMaximalresolution();
     afx_msg void OnUpdateMaximalresolution(CCmdUI *pCmdUI);
+    afx_msg void OnHwAcceleration();
+    afx_msg void OnUpdateHwAcceleration(CCmdUI *pCmdUI);
 };

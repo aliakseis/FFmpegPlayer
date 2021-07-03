@@ -110,6 +110,9 @@ struct IFrameDecoder
     virtual RationalNumber getSpeedRational() const = 0;
     virtual void setSpeedRational(const RationalNumber& speed) = 0;
 
+    virtual bool getHwAccelerated() const = 0;
+    virtual void setHwAccelerated(bool hwAccelerated) = 0;
+
     virtual std::vector<std::string> getProperties() = 0;
 };
 
