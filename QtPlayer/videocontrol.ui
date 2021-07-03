@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>VideoControl</class>
+ <widget class="QWidget" name="VideoControl">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>230</width>
+    <height>41</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+    <string notr="true">Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <widget class="MouseHoverButton" name="btnPause">
+   <property name="geometry">
+    <rect>
+     <x>31</x>
+     <y>8</y>
+     <width>40</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Pause</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resources.qrc">
+     <normaloff>:/control/pause_default</normaloff>
+     <normalon>:/control/pause_clicked</normalon>
+     <disabledoff>:/control/pause_default</disabledoff>
+     <disabledon>:/control/pause_default</disabledon>
+     <activeoff>:/control/pause_hover</activeoff>
+     <activeon>:/control/pause_hover</activeon>
+     <selectedoff>:/control/pause_default</selectedoff>
+     <selectedon>:/control/pause_default</selectedon>:/control/pause_default</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>40</width>
+     <height>31</height>
+    </size>
+   </property>
+   <property name="autoRaise">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="MouseHoverButton" name="btnStop">
+   <property name="geometry">
+    <rect>
+     <x>62</x>
+     <y>8</y>
+     <width>31</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Stop</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resources.qrc">
+     <normaloff>:/control/stop_default</normaloff>
+     <normalon>:/control/stop_clicked</normalon>
+     <disabledoff>:/control/stop_default</disabledoff>
+     <disabledon>:/control/stop_default</disabledon>
+     <activeoff>:/control/stop_hover</activeoff>
+     <activeon>:/control/stop_hover</activeon>
+     <selectedoff>:/control/stop_default</selectedoff>
+     <selectedon>:/control/stop_default</selectedon>:/control/stop_default</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>31</width>
+     <height>31</height>
+    </size>
+   </property>
+   <property name="autoRaise">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="MouseHoverButton" name="btnVolume">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>10</y>
+     <width>31</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Mute</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resources.qrc">
+     <normaloff>:/control/sound_on_default</normaloff>
+     <normalon>:/control/sound_on_clicked</normalon>
+     <disabledoff>:/control/sound_on_default</disabledoff>
+     <disabledon>:/control/sound_on_default</disabledon>
+     <activeoff>:/control/sound_on_hover</activeoff>
+     <activeon>:/control/sound_on_hover</activeon>
+     <selectedoff>:/control/sound_on_default</selectedoff>
+     <selectedon>:/control/sound_on_default</selectedon>:/control/sound_on_default</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>31</width>
+     <height>31</height>
+    </size>
+   </property>
+   <property name="autoRaise">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="MouseHoverButton" name="btnBrowser">
+   <property name="geometry">
+    <rect>
+     <x>108</x>
+     <y>8</y>
+     <width>31</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Browse</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resources.qrc">
+     <normaloff>:/control/globe_default</normaloff>
+     <normalon>:/control/globe_clicked</normalon>
+     <disabledoff>:/control/globe_default</disabledoff>
+     <disabledon>:/control/globe_default</disabledon>
+     <activeoff>:/control/globe_hover</activeoff>
+     <activeon>:/control/globe_hover</activeon>
+     <selectedoff>:/control/globe_default</selectedoff>
+     <selectedon>:/control/globe_default</selectedon>:/control/globe_default</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>31</width>
+     <height>31</height>
+    </size>
+   </property>
+   <property name="autoRaise">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="VolumeProgressBar" name="progressBar">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>15</y>
+     <width>30</width>
+     <height>8</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>1</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>30</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>30</width>
+     <height>10</height>
+    </size>
+   </property>
+   <property name="baseSize">
+    <size>
+     <width>30</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="mouseTracking">
+    <bool>true</bool>
+   </property>
+   <property name="toolTip">
+    <string>Volume control</string>
+   </property>
+   <property name="value">
+    <number>70</number>
+   </property>
+   <property name="textVisible">
+    <bool>false</bool>
+   </property>
+   <property name="format">
+    <string>%p%</string>
+   </property>
+  </widget>
+  <widget class="MouseHoverButton" name="btnPlay">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>8</y>
+     <width>40</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Play</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resources.qrc">
+     <normaloff>:/control/play_default</normaloff>
+     <normalon>:/control/play_clicked</normalon>
+     <disabledoff>:/control/play_default</disabledoff>
+     <disabledon>:/control/play_default</disabledon>
+     <activeoff>:/control/play_hover</activeoff>
+     <activeon>:/control/play_hover</activeon>
+     <selectedoff>:/control/play_default</selectedoff>
+     <selectedon>:/control/play_default</selectedon>:/control/play_default</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>40</width>
+     <height>31</height>
+    </size>
+   </property>
+   <property name="autoRaise">
+    <bool>true</bool>
+   </property>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MouseHoverButton</class>
+   <extends>QToolButton</extends>
+   <header>mousehoverbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>VolumeProgressBar</class>
+   <extends>QProgressBar</extends>
+   <header>volumeprogressbar.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="resources/resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

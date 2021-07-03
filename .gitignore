@@ -221,3 +221,5 @@ Player/I420Effect_PS.h
 Player.VC.db
 Player.VC.VC.opendb
 *.diagsession
+
+CMakeLists.txt.user*

@@ -1,0 +1,68 @@
+<RCC>
+    <qresource prefix="/">
+        <file>style.css</file>
+        <file>images/help41.png</file>
+        <file alias="button_disable.png">images/style/button_disable.png</file>
+        <file alias="button_down.png">images/style/button_down.png</file>
+        <file alias="button_hover.png">images/style/button_hover.png</file>
+        <file alias="button_normal.png">images/style/button_normal.png</file>
+        <file alias="header_arrow_down">images/style/header_arrow_down.png</file>
+        <file>images/style/down_arrow.png</file>
+        <file>images/style/lineedit.png</file>
+        <file>images/style/down_arrow_grey.png</file>
+        <file>images/play_transparent.png</file>
+        <file>images/video___btn_play___default___(94x94).png</file>
+        <file>images/video___btn_play___hover___(94x94).png</file>
+        <file>images/video___btn_play___clicked___(94x94).png</file>
+        <file alias="box-shadow">images/style/box-shadow.png</file>
+        <file alias="busy">images/style/busy.png</file>
+        <file alias="button-blank">images/style/button-blank.png</file>
+        <file alias="floatpanel">images/style/floatpanel.png</file>
+        <file>images/spinner.gif</file>
+        <file>images/triangle_down.png</file>
+        <file>images/triangle_right.png</file>
+        <file>images/style/progress_dropdown.png</file>
+        <file alias="circle-shadow">images/style/circle-shadow.png</file>
+        <file alias="tooltip-background.png">images/style/tooltip-background.png</file>
+        <file>images/video_seek_cursor.png</file>
+    </qresource>
+    <qresource prefix="/style">
+        <file alias="header_line.png">images/style/header_line.png</file>
+        <file alias="scroll-button-down.png">images/style/scroll-button-down.png</file>
+        <file alias="scroll-button-down-hover.png">images/style/scroll-button-down-hover.png</file>
+        <file alias="scroll-button-up.png">images/style/scroll-button-up.png</file>
+        <file alias="scroll-button-up-hover.png">images/style/scroll-button-up-hover.png</file>
+        <file alias="scroll-vhandle.png">images/style/scroll-vhandle.png</file>
+        <file alias="scroll-vhandle-hover.png">images/style/scroll-vhandle-hover.png</file>
+        <file alias="scroll-button-left.png">images/style/scroll-button-left.png</file>
+        <file alias="scroll-button-left-hover.png">images/style/scroll-button-left-hover.png</file>
+        <file alias="scroll-button-right.png">images/style/scroll-button-right.png</file>
+        <file alias="scroll-button-right-hover.png">images/style/scroll-button-right-hover.png</file>
+        <file alias="scroll-hhandle.png">images/style/scroll-hhandle.png</file>
+        <file alias="scroll-hhandle-hover.png">images/style/scroll-hhandle-hover.png</file>
+    </qresource>
+    <qresource prefix="/control">
+        <file alias="background">images/control/player_bg___(230x41).png</file>
+        <file alias="backgroundfs">images/control/player_bg_fs___(230x41).png</file>
+        <file alias="play_default">images/control/player___btn_play___default___(40x31).png</file>
+        <file alias="play_clicked">images/control/player___btn_play___clicked___(40x31).png</file>
+        <file alias="play_hover">images/control/player___btn_play___hover___(40x31).png</file>
+        <file alias="stop_default">images/control/player___btn_stop___default___(31x31).png</file>
+        <file alias="stop_clicked">images/control/player___btn_stop___clicked___(31x31).png</file>
+        <file alias="stop_hover">images/control/player___btn_stop___hover___(31x31).png</file>
+        <file alias="globe_default">images/control/player___btn_globe___default___(31x31).png</file>
+        <file alias="globe_clicked">images/control/player___btn_globe___click___(31x31).png</file>
+        <file alias="globe_hover">images/control/player___btn_globe___hover___(31x31).png</file>
+        <file alias="sound_on_default">images/control/player___btn_sound_on___default___(31x31).png</file>
+        <file alias="sound_on_clicked">images/control/player___btn_sound_on___clicked___(31x31).png</file>
+        <file alias="sound_on_hover">images/control/player___btn_sound_on___hover___(31x31).png</file>
+        <file alias="sound_off_default">images/control/player___btn_sound_off___default___(31x31).png</file>
+        <file alias="sound_off_clicked">images/control/player___btn_sound_off___clicked___(31x31).png</file>
+        <file alias="sound_off_hover">images/control/player___btn_sound_off___hover___(31x31).png</file>
+        <file alias="pause_default">images/control/player___btn_pause___default___(40x31).png</file>
+        <file alias="pause_clicked">images/control/player___btn_pause___clicked___(40x31).png</file>
+        <file alias="pause_hover">images/control/player___btn_pause___hover___(40x31).png</file>
+        <file alias="icodelete">images/control/icodelete.png</file>
+        <file alias="icoplay">images/control/icoplay.png</file>
+    </qresource>
+</RCC>

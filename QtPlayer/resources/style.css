@@ -1,0 +1,336 @@
+/* ********** Global settings ********** */
+QWidget
+{
+	font-family: "Segoe UI";
+	font-size: 12px;
+}
+
+QDialog
+{
+	border: 0px;
+}
+
+QMainWindow::separator {
+	background: rgb(128, 133, 137);
+	width: 3;
+	height: 3;
+}
+
+QPushButton,
+QDialogButtonBox QPushButton,
+ButtonLabel
+{
+	/*See in PS for cut lines*/
+	border-image: url(:/button_normal) 4 5 6 5;
+	border-top: 4px transparent;
+	border-right: 5px transparent;
+	border-bottom: 4px transparent;
+	border-left: 5px transparent;
+	padding-left:-1px;
+	min-width: 6em;
+	height: 16 px;
+}
+SearchResultForm QPushButton
+{
+	min-width: 62px;
+}
+
+QPushButton:hover,
+QDialogButtonBox QPushButton:hover, 
+ButtonLabel:hove
+{
+	border-image: url(:/button_hover) 4 5 6 5;
+}
+
+QPushButton:pressed,
+QDialogButtonBox QPushButton:pressed,
+ButtonLabel:pressed
+{
+	border-image: url(:/button_down) 4 5 6 5;
+	padding-top:2px;
+}
+
+QPushButton:disabled,
+QDialogButtonBox QPushButton:disabled,
+ButtonLabel:disabled
+{
+	border-image: url(:/button_disable) 4 5 6 5;
+	color: #8f8f8f;
+}
+
+#mainToolBar
+{
+	border-bottom: 1px solid #5d6c7a;
+	background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:0, stop:0 #d4d4d5, stop:1 #ffffff);
+}
+
+MainToolBar QToolButton {
+	border: 0px;
+}
+
+#SocialNetworksFrame QToolButton {
+	border: 0px;
+}
+
+MainToolBar QLabel {
+   color: rgb(95, 100, 104);
+}
+
+MainToolBar  #btnDownloads[active="false"] {
+	image: url(:/images/downloads41.png);
+}
+
+MainToolBar  #btnDownloads[active="true"]{
+	image: url(:/images/downloads41h.png);
+}
+
+MainToolBar  #btnSearch[active="false"] {
+	image: url(:/images/search41.png);
+}
+
+MainToolBar   #btnSearch[active="true"]{
+	image: url(:/images/search41h.png);
+}
+
+MainToolBar  #btnLibrary[active="false"] {
+	image: url(:/images/library41.png);
+}
+
+MainToolBar  #btnLibrary[active="true"]{
+	image: url(:/images/library41h.png);
+}
+/*
+SearchResultForm #searchFrame {
+	background-color: rgb(148, 153, 157);
+} */
+
+#topFrame{
+	background-color: rgb(148, 153, 157);
+}
+
+QTreeView, #declarativeView, #dockFrame, QTableView {
+	border-top: 1px solid #5d6c7a;
+}
+
+#dockFrame{
+	background-color: lightgrey;
+}
+
+SearchResultForm #leSearch,
+DownloadsForm #leSearch,
+LibraryForm #cbSearch {
+	/*background-color: rgb(125, 130, 134);
+	selection-background-color: #b3b7b9;*/
+	background: #e4e7e9;
+	color: black;
+		
+	border: 0px;
+	height: 22px;
+	font-size: 14px;
+}
+
+DownloadsControl #ctrlFrame {
+	border-width: 1px;
+	border-style: inset;
+	border-color: #535353;
+	border-radius: 5px;
+	background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #dedede, stop:1 #b1b2b3);
+}
+
+/*
+PlayerHeader QFrame{
+	background-color: rgb(148, 153, 157);
+	color: white;
+	font-size: 14px;
+}
+*/
+
+QComboBox#cbSites QAbstractItemView::item {
+	margin-top: 5px;
+	color: rgb(148, 153, 157);	
+}
+SearchResultForm QHeaderView::section,DownloadsForm QHeaderView::section {
+	background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+									   stop:0 rgb(237, 243, 248), 
+									   stop:1 rgb(211, 225, 238));
+
+	padding-left: 4px;
+	border: 0px;
+	height: 30px;
+	border-top: 1px solid rgb(165, 184, 195);
+	border-bottom: 1px solid rgb(165, 184, 195);
+	font-size: 14px;
+}
+/*
+QComboBox {
+	border-image: url(:/images/style/lineedit.png) 3;
+	border-width: 3;
+}
+
+QComboBox::drop-down
+{
+	border-style: none;
+}
+
+QComboBox::down-arrow
+{
+	image: url(:/images/style/down_arrow_grey.png);
+}
+*/
+
+QComboBox#cbSites {
+	border: 1px solid gray;
+	padding: 1px 22px 1px 3px;
+	min-width: 9em;
+	background: #e4e7e9;
+	height: 20px;
+}
+QComboBox#cbSites::drop-down
+{
+	border-style: none;
+}
+
+ QComboBox#cbSites::drop-down {
+	subcontrol-origin: padding;
+	subcontrol-position: top right;
+	width: 22px;
+
+	border-left-width: 1px;
+	border-left-color: #c9ccd2;
+	border-left-style: solid; /* just a single line */
+}
+
+QComboBox#cbSites::down-arrow {
+	image: url(:/images/style/down_arrow_grey.png);
+}
+
+AboutDialog {
+	background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:0, stop:0 rgba(220, 220, 220, 255), stop:0.460227 rgba(229, 229, 229, 255), stop:1 rgba(239, 239, 239, 255));
+}
+
+AboutDialog #aboutHeader {
+	background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:0, stop:0 rgba(184, 188, 192, 255), stop:0.460227 rgba(190, 195, 198, 255), stop:1 rgba(213, 219, 224, 255));
+}
+
+AboutDialog #lbAppName {
+	font-size: 24px;
+	color: white;
+}
+
+AboutDialog #wLine
+{
+	background:url(:/style/header_line.png);
+}
+VideoControl #playerControlFrame {
+	background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:0, stop:0 #e5e8ea, stop:1 #ffffff);
+	border-color: #75787a;
+	border-width: 1px;
+	border-style: outset;
+	border-radius: 5px;
+}
+
+VideoControl QProgressBar {
+	border-color: #777777;
+	border-width: 1px;
+	border-style: outset;
+	border-radius: 2px;
+}
+VideoControl QProgressBar::chunk {   
+	background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:0, stop:0 #278ece, stop:1 #5dc6f8);
+	border-width: 1px;
+	border-style: outset;
+	border-radius: 5px;
+	margin: 1px;
+ }
+VideoControl QToolButton {
+border: 0px;
+}
+
+DownloadsControl #frame {
+	background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:0, stop:0 #e5e8ea, stop:1 #ffffff);
+	border-color: #75787a;
+	border-width: 1px;
+	border-style: outset;
+	border-radius: 5px;
+}
+
+DownloadsControl QToolButton {
+border: 0px;
+}
+
+DownloadsControl QFrame  #line{
+	color:green;
+	margin-top: 2px;
+	margin-bottom: 2px;
+}
+ 
+QScrollBar::add-line:vertical { 
+background-image: url(:/style/scroll-button-down.png);
+} 
+QScrollBar::sub-line:vertical { 
+background-image: url(:/style/scroll-button-up.png);
+} 
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical,
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal
+{
+	background: none;
+}
+
+QScrollBar:vertical
+{
+	background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
+		stop: 0 #e9e8e9, stop: 0.5 #d3d3d3, stop: 1.0 #e9e8e9);
+	width: 14px;
+	padding: 14px 0px 14px 0px;
+}
+
+QScrollBar::handle:vertical
+{
+	background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
+		stop: 0 #fafafa, stop: 0.5 #e9e9e9, stop: 1.0 #c7c7c7);
+	border-radius: 2px;
+	border: 1px solid #787878;
+	min-height: 20px;
+ }
+
+QScrollBar:horizontal
+{
+	background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+		stop: 0 #e9e8e9, stop: 0.5 #d3d3d3, stop: 1.0 #e9e8e9);
+	height: 14px;
+	padding:  0px 14px 0px 14px;
+}
+
+QScrollBar::handle:horizontal
+{
+	background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+		stop: 0 #fafafa, stop: 0.5 #e9e9e9, stop: 1.0 #c7c7c7);
+	border-radius: 2px;
+	border: 1px solid #787878;
+	min-width: 20px;
+}
+
+#DescriptionFrame #textEdit
+{
+	background-color: rgb(211, 211, 211);
+	border: 0px;
+	padding: 3px 2px 3px 4px;
+	border-top: 1px solid rgb(180, 180, 180);
+}
+
+#descriptionSiteLabel {
+	color: rgb(155, 155, 155);
+	font: 75 11pt "MS Shell Dlg 2";
+	margin-left: 7px;
+	margin-top: 3px;
+	margin-bottom: 3px;
+}
+
+SocialNetworksWidget #SocialNetworksFrame {
+	background-image: url(:/sites/social_bg);
+}
+
+
