@@ -41,7 +41,7 @@ void FFmpegDecoder::displayRunnable()
         // Possibly give it time to render frame
         if (m_frameListener != nullptr)
         {
-            m_frameListener->updateFrame();
+            m_frameListener->updateFrame(this);
         }
 
         const auto speed = getSpeedRational();

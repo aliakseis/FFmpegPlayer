@@ -35,7 +35,7 @@ struct FrameRenderingData
 struct IFrameListener
 {
     virtual ~IFrameListener() = default;
-    virtual void updateFrame() = 0;
+    virtual void updateFrame(IFrameDecoder* decoder) = 0;
     virtual void drawFrame(IFrameDecoder* decoder, unsigned int generation) = 0; // decoder->finishedDisplayingFrame() must be called
     virtual void decoderClosing() = 0;
 };

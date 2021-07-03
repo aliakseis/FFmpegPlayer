@@ -524,7 +524,7 @@ public:
     explicit FrameListener(CPlayerView* playerView) : m_playerView(playerView) {}
 
 private:
-    void updateFrame() override
+    void updateFrame(IFrameDecoder*) override
     {
         m_playerView->updateFrame();
     }

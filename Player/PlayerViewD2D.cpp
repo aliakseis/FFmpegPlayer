@@ -60,7 +60,7 @@ public:
     explicit FrameListenerD2D(CPlayerViewD2D* playerView) : m_playerView(playerView) {}
 
 private:
-    void updateFrame() override
+    void updateFrame(IFrameDecoder*) override
     {
         m_playerView->updateFrame();
     }
