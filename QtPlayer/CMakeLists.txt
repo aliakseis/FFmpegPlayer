@@ -63,8 +63,6 @@ set(SOURCES
     mainwindow.ui
     mousehoverbutton.cpp
     mousehoverbutton.h
-    spinner.cpp
-    spinner.h
     videocontrol.cpp
     videocontrol.h
     videocontrol.ui

@@ -2,7 +2,6 @@
 #include "videowidget.h"
 #include "videocontrol.h"
 #include "videoprogressbar.h"
-#include "spinner.h"
 
 #include <QDesktopServices>
 #include <QResizeEvent>
@@ -16,15 +15,11 @@ VideoPlayerWidget::VideoPlayerWidget(QWidget* parent) :
 	QFrame(parent)
 	, m_controls(nullptr)
 	, m_progressBar(nullptr)
-	, m_spinner(nullptr)
 	, m_videoWidget(new VideoWidget(this))
 {
     connect(getDecoder(), &FFmpegDecoderWrapper::onPlayingFinished, this, &VideoPlayerWidget::onPlayingFinished);
 
 	setDisplay(m_videoWidget);
-	m_spinner = new Spinner(m_videoWidget);
-	m_spinner->hide();
-	m_spinner->setObjectName("bufferingSpinner");
 	m_videoWidget->installEventFilter(this);
 }
 
@@ -65,13 +60,11 @@ void VideoPlayerWidget::setControl(VideoControl* controlWidget)
 
 void VideoPlayerWidget::stopVideo(bool showDefaultImage)
 {
-	hideSpinner();
     getDecoder()->close(true);
 }
 
 void VideoPlayerWidget::playFile(const QString& fileName)
 {
-	hideSpinner();
 	if (QFile::exists(fileName))
 	{
 		Q_ASSERT(!fileName.isEmpty());
@@ -295,9 +288,6 @@ void VideoPlayerWidget::updateLayout()
 		yPos += playerHeight;
 	}
 
-	m_spinner->move(0, 0);
-	m_spinner->resize(playerWidth, yPos);
-
     auto progressWidget = findChild<QWidget*>("videoProgress");
     int progressHeight = progressWidget->height();
 	progressWidget->move(0, yPos - (progressHeight + PROGRESSBAR_VISIBLE_HEIGHT) / 2);
@@ -323,14 +313,4 @@ void VideoPlayerWidget::onPlayingFinished()
 	{
 		m_videoWidget->fullScreen(false);
 	}
-}
-
-void VideoPlayerWidget::showSpinner()
-{
-	m_spinner->show();
-}
-
-void VideoPlayerWidget::hideSpinner()
-{
-	m_spinner->hide();
 }

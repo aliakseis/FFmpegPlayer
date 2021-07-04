@@ -10,7 +10,6 @@
 class VideoControl;
 class VideoProgressBar;
 class VideoWidget;
-class Spinner;
 
 
 class VideoPlayerWidget;
@@ -68,9 +67,6 @@ private slots:
 
 	void onPlayingFinished();
 
-	void showSpinner();
-	void hideSpinner();
-
 signals:
 	void fileReleased();
 
@@ -80,6 +76,5 @@ private:
 	VideoControl* m_controls;
 	VideoProgressBar* m_progressBar;
 	QString m_currentFile;
-	Spinner* m_spinner;
 	VideoWidget* m_videoWidget;
 };
