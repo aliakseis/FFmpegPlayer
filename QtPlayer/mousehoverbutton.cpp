@@ -7,8 +7,7 @@ MouseHoverButton::MouseHoverButton(QWidget* parent) : QToolButton(parent)
 
 
 MouseHoverButton::~MouseHoverButton()
-{
-}
+= default;
 
 void MouseHoverButton::mousePressEvent(QMouseEvent* event)
 {
@@ -16,7 +15,7 @@ void MouseHoverButton::mousePressEvent(QMouseEvent* event)
 	{
 		m_defIcon = icon();
 		QList<QSize> normalOnSizes = m_defIcon.availableSizes(QIcon::Normal, QIcon::On);
-		if (normalOnSizes.size() > 0)
+		if (!normalOnSizes.empty())
 		{
 			// use normal/on image as pushed one
 			m_pushedIcon = m_defIcon.pixmap(*normalOnSizes.begin(), QIcon::Normal, QIcon::On);

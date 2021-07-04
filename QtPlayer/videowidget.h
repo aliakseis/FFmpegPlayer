@@ -78,7 +78,7 @@ protected Q_SLOTS:
     virtual void currentDisplay(unsigned int generation) override;
 
 private Q_SLOTS:
-	void getImageFinished(QImage image);
+	void getImageFinished(const QImage& image);
 	void onCursorTimer();
 	void fullScreenProcess();
 Q_SIGNALS:

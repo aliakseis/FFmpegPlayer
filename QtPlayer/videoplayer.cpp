@@ -28,11 +28,7 @@ VideoDisplay* VideoPlayer::getCurrentDisplay()
 void VideoPlayer::setDisplay(VideoDisplay* display)
 {
 	Q_ASSERT(display);
-
-	if (m_display)
-	{
-		delete m_display;
-	}
+    delete m_display;
 
 	m_display = display;
     m_decoder.setFrameListener(m_display);

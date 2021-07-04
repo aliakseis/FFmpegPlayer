@@ -24,8 +24,7 @@ VideoProgressBar::VideoProgressBar(QWidget* parent) :
 }
 
 VideoProgressBar::~VideoProgressBar()
-{
-}
+= default;
 
 void VideoProgressBar::paintEvent(QPaintEvent* event)
 {
@@ -127,7 +126,7 @@ bool VideoProgressBar::eventFilter(QObject* obj, QEvent* event)
 	{
 	case QEvent::MouseMove:
 	{
-		QMouseEvent* mevent = static_cast<QMouseEvent*>(event);
+		auto* mevent = static_cast<QMouseEvent*>(event);
 		float percent = (mevent->x() * 1.0) / width();
 
 		if (m_btn_down)
@@ -155,7 +154,7 @@ bool VideoProgressBar::eventFilter(QObject* obj, QEvent* event)
 	break;
 	case QEvent::MouseButtonRelease:
 	{
-		QMouseEvent* mevent = static_cast<QMouseEvent*>(event);
+		auto* mevent = static_cast<QMouseEvent*>(event);
 		float percent = (mevent->x() * 1.0) / width();
 
 		if (percent > 1.0)

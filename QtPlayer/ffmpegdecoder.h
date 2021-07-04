@@ -23,7 +23,7 @@ public:
 
     void setFrameListener(VideoDisplay* listener);
 
-    void openFile(QString file);
+    void openFile(const QString& file);
     void play(bool isPaused = false) { m_frameDecoder->play(); }
     bool pauseResume() { return m_frameDecoder->pauseResume(); }
     void close(bool isBlocking = true) { m_frameDecoder->close(); }

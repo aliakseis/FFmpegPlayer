@@ -51,7 +51,7 @@ bool VideoControl::eventFilter(QObject* obj, QEvent* event)
 		{
 		case QEvent::MouseMove:
 		{
-			QMouseEvent* mEvent = static_cast<QMouseEvent*>(event);
+			auto* mEvent = static_cast<QMouseEvent*>(event);
 			if (mEvent->buttons() & Qt::LeftButton)
 			{
 				float percent = (mEvent->x() * 1.0) / ui->progressBar->width();
@@ -63,7 +63,7 @@ bool VideoControl::eventFilter(QObject* obj, QEvent* event)
 
 		case QEvent::MouseButtonRelease:
 		{
-			QMouseEvent* mEvent = static_cast<QMouseEvent*>(event);
+			auto* mEvent = static_cast<QMouseEvent*>(event);
 			if (mEvent->button() == Qt::LeftButton)
 			{
 				float percent = (mEvent->x() * 1.0) / ui->progressBar->width();

@@ -11,8 +11,7 @@ VolumeProgressBar::VolumeProgressBar(QWidget* parent) : QProgressBar(parent),
 }
 
 VolumeProgressBar::~VolumeProgressBar()
-{
-}
+= default;
 
 void VolumeProgressBar::paintEvent(QPaintEvent* event)
 {

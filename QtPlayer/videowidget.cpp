@@ -99,7 +99,7 @@ void VideoWidget::hidePlayButton()
 	showPicture(m_startImgButton.scaled(width(), height() + HEIGHT_FIX, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
 }
 
-void VideoWidget::getImageFinished(QImage image)
+void VideoWidget::getImageFinished(const QImage& image)
 {
 	m_startImgButton = m_fromImage = image.isNull() ? m_noPreviewImg : image;
 
@@ -288,11 +288,11 @@ void VideoWidget::fullScreenProcess()
     setPreferredSize(width(), height());
 
     QWidget* videoControl = videoControlWidget();
-    videoControl->setParent(0, Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);
+    videoControl->setParent(nullptr, Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);
 	videoControl->setAttribute(Qt::WA_TranslucentBackground);
 	videoControl->move(this->width() / 2 - videoControl->width() / 2, this->height() - videoControl->height() - 20);
 	videoControl->show();
-	QWidget* spinner = findChild<QWidget*>("bufferingSpinner");
+	auto* spinner = findChild<QWidget*>("bufferingSpinner");
 	Q_ASSERT(spinner);
 	spinner->resize(this->width(), this->height());
 }

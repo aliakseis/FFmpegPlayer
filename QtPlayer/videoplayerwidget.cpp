@@ -219,7 +219,7 @@ bool VideoPlayerWidget::eventFilter(QObject* object, QEvent* event)
 {
 	if (event->type() == QEvent::KeyRelease)
 	{
-		QKeyEvent* ke = static_cast<QKeyEvent*>(event);
+		auto* ke = static_cast<QKeyEvent*>(event);
 		if (ke->key() == Qt::Key_Space)
 		{
 			playPauseButtonAction();
@@ -329,7 +329,6 @@ void VideoPlayerWidget::updateLayout(bool fromPendingHeaderPaused /* = false*/)
 	}
 	m_controls->move(controlsPos, yPos);
 	m_controls->resize(m_controls->getWidth(), controlsHeight);
-	yPos += controlsHeight;
 }
 
 void VideoPlayerWidget::exitFullScreen()

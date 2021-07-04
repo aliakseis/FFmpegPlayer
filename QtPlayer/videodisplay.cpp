@@ -1,6 +1,6 @@
 #include "videodisplay.h"
 
-VideoDisplay::VideoDisplay() : m_decoder(0)
+VideoDisplay::VideoDisplay() : m_decoder(nullptr)
 {
 
 }
@@ -13,7 +13,7 @@ VideoDisplay::~VideoDisplay()
 
 void VideoDisplay::setDecoderObject(FFmpegDecoderWrapper* decoder)
 {
-    Q_ASSERT(decoder != 0);
+    Q_ASSERT(decoder != nullptr);
     if (m_decoder != decoder)
     {
         m_decoder = decoder;
