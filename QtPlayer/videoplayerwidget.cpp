@@ -78,18 +78,9 @@ void VideoPlayerWidget::playFile(const QString& fileName)
 		m_currentFile = fileName;
         FFmpegDecoderWrapper* decoder = getDecoder();
 		decoder->openFile(m_currentFile);
-		const bool fromPendingHeaderPaused = state() == PendingHeaderPaused;
-		if (fromPendingHeaderPaused)
-		{
-			decoder->play(true);
-			setState(Paused);
-		}
-		else
-		{
-			decoder->play();
-			setState(Playing);
-			m_controls->showPlaybutton(false);
-		}
+        decoder->play();
+        setState(Playing);
+        m_controls->showPlaybutton(false);
 
 		if (m_videoWidget->isFullScreen())
 		{
@@ -97,7 +88,7 @@ void VideoPlayerWidget::playFile(const QString& fileName)
 		}
 		else
 		{
-			updateLayout(fromPendingHeaderPaused);
+            updateLayout();
 		}
 	}
 	else
@@ -134,20 +125,10 @@ void VideoPlayerWidget::playPauseButtonAction()
         m_controls->showPlaybutton(false);
         resumeVideo();
     }
-    else if (state() == PendingHeaderPaused)
-	{
-		m_controls->showPlaybutton(false);
-		setState(PendingHeader);
-	}
 	else if (state() == Playing)
 	{
 		m_controls->showPlaybutton(true);
 		pauseVideo();
-	}
-	else if (state() == PendingHeader)
-	{
-		m_controls->showPlaybutton(true);
-		setState(PendingHeaderPaused);
 	}
 }
 
@@ -228,7 +209,7 @@ bool VideoPlayerWidget::eventFilter(QObject* object, QEvent* event)
 	return QFrame::eventFilter(object, event);
 }
 
-void VideoPlayerWidget::updateLayout(bool fromPendingHeaderPaused /* = false*/)
+void VideoPlayerWidget::updateLayout()
 {
 	int currWidth = width();
 	int currHeight = height();
@@ -241,7 +222,7 @@ void VideoPlayerWidget::updateLayout(bool fromPendingHeaderPaused /* = false*/)
 	int yPos = 1;
     FFmpegDecoderWrapper* dec = getDecoder();
 	Q_ASSERT(dec != nullptr);
-	if (state() == InitialState || state() == PendingHeader || state() == PendingHeaderPaused)
+    if (state() == InitialState)
 	{
         double aspectRatio =
                 (m_videoWidget->getPictureSize().height() > 0 && m_videoWidget->getPictureSize().width() >0)
@@ -306,7 +287,7 @@ void VideoPlayerWidget::updateLayout(bool fromPendingHeaderPaused /* = false*/)
 		{
 			m_videoWidget->setPixmap(m_videoWidget->pixmap()->scaledToHeight(m_videoWidget->height(), Qt::SmoothTransformation));
 		}
-		else if (state() == Paused && !fromPendingHeaderPaused)
+        else if (state() == Paused)
 		{
 			m_videoWidget->showPicture(m_videoWidget->originalFrame().scaled(playerWidth, playerHeight, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 		}

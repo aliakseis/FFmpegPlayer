@@ -12,8 +12,6 @@ public:
 		InitialState,
 		Playing,
 		Paused,
-		PendingHeader,
-		PendingHeaderPaused,
 	};
 
 	VideoPlayer();

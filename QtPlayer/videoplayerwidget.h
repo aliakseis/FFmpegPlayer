@@ -47,7 +47,7 @@ public:
 
 	QString currentFilename() const;
 
-	void updateLayout(bool fromPendingHeaderPaused = false);
+    void updateLayout();
 
 	void exitFullScreen();
 
