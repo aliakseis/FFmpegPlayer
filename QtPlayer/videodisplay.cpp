@@ -18,11 +18,17 @@ void VideoDisplay::setDecoderObject(FFmpegDecoderWrapper* decoder)
     {
         m_decoder = decoder;
         m_decoder->setFrameListener(this);
-        m_decoder->getFrameDecoder()->SetFrameFormat(IFrameDecoder::PIX_FMT_RGB24, false);
+        m_decoder->getFrameDecoder()->SetFrameFormat(
+#ifdef DEVELOPER_OPENGL
+                    IFrameDecoder::PIX_FMT_YUV420P
+#else
+                    IFrameDecoder::PIX_FMT_RGB24
+#endif
+                    , false);
     }
 }
 
-void VideoDisplay::displayFrame(unsigned int generation)
+void VideoDisplay::finishedDisplayingFrame(unsigned int generation)
 {
     m_decoder->finishedDisplayingFrame(generation);
 }

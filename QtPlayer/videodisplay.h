@@ -9,7 +9,7 @@ class VideoDisplay : public IFrameListener
 public:
 	VideoDisplay();
 	virtual ~VideoDisplay();
-    virtual void displayFrame(unsigned int generation) = 0;
+    void finishedDisplayingFrame(unsigned int generation);
     void setDecoderObject(FFmpegDecoderWrapper* decoder);
 
     virtual void showPicture(const QImage& picture) = 0;

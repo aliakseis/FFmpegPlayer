@@ -75,7 +75,9 @@ public Q_SLOTS:
 	void fullScreen(bool isEnable = true);
 
 protected Q_SLOTS:
+#ifndef DEVELOPER_OPENGL
     virtual void currentDisplay(unsigned int generation) override;
+#endif
 
 private Q_SLOTS:
 	void getImageFinished(const QImage& image);

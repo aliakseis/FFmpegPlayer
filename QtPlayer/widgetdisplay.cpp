@@ -14,12 +14,7 @@ void WidgetDisplay::currentDisplay(unsigned int generation)
     m_display = QPixmap::fromImage(m_image);
     setPixmap(m_display);
 
-    VideoDisplay::displayFrame(generation);
-}
-
-void WidgetDisplay::displayFrame(unsigned int generation)
-{
-    emit display(generation);
+    finishedDisplayingFrame(generation);
 }
 
 
@@ -53,7 +48,7 @@ void WidgetDisplay::updateFrame(IFrameDecoder* decoder)
 
 void WidgetDisplay::drawFrame(IFrameDecoder* decoder, unsigned int generation)
 {
-    displayFrame(generation);
+    emit display(generation);
 }
 
 void WidgetDisplay::decoderClosing()

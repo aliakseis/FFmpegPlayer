@@ -292,9 +292,9 @@ void VideoWidget::fullScreenProcess()
 	videoControl->setAttribute(Qt::WA_TranslucentBackground);
 	videoControl->move(this->width() / 2 - videoControl->width() / 2, this->height() - videoControl->height() - 20);
 	videoControl->show();
-	auto* spinner = findChild<QWidget*>("bufferingSpinner");
-	Q_ASSERT(spinner);
-	spinner->resize(this->width(), this->height());
+	//auto* spinner = findChild<QWidget*>("bufferingSpinner");
+	//Q_ASSERT(spinner);
+	//spinner->resize(this->width(), this->height());
 }
 
 void VideoWidget::resizeEvent(QResizeEvent* event)
@@ -312,14 +312,13 @@ void VideoWidget::resizeEvent(QResizeEvent* event)
 #endif
 }
 
+#ifndef DEVELOPER_OPENGL
 void VideoWidget::currentDisplay(unsigned int generation)
 {
-	// FIXME: OpenGL full support
-#ifndef DEVELOPER_OPENGL
     WidgetDisplay::currentDisplay(generation);
 	m_originalFrame = *pixmap();
-#endif
 }
+#endif
 
 void VideoWidget::onCursorTimer()
 {

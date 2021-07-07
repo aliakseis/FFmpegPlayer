@@ -12,7 +12,6 @@ class WidgetDisplay : public QLabel, public VideoDisplay
 public:
 	WidgetDisplay(QWidget* parent = 0);
     ~WidgetDisplay() {}
-    void displayFrame(unsigned int generation) override;
 
 	void showPicture(const QImage& picture) override;
 	void showPicture(const QPixmap& picture) override;

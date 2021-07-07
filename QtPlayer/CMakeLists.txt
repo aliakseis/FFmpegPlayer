@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 
 project(QtPlayer LANGUAGES CXX)
 
+option(DEVELOPER_OPENGL "Enables opengl display" ON)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOUIC ON)
@@ -14,6 +16,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(MSVC)
   add_definitions(-D_WIN32_WINNT=0x600)
 endif()
+
+if(DEVELOPER_OPENGL)
+        add_definitions(
+                -DDEVELOPER_OPENGL
+        )
+endif(DEVELOPER_OPENGL)
 
 # QtCreator supports the following variables for Android, which are identical to qmake Android variables.
 # Check http://doc.qt.io/qt-5/deployment-android.html for more information.
@@ -63,6 +71,8 @@ set(SOURCES
     mainwindow.ui
     mousehoverbutton.cpp
     mousehoverbutton.h
+    opengldisplay.cpp
+    opengldisplay.h   
     videocontrol.cpp
     videocontrol.h
     videocontrol.ui
