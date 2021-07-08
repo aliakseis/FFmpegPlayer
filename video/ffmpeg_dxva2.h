@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * This file is part of FFmpeg.
  *
@@ -16,10 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef FFMPEG_DXVA2_H
-#define FFMPEG_DXVA2_H
-
-//#include "windows.h"
+#ifdef _WIN32
 
 extern "C"{
 #include "libavcodec/avcodec.h"
@@ -148,4 +147,4 @@ int dxva2_retrieve_data(AVCodecContext *s, AVFrame *frame);
 
 IDirect3DDevice9* get_device(AVCodecContext *s);
 
-#endif /* FFMPEG_DXVA2_H */
+#endif // _WIN32

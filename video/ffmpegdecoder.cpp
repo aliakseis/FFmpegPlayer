@@ -20,7 +20,9 @@ extern "C"
 #include "libavutil/pixdesc.h"
 }
 
+#ifdef _WIN32
 #define USE_HWACCEL
+#endif
 
 // http://stackoverflow.com/questions/34602561
 #ifdef USE_HWACCEL

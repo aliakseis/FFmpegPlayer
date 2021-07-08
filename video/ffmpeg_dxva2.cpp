@@ -16,6 +16,7 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
+#ifdef _WIN32
 
 #include <d3d9.h>
 #include <dxva2api.h>
@@ -929,3 +930,5 @@ IDirect3DDevice9* get_device(AVCodecContext *s)
     DXVA2Context *ctx = (DXVA2Context *)ist->hwaccel_ctx;
     return ctx->d3d9device;
 }
+
+#endif // _WIN32
