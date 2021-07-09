@@ -10,7 +10,7 @@
 #include <QtWidgets/qdrawutil.h>
 
 VideoControl::VideoControl(VideoPlayerWidget* parent)
-	: QWidget(parent), ui(new Ui::VideoControl), m_isVolumeOn(false), m_prevVolumeValue(0)
+	: QWidget(parent), ui(new Ui::VideoControl) 
 {
 	ui->setupUi(this);
 
@@ -19,8 +19,6 @@ VideoControl::VideoControl(VideoPlayerWidget* parent)
 	// Link it with VideoPlayerWidget
 	parent->setControl(this);
 	videoPlayer = parent;
-
-	Q_ASSERT(videoPlayer->metaObject()->className() == QString("VideoPlayerWidget"));
 
 	// Default value from the decoder
 	int volume = videoPlayer->getDecoder()->volume() * ui->progressBar->maximum();
@@ -56,7 +54,7 @@ bool VideoControl::eventFilter(QObject* obj, QEvent* event)
 			{
 				float percent = (mEvent->x() * 1.0) / ui->progressBar->width();
 				percent *= 100;
-				setVolume(qBound(0, (int)percent, 100));
+				setVolume(qBound(0, static_cast<int>(percent), 100));
 			}
 		}
 		break;
@@ -68,7 +66,7 @@ bool VideoControl::eventFilter(QObject* obj, QEvent* event)
 			{
 				float percent = (mEvent->x() * 1.0) / ui->progressBar->width();
 				percent *= 100;
-				setVolume(qBound(0, (int)percent, 100));
+				setVolume(qBound(0, static_cast<int>(percent), 100));
 			}
 		}
 		break;
@@ -143,10 +141,10 @@ void VideoControl::setVolume(int volume, bool onlyWidget)
 	switchVolumeButton(volume != 0);
 
     int prevVolumeValue = videoPlayer->getDecoder()->volume() * ui->progressBar->maximum();
-    if (videoPlayer && !onlyWidget)
+    if ((videoPlayer != nullptr) && !onlyWidget)
     {
         videoPlayer->getDecoder()->setVolume(
-                    ui->progressBar->maximum()? (double(volume) / ui->progressBar->maximum()) : 0.);
+                    ui->progressBar->maximum() != 0? (double(volume) / ui->progressBar->maximum()) : 0.);
     }
     m_prevVolumeValue = prevVolumeValue;
 }

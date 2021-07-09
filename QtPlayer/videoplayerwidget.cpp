@@ -13,9 +13,8 @@ enum { PROGRESSBAR_VISIBLE_HEIGHT = 5};
 
 VideoPlayerWidget::VideoPlayerWidget(QWidget* parent) :
 	QFrame(parent)
-	, m_controls(nullptr)
-	, m_progressBar(nullptr)
-	, m_videoWidget(new VideoWidget(this))
+	, 
+	 m_videoWidget(new VideoWidget(this))
 {
     connect(getDecoder(), &FFmpegDecoderWrapper::onPlayingFinished, this, &VideoPlayerWidget::onPlayingFinished);
 
@@ -174,7 +173,7 @@ void VideoPlayerWidget::wheelEvent(QWheelEvent* event)
 	{
 		if (getDecoder() != nullptr)
 		{
-			double newVolume = getDecoder()->volume() + ((double)numSteps / 20);
+			double newVolume = getDecoder()->volume() + (static_cast<double>(numSteps) / 20);
 			if (newVolume < 0)
 			{
 				newVolume = 0;
@@ -219,14 +218,14 @@ void VideoPlayerWidget::updateLayout()
 	{
         double aspectRatio =
                 (m_videoWidget->getPictureSize().height() > 0 && m_videoWidget->getPictureSize().width() >0)
-                ? (double)m_videoWidget->getPictureSize().height() / m_videoWidget->getPictureSize().width()
+                ? static_cast<double>(m_videoWidget->getPictureSize().height()) / m_videoWidget->getPictureSize().width()
                 : 0.75;
 		int height = aspectRatio * currWidth;
 		// Display too big: do recalculation
-		if (height > minPlayerHeight)	//TODO: code refactoring
+		if (height > minPlayerHeight)	// TODO(Usrer): code refactoring
 		{
 			height = minPlayerHeight;
-			playerWidth = (int)((double)minPlayerHeight / aspectRatio);
+			playerWidth = static_cast<int>(static_cast<double>(minPlayerHeight) / aspectRatio);
 		}
 
 		m_videoWidget->setGeometry(0, yPos, playerWidth, height - PROGRESSBAR_VISIBLE_HEIGHT);
@@ -257,7 +256,7 @@ void VideoPlayerWidget::updateLayout()
 		if (playerHeight > minPlayerHeight)
 		{
 			playerHeight = minPlayerHeight;
-			playerWidth = (int)((double)minPlayerHeight / aspectRatio);
+			playerWidth = static_cast<int>(static_cast<double>(minPlayerHeight) / aspectRatio);
 		}
 
 		if (m_videoWidget->isFullScreen())
@@ -309,7 +308,7 @@ void VideoPlayerWidget::exitFullScreen()
 
 void VideoPlayerWidget::onPlayingFinished()
 {
-	if (m_videoWidget && m_videoWidget->isFullScreen())
+	if ((m_videoWidget != nullptr) && m_videoWidget->isFullScreen())
 	{
 		m_videoWidget->fullScreen(false);
 	}

@@ -27,6 +27,6 @@ protected:
 
 private:
     FFmpegDecoderWrapper m_decoder;
-	VideoDisplay* m_display;
-	VideoState m_state;
+	VideoDisplay* m_display{nullptr};
+	VideoState m_state{InitialState};
 };

@@ -21,8 +21,8 @@ class VideoWidget : public WidgetDisplay
 	Q_OBJECT
 	Q_PROPERTY(QImage m_noPreviewImg READ noPreviewImage WRITE setNoPreviewImage);
 public:
-	explicit VideoWidget(QWidget* parent = 0);
-	virtual ~VideoWidget();
+	explicit VideoWidget(QWidget* parent = nullptr);
+	~VideoWidget() override;
 
 	void setDefaultPreviewPicture();
 	QSize getPictureSize() const { return m_pictureSize; }
@@ -38,31 +38,31 @@ public:
 	void updatePlayButton();
 
 protected:
-	virtual void keyPressEvent(QKeyEvent* event) override;
+	void keyPressEvent(QKeyEvent* event) override;
 
-	void mousePressEvent(QMouseEvent* event);
-	void mouseReleaseEvent(QMouseEvent* event);
-	void mouseMoveEvent(QMouseEvent* event);
-	void wheelEvent(QWheelEvent* event);
-	void resizeEvent(QResizeEvent* event);
+	void mousePressEvent(QMouseEvent* event) override;
+	void mouseReleaseEvent(QMouseEvent* event) override;
+	void mouseMoveEvent(QMouseEvent* event) override;
+	void wheelEvent(QWheelEvent* event) override;
+	void resizeEvent(QResizeEvent* event) override;
 
 	QImage m_startImgButton;
 	QImage m_noPreviewImg;
 	QPixmap m_originalFrame;
 
 private:
-	bool m_playIndicator;
+	bool m_playIndicator{false};
 	QSize m_pictureSize;
 	QImage m_defPlayButton, m_hoverPlayButton, m_clickedPlayButton;
 	QImage* m_selImage;
 	QImage m_fromImage;
-	bool m_isMousePressed;
-	const int m_playBtnRadius;
+	bool m_isMousePressed{false};
+	const int m_playBtnRadius{29};
 #ifdef Q_OS_LINUX
 	bool m_resizeIndicator;
 #endif
 
-	qint64 m_lastMouseTime;
+	qint64 m_lastMouseTime{0};
 
 	QTimer m_cursorTimer;
 

@@ -32,17 +32,15 @@ VideoWidget::VideoWidget(QWidget* parent) : OpenGLDisplay(parent),
 #else
 VideoWidget::VideoWidget(QWidget* parent) : WidgetDisplay(parent),
 #endif
-	m_playIndicator(false),
+	
 	m_defPlayButton(":/images/video___btn_play___default___(94x94).png"),
 	m_hoverPlayButton(":/images/video___btn_play___hover___(94x94).png"),
 	m_clickedPlayButton(":/images/video___btn_play___clicked___(94x94).png"),
-	m_selImage(&m_defPlayButton),
-	m_isMousePressed(false),
-	m_playBtnRadius(29),
+	m_selImage(&m_defPlayButton)
 #ifdef Q_OS_LINUX
-	m_resizeIndicator(false),
+	m_resizeIndicator(false)
 #endif
-	m_lastMouseTime(0)
+	
 {
 	m_noPreviewImg = QImage(":/images/fvd_banner.png");
 	setMouseTracking(true);
@@ -129,7 +127,7 @@ void VideoWidget::keyPressEvent(QKeyEvent* event)
 {
 	showElements();
 	// Full screen exiting
-	if (((event->key() == Qt::Key_Return  || event->key() == Qt::Key_Enter) && event->modifiers() & Qt::AltModifier)
+	if (((event->key() == Qt::Key_Return  || event->key() == Qt::Key_Enter) && (event->modifiers() & Qt::AltModifier))
 			|| event->key() == Qt::Key_Escape)
 	{
 		if (isFullScreen())
@@ -184,10 +182,11 @@ void VideoWidget::mouseReleaseEvent(QMouseEvent* event)
 	}
 	else if (event->button() == Qt::MiddleButton)
 	{
-        if (isFullScreen())
+        if (isFullScreen()) {
             fullScreen(false);
-        else
+        } else {
             dockWidget()->setVisibilityState(CustomDockWidget::FullScreen);
+}
 	}
 }
 

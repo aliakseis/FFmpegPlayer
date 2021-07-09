@@ -7,10 +7,8 @@
 #include <QWidget>
 #include <QEvent>
 
-CustomDockWidget::CustomDockWidget(QWidget* widget) : QWidget(widget), m_state(ShownDocked), m_prevState(ShownDocked)
+CustomDockWidget::CustomDockWidget(QWidget* widget) : QWidget(widget) 
 {
-	Q_ASSERT(parent()->metaObject()->className() == QString("MainWindow"));
-	m_parent = (MainWindow*)parent();
 }
 
 void CustomDockWidget::setDisplayForFullscreen(VideoDisplay* display)

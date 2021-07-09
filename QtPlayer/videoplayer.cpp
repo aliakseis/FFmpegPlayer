@@ -4,11 +4,7 @@
 #include <QDebug>
 
 VideoPlayer::VideoPlayer()
-	: m_display(nullptr)
-	, m_state(InitialState)
-{
-
-}
+= default;
 
 VideoPlayer::~VideoPlayer()
 {

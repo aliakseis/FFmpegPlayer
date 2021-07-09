@@ -13,8 +13,8 @@ class VideoControl : public QWidget
 	Q_OBJECT
 
 public:
-	explicit VideoControl(VideoPlayerWidget* parent = 0);
-	~VideoControl();
+	explicit VideoControl(VideoPlayerWidget* parent = nullptr);
+	~VideoControl() override;
 	void setVolume(int volume, bool onlyWidget = false);
 	void showPlaybutton(bool show = true);
 
@@ -26,9 +26,9 @@ signals:
 	void browse();
 
 protected:
-	bool eventFilter(QObject* obj, QEvent* event);
-	virtual void paintEvent(QPaintEvent* event) override;
-	virtual void resizeEvent(QResizeEvent* event)override;
+	bool eventFilter(QObject* obj, QEvent* event) override;
+	void paintEvent(QPaintEvent* event) override;
+	void resizeEvent(QResizeEvent* event)override;
 
 public slots:
 	void on_btnPlay_clicked();
@@ -46,8 +46,8 @@ private:
 	int m_height;
 	QPixmap background;
 	QPixmap backgroundfs;
-	bool m_isVolumeOn;
-	int m_prevVolumeValue;
+	bool m_isVolumeOn{false};
+	int m_prevVolumeValue{0};
 
 	void switchVolumeButton(bool volumeOn);
 };

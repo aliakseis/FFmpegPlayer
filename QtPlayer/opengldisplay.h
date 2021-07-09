@@ -15,7 +15,7 @@ class OpenGLDisplay : public QOpenGLWidget, public QOpenGLFunctions, public Vide
     Q_OBJECT
 public:
     explicit OpenGLDisplay(QWidget* parent = nullptr);
-    ~OpenGLDisplay();
+    ~OpenGLDisplay() override;
 
     void InitDrawBuffer(unsigned bsize);
     //void DisplayVideoFrame(unsigned char *data, int frameWidth, int frameHeight);
@@ -23,7 +23,7 @@ public:
 
     void displayFrame(unsigned int generation);
 
-    void showPicture(const QImage& picture) override;
+    void showPicture(const QImage& img) override;
     void showPicture(const QPixmap& picture) override;
 
     void updateFrame(IFrameDecoder* decoder) override;
@@ -49,7 +49,7 @@ private:
     struct OpenGLDisplayImpl;
     QScopedPointer<OpenGLDisplayImpl> impl;
 
-    float m_aspectRatio { 0.75f };
+    float m_aspectRatio { 0.75F };
 };
 
 /***********************************************************************/
@@ -57,8 +57,8 @@ private:
 class OpenGlException: public QException
 {
 public:
-     void raise() const { throw *this; }
-     OpenGlException *clone() const { return new OpenGlException(*this); }
+     void raise() const override { throw *this; }
+     OpenGlException *clone() const override { return new OpenGlException(*this); }
 };
 
 #endif // OPENGLDISPLAY_H

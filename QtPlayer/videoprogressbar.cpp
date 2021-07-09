@@ -9,11 +9,8 @@
 #include <qdrawutil.h>
 
 VideoProgressBar::VideoProgressBar(QWidget* parent) :
-	QProgressBar(parent),
-	m_scale(1000),
-	m_btn_down(false),
-	m_seekDisabled(false),
-	m_downloadedTotalOriginal(0)
+	QProgressBar(parent)
+	
 {
 	m_downloaded = 0;
 	m_played = 0;
@@ -46,17 +43,17 @@ void VideoProgressBar::paintEvent(QPaintEvent* event)
 	gradient.setColorAt(0, QColor(235, 235, 235));
 	gradient.setColorAt(1, QColor(207, 213, 217));
 	painter.setBrush(gradient);
-	painter.drawRect(0, margintop, ((double)m_downloaded / m_scale) * width(), lineheight);
+	painter.drawRect(0, margintop, (static_cast<double>(m_downloaded) / m_scale) * width(), lineheight);
 
 	// 3 step : playing line
 	gradient.setColorAt(0, QColor(209, 63, 70));
 	gradient.setColorAt(1, QColor(177, 10, 11));
 	painter.setBrush(gradient);
-	painter.drawRect(0, margintop, ((double)m_played / m_scale) * width(), lineheight);
+	painter.drawRect(0, margintop, (static_cast<double>(m_played) / m_scale) * width(), lineheight);
 
 	QPixmap clicker = QPixmap(":/images/video_seek_cursor.png");
 	painter.drawPixmap(
-		QRect((m_played / (m_scale - (double)clicker.width()*m_scale / (width()))) * width() - 1 - (double)clicker.width()*m_played / m_scale * 1.8 , 1, clicker.width(), clicker.height()),
+		QRect((m_played / (m_scale - static_cast<double>(clicker.width())*m_scale / (width()))) * width() - 1 - static_cast<double>(clicker.width())*m_played / m_scale * 1.8 , 1, clicker.width(), clicker.height()),
 		clicker,
 		clicker.rect()
 	);
@@ -182,7 +179,7 @@ bool VideoProgressBar::eventFilter(QObject* obj, QEvent* event)
 
 void VideoProgressBar::displayPlayedProgress(qint64 frame, qint64 total)
 {
-	int progress = ((double)frame / total) * getScale();
+	int progress = (static_cast<double>(frame) / total) * getScale();
 	if (!m_seekDisabled)
 	{
 		setPlayedCounter(progress);

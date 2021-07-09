@@ -16,7 +16,7 @@ class FFmpegDecoderWrapper : public QObject, public FrameDecoderListener
 
 public:
     FFmpegDecoderWrapper();
-    ~FFmpegDecoderWrapper();
+    ~FFmpegDecoderWrapper() override;
 
     FFmpegDecoderWrapper(const FFmpegDecoderWrapper&) = delete;
     FFmpegDecoderWrapper& operator=(const FFmpegDecoderWrapper&) = delete;
@@ -42,7 +42,7 @@ public:
     IFrameDecoder* getFrameDecoder() const { return m_frameDecoder.get(); }
 
     void playingFinished() override { emit onPlayingFinished(); }
-    virtual void changedFramePosition(
+    void changedFramePosition(
         long long start, long long frame, long long total) override
     {
         emit onChangedFramePosition(frame - start, total - start);
@@ -51,7 +51,7 @@ public:
 signals:
     void onPlayingFinished();
     void onChangedFramePosition(qint64, qint64);
-    void volumeChanged(double);
+    void volumeChanged(double /*unused*/) override;
 
 private:
     std::unique_ptr<IFrameDecoder> m_frameDecoder;

@@ -16,8 +16,9 @@ FFmpegDecoderWrapper::~FFmpegDecoderWrapper() = default;
 void FFmpegDecoderWrapper::setFrameListener(VideoDisplay* listener)
 {
     m_frameDecoder->setFrameListener(listener);
-    if (listener)
+    if (listener != nullptr) {
         listener->setDecoderObject(this);
+}
 }
 
 void FFmpegDecoderWrapper::openFile(const QString& file)

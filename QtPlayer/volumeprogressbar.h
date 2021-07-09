@@ -7,9 +7,9 @@ class VolumeProgressBar : public QProgressBar
 	Q_OBJECT
 public:
 	VolumeProgressBar(QWidget* parent);
-	virtual ~VolumeProgressBar();
+	~VolumeProgressBar() override;
 protected:
-	void paintEvent(QPaintEvent* event);
+	void paintEvent(QPaintEvent* event) override;
 
 private:
 	QBrush m_borderBrush, m_backBrush;

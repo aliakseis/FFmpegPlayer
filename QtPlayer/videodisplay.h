@@ -8,7 +8,7 @@ class VideoDisplay : public IFrameListener
 {
 public:
 	VideoDisplay();
-	virtual ~VideoDisplay();
+	~VideoDisplay() override;
     void finishedDisplayingFrame(unsigned int generation);
     void setDecoderObject(FFmpegDecoderWrapper* decoder);
 
@@ -22,7 +22,7 @@ public:
     }
 
 protected:
-    FFmpegDecoderWrapper* m_decoder;
+    FFmpegDecoderWrapper* m_decoder{nullptr};
     int m_scrWidth{};
     int m_scrHeight{};
 };

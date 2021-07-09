@@ -40,10 +40,11 @@ void WidgetDisplay::updateFrame(IFrameDecoder* decoder)
     m_aspectRatio = float(data.height) / data.width;
 
     auto image = QImage(data.image[0], data.width, data.height, data.pitch[0], QImage::Format_RGB888);
-    if (m_scrWidth > 0 && m_scrHeight > 0)
+    if (m_scrWidth > 0 && m_scrHeight > 0) {
         m_image = image.scaled(m_scrWidth, m_scrHeight);
-    else
+    } else {
         m_image = std::move(image);
+}
 }
 
 void WidgetDisplay::drawFrame(IFrameDecoder* decoder, unsigned int generation)

@@ -6,23 +6,23 @@ class VideoProgressBar : public QProgressBar
 {
 	Q_OBJECT
 public:
-	explicit VideoProgressBar(QWidget* parent = 0);
+	explicit VideoProgressBar(QWidget* parent = nullptr);
 
-	virtual ~VideoProgressBar();
+	~VideoProgressBar() override;
 	int getScale() const;
 	void resetProgress();
 
 protected:
-	virtual void paintEvent(QPaintEvent* event) override;
+	void paintEvent(QPaintEvent* event) override;
 	bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
 	int m_downloaded;
 	int m_played;
-	int m_scale;
-	bool m_btn_down;
-	bool m_seekDisabled;
-	qint64 m_downloadedTotalOriginal;
+	int m_scale{1000};
+	bool m_btn_down{false};
+	bool m_seekDisabled{false};
+	qint64 m_downloadedTotalOriginal{0};
 public slots:
 	void setDownloadedCounter(int downloaded);
 	void setPlayedCounter(int played);

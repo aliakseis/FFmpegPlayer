@@ -12,7 +12,7 @@ class CustomDockWidget : public QWidget
 {
 	Q_OBJECT
 public:
-	CustomDockWidget(QWidget* widget = 0);
+	CustomDockWidget(QWidget* widget = nullptr);
 	void setDisplayForFullscreen(VideoDisplay* display);
 
 	enum VisibilityState
@@ -26,8 +26,8 @@ public:
 	VisibilityState previousState() const { return m_prevState; }
 
 protected:
-	virtual void closeEvent(QCloseEvent* event) override;
-	virtual void keyPressEvent(QKeyEvent* event) override;
+	void closeEvent(QCloseEvent* event) override;
+	void keyPressEvent(QKeyEvent* event) override;
 
 signals:
 	bool enterFullscreen(bool f);
@@ -36,8 +36,7 @@ public slots:
 	void onLeaveFullScreen();
 
 private:
-	VisibilityState m_state;
-	VisibilityState m_prevState;
-	VideoWidget* m_display;
-	MainWindow* m_parent;
+	VisibilityState m_state{ShownDocked};
+	VisibilityState m_prevState{ShownDocked};
+    VideoWidget* m_display{};
 };

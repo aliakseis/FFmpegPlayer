@@ -10,8 +10,8 @@ class WidgetDisplay : public QLabel, public VideoDisplay
 {
 	Q_OBJECT
 public:
-	WidgetDisplay(QWidget* parent = 0);
-    ~WidgetDisplay() {}
+	WidgetDisplay(QWidget* parent = nullptr);
+    ~WidgetDisplay() override = default;
 
 	void showPicture(const QImage& picture) override;
 	void showPicture(const QPixmap& picture) override;
@@ -25,7 +25,7 @@ public:
 protected:
 	QImage m_image;
 	QPixmap m_display;
-    float m_aspectRatio { 0.75f };
+    float m_aspectRatio { 0.75F };
 
 protected slots:
     virtual void currentDisplay(unsigned int generation);

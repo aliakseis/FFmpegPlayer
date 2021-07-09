@@ -16,13 +16,8 @@
 
 struct OpenGLDisplay::OpenGLDisplayImpl
 {
-    OpenGLDisplayImpl()
-        : mBufYuv(nullptr)
-        , mFrameSize(0)
-    {}
-
-    GLvoid*                 mBufYuv;
-    int                     mFrameSize;
+    GLvoid*                 mBufYuv{nullptr};
+    int                     mFrameSize{0};
 
     QOpenGLShader*          mVShader;
     QOpenGLShader*          mFShader;
@@ -174,18 +169,18 @@ void OpenGLDisplay::initializeGL()
     
     //Vertex matrix
     static const GLfloat vertexVertices[] = {
-        -1.0f, -1.0f,
-         1.0f, -1.0f,
-         -1.0f, 1.0f,
-         1.0f, 1.0f,
+        -1.0F, -1.0F,
+         1.0F, -1.0F,
+         -1.0F, 1.0F,
+         1.0F, 1.0F,
     };
     
     //Texture matrix
     static const GLfloat textureVertices[] = {
-        0.0f,  1.0f,
-        1.0f,  1.0f,
-        0.0f,  0.0f,
-        1.0f,  0.0f,
+        0.0F,  1.0F,
+        1.0F,  1.0F,
+        0.0F,  0.0F,
+        1.0F,  0.0F,
     };
 
     // Set the value of the vertex matrix of the attribute ATTRIB_VERTEX and format
@@ -218,8 +213,9 @@ void OpenGLDisplay::initializeGL()
 
 void OpenGLDisplay::resizeGL(int w, int h)
 {
-    if(h == 0)// prevents being divided by zero
+    if(h == 0) {// prevents being divided by zero
         h = 1;// set the height to 1
+}
 
     // Set the viewport
     glViewport(0, 0, w, h);
@@ -250,7 +246,7 @@ void OpenGLDisplay::paintGL()
     glActiveTexture(GL_TEXTURE1);//Activate texture unit GL_TEXTURE1
     glBindTexture(GL_TEXTURE_2D, impl->id_u);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, impl->mVideoW/2, impl->mVideoH/2
-                 , 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (char*)impl->mBufYuv + impl->mVideoW * impl->mVideoH);
+                 , 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, static_cast<char*>(impl->mBufYuv) + impl->mVideoW * impl->mVideoH);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -259,7 +255,7 @@ void OpenGLDisplay::paintGL()
     glActiveTexture(GL_TEXTURE2);//Activate texture unit GL_TEXTURE2
     glBindTexture(GL_TEXTURE_2D, impl->id_v);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, impl->mVideoW / 2, impl->mVideoH / 2
-                 , 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (char*)impl->mBufYuv + impl->mVideoW * impl->mVideoH * 5/4);
+                 , 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, static_cast<char*>(impl->mBufYuv) + impl->mVideoW * impl->mVideoH * 5/4);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -324,8 +320,9 @@ int OpenGLDisplay::getHeight() { return impl->mVideoH; }
 
 void OpenGLDisplay::showPicture(const QImage& img)
 {
-    if (img.isNull())
+    if (img.isNull()) {
         return;
+}
 
     if(img.format()!=QImage::Format_RGB32 && img.format() != QImage::Format_ARGB32 && img.format() != QImage::Format_RGB888)
     {
@@ -344,7 +341,7 @@ void OpenGLDisplay::showPicture(const QImage& img)
     for(unsigned y=0;y<getHeight();y++)
     {
 
-       unsigned char *s = (unsigned char*)img.scanLine(y);
+       const auto *s = img.scanLine(y);
        unsigned char *d = reinterpret_cast<unsigned char*>(impl->mBufYuv) + y*getWidth(); //(unsigned char*)&picture_buf[y*getWidth()];
        //printf("Line %d. d: %p. picture_buf: %p\n",y,d,picture_buf);
 
@@ -355,7 +352,8 @@ void OpenGLDisplay::showPicture(const QImage& img)
           unsigned int b=s[0];
 
           unsigned Y = (r*2104 + g*4130 + b*802 + 4096 + 131072) >> 13;
-          if(Y>235) Y=235;
+          if(Y>235) { Y=235;
+}
 
           *d = Y;
 
@@ -367,7 +365,7 @@ void OpenGLDisplay::showPicture(const QImage& img)
     // U,V
     for(unsigned y=0;y<getHeight();y+=2)
     {
-       unsigned char *s = (unsigned char*)img.scanLine(y);
+       const auto *s = img.scanLine(y);
        unsigned int ss = img.bytesPerLine();
        unsigned char *d = reinterpret_cast<unsigned char*>(impl->mBufYuv) + size+y/2*getWidth()/2; //(unsigned char*)&picture_buf[size+y/2*getWidth()/2];
 
@@ -384,16 +382,20 @@ void OpenGLDisplay::showPicture(const QImage& img)
           int b=(s[0] + s[step] + s[ss+0] + s[ss+step] + 2) >> 2;
 
           int Cb = (-1214*r - 2384*g + 3598*b + 4096 + 1048576)>>13;
-          if(Cb<16)
+          if(Cb<16) {
              Cb=16;
-          if(Cb>240)
+}
+          if(Cb>240) {
              Cb=240;
+}
 
           int Cr = (3598*r - 3013*g - 585*b + 4096 + 1048576)>>13;
-          if(Cr<16)
+          if(Cr<16) {
              Cr=16;
-          if(Cr>240)
+}
+          if(Cr>240) {
              Cr=240;
+}
 
           *d = Cb;
           *(d+size/4) = Cr;

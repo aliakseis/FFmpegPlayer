@@ -1,14 +1,13 @@
 #include "videodisplay.h"
 
-VideoDisplay::VideoDisplay() : m_decoder(nullptr)
-{
-
-}
+VideoDisplay::VideoDisplay()  
+= default;
 
 VideoDisplay::~VideoDisplay()
 {
-    if (m_decoder)
+    if (m_decoder != nullptr) {
         m_decoder->setFrameListener(nullptr);
+    }
 }
 
 void VideoDisplay::setDecoderObject(FFmpegDecoderWrapper* decoder)

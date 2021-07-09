@@ -20,13 +20,13 @@ class MouseHoverButton : public QToolButton
 {
 	Q_OBJECT
 public:
-	MouseHoverButton(QWidget* widget);
-	virtual ~MouseHoverButton();
+	MouseHoverButton(QWidget* parent);
+	~MouseHoverButton() override;
 protected:
-	void mousePressEvent(QMouseEvent* event);
-	void mouseReleaseEvent(QMouseEvent* event);
-	void keyReleaseEvent(QKeyEvent* e);
-	void paintEvent(QPaintEvent* event);
+	void mousePressEvent(QMouseEvent* event) override;
+	void mouseReleaseEvent(QMouseEvent* event) override;
+	void keyReleaseEvent(QKeyEvent* e) override;
+	void paintEvent(QPaintEvent* event) override;
 private:
 	QIcon m_defIcon;
 	QIcon m_pushedIcon;

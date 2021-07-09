@@ -21,7 +21,7 @@ void VolumeProgressBar::paintEvent(QPaintEvent* event)
 	painter.fillRect(0, 0, width(), height(), m_borderBrush);
 	painter.fillRect(1, 1, width() - 2, height() - 2, m_backBrush);
 
-	int filledWidth = (int)(width() / 100.0 * value());
+	int filledWidth = static_cast<int>(width() / 100.0 * value());
 
 	painter.fillRect(0, 0, filledWidth, height(), m_fillBorderBrush);
 	if (filledWidth > 1)

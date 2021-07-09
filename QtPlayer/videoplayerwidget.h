@@ -16,8 +16,9 @@ class VideoPlayerWidget;
 
 inline VideoPlayerWidget* VideoPlayerWidgetInstance()
 {
-    if (auto mainWindow = getMainWindow())
+    if (auto mainWindow = getMainWindow()) {
         return mainWindow->getPlayer();
+}
     return nullptr;
 }
 
@@ -26,15 +27,15 @@ class VideoPlayerWidget : public QFrame, public VideoPlayer
 {
 	Q_OBJECT
 public:
-	explicit VideoPlayerWidget(QWidget* parent = 0);
-	virtual ~VideoPlayerWidget();
+	explicit VideoPlayerWidget(QWidget* parent = nullptr);
+	~VideoPlayerWidget() override;
 
 	void pauseVideo();
 	void resumeVideo();
 
 	void stopVideo(bool showDefaultImage = false);
 	bool isPaused();
-    void seekByPercent(float position);
+    void seekByPercent(float percent);
 
 	VideoDisplay* getCurrentDisplay();
 	VideoWidget* videoWidget() {return m_videoWidget;}
@@ -53,9 +54,9 @@ public:
 	void playFile(const QString& fileName);
 
 protected:
-	virtual void resizeEvent(QResizeEvent* event) override;
-	virtual void wheelEvent(QWheelEvent* event) override;
-	virtual bool eventFilter(QObject* object, QEvent* event) override;
+	void resizeEvent(QResizeEvent* event) override;
+	void wheelEvent(QWheelEvent* event) override;
+	bool eventFilter(QObject* object, QEvent* event) override;
 
 public slots:
 	void playPauseButtonAction();
@@ -73,8 +74,8 @@ signals:
 private:
     friend class VideoWidget;
 
-	VideoControl* m_controls;
-	VideoProgressBar* m_progressBar;
+	VideoControl* m_controls{nullptr};
+	VideoProgressBar* m_progressBar{nullptr};
 	QString m_currentFile;
 	VideoWidget* m_videoWidget;
 };
