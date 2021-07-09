@@ -443,7 +443,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         if (!isFullFrameRange())
         {
             timeClause.Format(
-                _T("-ss %.3f -t %.3f "),
+                _T("-ss %.3f -t %.3f -accurate_seek "),
                 m_rangeStartTime,
                 m_rangeEndTime - m_rangeStartTime);
 
@@ -460,6 +460,10 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
             }
         }
 
+        if (!isFullFrameRange())
+        {
+            strParams += _T(" -avoid_negative_ts 1 -map_chapters -1");
+        }
         strParams += _T(" -q:v 4 \"");
         strParams += lpszPathName;
         strParams += _T('"');
