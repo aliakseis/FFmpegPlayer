@@ -56,6 +56,10 @@ private:
     volatile int m_oldTotalTime;
     volatile int m_oldCurrentTime;
     bool m_tracking;
+
+    int m_selStart;
+    int m_selEnd;
+
 public:
     CSliderCtrl m_progressSlider;
     CSliderCtrl m_volumeSlider;

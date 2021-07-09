@@ -87,6 +87,8 @@ CDialogBarPlayerControl::CDialogBarPlayerControl()
 , m_oldTotalTime(-1) // unset
 , m_oldCurrentTime(-1) // unset
 , m_tracking(false)
+, m_selStart(0)
+, m_selEnd(RANGE_MAX)
 {
     CDialogTemplate dlgtemplate;
     if (dlgtemplate.Load(MAKEINTRESOURCE(IDD)))
@@ -193,18 +195,22 @@ void CDialogBarPlayerControl::onFramePositionChanged(long long frame, long long 
     }
 }
 
+enum { MIN_SEL_WIDTH = 50 };
+
 void CDialogBarPlayerControl::onRangeStartTimeChanged(long long frame, long long total)
 {
     ASSERT(total >= 0);
-    const int pos = (total > 0) ? int((frame * RANGE_MAX) / total) : 0;
-    m_progressSlider.SendNotifyMessage(TBM_SETSELSTART, TRUE, pos);
+    const int pos = (total > 0) ? int((frame * (RANGE_MAX - MIN_SEL_WIDTH)) / total) : 0;
+    m_selStart = pos;
+    m_progressSlider.SendNotifyMessage(TBM_SETSEL, TRUE, MAKELPARAM(pos, m_selEnd));
 }
 
 void CDialogBarPlayerControl::onRangeEndTimeChanged(long long frame, long long total)
 {
     ASSERT(total >= 0);
-    const int pos = (total > 0) ? int((frame * RANGE_MAX) / total) : 0;
-    m_progressSlider.SendNotifyMessage(TBM_SETSELEND, TRUE, pos);
+    const int pos = (total > 0) ? int((frame * (RANGE_MAX - MIN_SEL_WIDTH)) / total) + MIN_SEL_WIDTH : 0;
+    m_selEnd = pos;
+    m_progressSlider.SendNotifyMessage(TBM_SETSEL, TRUE, MAKELPARAM(m_selStart, pos));
 }
 
 void CDialogBarPlayerControl::onTotalTimeUpdated(double secs)
