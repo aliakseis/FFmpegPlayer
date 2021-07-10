@@ -7,12 +7,15 @@
 #include <QCoreApplication>
 #include <QResizeEvent>
 
-#define PROGRAM_VERTEX_ATTRIBUTE 0
-#define PROGRAM_TEXCOORD_ATTRIBUTE 1
+#include <algorithm>
 
-#define ATTRIB_VERTEX 0
-#define ATTRIB_TEXTURE 1
+enum {
+PROGRAM_VERTEX_ATTRIBUTE  = 0,
+PROGRAM_TEXCOORD_ATTRIBUTE = 1,
 
+ATTRIB_VERTEX = 0,
+ATTRIB_TEXTURE = 1,
+};
 
 struct OpenGLDisplay::OpenGLDisplayImpl
 {
@@ -39,7 +42,7 @@ OpenGLDisplay::OpenGLDisplay(QWidget* parent)
     : QOpenGLWidget(parent)
     , impl(new OpenGLDisplayImpl)
 {
-    connect(this, &OpenGLDisplay::display, this, &OpenGLDisplay::currentDisplay);//, Qt::BlockingQueuedConnection);
+    connect(this, &OpenGLDisplay::display, this, &OpenGLDisplay::currentDisplay);
 }
 
 OpenGLDisplay::~OpenGLDisplay()
@@ -315,8 +318,6 @@ void OpenGLDisplay::updateFrame(IFrameDecoder* decoder)
     }
 }
 
-int OpenGLDisplay::getWidth() { return impl->mVideoW; }
-int OpenGLDisplay::getHeight() { return impl->mVideoH; }
 
 void OpenGLDisplay::showPicture(const QImage& img)
 {
@@ -332,29 +333,32 @@ void OpenGLDisplay::showPicture(const QImage& img)
 
     const auto step = (img.format() == QImage::Format_RGB888)? 3 : 4;
 
-    // RGB32 to YUV420
-    impl->mVideoW = img.width();
-    impl->mVideoH = img.height();
+    const int width = img.width();
+    const int height = img.height();
 
-    int size = getWidth()*getHeight();
+    m_aspectRatio = float(height) / width;
+
+    // RGB to YUV420
+    impl->mVideoW = width;
+    impl->mVideoH = height;
+
+    InitDrawBuffer(height * width * 3 / 2);
+
+    int size = width*height;
     // Y
-    for(unsigned y=0;y<getHeight();y++)
+    for(unsigned y=0;y<height;y++)
     {
 
        const auto *s = img.scanLine(y);
-       unsigned char *d = reinterpret_cast<unsigned char*>(impl->mBufYuv) + y*getWidth(); //(unsigned char*)&picture_buf[y*getWidth()];
-       //printf("Line %d. d: %p. picture_buf: %p\n",y,d,picture_buf);
+       unsigned char *d = reinterpret_cast<unsigned char*>(impl->mBufYuv) + y*width;
 
-       for(unsigned x=0;x<getWidth();x++)
+       for(unsigned x=0;x<width;x++)
        {
           unsigned int r=s[2];
           unsigned int g=s[1];
           unsigned int b=s[0];
 
-          unsigned Y = (r*2104 + g*4130 + b*802 + 4096 + 131072) >> 13;
-          if(Y>235) { Y=235;
-}
-
+          unsigned Y = std::min((r*2104 + g*4130 + b*802 + 4096 + 131072) >> 13, 235u);
           *d = Y;
 
           d++;
@@ -363,15 +367,13 @@ void OpenGLDisplay::showPicture(const QImage& img)
     }
 
     // U,V
-    for(unsigned y=0;y<getHeight();y+=2)
+    for(unsigned y=0;y<height;y+=2)
     {
        const auto *s = img.scanLine(y);
        unsigned int ss = img.bytesPerLine();
-       unsigned char *d = reinterpret_cast<unsigned char*>(impl->mBufYuv) + size+y/2*getWidth()/2; //(unsigned char*)&picture_buf[size+y/2*getWidth()/2];
+       unsigned char *d = reinterpret_cast<unsigned char*>(impl->mBufYuv) + size+y/2*width/2;
 
-       //printf("Line %d. d: %p. picture_buf: %p\n",y,d,picture_buf);
-
-       for(unsigned x=0;x<getWidth();x+=2)
+       for(unsigned x=0;x<width;x+=2)
        {
           // Cr = 128 + 1/256 * ( 112.439 * R'd -  94.154 * G'd -  18.285 * B'd)
           // Cb = 128 + 1/256 * (- 37.945 * R'd -  74.494 * G'd + 112.439 * B'd)
@@ -381,21 +383,8 @@ void OpenGLDisplay::showPicture(const QImage& img)
           int g=(s[1] + s[step+1] + s[ss+1] + s[ss+step+1] + 2) >> 2;
           int b=(s[0] + s[step] + s[ss+0] + s[ss+step] + 2) >> 2;
 
-          int Cb = (-1214*r - 2384*g + 3598*b + 4096 + 1048576)>>13;
-          if(Cb<16) {
-             Cb=16;
-}
-          if(Cb>240) {
-             Cb=240;
-}
-
-          int Cr = (3598*r - 3013*g - 585*b + 4096 + 1048576)>>13;
-          if(Cr<16) {
-             Cr=16;
-}
-          if(Cr>240) {
-             Cr=240;
-}
+          int Cb = std::clamp((-1214*r - 2384*g + 3598*b + 4096 + 1048576)>>13, 16, 240);
+          int Cr = std::clamp((3598*r - 3013*g - 585*b + 4096 + 1048576)>>13, 16, 240);
 
           *d = Cb;
           *(d+size/4) = Cr;

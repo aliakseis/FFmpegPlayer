@@ -6,7 +6,7 @@
 
 WidgetDisplay::WidgetDisplay(QWidget* parent) : QLabel(parent)
 {
-    connect(this, &WidgetDisplay::display, this, &WidgetDisplay::currentDisplay);//, Qt::BlockingQueuedConnection);
+    connect(this, &WidgetDisplay::display, this, &WidgetDisplay::currentDisplay);
 }
 
 void WidgetDisplay::currentDisplay(unsigned int generation)

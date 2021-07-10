@@ -37,9 +37,6 @@ protected:
     void resizeGL(int w, int h) override;
     void paintGL() override;
 
-    int getWidth();
-    int getHeight();
-
 protected slots:
     virtual void currentDisplay(unsigned int generation);
 signals:
