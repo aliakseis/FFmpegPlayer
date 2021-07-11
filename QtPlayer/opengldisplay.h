@@ -30,7 +30,7 @@ public:
     void drawFrame(IFrameDecoder* decoder, unsigned int generation) override; // decoder->finishedDisplayingFrame() must be called
     void decoderClosing() override;
 
-    float aspectRatio() const { return m_aspectRatio; }
+    float aspectRatio() const;
 
 protected:
     void initializeGL() override;
@@ -45,8 +45,6 @@ signals:
 private:
     struct OpenGLDisplayImpl;
     QScopedPointer<OpenGLDisplayImpl> impl;
-
-    float m_aspectRatio { 0.75F };
 };
 
 /***********************************************************************/

@@ -8,6 +8,8 @@
 #include <QResizeEvent>
 
 #include <algorithm>
+#include <mutex>
+
 
 enum {
 PROGRAM_VERTEX_ATTRIBUTE  = 0,
@@ -34,6 +36,9 @@ struct OpenGLDisplay::OpenGLDisplayImpl
     int                     textureUniformY, textureUniformU, textureUniformV;
     GLsizei                 mVideoW, mVideoH;
 
+    std::mutex m_mutex;
+
+    float m_aspectRatio{ 0.75F };
 };
 
 /*************************************************************************/
@@ -227,6 +232,8 @@ void OpenGLDisplay::resizeGL(int w, int h)
 
 void OpenGLDisplay::paintGL()
 {
+    std::unique_lock<std::mutex> lock(impl->m_mutex);
+
     // Load y data texture
     // Activate the texture unit GL_TEXTURE0
     glActiveTexture(GL_TEXTURE0);
@@ -294,7 +301,9 @@ void OpenGLDisplay::updateFrame(IFrameDecoder* decoder)
         return;
     }
 
-    m_aspectRatio = float(data.height) / data.width;
+    std::unique_lock<std::mutex> lock(impl->m_mutex);
+
+    impl->m_aspectRatio = float(data.height) / data.width;
 
     impl->mVideoW = data.width;
     impl->mVideoH = data.height;
@@ -336,7 +345,9 @@ void OpenGLDisplay::showPicture(const QImage& img)
     const int width = img.width();
     const int height = img.height();
 
-    m_aspectRatio = float(height) / width;
+    std::unique_lock<std::mutex> lock(impl->m_mutex);
+
+    impl->m_aspectRatio = float(height) / width;
 
     // RGB to YUV420
     impl->mVideoW = width;
@@ -367,10 +378,10 @@ void OpenGLDisplay::showPicture(const QImage& img)
     }
 
     // U,V
+    const unsigned int ss = img.bytesPerLine();
     for(unsigned y=0;y<height;y+=2)
     {
        const auto *s = img.scanLine(y);
-       unsigned int ss = img.bytesPerLine();
        unsigned char *d = reinterpret_cast<unsigned char*>(impl->mBufYuv) + size+y/2*width/2;
 
        for(unsigned x=0;x<width;x+=2)
@@ -408,3 +419,5 @@ void OpenGLDisplay::drawFrame(IFrameDecoder* decoder, unsigned int generation)
 void OpenGLDisplay::decoderClosing()
 {
 }
+
+float OpenGLDisplay::aspectRatio() const { return impl->m_aspectRatio; }
