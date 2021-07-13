@@ -726,7 +726,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_3262A9A7818C4E61A47966A1AC635C9D"
             {
-            "SourcePath" = "8:C:\\vcpkg\\buildtrees\\ffmpeg\\x86-windows-rel\\ffmpeg.exe"
+            "SourcePath" = "8:C:\\vcpkg\\installed\\x86-windows\\tools\\ffmpeg\\ffmpeg.exe"
             "TargetName" = "8:ffmpeg.exe"
             "Tag" = "8:"
             "Folder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
@@ -1859,7 +1859,7 @@
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.1.12"
+        "ProductVersion" = "8:0.1.13"
         "Manufacturer" = "8:aliakseis"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
