@@ -55,11 +55,6 @@ bool AudioPitchDecorator::Open(int bytesPerSample, int channels, int * samplesPe
     return true;
 }
 
-void AudioPitchDecorator::Reset()
-{
-    m_player->Reset();
-}
-
 void AudioPitchDecorator::SetVolume(double volume)
 {
     m_player->SetVolume(volume);

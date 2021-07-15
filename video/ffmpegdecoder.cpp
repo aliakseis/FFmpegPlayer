@@ -358,8 +358,6 @@ void FFmpegDecoder::closeProcessing()
     m_mainParseThreads.clear();
     m_mainDisplayThread.reset();
 
-    m_audioPlayer->Reset();
-
     // Free videoFrames
     m_videoFramesQueue.clear();
 

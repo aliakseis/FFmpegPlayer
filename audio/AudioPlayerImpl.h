@@ -27,7 +27,6 @@ public:
 
     void Close() override;
     bool Open(int bytesPerSample, int channels, int* samplesPerSec) override;
-    void Reset() override;
 
     void SetVolume(double volume) override;
     double GetVolume() const override;

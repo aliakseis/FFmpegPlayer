@@ -87,6 +87,12 @@ void AudioPlayerImpl::Close()
 
         freeBlocks(m_waveBlocks);
     }
+
+    m_waveOutput = NULL;
+    m_waveBlocks = nullptr;
+    m_waveFreeBlockCount = BLOCK_COUNT;
+    ResetEvent(m_evtHasFreeBlocks);
+    m_waveCurrentBlock = 0;
 }
 
 bool AudioPlayerImpl::Open(int bytesPerSample, int channels, int* samplesPerSec)
@@ -127,15 +133,6 @@ bool AudioPlayerImpl::Open(int bytesPerSample, int channels, int* samplesPerSec)
     }
 
     return true;
-}
-
-void AudioPlayerImpl::Reset()
-{
-    m_waveOutput = NULL;
-    m_waveBlocks = nullptr;
-    m_waveFreeBlockCount = BLOCK_COUNT;
-    ResetEvent(m_evtHasFreeBlocks);
-    m_waveCurrentBlock = 0;
 }
 
 void AudioPlayerImpl::SetVolume(double volume)

@@ -440,14 +440,6 @@ void AudioPlayerWasapi::Close()
     m_AudioClient.Release();
 }
 
-void AudioPlayerWasapi::Reset()
-{
-    if (m_AudioClient)
-    {
-        m_AudioClient->Reset();
-    }
-}
-
 void AudioPlayerWasapi::SetVolume(double volume)
 {
     if (m_SimpleAudioVolume)
