@@ -41,6 +41,7 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 find_package(Boost REQUIRED thread log)
 
+find_package(portaudio CONFIG REQUIRED)
 
 find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)
 find_library(AVCODEC_LIBRARY avcodec)
@@ -73,6 +74,8 @@ set(SOURCES
     mousehoverbutton.h
     opengldisplay.cpp
     opengldisplay.h   
+    portaudioplayer.cpp
+    portaudioplayer.h
     videocontrol.cpp
     videocontrol.h
     videocontrol.ui
@@ -111,11 +114,10 @@ target_link_libraries(video
 	${SWRESAMPLE_LIBRARY})
 
 
-file(GLOB AUDIO_SRCS ../audio/*.cpp)
-add_library(audio STATIC
-               ${AUDIO_SRCS})
-target_include_directories(audio PRIVATE ../audio)
-target_link_libraries(audio)
+#file(GLOB AUDIO_SRCS ../audio/*.cpp)
+#add_library(audio STATIC ${AUDIO_SRCS})
+#target_include_directories(audio PRIVATE ../audio)
+#target_link_libraries(audio)
 
 
-target_link_libraries(QtPlayer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets video audio)
+target_link_libraries(QtPlayer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets video portaudio)

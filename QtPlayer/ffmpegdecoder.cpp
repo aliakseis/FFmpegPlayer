@@ -1,12 +1,14 @@
 #include "ffmpegdecoder.h"
 
-#include "../audio/AudioPlayerWasapi.h"
+//#include "../audio/AudioPlayerWasapi.h"
+
+#include "portaudioplayer.h"
 
 #include "videodisplay.h"
 
 FFmpegDecoderWrapper::FFmpegDecoderWrapper()
     : m_frameDecoder(
-        GetFrameDecoder(std::make_unique<AudioPlayerWasapi>()))
+        GetFrameDecoder(std::make_unique<PortAudioPlayer>()))
 {
     m_frameDecoder->setDecoderListener(this);
 }
@@ -25,4 +27,3 @@ void FFmpegDecoderWrapper::openFile(const QString& file)
 {
     m_frameDecoder->openUrls({file.toStdString()});
 }
-
