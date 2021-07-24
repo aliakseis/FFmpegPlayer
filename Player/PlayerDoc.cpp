@@ -480,6 +480,9 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
 {
     reset();
 
+    if (auto fileName = PathFindFileName(lpszPathName))
+        SetCurrentDirectory(CString(lpszPathName, fileName - lpszPathName));
+
     const auto extension = PathFindExtension(lpszPathName);
     if (!_tcsicmp(extension, _T(".lst")))
     {
