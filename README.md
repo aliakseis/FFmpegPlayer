@@ -42,7 +42,7 @@ vcpkg install python3
 
 ```
 
-The matching Python version (currently 3.7) has to be installed and added to the PATH environment variable for the accessory DLLs to be accessible.
+The matching Python version has to be installed and added to the PATH environment variable for the accessory DLLs to be accessible.
 
 It is also possible that Boost::Python stuff will have to be enabled:
 ```
@@ -55,7 +55,7 @@ You may need to remove pytube stuff from your profile folder for the player appl
 You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mapping file that contains, for example,
 
 ```
-https://github.com/pytube/pytube/archive/master.zip = https://github.com/tfdahlin/pytube/archive/refs/heads/bug/vid_info_404.zip
+https://github.com/pytube/pytube/archive/master.zip = https://github.com/Zeecka/pytube/archive/refs/heads/fix_1060.zip
 ```
 
 Sometimes we need to go deeper, visit pytube issues list and apply fixes, for example 
