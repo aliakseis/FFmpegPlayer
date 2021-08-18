@@ -49,6 +49,27 @@
 
 namespace {
 
+void SetForegroundWindowInternal(HWND hWnd)
+{
+    if (!hWnd || !::IsWindow(hWnd) || ::SetForegroundWindow(hWnd))
+        return;
+
+    //to unlock SetForegroundWindow we need to imitate pressing [Alt] key
+    bool bPressed = false;
+    if ((::GetAsyncKeyState(VK_MENU) & 0x8000) == 0)
+    {
+        bPressed = true;
+        ::keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY | 0, 0);
+    }
+
+    ::SetForegroundWindow(hWnd);
+
+    if (bPressed)
+    {
+        ::keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+    }
+}
+
 const RationalNumber videoSpeeds[]
 {
     { 1, 2 },
@@ -480,8 +501,12 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
 {
     reset();
 
+    CString currentDirectory;
     if (auto fileName = PathFindFileName(lpszPathName))
-        SetCurrentDirectory(CString(lpszPathName, fileName - lpszPathName));
+    {
+        currentDirectory = CString(lpszPathName, fileName - lpszPathName);
+        SetCurrentDirectory(currentDirectory);
+    }
 
     const auto extension = PathFindExtension(lpszPathName);
     if (!_tcsicmp(extension, _T(".lst")))
@@ -520,7 +545,13 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
         CString mappedAudioFile;
 
         if (openSeparateFile) {
+            if (!AfxGetApp()->m_pMainWnd && AfxGetMainWnd()) {
+                SetForegroundWindowInternal(*AfxGetMainWnd());
+                AfxGetMainWnd()->ShowWindow(SW_SHOW);
+            }
             CFileDialog dlg(TRUE);
+            if (!currentDirectory.IsEmpty())
+                dlg.GetOFN().lpstrInitialDir = currentDirectory;
             if (dlg.DoModal() != IDOK)
             {
                 return false;
