@@ -42,7 +42,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#include <vector>
+#include <memory>
 
 #include <emmintrin.h>
 #include <pmmintrin.h>
@@ -240,13 +240,9 @@ void CSmbPitchShift::smbPitchShift(float pitchShift, long numSampsToProcess, lon
         gInit = true;
     }
 
-    std::vector<double> window;
-    if (window.size() != fftFrameSize)
-    {
-        window.resize(fftFrameSize);
-        for (long k = 0; k < fftFrameSize; k++) {
-            window[k] = -.5*cos(2.*M_PI*(double)k / (double)fftFrameSize) + .5;
-        }
+    auto window = std::make_unique<double[]>(fftFrameSize);
+    for (long k = 0; k < fftFrameSize; k++) {
+        window[k] = -.5*cos(2.*M_PI*(double)k / (double)fftFrameSize) + .5;
     }
 
     /* main processing loop */
