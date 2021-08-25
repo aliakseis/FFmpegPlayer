@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 #include <initializer_list>
+#include <functional>
 
 
 #ifdef _WIN32
@@ -79,7 +80,6 @@ struct IFrameDecoder
 
     virtual void SetFrameFormat(FrameFormat format, bool allowDirect3dData) = 0;
 
-    //virtual bool openFile(const PathType& file) = 0;
     virtual bool openUrls(std::initializer_list<std::string> urls) = 0;
 
     virtual void play(bool isPaused = false) = 0;
@@ -114,6 +114,9 @@ struct IFrameDecoder
     virtual void setHwAccelerated(bool hwAccelerated) = 0;
 
     virtual std::vector<std::string> getProperties() = 0;
+
+    virtual std::vector<std::string> listSubtitles() const = 0;
+    virtual bool getSubtitles(int idx, std::function<void(double, double, const std::string&)> addIntervalCallback) const = 0;
 };
 
 struct IAudioPlayer;

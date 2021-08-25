@@ -67,6 +67,7 @@ protected:
     afx_msg void OnOpensubtitlesfile();
     afx_msg void OnUpdateOpensubtitlesfile(CCmdUI *pCmdUI);
     afx_msg void OnCopyUrlToClipboard();
+    afx_msg void OnGetSubtitles(UINT id);
     DECLARE_MESSAGE_MAP()
 
 #ifdef SHARED_HANDLERS

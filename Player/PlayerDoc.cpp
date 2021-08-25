@@ -163,6 +163,8 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_UPDATE_COMMAND_UI(ID_MAXIMALRESOLUTION, &CPlayerDoc::OnUpdateMaximalresolution)
     ON_COMMAND(ID_HW_ACCELERATION, &CPlayerDoc::OnHwAcceleration)
     ON_UPDATE_COMMAND_UI(ID_HW_ACCELERATION, &CPlayerDoc::OnUpdateHwAcceleration)
+    ON_COMMAND_RANGE(ID_FIRST_SUBTITLE, ID_FIRST_SUBTITLE+99, OnGetSubtitles)
+    ON_UPDATE_COMMAND_UI_RANGE(ID_FIRST_SUBTITLE, ID_FIRST_SUBTITLE + 99, OnUpdateOpensubtitlesfile)
 END_MESSAGE_MAP()
 
 
@@ -1003,4 +1005,15 @@ void CPlayerDoc::OnHwAcceleration()
 void CPlayerDoc::OnUpdateHwAcceleration(CCmdUI *pCmdUI)
 {
     pCmdUI->SetCheck(m_frameDecoder->getHwAccelerated());
+}
+
+void CPlayerDoc::OnGetSubtitles(UINT id)
+{
+    CWaitCursor wait;
+    auto map(std::make_unique<SubtitlesMap>());
+    if (m_frameDecoder->getSubtitles(id - ID_FIRST_SUBTITLE, GetAddToSubtitlesMapLambda(map))) {
+        std::atomic_thread_fence(std::memory_order_acq_rel);
+        m_unicodeSubtitles = true;
+        m_subtitles = std::move(map);
+    }
 }

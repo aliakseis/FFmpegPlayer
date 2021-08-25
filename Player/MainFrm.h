@@ -73,4 +73,6 @@ protected:
     afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
     afx_msg LRESULT OnNcHitTest(CPoint point);
     DECLARE_MESSAGE_MAP()
+public:
+    afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 };

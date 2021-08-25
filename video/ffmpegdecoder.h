@@ -140,6 +140,10 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     std::vector<std::string> getProperties() override;
 
+    std::vector<std::string> listSubtitles() const override;
+    bool getSubtitles(int idx, std::function<void(double, double, const std::string&)> addIntervalCallback) const override;
+
+
    private:
     class IOContext;
     struct VideoParseContext;
@@ -294,4 +298,12 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     boost::atomic<RationalNumber> m_speedRational; // Numerator, Denominator
 
     bool m_hwAccelerated;
+
+    struct SubtitleItem {
+        int contextIdx;
+        int streamIdx;
+        std::string description;
+    };
+
+    std::vector<SubtitleItem> m_subtitleItems;
 };

@@ -43,3 +43,5 @@ private:
 };
 
 extern CPlayerApp theApp;
+
+enum { ID_FIRST_SUBTITLE = 7000 };

@@ -70,6 +70,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_POWERBROADCAST()
     ON_REGISTERED_MESSAGE(s_uTBBC, &CMainFrame::CreateThumbnailToolbar)
     ON_WM_NCHITTEST()
+    ON_WM_INITMENUPOPUP()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -415,4 +416,27 @@ LRESULT CMainFrame::OnNcHitTest(CPoint point)
     }
 
     return __super::OnNcHitTest(point);
+}
+
+
+void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
+{
+    CFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
+
+    if (!bSysMenu && pPopupMenu->GetMenuItemCount() == 1 && pPopupMenu->GetMenuItemID(0) == ID_FIRST_SUBTITLE_DUMMY)
+    {
+        if (CView* pView = dynamic_cast<CView*>(GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE)))
+        {
+            if (CPlayerDoc* pDoc = static_cast<DocumentAccessor*>(pView)->GetDocument())
+            {
+                pPopupMenu->DeleteMenu(0, MF_BYPOSITION);
+                auto subtitles = pDoc->getFrameDecoder()->listSubtitles();
+                int id = ID_FIRST_SUBTITLE;
+                for (auto& item : subtitles)
+                {
+                    pPopupMenu->AppendMenu(MF_STRING, id++, CA2T(item.c_str(), CP_UTF8));
+                }
+            }
+        }
+    }
 }

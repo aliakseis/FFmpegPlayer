@@ -35,7 +35,6 @@
 #define IDC_END                         1012
 #define IDC_EDIT_END                    1013
 #define IDC_END_RESET                   1014
-#define IDC_CHECK1                      1016
 #define IDC_PARSE                       1016
 #define IDC_VIDEO_PROPERTIES            1017
 #define ID_TRACK1                       32771
@@ -56,13 +55,15 @@
 #define ID_COPY_URL_TO_CLIPBOARD        32786
 #define ID_MAXIMALRESOLUTION            32787
 #define ID_HW_ACCELERATION              32788
+#define ID_AUDIO_OPENSUBTITLES          32789
+#define ID_FIRST_SUBTITLE_DUMMY         32790
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
-#define _APS_NEXT_COMMAND_VALUE         32789
+#define _APS_NEXT_COMMAND_VALUE         32791
 #define _APS_NEXT_CONTROL_VALUE         1018
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
