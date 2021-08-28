@@ -423,19 +423,38 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 {
     CFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
 
-    if (!bSysMenu && pPopupMenu->GetMenuItemCount() == 1 && pPopupMenu->GetMenuItemID(0) == ID_FIRST_SUBTITLE_DUMMY)
+    if (bSysMenu || pPopupMenu->GetMenuItemCount() != 1)
+        return;
+
+    if (CView* pView = dynamic_cast<CView*>(GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE)))
     {
-        if (CView* pView = dynamic_cast<CView*>(GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE)))
+        if (CPlayerDoc* pDoc = static_cast<DocumentAccessor*>(pView)->GetDocument())
         {
-            if (CPlayerDoc* pDoc = static_cast<DocumentAccessor*>(pView)->GetDocument())
+            switch (pPopupMenu->GetMenuItemID(0))
             {
-                pPopupMenu->DeleteMenu(0, MF_BYPOSITION);
-                auto subtitles = pDoc->getFrameDecoder()->listSubtitles();
-                int id = ID_FIRST_SUBTITLE;
-                for (auto& item : subtitles)
+            case ID_FIRST_SUBTITLE_DUMMY:
                 {
-                    pPopupMenu->AppendMenu(MF_STRING, id++, CA2T(item.c_str(), CP_UTF8));
+                    pPopupMenu->DeleteMenu(0, MF_BYPOSITION);
+                    int id = ID_FIRST_SUBTITLE;
+                    for (auto& item : pDoc->getFrameDecoder()->listSubtitles())
+                    {
+                        pPopupMenu->AppendMenu(MF_STRING, id++, CA2T(item.c_str(), CP_UTF8));
+                    }
                 }
+                break;
+            case ID_TRACK1_DUMMY:
+                {
+                    pPopupMenu->DeleteMenu(0, MF_BYPOSITION);
+                    int id = ID_TRACK1;
+                    const int nTracks = pDoc->getFrameDecoder()->getNumAudioTracks();
+                    for (int i = 1; i <= nTracks; ++i)
+                    {
+                        CString name;
+                        name.Format(_T("Track %d"), i);
+                        pPopupMenu->AppendMenu(MF_STRING, id++, name);
+                    }
+                }
+                break;
             }
         }
     }

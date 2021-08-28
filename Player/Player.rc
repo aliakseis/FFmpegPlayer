@@ -155,10 +155,7 @@ BEGIN
     BEGIN
         POPUP "Audio Track"
         BEGIN
-            MENUITEM "Track 1",                     ID_TRACK1
-            MENUITEM "Track 2",                     ID_TRACK2
-            MENUITEM "Track 3",                     ID_TRACK3
-            MENUITEM "Track 4",                     ID_TRACK4
+            MENUITEM "Track 1",                     ID_TRACK1_DUMMY
         END
         POPUP "Video Speed"
         BEGIN

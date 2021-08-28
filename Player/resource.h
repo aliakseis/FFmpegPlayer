@@ -37,10 +37,7 @@
 #define IDC_END_RESET                   1014
 #define IDC_PARSE                       1016
 #define IDC_VIDEO_PROPERTIES            1017
-#define ID_TRACK1                       32771
-#define ID_TRACK2                       32772
-#define ID_TRACK3                       32773
-#define ID_TRACK4                       32774
+#define ID_TRACK1_DUMMY                 32771
 #define ID_AUTOPLAY                     32775
 #define ID_LOOPING                      32776
 #define ID_VIDEO_SPEED1                 32777

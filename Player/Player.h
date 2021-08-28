@@ -44,4 +44,4 @@ private:
 
 extern CPlayerApp theApp;
 
-enum { ID_FIRST_SUBTITLE = 7000 };
+enum { ID_FIRST_SUBTITLE = 7000, ID_TRACK1 = 7100 };

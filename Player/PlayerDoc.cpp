@@ -147,8 +147,8 @@ class CPlayerDoc::StringDifference : public dtl::Diff<TCHAR, std::basic_string<T
 IMPLEMENT_DYNCREATE(CPlayerDoc, CDocument)
 
 BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
-    ON_COMMAND_RANGE(ID_TRACK1, ID_TRACK4, OnAudioTrack)
-    ON_UPDATE_COMMAND_UI_RANGE(ID_TRACK1, ID_TRACK4, OnUpdateAudioTrack)
+    ON_COMMAND_RANGE(ID_TRACK1, ID_TRACK1 + 99, OnAudioTrack)
+    ON_UPDATE_COMMAND_UI_RANGE(ID_TRACK1, ID_TRACK1 + 99, OnUpdateAudioTrack)
     ON_COMMAND_RANGE(ID_VIDEO_SPEED1, ID_NIGHTCORE, OnVideoSpeed)
     ON_UPDATE_COMMAND_UI_RANGE(ID_VIDEO_SPEED1, ID_NIGHTCORE, OnUpdateVideoSpeed)
     ON_COMMAND(ID_AUTOPLAY, &CPlayerDoc::OnAutoplay)
