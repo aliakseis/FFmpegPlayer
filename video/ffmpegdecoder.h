@@ -138,7 +138,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     bool getHwAccelerated() const override;
     void setHwAccelerated(bool hwAccelerated) override;
 
-    std::vector<std::string> getProperties() override;
+    std::vector<std::string> getProperties() const override;
 
     std::vector<std::string> listSubtitles() const override;
     bool getSubtitles(int idx, std::function<void(double, double, const std::string&)> addIntervalCallback) const override;

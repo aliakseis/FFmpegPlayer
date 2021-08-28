@@ -503,15 +503,14 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls)
 
     m_referenceTime = boost::chrono::high_resolution_clock::now().time_since_epoch();
 
-    AVDictionary *streamOpts = nullptr;
-    auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
-
-    //m_formatContexts.resize(urls.size());
     m_formatContexts.clear();
 
     for (const auto& url : urls)
     {
         auto formatContext = avformat_alloc_context();
+
+        AVDictionary *streamOpts = nullptr;
+        auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
 
         av_dict_set(&streamOpts, "stimeout", "5000000", 0); // 5 seconds rtsp timeout.
         av_dict_set(&streamOpts, "rw_timeout", "5000000", 0); // 5 seconds I/O timeout.
@@ -1052,7 +1051,7 @@ void FFmpegDecoder::setSpeedRational(const RationalNumber& speed)
         .time_since_epoch();
 }
 
-std::vector<std::string> FFmpegDecoder::getProperties()
+std::vector<std::string> FFmpegDecoder::getProperties() const
 {
     std::vector<std::string> result;
 

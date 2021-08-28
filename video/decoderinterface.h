@@ -113,7 +113,7 @@ struct IFrameDecoder
     virtual bool getHwAccelerated() const = 0;
     virtual void setHwAccelerated(bool hwAccelerated) = 0;
 
-    virtual std::vector<std::string> getProperties() = 0;
+    virtual std::vector<std::string> getProperties() const = 0;
 
     virtual std::vector<std::string> listSubtitles() const = 0;
     virtual bool getSubtitles(int idx, std::function<void(double, double, const std::string&)> addIntervalCallback) const = 0;
