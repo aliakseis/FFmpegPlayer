@@ -37,14 +37,12 @@ namespace
  *  from mpv/sub/sd_ass.c
  * ass_to_plaintext() was written by wm4 and he says it can be under LGPL
  */
-
-
 std::string ass_to_plaintext(const char *in)
 {
     std::string result;
 
     bool in_tag = false;
-    const char *open_tag_pos = NULL;
+    const char *open_tag_pos = nullptr;
     bool in_drawing = false;
     while (*in) {
         if (in_tag) {

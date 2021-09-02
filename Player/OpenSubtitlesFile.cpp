@@ -10,6 +10,61 @@
 
 namespace {
 
+/*
+ *  from mpv/sub/sd_ass.c
+ * ass_to_plaintext() was written by wm4 and he says it can be under LGPL
+ */
+std::string ass_to_plaintext(const char *in)
+{
+    std::string result;
+
+    bool in_tag = false;
+    const char *open_tag_pos = nullptr;
+    bool in_drawing = false;
+    while (*in) {
+        if (in_tag) {
+            if (in[0] == '}') {
+                in += 1;
+                in_tag = false;
+            } else if (in[0] == '\\' && in[1] == 'p') {
+                in += 2;
+                // Skip text between \pN and \p0 tags. A \p without a number
+                // is the same as \p0, and leading 0s are also allowed.
+                in_drawing = false;
+                while (in[0] >= '0' && in[0] <= '9') {
+                    if (in[0] != '0')
+                        in_drawing = true;
+                    in += 1;
+                }
+            } else {
+                in += 1;
+            }
+        } else {
+            if (in[0] == '\\' && (in[1] == 'N' || in[1] == 'n')) {
+                in += 2;
+                result += '\n';
+            } else if (in[0] == '\\' && in[1] == 'h') {
+                in += 2;
+                result += ' ';
+            } else if (in[0] == '{') {
+                open_tag_pos = in;
+                in += 1;
+                in_tag = true;
+            } else {
+                if (!in_drawing)
+                    result += in[0];
+                in += 1;
+            }
+        }
+    }
+    // A '{' without a closing '}' is always visible.
+    if (in_tag) {
+        result += open_tag_pos;
+    }
+
+    return result;
+}
+
 CString ChangePathExtension(const TCHAR* videoPathName, const TCHAR* ext)
 {
     CString subRipPathName(videoPathName);
@@ -177,14 +232,8 @@ bool OpenSubStationAlphaFile(const TCHAR* videoPathName,
         if (skip)
             continue;
 
-        std::string subtitle;
-        if (!std::getline(ss, subtitle, '\\'))
-            continue;
-        while (std::getline(ss, buffer, '\\'))
-        {
-            subtitle +=
-                (buffer[0] == 'N' || buffer[0] == 'n') ? '\n' + buffer.substr(1) : '\\' + buffer;
-        }
+        std::getline(ss, buffer, {});
+        std::string subtitle = ass_to_plaintext(buffer.c_str());
 
         if (!unicodeSubtitles && autoDetectedUnicode)
             autoDetectedUnicode = IsTextUtf8(subtitle);
@@ -219,14 +268,11 @@ bool OpenMatchingSubtitlesFile(const TCHAR* videoPathName,
     bool& unicodeSubtitles,
     AddIntervalCallback addIntervalCallback)
 {
-    if (OpenSubRipFile(ChangePathExtension(videoPathName, _T(".srt")), unicodeSubtitles, addIntervalCallback))
-        return true;
-
     for (auto ext : { _T(".ass"), _T(".ssa") })
     {
         if (OpenSubStationAlphaFile(ChangePathExtension(videoPathName, ext), unicodeSubtitles, addIntervalCallback))
             return true;
     }
 
-    return false;
+    return OpenSubRipFile(ChangePathExtension(videoPathName, _T(".srt")), unicodeSubtitles, addIntervalCallback);
 }
