@@ -928,6 +928,13 @@ float CPlayerDoc::getVideoSpeed() const
 void CPlayerDoc::OnOpensubtitlesfile()
 {
     CFileDialog dlg(TRUE); // TODO extensions
+    CString currentDirectory;
+    if (auto fileName = PathFindFileName(static_cast<LPCTSTR>(m_strPathName)))
+    {
+        currentDirectory = CString(static_cast<LPCTSTR>(m_strPathName),
+            fileName - static_cast<LPCTSTR>(m_strPathName));
+        dlg.GetOFN().lpstrInitialDir = currentDirectory;
+    }
     if (dlg.DoModal() != IDOK)
     {
         return;
