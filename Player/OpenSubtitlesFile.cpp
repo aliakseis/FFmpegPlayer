@@ -74,12 +74,6 @@ CString ChangePathExtension(const TCHAR* videoPathName, const TCHAR* ext)
     return subRipPathName;
 }
 
-bool IsUTF8(const std::string& buffer)
-{
-    return buffer.length() > 2
-        && buffer[0] == char(0xEF) && buffer[1] == char(0xBB) && buffer[2] == char(0xBF);
-}
-
 // https://chromium.googlesource.com/chromium/src/third_party/+/refs/heads/master/unrar/src/unicode.cpp
 // Source data can be both with and without UTF-8 BOM.
 bool IsTextUtf8(const char *Src, size_t SrcSize)
@@ -105,25 +99,15 @@ bool IsTextUtf8(const std::string& Src)
 }
 
 
-bool OpenSubRipFile(const TCHAR* videoPathName,
+bool OpenSubRipFile(std::istream& s,
     bool& unicodeSubtitles,
     AddIntervalCallback addIntervalCallback)
 {
-    std::ifstream s(ChangePathExtension(videoPathName, _T(".srt")));
-    if (!s)
-        return false;
-
     bool autoDetectedUnicode = true;
+    bool ok = false;
     std::string buffer;
-    bool first = true;
     while (std::getline(s, buffer))
     {
-        if (first)
-        {
-            unicodeSubtitles = IsUTF8(buffer);
-            first = false;
-        }
-
         if (std::find_if(buffer.begin(), buffer.end(), [](unsigned char c) { return !std::isspace(c); })
             == buffer.end())
         {
@@ -161,34 +145,25 @@ bool OpenSubRipFile(const TCHAR* videoPathName,
         if (!subtitle.empty())
         {
             addIntervalCallback(start, end, subtitle);
+            ok = true;
         }
     }
 
     if (!unicodeSubtitles)
         unicodeSubtitles = autoDetectedUnicode;
 
-    return true;
+    return ok;
 }
 
-bool OpenSubStationAlphaFile(const TCHAR* videoPathName,
+bool OpenSubStationAlphaFile(std::istream& s,
     bool& unicodeSubtitles,
     AddIntervalCallback addIntervalCallback)
 {
-    std::ifstream s(videoPathName);
-    if (!s)
-        return false;
-
     bool autoDetectedUnicode = true;
+    bool ok = false;
     std::string buffer;
-    bool first = true;
     while (std::getline(s, buffer))
     {
-        if (first)
-        {
-            unicodeSubtitles = IsUTF8(buffer);
-            first = false;
-        }
-
         std::istringstream ss(buffer);
 
         std::getline(ss, buffer, ':');
@@ -242,13 +217,115 @@ bool OpenSubStationAlphaFile(const TCHAR* videoPathName,
         {
             subtitle += '\n'; // The last '\n' is for aggregating overlapped subtitles (if any)
             addIntervalCallback(start, end, subtitle);
+            ok = true;
         }
     }
 
     if (!unicodeSubtitles)
         unicodeSubtitles = autoDetectedUnicode;
 
-    return true;
+    return ok;
+}
+
+template<char C>
+class FilterBuf : public std::streambuf
+{
+    char readBuf_;
+    const char* pExternBuf_;
+
+    int_type underflow() override
+    {
+        if (gptr() == &readBuf_)
+            return traits_type::to_int_type(readBuf_);
+
+        for (; *pExternBuf_ == C; ++pExternBuf_);
+
+        if (*pExternBuf_ == '\0')
+            return traits_type::eof();
+
+        int_type nextChar = *pExternBuf_++;
+
+        readBuf_ = traits_type::to_char_type(nextChar);
+
+        setg(&readBuf_, &readBuf_, &readBuf_ + 1);
+        return traits_type::to_int_type(readBuf_);
+    }
+
+public:
+    explicit FilterBuf(const char* pExternBuf)
+        : pExternBuf_(pExternBuf)
+    {
+        setg(nullptr, nullptr, nullptr);
+    }
+};
+
+bool OpenSubFile(
+    bool(*doOpenSubFile)(std::istream&, bool&, AddIntervalCallback),
+    const TCHAR* videoPathName,
+    bool& unicodeSubtitles,
+    AddIntervalCallback addIntervalCallback)
+{
+    do
+    {
+        std::ifstream s(videoPathName);
+        if (!s)
+            return false;
+
+        unicodeSubtitles = false;
+        const char ch = s.peek();
+        if (ch == char(0xFF))
+        {
+            s.get();
+            if (char(s.peek()) == char(0xFE))
+            {
+                break; // go to unicode part
+            }
+            s.unget();
+        }
+        else if (ch == char(0xEF))
+        {
+            s.get();
+            if (char(s.peek()) == char(0xBB))
+            {
+                s.get();
+                if (char(s.peek()) == char(0xBF))
+                {
+                    unicodeSubtitles = true;
+                }
+                else
+                {
+                    s.unget();
+                    s.unget();
+                }
+            }
+            else
+                s.unget();
+        }
+
+        return doOpenSubFile(s, unicodeSubtitles, addIntervalCallback);
+
+    } while (false);
+
+    std::ifstream s(videoPathName, std::ios::binary);
+    if (!s)
+        return false;
+
+    s.seekg(0, std::ios::end);
+    const auto size = static_cast<size_t>(s.tellg()) - 2;
+    s.seekg(2, std::ios::beg);
+
+    std::wstring str(size / 2 + 1, L'\0');
+
+    s.read(static_cast<char*>(static_cast<void*>(str.data())), size);
+
+    ATL::CW2A text(str.c_str(), CP_UTF8);
+    FilterBuf<'\r'> buf(text);
+
+    std::iostream ss(&buf);
+
+    unicodeSubtitles = true;
+
+    return doOpenSubFile(ss, unicodeSubtitles, addIntervalCallback);
 }
 
 } // namespace
@@ -259,9 +336,9 @@ bool OpenSubtitlesFile(const TCHAR* videoPathName,
 {
     const auto extension = PathFindExtension(videoPathName);
     if (!_tcsicmp(extension, _T(".srt")))
-        return OpenSubRipFile(videoPathName, unicodeSubtitles, addIntervalCallback);
+        return OpenSubFile(OpenSubRipFile, videoPathName, unicodeSubtitles, addIntervalCallback);
 
-    return OpenSubStationAlphaFile(videoPathName, unicodeSubtitles, addIntervalCallback);
+    return OpenSubFile(OpenSubStationAlphaFile, videoPathName, unicodeSubtitles, addIntervalCallback);
 }
 
 bool OpenMatchingSubtitlesFile(const TCHAR* videoPathName,
@@ -270,9 +347,11 @@ bool OpenMatchingSubtitlesFile(const TCHAR* videoPathName,
 {
     for (auto ext : { _T(".ass"), _T(".ssa") })
     {
-        if (OpenSubStationAlphaFile(ChangePathExtension(videoPathName, ext), unicodeSubtitles, addIntervalCallback))
+        if (OpenSubFile(OpenSubStationAlphaFile, ChangePathExtension(videoPathName, ext), unicodeSubtitles, addIntervalCallback))
             return true;
     }
 
-    return OpenSubRipFile(ChangePathExtension(videoPathName, _T(".srt")), unicodeSubtitles, addIntervalCallback);
+    const auto ext = ChangePathExtension(videoPathName, _T(".srt"));
+    return OpenSubFile(OpenSubRipFile, ext, unicodeSubtitles, addIntervalCallback)
+        || OpenSubFile(OpenSubStationAlphaFile, ext, unicodeSubtitles, addIntervalCallback);
 }
