@@ -335,8 +335,11 @@ bool OpenSubtitlesFile(const TCHAR* videoPathName,
     AddIntervalCallback addIntervalCallback)
 {
     const auto extension = PathFindExtension(videoPathName);
-    if (!_tcsicmp(extension, _T(".srt")))
-        return OpenSubFile(OpenSubRipFile, videoPathName, unicodeSubtitles, addIntervalCallback);
+    if (!_tcsicmp(extension, _T(".srt"))
+        && OpenSubFile(OpenSubRipFile, videoPathName, unicodeSubtitles, addIntervalCallback))
+    {
+        return true;
+    }
 
     return OpenSubFile(OpenSubStationAlphaFile, videoPathName, unicodeSubtitles, addIntervalCallback);
 }
