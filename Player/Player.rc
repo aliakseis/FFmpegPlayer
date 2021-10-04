@@ -170,6 +170,7 @@ BEGIN
         END
         MENUITEM "Maximal Resolution",          ID_MAXIMALRESOLUTION
         MENUITEM "Hardware Acceleration",       ID_HW_ACCELERATION
+        MENUITEM "Super Resolution",            ID_SUPER_RESOLUTION
         MENUITEM "Open Subtitles File...",      ID_OPENSUBTITLESFILE
         POPUP "Open Subtitles"
         BEGIN

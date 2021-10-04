@@ -1,0 +1,274 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{632353E4-4856-38F9-9E74-ED41BD99D7E5}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>Win32</Platform>
+    <ProjectName>Anime4KCPPCore</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+    <VcpkgEnabled>true</VcpkgEnabled>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="do_not_import_user.props" Condition="exists('do_not_import_user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Anime4KCPP\build\bin\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Anime4KCPPCore.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Anime4KCPPCore</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Anime4KCPPCore</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.lib</TargetExt>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Anime4KCPP\build\bin\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Anime4KCPPCore.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Anime4KCPPCore</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Anime4KCPPCore</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.lib</TargetExt>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SuppressStartupBanner>
+      </SuppressStartupBanner>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY="PPL";ANIME4KCPP_CORE_COMPILER="MSVC";ANIME4KCPP_CORE_BUILD_DATE="2021-10-01";ANIME4KCPP_CORE_VERSION="2.6.0";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS="dev";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY=\"PPL\";ANIME4KCPP_CORE_COMPILER=\"MSVC\";ANIME4KCPP_CORE_BUILD_DATE=\"2021-10-01\";ANIME4KCPP_CORE_VERSION=\"2.6.0\";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS=\"dev\";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SuppressStartupBanner>
+      </SuppressStartupBanner>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY="PPL";ANIME4KCPP_CORE_COMPILER="MSVC";ANIME4KCPP_CORE_BUILD_DATE="2021-10-01";ANIME4KCPP_CORE_VERSION="2.6.0";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS="dev";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY=\"PPL\";ANIME4KCPP_CORE_COMPILER=\"MSVC\";ANIME4KCPP_CORE_BUILD_DATE=\"2021-10-01\";ANIME4KCPP_CORE_VERSION=\"2.6.0\";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS=\"dev\";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>
+      </AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SuppressStartupBanner>
+      </SuppressStartupBanner>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY="PPL";ANIME4KCPP_CORE_COMPILER="MSVC";ANIME4KCPP_CORE_BUILD_DATE="2021-10-01";ANIME4KCPP_CORE_VERSION="2.6.0";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS="dev";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY=\"PPL\";ANIME4KCPP_CORE_COMPILER=\"MSVC\";ANIME4KCPP_CORE_BUILD_DATE=\"2021-10-01\";ANIME4KCPP_CORE_VERSION=\"2.6.0\";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS=\"dev\";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SuppressStartupBanner>
+      </SuppressStartupBanner>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY="PPL";ANIME4KCPP_CORE_COMPILER="MSVC";ANIME4KCPP_CORE_BUILD_DATE="2021-10-01";ANIME4KCPP_CORE_VERSION="2.6.0";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS="dev";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY=\"PPL\";ANIME4KCPP_CORE_COMPILER=\"MSVC\";ANIME4KCPP_CORE_BUILD_DATE=\"2021-10-01\";ANIME4KCPP_CORE_VERSION=\"2.6.0\";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS=\"dev\";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>
+      </AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Anime4KCPP\core\include\AC.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACCPU.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACCreator.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACCuda.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACException.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACInitializer.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACManager.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACNCNN.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACNetType.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACOpenCL.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACProcessor.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ACRegister.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\Anime4KCPP.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\CNN.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\CPUACNet.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\CPUACNetProcessor.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\CPUAnime4K09.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\CPUCNNProcessor.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\CoreInfo.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\CudaACNet.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\CudaAnime4K09.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\CudaInterface.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\FilterProcessor.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\NCNNACNet.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\NCNNACNetID.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\NCNNACNetModel.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\OpenCLACNet.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\OpenCLACNetKernel.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\OpenCLAnime4K09.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\OpenCLAnime4K09Kernel.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\Parallel.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\ThreadPool.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\VideoCodec.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\VideoIO.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\VideoIOAsync.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\VideoIOSerial.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\VideoIOThreads.hpp" />
+    <ClInclude Include="Anime4KCPP\core\include\VideoProcessor.hpp" />
+    <ClCompile Include="Anime4KCPP\core\src\AC.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\ACCreator.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\ACCuda.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\ACNCNN.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\ACOpenCL.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\CPUACNet.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\CPUACNetProcessor.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\CPUAnime4K09.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\CPUCNNProcessor.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\CoreInfo.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\CudaACNet.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\CudaAnime4K09.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\FilterProcessor.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\NCNNACNet.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\OpenCLACNet.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\OpenCLAnime4K09.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\VideoIO.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\VideoIOAsync.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\VideoIOSerial.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\VideoIOThreads.cpp" />
+    <ClCompile Include="Anime4KCPP\core\src\VideoProcessor.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
