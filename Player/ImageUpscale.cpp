@@ -47,28 +47,24 @@ void ImageUpscale(uint8_t* input, int inputStride, int inputWidth, int inputHeig
     split(img, ycbcr_channels);
 
     auto cbcr_channel = ycbcr_channels[1].reshape(2);
-    std::vector <cv::Mat> cbcr_channels;
+    cv::Mat cbcr_channels[2];
     split(cbcr_channel, cbcr_channels);
 
     ac->loadImage(ycbcr_channels[0], cbcr_channels[0], cbcr_channels[1]);
 
     ac->process();
 
-    cv::Mat u_img;
+    std::vector <cv::Mat> channels(2);
     std::vector <cv::Mat> out_cbcr_channels(2);
 
-    ac->saveImage(u_img, out_cbcr_channels[0], out_cbcr_channels[1]);
+    ac->saveImage(channels[0], out_cbcr_channels[0], out_cbcr_channels[1]);
 
-    outputWidth = u_img.cols;
-    outputHeight = u_img.rows;
+    outputWidth = channels[0].cols;
+    outputHeight = channels[0].rows;
 
     cv::Mat CrCb;
     merge(out_cbcr_channels, CrCb);
-    auto CrCb_channel = CrCb.reshape(1);
-
-    std::vector <cv::Mat> channels;
-    channels.push_back(u_img);
-    channels.push_back(CrCb_channel);
+    channels[1] = CrCb.reshape(1);
 
     cv::Mat merged_img;
     merge(channels, merged_img);

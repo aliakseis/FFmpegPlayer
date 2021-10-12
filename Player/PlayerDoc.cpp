@@ -1027,12 +1027,12 @@ void CPlayerDoc::OnGetSubtitles(UINT id)
 void CPlayerDoc::OnSuperResolution()
 {
     m_superResolution = !m_superResolution;
-
     if (m_superResolution)
+    {
+        CWaitCursor wait;
         EnableImageUpscale();
-
-    if (m_superResolution)
         m_frameDecoder->setImageConversionFunc(ImageUpscale);
+    }
     else
         m_frameDecoder->setImageConversionFunc({});
 }
