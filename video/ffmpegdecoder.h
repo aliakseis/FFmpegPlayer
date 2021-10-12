@@ -14,6 +14,7 @@ extern "C" {
 #include <string>
 #include <boost/thread/thread.hpp>
 #include <boost/atomic.hpp>
+#include <boost/smart_ptr/atomic_shared_ptr.hpp>
 #include <memory>
 #include <vector>
 
@@ -143,6 +144,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     std::vector<std::string> listSubtitles() const override;
     bool getSubtitles(int idx, std::function<void(double, double, const std::string&)> addIntervalCallback) const override;
 
+    void setImageConversionFunc(ImageConversionFunc func) override;
 
    private:
     class IOContext;
@@ -192,7 +194,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     void seekWhilePaused();
 
-    void handleDirect3dData(AVFrame* videoFrame);
+    void handleDirect3dData(AVFrame* videoFrame, bool forceConversion);
 
     double GetHiResTime();
 
@@ -306,4 +308,6 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     };
 
     std::vector<SubtitleItem> m_subtitleItems;
+
+    boost::atomic_shared_ptr<ImageConversionFunc> m_imageConversionFunc;
 };

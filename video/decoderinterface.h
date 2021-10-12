@@ -76,6 +76,8 @@ struct IFrameDecoder
         PIX_FMT_BGR24,     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
     };
 
+    typedef std::function<void(uint8_t*, int, int, int, std::vector<uint8_t>&, int&, int&)> ImageConversionFunc;
+
     virtual ~IFrameDecoder() = default;
 
     virtual void SetFrameFormat(FrameFormat format, bool allowDirect3dData) = 0;
@@ -117,6 +119,8 @@ struct IFrameDecoder
 
     virtual std::vector<std::string> listSubtitles() const = 0;
     virtual bool getSubtitles(int idx, std::function<void(double, double, const std::string&)> addIntervalCallback) const = 0;
+
+    virtual void setImageConversionFunc(ImageConversionFunc func) = 0;
 };
 
 struct IAudioPlayer;

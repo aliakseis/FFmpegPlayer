@@ -142,10 +142,10 @@ private:
 
     class SubtitlesMap;
     std::unique_ptr<SubtitlesMap> m_subtitles;
-    bool m_unicodeSubtitles;
-    bool m_onEndOfStream;
-    bool m_autoPlay;
-    bool m_looping;
+    bool m_unicodeSubtitles = false;
+    bool m_onEndOfStream = false;
+    bool m_autoPlay = false;
+    bool m_looping = false;
 
     std::string m_originalUrl;
     std::string m_url;
@@ -157,12 +157,15 @@ private:
     std::deque<std::string> m_playList;
     std::function<void()> m_reopenFunc;
 
-    bool m_nightcore;
+    bool m_nightcore = false;
 
-    bool m_maximalResolution;
+    bool m_maximalResolution = false;
+    bool m_superResolution = false;
 public:
     afx_msg void OnMaximalresolution();
     afx_msg void OnUpdateMaximalresolution(CCmdUI *pCmdUI);
     afx_msg void OnHwAcceleration();
     afx_msg void OnUpdateHwAcceleration(CCmdUI *pCmdUI);
+    afx_msg void OnSuperResolution();
+    afx_msg void OnUpdateSuperResolution(CCmdUI *pCmdUI);
 };

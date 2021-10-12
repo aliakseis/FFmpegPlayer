@@ -54,13 +54,14 @@
 #define ID_HW_ACCELERATION              32788
 #define ID_AUDIO_OPENSUBTITLES          32789
 #define ID_FIRST_SUBTITLE_DUMMY         32790
+#define ID_SUPER_RESOLUTION             32791
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
-#define _APS_NEXT_COMMAND_VALUE         32791
+#define _APS_NEXT_COMMAND_VALUE         32792
 #define _APS_NEXT_CONTROL_VALUE         1018
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

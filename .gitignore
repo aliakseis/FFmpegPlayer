@@ -225,3 +225,5 @@ Player.VC.VC.opendb
 CMakeLists.txt.user*
 
 .clang-tidy
+
+.vs/

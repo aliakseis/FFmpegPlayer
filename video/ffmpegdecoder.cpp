@@ -1108,10 +1108,10 @@ std::vector<std::string> FFmpegDecoder::getProperties() const
 }
 
 
-void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame)
+void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame, bool forceConversion)
 {
 #ifdef USE_HWACCEL
-    if (!m_allowDirect3dData && videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
+    if ((forceConversion || !m_allowDirect3dData) && videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
     {
         dxva2_retrieve_data(m_videoCodecContext, videoFrame);
         assert(videoFrame->format != AV_PIX_FMT_DXVA2_VLD);
@@ -1234,4 +1234,9 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<void(double, double, con
     }
 
     return true;
+}
+
+void FFmpegDecoder::setImageConversionFunc(ImageConversionFunc func)
+{
+    m_imageConversionFunc = boost::make_shared<ImageConversionFunc>(std::move(func));
 }

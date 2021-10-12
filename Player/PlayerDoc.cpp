@@ -20,6 +20,8 @@
 
 #include "YouTuber.h"
 
+#include "ImageUpscale.h"
+
 #include <propkey.h>
 #include <memory>
 
@@ -165,6 +167,8 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_UPDATE_COMMAND_UI(ID_HW_ACCELERATION, &CPlayerDoc::OnUpdateHwAcceleration)
     ON_COMMAND_RANGE(ID_FIRST_SUBTITLE, ID_FIRST_SUBTITLE+99, OnGetSubtitles)
     ON_UPDATE_COMMAND_UI_RANGE(ID_FIRST_SUBTITLE, ID_FIRST_SUBTITLE + 99, OnUpdateOpensubtitlesfile)
+    ON_COMMAND(ID_SUPER_RESOLUTION, &CPlayerDoc::OnSuperResolution)
+    ON_UPDATE_COMMAND_UI(ID_SUPER_RESOLUTION, &CPlayerDoc::OnUpdateSuperResolution)
 END_MESSAGE_MAP()
 
 
@@ -175,12 +179,6 @@ CPlayerDoc::CPlayerDoc()
         GetFrameDecoder(
             std::make_unique<AudioPitchDecorator>(GetAudioPlayer(),
             std::bind(&CPlayerDoc::getVideoSpeed, this))))
-    , m_unicodeSubtitles(false)
-    , m_onEndOfStream(false)
-    , m_autoPlay(false)
-    , m_looping(false)
-    , m_nightcore(false)
-    , m_maximalResolution(false)
 {
     m_frameDecoder->setDecoderListener(this);
 }
@@ -1023,4 +1021,25 @@ void CPlayerDoc::OnGetSubtitles(UINT id)
         m_unicodeSubtitles = true;
         m_subtitles = std::move(map);
     }
+}
+
+
+void CPlayerDoc::OnSuperResolution()
+{
+    m_superResolution = !m_superResolution;
+    if (m_superResolution)
+    {
+        CWaitCursor wait;
+        EnableImageUpscale();
+        m_frameDecoder->setImageConversionFunc(ImageUpscale);
+    }
+    else
+        m_frameDecoder->setImageConversionFunc({});
+}
+
+
+void CPlayerDoc::OnUpdateSuperResolution(CCmdUI *pCmdUI)
+{
+    pCmdUI->Enable(CanUpscaleImage());
+    pCmdUI->SetCheck(m_superResolution);
 }

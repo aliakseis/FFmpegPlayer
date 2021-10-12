@@ -11,11 +11,12 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 
 
-```
-Visual Studio 2015 or 2017
-```
+- Visual Studio 2017 or higher.
+- Intel SDK For OpenCL Applications installation is required for the super resolution functionality intergated.
 
 ### Installing
+
+Be sure to download git submodules.
 
 To get a development env running:
 
@@ -25,17 +26,17 @@ Install vcpkg from https://github.com/Microsoft/vcpkg.
 .\vcpkg integrate install
 ```
 
-Install Boost, FFmpeg:
+Install Boost, FFmpeg, OpenCV etc... :
 
 ```
 vcpkg install boost boost:x86-windows
 vcpkg install ffmpeg ffmpeg:x86-windows
+...
 
 ```
 
-If libbz2.dll is missing from the player debug directory, then vcpkg/installed/x86-windows/debug/bin/libbz2d.dll file is to be copied into that. 
-
-YouTube view support using https://github.com/pytube/pytube.git can be turned on by uncommenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. Python is also needed in this case:
+YouTube view support using https://github.com/pytube/pytube.git is turned on by default. It can be turned off by commenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. 
+Python is also needed otherwise:
 
 ```
 vcpkg install python3
@@ -58,7 +59,7 @@ You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mappi
 https://github.com/pytube/pytube/archive/master.zip = https://github.com/Zeecka/pytube/archive/refs/heads/fix_1060.zip
 ```
 
-Sometimes we need to go deeper, visit pytube issues list and apply fixes, for example 
+Sometimes it is needed to visit pytube issues list and apply fixes, for example 
 - https://github.com/get-pytube/pytube3/issues/81
 - https://github.com/H4KKR/pytubeX/pull/5/commits
 

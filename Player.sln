@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.1622
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Player", "Player\Player.vcxproj", "{C90196CD-7354-4ED4-BFC0-E51A7E1CBE3C}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -22,6 +22,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls", "Dlls\Dlls.csproj", "{BC1BC9F1-893D-4715-818A-F37F74EB5710}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio", "audio\audio.vcxproj", "{8B955995-B5EC-41F0-940A-48A6F17BCBB8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Anime4KCPPCore", "Anime4KCPPCore.vcxproj", "{632353E4-4856-38F9-9E74-ED41BD99D7E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,8 +85,19 @@ Global
 		{8B955995-B5EC-41F0-940A-48A6F17BCBB8}.Release|Win32.Build.0 = Release|Win32
 		{8B955995-B5EC-41F0-940A-48A6F17BCBB8}.Release|x64.ActiveCfg = Release|x64
 		{8B955995-B5EC-41F0-940A-48A6F17BCBB8}.Release|x64.Build.0 = Release|x64
+		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Debug|Win32.Build.0 = Debug|Win32
+		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Debug|x64.ActiveCfg = Debug|x64
+		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Debug|x64.Build.0 = Debug|x64
+		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Release|Win32.ActiveCfg = Release|Win32
+		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Release|Win32.Build.0 = Release|Win32
+		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Release|x64.ActiveCfg = Release|x64
+		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {75699A84-B7AB-4C3D-86E3-5E2370B5D57B}
 	EndGlobalSection
 EndGlobal

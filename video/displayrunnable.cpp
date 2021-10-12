@@ -25,7 +25,12 @@ void FFmpegDecoder::displayRunnable()
             });
         }
 
-        const VideoFrame& current_frame = m_videoFramesQueue.front();
+        VideoFrame& current_frame = m_videoFramesQueue.front();
+
+        if (current_frame.m_convert.valid() && !current_frame.m_convert.get()) {
+                finishedDisplayingFrame(m_generation);
+                continue;
+        }
 
         // Frame skip
         if (!m_videoFramesQueue.canPush()

@@ -170,6 +170,7 @@ BEGIN
         END
         MENUITEM "Maximal Resolution",          ID_MAXIMALRESOLUTION
         MENUITEM "Hardware Acceleration",       ID_HW_ACCELERATION
+        MENUITEM "Super Resolution",            ID_SUPER_RESOLUTION
         MENUITEM "Open Subtitles File...",      ID_OPENSUBTITLESFILE
         POPUP "Open Subtitles"
         BEGIN
@@ -222,16 +223,17 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "About FFmpeg Player"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,9,14,21,20,SS_REALSIZEIMAGE
+    ICON            IDR_MAINFRAME,IDC_STATIC,9,14,20,20,SS_REALSIZEIMAGE
     DEFPUSHBUTTON   "OK",IDOK,284,157,50,14,WS_GROUP
     LTEXT           "FFmpeg Player, Version 1.0",IDC_STATIC,178,14,114,8,SS_NOPREFIX
     LTEXT           "github.com/aliakseis/FFmpegPlayer",IDC_STATIC,178,22,114,8
-    LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,178,38,114,8
-    LTEXT           "www.iconfinder.com/Rudityas",IDC_STATIC,178,46,97,8
-    LTEXT           "YouTube: github.com/pytube/pytube",IDC_STATIC,178,62,122,8
-    LTEXT           "github.com/jdepoix/youtube-transcript-api",IDC_STATIC,178,70,141,8
-    LTEXT           "Pitch shifting by Stephan M. Bernsee",IDC_STATIC,178,86,141,8
+    LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,178,36,114,8
+    LTEXT           "www.iconfinder.com/Rudityas",IDC_STATIC,178,44,97,8
+    LTEXT           "YouTube: github.com/pytube/pytube",IDC_STATIC,178,58,122,8
+    LTEXT           "github.com/jdepoix/youtube-transcript-api",IDC_STATIC,178,66,141,8
+    LTEXT           "Pitch shifting by Stephan M. Bernsee",IDC_STATIC,178,80,141,8
     LTEXT           "",IDC_VIDEO_PROPERTIES,178,109,156,48
+    LTEXT           "Upscaling: github.com/TianZerL/Anime4KCPP",IDC_STATIC,178,94,156,8
 END
 
 IDD_DIALOGBAR_PLAYER_CONTROL DIALOGEX 0, 0, 372, 22
