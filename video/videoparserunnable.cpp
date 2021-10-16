@@ -8,7 +8,7 @@
 namespace {
 
 bool frameToImage(
-    VideoFrame& videoFrameData, 
+    VideoFrame& videoFrameData,
     AVFramePtr& m_videoFrame,
     SwsContext*& m_imageCovertContext,
     AVPixelFormat m_pixelFormat)
@@ -53,6 +53,80 @@ bool frameToImage(
     return true;
 }
 
+auto GetAsyncConversionFunction(AVFramePtr input,
+    std::promise<VideoFrame *> &videoFramePromise,
+    boost::shared_ptr<IFrameDecoder::ImageConversionFunc> imageConversionFunc,
+    AVPixelFormat pixelFormat)
+{
+    return [input = std::move(input),
+        outputFut = videoFramePromise.get_future(),
+        imageConversionFunc = std::move(imageConversionFunc),
+        pixelFormat]() mutable
+    {
+        try {
+            const int stride = input->width * 2;
+
+            std::vector<uint8_t> img(stride * input->height);
+
+            const auto data = img.data();
+
+            {
+                auto img_convert_ctx = sws_getContext(
+                    input->width,
+                    input->height,
+                    (AVPixelFormat)input->format,
+                    input->width,
+                    input->height,
+                    AV_PIX_FMT_YUYV422,
+                    SWS_FAST_BILINEAR, NULL, NULL, NULL);
+
+                sws_scale(img_convert_ctx, input->data, input->linesize, 0, input->height,
+                    &data,
+                    &stride);
+
+                sws_freeContext(img_convert_ctx);
+            }
+
+            std::vector<uint8_t> outputImg;
+
+            int outputHeight{};
+            int outputWidth{};
+
+            (*imageConversionFunc)(data, stride, input->width, input->height, outputImg, outputWidth, outputHeight);
+
+            const int outputStride = outputImg.size() / outputHeight;
+
+            auto output = outputFut.get();
+            if (!output)
+                return false;
+
+            output->realloc(pixelFormat, outputWidth, outputHeight);
+
+            auto img_convert_ctx = sws_getContext(
+                outputWidth,
+                outputHeight,
+                AV_PIX_FMT_YUYV422,
+                outputWidth,
+                outputHeight,
+                pixelFormat,
+                SWS_FAST_BILINEAR, NULL, NULL, NULL);
+
+            const auto outputData = outputImg.data();
+
+            sws_scale(img_convert_ctx, &outputData, &outputStride, 0, outputHeight,
+                output->m_image->data,
+                output->m_image->linesize);
+
+            sws_freeContext(img_convert_ctx);
+        }
+        catch (const std::exception& ex) {
+            CHANNEL_LOG(ffmpeg_sync) << "Exception in async converter: " << typeid(ex).name() << ": " << ex.what();
+            return false;
+        }
+
+        return true;
+    };
+}
 
 } // namespace
 
@@ -219,74 +293,10 @@ bool FFmpegDecoder::handleVideoFrame(
 
         std::swap(input, videoFrame);
 
-        auto asyncConversion = [input = std::move(input), 
-            outputFut = videoFramePromise.get_future(), 
-            imageConversionFunc = std::move(imageConversionFunc),
-            pixelFormat = m_pixelFormat]() mutable
-        {
-            try {
-                const int stride = input->width * 2;
-
-                std::vector<uint8_t> img(stride * input->height);
-
-                const auto data = img.data();
-
-                {
-                    auto img_convert_ctx = sws_getContext(
-                        input->width,
-                        input->height,
-                        (AVPixelFormat)input->format,
-                        input->width,
-                        input->height,
-                        AV_PIX_FMT_YUYV422,
-                        SWS_FAST_BILINEAR, NULL, NULL, NULL);
-
-                    sws_scale(img_convert_ctx, input->data, input->linesize, 0, input->height,
-                        &data,
-                        &stride);
-
-                    sws_freeContext(img_convert_ctx);
-                }
-
-                std::vector<uint8_t> outputImg;
-
-                int outputHeight{};
-                int outputWidth{};
-
-                (*imageConversionFunc)(data, stride, input->width, input->height, outputImg, outputWidth, outputHeight);
-
-                const int outputStride = outputImg.size() / outputHeight;
-        
-                auto output = outputFut.get();
-                if (!output)
-                    return false;
-
-                output->realloc(pixelFormat, outputWidth, outputHeight);
-
-                auto img_convert_ctx = sws_getContext(
-                    outputWidth,
-                    outputHeight,
-                    AV_PIX_FMT_YUYV422,
-                    outputWidth,
-                    outputHeight,
-                    pixelFormat,
-                    SWS_FAST_BILINEAR, NULL, NULL, NULL);
-
-                const auto outputData = outputImg.data();
-
-                sws_scale(img_convert_ctx, &outputData, &outputStride, 0, outputHeight,
-                    output->m_image->data,
-                    output->m_image->linesize);
-
-                sws_freeContext(img_convert_ctx);
-            }
-            catch (const std::exception& ex) {
-                CHANNEL_LOG(ffmpeg_sync) << "Exception in async converter: " << typeid(ex).name() << ": " << ex.what();
-                return false;
-            }
-
-            return true;
-        };
+        auto asyncConversion = GetAsyncConversionFunction(std::move(input),
+            videoFramePromise,
+            std::move(imageConversionFunc),
+            m_pixelFormat);
 
         convert = std::async(std::launch::async, std::move(asyncConversion));
     }
