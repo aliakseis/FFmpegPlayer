@@ -38,6 +38,7 @@
 #include <cctype>
 
 #include <atomic>
+#include <filesystem>
 
 #include <VersionHelpers.h>
 
@@ -124,24 +125,52 @@ auto GetAddToSubtitlesMapLambda(T& map)
     };
 }
 
-
-auto SafePathString(const TCHAR* path)
-{
-    std::basic_string<TCHAR> result(path);
-    enum { MAX_DIFF_SIZE = 2048 };
-    result.append(MAX_DIFF_SIZE, _T('\0'));
-    return result;
-}
-
 } // namespace
 
 
 class CPlayerDoc::SubtitlesMap : public boost::icl::interval_map<double, std::string>
 {};
 
-class CPlayerDoc::StringDifference : public dtl::Diff<TCHAR, std::basic_string<TCHAR>>
+class CPlayerDoc::StringDifference
 {
-    using Diff::Diff;
+    typedef std::basic_string<TCHAR> Sequence;
+
+    dtl::Diff<TCHAR, std::basic_string<TCHAR>> m_diff;
+    std::filesystem::path m_parent_path;
+    std::filesystem::path m_extension;
+
+    static auto SafePathString(std::basic_string<TCHAR> path)
+    {
+        enum { MAX_DIFF_SIZE = 2048 };
+        path.append(MAX_DIFF_SIZE, _T('\0'));
+        return path;
+    }
+
+public:
+    StringDifference(const Sequence& a, const Sequence& b)
+        : m_diff(a, b)
+    {
+        std::filesystem::path path_b(b);
+        if (path_b.has_parent_path() && path_b.has_stem() && path_b.stem() == std::filesystem::path(a).stem())
+        {
+            m_parent_path = path_b.parent_path();
+            m_extension = path_b.extension();
+        }
+        else
+        {
+            m_diff.compose();
+        }
+    }
+
+    Sequence patch(const Sequence& seq) const
+    {
+        if (m_parent_path.empty())
+        {
+            return m_diff.patch(SafePathString(seq));
+        }
+
+        return (m_parent_path / std::filesystem::path(seq).stem()) += m_extension;
+    }
 };
 
 // CPlayerDoc
@@ -254,7 +283,6 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
             m_separateFileDiff = std::make_unique<StringDifference>(
                 std::basic_string<TCHAR>(urls.first.begin(), urls.first.end()),
                 std::basic_string<TCHAR>(urls.second.begin(), urls.second.end()));
-            m_separateFileDiff->compose();
         }
         else {
             m_separateFileDiff.reset();
@@ -474,7 +502,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
         if (m_separateFileDiff)
         {
-            const auto s = m_separateFileDiff->patch(SafePathString(source));
+            const auto s = m_separateFileDiff->patch({ source.GetString(), source.GetString() + source.GetLength() });
             if (!s.empty()) {
                 strParams += _T(" ") + timeClause + _T("-i \"") + s.c_str() 
                     + _T("\" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0");
@@ -567,10 +595,9 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
             separateFilePath = CT2A(mappedAudioFile, CP_UTF8);
             m_separateFileDiff = std::make_unique<StringDifference>(
                 lpszPathName, static_cast<LPCTSTR>(mappedAudioFile));
-            m_separateFileDiff->compose();
         }
         else if (m_autoPlay && m_separateFileDiff) {
-            const auto s = m_separateFileDiff->patch(SafePathString(lpszPathName));
+            const auto s = m_separateFileDiff->patch(lpszPathName);
             if (!s.empty() && 0 != _tcscmp(s.c_str(), lpszPathName) && 0 == _taccess(s.c_str(), 04)) {
                 separateFilePath = CT2A(s.c_str(), CP_UTF8);
             }
@@ -597,7 +624,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
         m_subtitles.reset();
 
         if (m_autoPlay && m_subtitlesFileDiff) {
-            const auto s = m_subtitlesFileDiff->patch(SafePathString(lpszPathName));
+            const auto s = m_subtitlesFileDiff->patch(lpszPathName);
             auto map(std::make_unique<SubtitlesMap>());
             if (!s.empty() && 0 != _tcscmp(s.c_str(), lpszPathName)
                     && OpenSubtitlesFile(s.c_str(), m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map))) {
@@ -945,7 +972,6 @@ void CPlayerDoc::OnOpensubtitlesfile()
         m_subtitles = std::move(map);
         m_subtitlesFileDiff = std::make_unique<StringDifference>(
             static_cast<LPCTSTR>(m_strPathName), static_cast<LPCTSTR>(dlg.GetPathName()));
-        m_subtitlesFileDiff->compose();
     }
 }
 
