@@ -126,6 +126,11 @@ bool OpenSubRipFile(std::istream& s,
             &startHr, &startMin, &startSec, &startMsec,
             &endHr, &endMin, &endSec, &endMsec) != 8)
         {
+            if (std::find_if(buffer.begin(), buffer.end(), [](unsigned char c) { return !std::isspace(c); })
+                == buffer.end())
+            {
+                continue;
+            }
             break;
         }
 
