@@ -5,6 +5,51 @@
 #include <algorithm>
 #include <vector>
 
+namespace {
+
+auto MakeComparableConsideringNumbers(const CString& s)
+{
+    std::vector<unsigned int> result;
+
+    unsigned int accum = 0;
+    for (int i = 0; i < s.GetLength(); ++i)
+    {
+        const auto c = s[i];
+        if ((c >= _T('0') && accum != 0 || c > _T('0')) && c <= _T('9'))
+        {
+            accum = accum * 10 + (c - _T('0'));
+        }
+        else
+        {
+            if (accum != 0)
+            {
+                result.push_back(accum + static_cast<unsigned int>(_T('0')));
+                accum = 0;
+            }
+            result.push_back((static_cast<unsigned>(c) < static_cast<unsigned>(_T('9'))) 
+                ? c : (0xFFFF0000 | c));
+        }
+    }
+
+    if (accum != 0)
+    {
+        result.push_back(accum + static_cast<unsigned int>(_T('0')));
+    }
+
+    return result;
+}
+
+bool CompareConsideringNumbers(CString left, CString right)
+{
+    const auto leftConverted = MakeComparableConsideringNumbers(left.MakeUpper());
+    const auto rightConverted = MakeComparableConsideringNumbers(right.MakeUpper());
+
+    return std::lexicographical_compare(
+        rightConverted.begin(), rightConverted.end(), leftConverted.begin(), leftConverted.end());
+}
+
+}
+
 bool HandleFilesSequence(const CString& pathName,
     bool looping,
     std::function<bool(const CString&)> tryToOpen)
@@ -35,23 +80,19 @@ bool HandleFilesSequence(const CString& pathName,
             const auto length = _tcslen(ffd.cFileName);
             if (length > extensionLength && ffd.cFileName[length - extensionLength] == _T('.'))
             {
-                ffd.cFileName[length - extensionLength] = 0;
-                const bool beforeOrEqual = _tcsicmp(ffd.cFileName, justFileName) <= 0;
-                filesArr[beforeOrEqual].emplace_back(ffd.cFileName, length - extensionLength);
+                CString cFileName(ffd.cFileName, length - extensionLength);
+                const bool beforeOrEqual = !CompareConsideringNumbers(cFileName, justFileName);
+                filesArr[beforeOrEqual].push_back(cFileName);
             }
         }
     } while (FindNextFile(hFind, &ffd));
 
     FindClose(hFind);
 
-    auto comp = [](const CString& left, const CString& right) {
-        return left.CompareNoCase(right) > 0;
-    };
-
     for (int i = 0; i <= looping; ++i)
     {
         std::vector<CString>& files = filesArr[i];
-        std::make_heap(files.begin(), files.end(), comp);
+        std::make_heap(files.begin(), files.end(), CompareConsideringNumbers);
 
         while (!files.empty())
         {
@@ -60,7 +101,7 @@ bool HandleFilesSequence(const CString& pathName,
             {
                 return true;
             }
-            std::pop_heap(files.begin(), files.end(), comp);
+            std::pop_heap(files.begin(), files.end(), CompareConsideringNumbers);
             files.pop_back();
         }
     }
