@@ -227,3 +227,5 @@ CMakeLists.txt.user*
 .clang-tidy
 
 .vs/
+
+Player/version.h

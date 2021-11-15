@@ -16,6 +16,8 @@
 
 #include "AsyncGetUrlUnderMouseCursor.h"
 
+#include "version.h"
+
 #include <boost/log/sinks/debug_output_backend.hpp>
 #include <boost/log/sinks/sync_frontend.hpp>
 #include <boost/log/core/core.hpp>
@@ -290,6 +292,12 @@ BOOL CAboutDlg::OnInitDialog()
 {
     ModifyStyleEx(0, WS_EX_LAYERED);
     SetLayeredWindowAttributes(0, (255 * 75) / 100, LWA_ALPHA);
+#ifdef GIT_COMMIT
+    CString text;
+    GetDlgItemText(IDC_APP_NAME_VERSION, text);
+    text += " " BOOST_STRINGIZE(GIT_COMMIT);
+    SetDlgItemText(IDC_APP_NAME_VERSION, text);
+#endif
     return __super::OnInitDialog();
 }
 
