@@ -18,7 +18,7 @@ public:
         m_callback = callback;
     }
 
-    void InitializeThread() override {}
+    void InitializeThread() override;
     void DeinitializeThread() override {}
 
     void WaveOutReset() override;

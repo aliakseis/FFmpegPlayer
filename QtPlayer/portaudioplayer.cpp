@@ -1,6 +1,7 @@
 #include "portaudioplayer.h"
 
 #include <portaudio.h>
+#include <QThread>
 
 PortAudioPlayer::PortAudioPlayer()
 {
@@ -10,6 +11,11 @@ PortAudioPlayer::PortAudioPlayer()
 PortAudioPlayer::~PortAudioPlayer()
 {
     auto err = Pa_Terminate();
+}
+
+void PortAudioPlayer::InitializeThread()
+{
+    QThread::currentThread()->setPriority(QThread::TimeCriticalPriority);
 }
 
 bool PortAudioPlayer::Open(int bytesPerSample, int channels, int* samplesPerSec)
