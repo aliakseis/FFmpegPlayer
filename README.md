@@ -60,8 +60,7 @@ https://github.com/pytube/pytube/archive/master.zip = https://github.com/Zeecka/
 ```
 
 Sometimes it is needed to visit pytube issues list and apply fixes, for example 
-- https://github.com/get-pytube/pytube3/issues/81
-- https://github.com/H4KKR/pytubeX/pull/5/commits
+- https://github.com/pytube/pytube/issues/1163
 
 Take into account https://www.psiphon3.com if you encounter HTTP Error 429.
 
