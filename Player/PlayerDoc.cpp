@@ -255,7 +255,7 @@ BOOL CPlayerDoc::OnNewDocument()
         if (dlg.DoModal() == IDOK && !dlg.m_URL.IsEmpty())
         {
             reset();
-            openTopLevelUrl(dlg.m_URL, dlg.m_bParse);
+            return openTopLevelUrl(dlg.m_URL, dlg.m_bParse);
         }
     }
 
