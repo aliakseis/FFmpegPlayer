@@ -110,6 +110,25 @@ CString GetUrlFromUrlFile(LPCTSTR lpszPathName)
     return url;
 }
 
+bool PumpMessages()
+{
+    MSG msg;
+    while (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+    {
+        if (!AfxGetApp()->PumpMessage())
+        {
+            ::PostQuitMessage(0);
+            return false;
+        }
+    }
+    // let MFC do its idle processing
+    LONG lIdle = 0;
+    while (AfxGetApp()->OnIdle(lIdle++))
+        ;
+
+    return true;
+}
+
 std::unique_ptr<IAudioPlayer> GetAudioPlayer()
 {
     if (IsWindowsVistaOrGreater())
@@ -333,6 +352,17 @@ bool CPlayerDoc::openUrlFromList()
                 return false;
             }
         }
+
+        if (!m_playList.empty())
+        {
+            const auto documentGeneration = m_documentGeneration;
+
+            if (!PumpMessages())
+                return false;
+
+            if (m_playList.empty() || documentGeneration != m_documentGeneration)
+                AfxThrowUserException();
+        }
     }
     return false;
 }
@@ -364,6 +394,8 @@ void CPlayerDoc::reset()
     m_url.clear();
 
     m_nightcore = false;
+
+    ++m_documentGeneration;
 
     UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
 }

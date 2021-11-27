@@ -159,6 +159,8 @@ private:
 
     bool m_nightcore = false;
 
+    unsigned int m_documentGeneration = 0;
+
     bool m_maximalResolution = false;
     bool m_superResolution = false;
 public:
