@@ -307,6 +307,7 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
             m_separateFileDiff.reset();
         }
 
+        ++m_documentGeneration;
         m_nightcore = false;
         m_subtitles.reset();
         auto map(std::make_unique<SubtitlesMap>());
