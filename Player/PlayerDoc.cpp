@@ -244,22 +244,20 @@ CPlayerDoc::~CPlayerDoc()
 
 BOOL CPlayerDoc::OnNewDocument()
 {
-    if (!CDocument::OnNewDocument())
-        return FALSE;
-
     // (SDI documents will reuse this document)
-
     if (AfxGetApp()->m_pMainWnd) // false if the document is being initialized for the first time
     {
         CDialogOpenURL dlg;
-        if (dlg.DoModal() == IDOK && !dlg.m_URL.IsEmpty())
+        if (dlg.DoModal() == IDOK && !dlg.m_URL.IsEmpty() && CDocument::OnNewDocument())
         {
             reset();
             return openTopLevelUrl(dlg.m_URL, dlg.m_bParse);
         }
+
+        return false;
     }
 
-    return TRUE;
+    return CDocument::OnNewDocument();
 }
 
 bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl, bool force, const CString& pathName)
