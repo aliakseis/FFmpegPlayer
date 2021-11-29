@@ -305,9 +305,11 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
             m_separateFileDiff.reset();
         }
 
-        ++m_documentGeneration;
-        m_nightcore = false;
         m_subtitles.reset();
+        m_nightcore = false;
+        ++m_documentGeneration;
+        UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
+
         auto map(std::make_unique<SubtitlesMap>());
         if (getYoutubeTranscripts(originalUrl, 
             [&map](double start, double duration, const std::string& text) {
