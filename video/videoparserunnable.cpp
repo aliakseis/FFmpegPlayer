@@ -2,6 +2,11 @@
 #include "makeguard.h"
 #include "interlockedadd.h"
 
+extern "C"
+{
+#include "libavutil/imgutils.h"
+}
+
 #include <boost/log/trivial.hpp>
 #include <tuple>
 
@@ -70,6 +75,12 @@ auto GetAsyncConversionFunction(AVFramePtr input,
 
             const auto data = img.data();
 
+            if (input->format == AV_PIX_FMT_NV12)
+            {
+                av_image_copy_plane(data, stride, input->data[0], input->linesize[0], input->width, input->height);
+                av_image_copy_plane(data + stride * input->height, stride, input->data[1], input->linesize[1], input->width, input->height / 2);
+            }
+            else
             {
                 auto img_convert_ctx = sws_getContext(
                     input->width,
