@@ -64,9 +64,9 @@ auto GetAsyncConversionFunction(AVFramePtr input,
         pixelFormat]() mutable
     {
         try {
-            const int stride = input->width * 2;
+            const int stride = (input->width + 1) & ~1;
 
-            std::vector<uint8_t> img(stride * input->height);
+            std::vector<uint8_t> img(stride * (input->height + (input->height + 1) / 2));
 
             const auto data = img.data();
 
@@ -77,12 +77,14 @@ auto GetAsyncConversionFunction(AVFramePtr input,
                     (AVPixelFormat)input->format,
                     input->width,
                     input->height,
-                    AV_PIX_FMT_YUYV422,
+                    AV_PIX_FMT_NV12,
                     SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
+                uint8_t* const dst[] = { data, data + stride * input->height };
+                const int dstStride[] = { stride, stride };
+
                 sws_scale(img_convert_ctx, input->data, input->linesize, 0, input->height,
-                    &data,
-                    &stride);
+                    dst, dstStride);
 
                 sws_freeContext(img_convert_ctx);
             }
@@ -94,7 +96,7 @@ auto GetAsyncConversionFunction(AVFramePtr input,
 
             (*imageConversionFunc)(data, stride, input->width, input->height, outputImg, outputWidth, outputHeight);
 
-            const int outputStride = outputImg.size() / outputHeight;
+            const int outputStride = outputWidth;
 
             auto output = outputFut.get();
             if (!output)
@@ -105,7 +107,7 @@ auto GetAsyncConversionFunction(AVFramePtr input,
             auto img_convert_ctx = sws_getContext(
                 outputWidth,
                 outputHeight,
-                AV_PIX_FMT_YUYV422,
+                AV_PIX_FMT_NV12,
                 outputWidth,
                 outputHeight,
                 pixelFormat,
@@ -113,7 +115,12 @@ auto GetAsyncConversionFunction(AVFramePtr input,
 
             const auto outputData = outputImg.data();
 
-            sws_scale(img_convert_ctx, &outputData, &outputStride, 0, outputHeight,
+            uint8_t* const src[] = { outputData, outputData + outputStride * outputHeight };
+            const int srcStride[] = { outputStride, outputStride };
+
+            sws_scale(img_convert_ctx,
+                src, srcStride,
+                0, outputHeight,
                 output->m_image->data,
                 output->m_image->linesize);
 

@@ -41,33 +41,26 @@ void ImageUpscale(uint8_t* input, int inputStride, int inputWidth, int inputHeig
     Anime4KCPP::Parameters param{};
     auto ac = Anime4KCPP::ACCreator::createUP(param, Anime4KCPP::Processor::Type::OpenCL_ACNet);
 
-    cv::Mat img(inputHeight, inputWidth, CV_8UC2, input, inputStride);
-
-    cv::Mat ycbcr_channels[2];
-    split(img, ycbcr_channels);
-
-    auto cbcr_channel = ycbcr_channels[1].reshape(2);
+    const cv::Mat y_image(inputHeight, inputWidth, CV_8UC1, input, inputStride);
+    const cv::Mat uv_image(inputHeight / 2, inputWidth / 2, CV_8UC2, input + inputHeight * inputStride, inputStride);
     cv::Mat cbcr_channels[2];
-    split(cbcr_channel, cbcr_channels);
+    split(uv_image, cbcr_channels);
 
-    ac->loadImage(ycbcr_channels[0], cbcr_channels[0], cbcr_channels[1]);
+    ac->loadImage(y_image, cbcr_channels[0], cbcr_channels[1]);
 
     ac->process();
 
-    std::vector <cv::Mat> channels(2);
+    cv::Mat out_y_image;
     std::vector <cv::Mat> out_cbcr_channels(2);
 
-    ac->saveImage(channels[0], out_cbcr_channels[0], out_cbcr_channels[1]);
+    ac->saveImage(out_y_image, out_cbcr_channels[0], out_cbcr_channels[1]);
 
-    outputWidth = channels[0].cols;
-    outputHeight = channels[0].rows;
+    outputWidth = out_y_image.cols;
+    outputHeight = out_y_image.rows;
 
     cv::Mat CrCb;
     merge(out_cbcr_channels, CrCb);
-    channels[1] = CrCb.reshape(1);
 
-    cv::Mat merged_img;
-    merge(channels, merged_img);
-
-    output.assign(merged_img.datastart, merged_img.dataend);
+    output.assign(out_y_image.datastart, out_y_image.dataend);
+    output.insert(output.end(), CrCb.datastart, CrCb.dataend);
 }
