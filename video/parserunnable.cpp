@@ -100,7 +100,7 @@ void FFmpegDecoder::parseRunnable(int idx)
         const int readStatus = av_read_frame(m_formatContexts[idx], &packet);
         if (readStatus >= 0)
         {
-            dispatchPacket(idx, packet);
+            const bool dispatched = dispatchPacket(idx, packet);
             eof = UNSET;
 
             if (recovering == TO_RECOVER && m_currentTime > lastTime)
@@ -108,17 +108,24 @@ void FFmpegDecoder::parseRunnable(int idx)
                 lastTime = m_currentTime;
                 recovering = RECOVERING;
             }
-            else if (recovering == RECOVERING && m_currentTime > lastTime)
+            else if (dispatched && recovering == RECOVERING && m_currentTime > lastTime)
             {
                 recovering = RECOVERED;
             }
         }
         else if ((readStatus == AVERROR(10054) || readStatus == AVERROR_INVALIDDATA) && recovering == RECOVERED) // WSAECONNRESET TODO generic
         {
-            CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " Trying to recover from " << readStatus;
             recovering = TO_RECOVER;
             lastTime = m_currentTime;
-            seekDuration(lastTime);
+            //seekDuration(lastTime);
+            if (doSeekFrame(idx, lastTime, nullptr))
+            {
+                CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " Trying to recover from " << readStatus << "; index: " << idx;
+            }
+            else
+            {
+                CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " Can't recover from " << readStatus << "; index: " << idx;
+            }
         }
         else
         {
@@ -152,7 +159,7 @@ void FFmpegDecoder::parseRunnable(int idx)
     CHANNEL_LOG(ffmpeg_threads) << "Decoding ended";
 }
 
-void FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
+bool FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
 {
     auto guard = MakeGuard(&packet, av_packet_unref);
 
@@ -163,7 +170,7 @@ void FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
 
     if (seekLambda())
     {
-        return;
+        return false;
     }
 
     if (idx == m_videoContextIndex && packet.stream_index == m_videoStreamNumber)
@@ -171,6 +178,7 @@ void FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
         if (m_videoPacketsQueue.push(packet, seekLambda))
         {
             guard.release();
+            return true;
         }
     }
     else if (idx == m_audioContextIndex
@@ -179,6 +187,7 @@ void FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
         if (m_audioPacketsQueue.push(packet, seekLambda))
         {
             guard.release();
+            return true;
         }
     }
     //else
@@ -195,6 +204,8 @@ void FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
     //        }
     //    }
     //}
+
+    return false;
 }
 
 void FFmpegDecoder::flush()

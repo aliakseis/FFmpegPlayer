@@ -15,6 +15,13 @@ public:
     template<typename T>
     bool push(const AVPacket& packet, T abortFunc)
     {
+        const auto pos = packet.pos;
+        const auto dts = packet.dts;
+        if (pos != -1 && pos < m_pos || dts != AV_NOPTS_VALUE && dts < m_dts)
+        {
+            return false;
+        }
+
         bool wasEmpty;
         {
             boost::unique_lock<boost::mutex> locker(m_mutex);
@@ -28,6 +35,10 @@ public:
             }
             wasEmpty = m_queue.empty();
             enqueue(packet);
+            if (pos != -1)
+                m_pos = pos;
+            if (dts != AV_NOPTS_VALUE)
+                m_dts = dts;
         }
         if (wasEmpty)
         {
@@ -71,6 +82,8 @@ public:
             av_packet_unref(&packet);
         }
         m_packetsSize = 0;
+        m_pos = -1;
+        m_dts = AV_NOPTS_VALUE;
         std::deque<AVPacket>().swap(m_queue);
     }
 
@@ -110,9 +123,12 @@ private:
     }
 
 private:
-    int64_t	m_packetsSize{0};
+    int64_t	m_packetsSize = 0;
     std::deque<AVPacket> m_queue;
 
     boost::mutex m_mutex;
     boost::condition_variable m_condVar;
+
+    int64_t	m_pos = -1;
+    int64_t m_dts = AV_NOPTS_VALUE;
 };
