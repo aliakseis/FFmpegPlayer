@@ -160,9 +160,12 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     void flush();
     void startAudioThread();
     void startVideoThread();
-    //void seek();
     bool resetDecoding(int64_t seekDuration, bool resetVideo);
+    bool doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet);
+    bool respawn(int64_t seekDuration, bool resetVideo);
+
     void fixDuration();
+
     bool handleAudioPacket(
         const AVPacket& packet,
         std::vector<uint8_t>& resampleBuffer,
