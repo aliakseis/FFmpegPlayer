@@ -1,58 +1,39 @@
 #pragma once
 
-// http://blog.coldflake.com/posts/C++-delegates-on-steroids/
-
 #include <utility>
 
-template<typename return_type, typename... params>
-struct DelegateScope
+template<auto TMethod, class T>
+class Delegate
 {
-    template <class T, return_type(T::*TMethod)(params...)>
-    class Delegate
+public:
+    explicit Delegate(T* callee)
+        : fpCallee(callee)
+    {}
+    template <typename... Args>
+    decltype(auto) operator()(Args&&... xs) const
     {
-    public:
-        explicit Delegate(T* callee)
-            : fpCallee(callee)
-        {}
-        //return_type operator()(params... xs) const
-        //{
-        //    return (fpCallee->*TMethod)(xs...);
-        //}
-        template <typename... Args>
-        return_type operator()(Args&&... xs) const
-        {
-            return (fpCallee->*TMethod)(std::forward<Args>(xs)...);
-        }
-
-        bool operator == (const Delegate& other) const
-        {
-            return fpCallee == other.fpCallee;
-        }
-
-        bool operator != (const Delegate& other) const
-        {
-            return fpCallee != other.fpCallee;
-        }
-
-    private:
-        T* fpCallee;
-    };
-};
-
-template<typename T, typename return_type, typename... params>
-struct DelegateMaker
-{
-    template<return_type(T::*foo)(params...)>
-    inline static auto Bind(T* o)
-    {
-        return DelegateScope<return_type, params...>::template Delegate<T, foo>(o);
+        return (fpCallee->*TMethod)(std::forward<Args>(xs)...);
     }
+
+    bool operator == (const Delegate& other) const
+    {
+        return fpCallee == other.fpCallee;
+    }
+
+    bool operator != (const Delegate& other) const
+    {
+        return fpCallee != other.fpCallee;
+    }
+
+private:
+    T* fpCallee;
 };
 
-template<typename T, typename return_type, typename... params>
-inline auto makeDelegate(return_type(T::*)(params...))
+
+template<auto TMethod, class T>
+inline auto MakeDelegate(T* ptr)
 {
-    return DelegateMaker<T, return_type, params...>();
+    return Delegate<TMethod, T>(ptr);
 }
 
-#define MAKE_DELEGATE(foo, thisPtr) (makeDelegate(foo).Bind<foo>(thisPtr))
+#define MAKE_DELEGATE(foo, thisPtr) (MakeDelegate<foo>(thisPtr))
