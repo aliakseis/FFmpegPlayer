@@ -17,7 +17,7 @@ public:
     {
         const auto pos = packet.pos;
         const auto dts = packet.dts;
-        if (pos != -1 && pos < m_pos || dts != AV_NOPTS_VALUE && dts < m_dts)
+        if (pos != -1 && pos < m_pos || !(pos != -1 && pos > m_pos) && dts != AV_NOPTS_VALUE && dts < m_dts)
         {
             return false;
         }
