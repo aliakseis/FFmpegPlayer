@@ -2,6 +2,7 @@
 
 #include <boost/thread/thread.hpp>
 #include <deque>
+#include <map>
 #include <type_traits>
 
 template<size_t MAX_QUEUE_SIZE, size_t MAX_FRAMES>
@@ -17,7 +18,10 @@ public:
     {
         const auto pos = packet.pos;
         const auto dts = packet.dts;
-        if (pos != -1 && pos < m_pos || !(pos != -1 && pos > m_pos) && dts != AV_NOPTS_VALUE && dts < m_dts)
+        auto& prev = m_positions[packet.stream_index];
+        if (pos != -1 && pos < prev.m_pos
+            || !(pos != -1 && pos > prev.m_pos)
+            && dts != AV_NOPTS_VALUE && dts < prev.m_dts)
         {
             return false;
         }
@@ -36,9 +40,9 @@ public:
             wasEmpty = m_queue.empty();
             enqueue(packet);
             if (pos != -1)
-                m_pos = pos;
+                prev.m_pos = pos;
             if (dts != AV_NOPTS_VALUE)
-                m_dts = dts;
+                prev.m_dts = dts;
         }
         if (wasEmpty)
         {
@@ -82,8 +86,7 @@ public:
             av_packet_unref(&packet);
         }
         m_packetsSize = 0;
-        m_pos = -1;
-        m_dts = AV_NOPTS_VALUE;
+        m_positions.clear();
         std::deque<AVPacket>().swap(m_queue);
     }
 
@@ -123,12 +126,17 @@ private:
     }
 
 private:
+    struct PositionData
+    {
+        int64_t	m_pos = -1;
+        int64_t m_dts = AV_NOPTS_VALUE;
+    };
+
     int64_t	m_packetsSize = 0;
     std::deque<AVPacket> m_queue;
 
     boost::mutex m_mutex;
     boost::condition_variable m_condVar;
 
-    int64_t	m_pos = -1;
-    int64_t m_dts = AV_NOPTS_VALUE;
+    std::map<int, PositionData> m_positions;
 };
