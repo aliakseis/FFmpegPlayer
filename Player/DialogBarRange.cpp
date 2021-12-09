@@ -28,10 +28,18 @@ CDialogBarRange::CDialogBarRange()
 
 CDialogBarRange::~CDialogBarRange()
 {
-	if (m_pDoc)
-	{
-		m_pDoc->totalTimeUpdated.disconnect(MAKE_DELEGATE(&CDialogBarRange::onTotalTimeUpdated, this));
-	}
+    onDocDetaching();
+}
+
+void CDialogBarRange::onDocDetaching()
+{
+    if (m_pDoc)
+    {
+        m_pDoc->totalTimeUpdated.disconnect(MAKE_DELEGATE(&CDialogBarRange::onTotalTimeUpdated, this));
+        m_pDoc->onDestructing.disconnect(MAKE_DELEGATE(&CDialogBarRange::onDocDetaching, this));
+
+        m_pDoc = nullptr;
+    }
 }
 
 void CDialogBarRange::setDocument(CPlayerDoc* pDoc)
@@ -39,7 +47,8 @@ void CDialogBarRange::setDocument(CPlayerDoc* pDoc)
     ASSERT(!m_pDoc);
     m_pDoc = pDoc;
 
-	m_pDoc->totalTimeUpdated.connect(MAKE_DELEGATE(&CDialogBarRange::onTotalTimeUpdated, this));
+    m_pDoc->totalTimeUpdated.connect(MAKE_DELEGATE(&CDialogBarRange::onTotalTimeUpdated, this));
+    m_pDoc->onDestructing.connect(MAKE_DELEGATE(&CDialogBarRange::onDocDetaching, this));
 }
 
 void CDialogBarRange::DoDataExchange(CDataExchange* pDX)

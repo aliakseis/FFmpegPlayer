@@ -233,6 +233,8 @@ CPlayerDoc::CPlayerDoc()
 
 CPlayerDoc::~CPlayerDoc()
 {
+    onDestructing();
+
     ASSERT(framePositionChanged.empty());
     ASSERT(startTimeUpdated.empty());
     ASSERT(totalTimeUpdated.empty());

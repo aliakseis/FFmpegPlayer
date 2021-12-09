@@ -30,6 +30,8 @@ protected:
 
 	void onTotalTimeUpdated(double secs);
 
+    void onDocDetaching();
+
 protected:
 	DECLARE_MESSAGE_MAP()
 private:

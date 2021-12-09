@@ -101,6 +101,11 @@ CDialogBarPlayerControl::CDialogBarPlayerControl()
 
 CDialogBarPlayerControl::~CDialogBarPlayerControl()
 {
+    onDocDetaching();
+}
+
+void CDialogBarPlayerControl::onDocDetaching()
+{
     if (m_pDoc)
     {
         m_pDoc->framePositionChanged.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onFramePositionChanged, this));
@@ -109,8 +114,13 @@ CDialogBarPlayerControl::~CDialogBarPlayerControl()
 
         m_pDoc->rangeStartTimeChanged.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onRangeStartTimeChanged, this));
         m_pDoc->rangeEndTimeChanged.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onRangeEndTimeChanged, this));
+
+        m_pDoc->onDestructing.disconnect(MAKE_DELEGATE(&CDialogBarPlayerControl::onDocDetaching, this));
+
+        m_pDoc = nullptr;
     }
 }
+
 
 void CDialogBarPlayerControl::DoDataExchange(CDataExchange* pDX)
 {
@@ -183,6 +193,8 @@ void CDialogBarPlayerControl::setDocument(CPlayerDoc* pDoc)
 
     m_pDoc->rangeStartTimeChanged.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onRangeStartTimeChanged, this));
     m_pDoc->rangeEndTimeChanged.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onRangeEndTimeChanged, this));
+
+    m_pDoc->onDestructing.connect(MAKE_DELEGATE(&CDialogBarPlayerControl::onDocDetaching, this));
 }
 
 void CDialogBarPlayerControl::onFramePositionChanged(long long frame, long long total)

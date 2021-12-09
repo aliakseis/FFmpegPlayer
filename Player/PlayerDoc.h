@@ -100,6 +100,8 @@ public:
 
     boost::signals2::signal<void(bool)> onPauseResume;
 
+    boost::signals2::signal<void()> onDestructing;
+
     std::string getSubtitle() const;
     bool isUnicodeSubtitles() const { return m_unicodeSubtitles; }
 

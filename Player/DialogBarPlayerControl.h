@@ -39,6 +39,8 @@ protected:
     void onRangeStartTimeChanged(long long frame, long long total);
     void onRangeEndTimeChanged(long long frame, long long total);
 
+    void onDocDetaching();
+
 protected:
     DECLARE_MESSAGE_MAP()
     afx_msg LRESULT HandleInitDialog(WPARAM wParam, LPARAM lParam);
