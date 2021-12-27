@@ -1062,11 +1062,11 @@ std::vector<std::string> FFmpegDecoder::getProperties() const
     for (auto formatContext : m_formatContexts)
     {
         if (formatContext && formatContext->iformat && formatContext->iformat->long_name)
-            result.push_back(formatContext->iformat->long_name);
+            result.emplace_back(formatContext->iformat->long_name);
     }
 
     if (m_videoCodec && m_videoCodec->long_name)
-        result.push_back(m_videoCodec->long_name);
+        result.emplace_back(m_videoCodec->long_name);
 
     if (m_videoStream && m_videoCodecContext)
     {
@@ -1098,11 +1098,11 @@ std::vector<std::string> FFmpegDecoder::getProperties() const
         sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]),
             "%d / %d @ %.2f FPS %d BPP %d bits", 
             m_videoCodecContext->width, m_videoCodecContext->height, fps, bpp, depth);
-        result.push_back(buffer);
+        result.emplace_back(buffer);
     }
 
     if (m_audioCodec && m_audioCodec->long_name)
-        result.push_back(m_audioCodec->long_name);
+        result.emplace_back(m_audioCodec->long_name);
 
     return result;
 }
