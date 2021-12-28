@@ -9,12 +9,11 @@
 #include <QMessageBox>
 #include <QDebug>
 
-enum { PROGRESSBAR_VISIBLE_HEIGHT = 5};
+enum { PROGRESSBAR_VISIBLE_HEIGHT = 5 };
 
 VideoPlayerWidget::VideoPlayerWidget(QWidget* parent) :
 	QFrame(parent)
-	, 
-	 m_videoWidget(new VideoWidget(this))
+	, m_videoWidget(new VideoWidget(this))
 {
     connect(getDecoder(), &FFmpegDecoderWrapper::onPlayingFinished, this, &VideoPlayerWidget::onPlayingFinished);
 

@@ -4,7 +4,6 @@
 #include <QRegion>
 #include <QTimer>
 
-#include "videoplayerwidget.h"
 #ifdef DEVELOPER_OPENGL
 #include "opengldisplay.h"
 #else

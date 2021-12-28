@@ -44,7 +44,7 @@ void WidgetDisplay::updateFrame(IFrameDecoder* decoder)
         m_image = image.scaled(m_scrWidth, m_scrHeight);
     } else {
         m_image = std::move(image);
-}
+    }
 }
 
 void WidgetDisplay::drawFrame(IFrameDecoder* decoder, unsigned int generation)

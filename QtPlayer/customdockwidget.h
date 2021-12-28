@@ -1,11 +1,9 @@
 #pragma once
 
 #include <QWidget>
-#include <QLabel>
 
 class VideoDisplay;
 class VideoWidget;
-class MainWindow;
 
 
 class CustomDockWidget : public QWidget

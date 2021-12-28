@@ -1,5 +1,6 @@
 #include "videowidget.h"
 #include "customdockwidget.h"
+#include "videoplayerwidget.h"
 
 #include <QResizeEvent>
 #include <QPainter>
@@ -21,7 +22,6 @@ QWidget* getPlayer()
 {
     return getMainWindow()->getPlayer();
 }
-
 
 } // namespace
 

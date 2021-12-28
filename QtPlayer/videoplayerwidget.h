@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mainwindow.h"
-#include "videowidget.h"
 #include "videoplayer.h"
 
 #include <QFrame>

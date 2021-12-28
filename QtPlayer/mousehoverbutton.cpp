@@ -6,8 +6,7 @@ MouseHoverButton::MouseHoverButton(QWidget* parent) : QToolButton(parent)
 }
 
 
-MouseHoverButton::~MouseHoverButton()
-= default;
+MouseHoverButton::~MouseHoverButton() = default;
 
 void MouseHoverButton::mousePressEvent(QMouseEvent* event)
 {

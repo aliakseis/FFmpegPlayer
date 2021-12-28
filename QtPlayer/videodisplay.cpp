@@ -1,7 +1,6 @@
 #include "videodisplay.h"
 
-VideoDisplay::VideoDisplay()  
-= default;
+VideoDisplay::VideoDisplay() = default;
 
 VideoDisplay::~VideoDisplay()
 {

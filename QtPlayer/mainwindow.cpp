@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
+#include "videowidget.h"
+
 #include <QFileDialog>
 
 MainWindow* getMainWindow()
@@ -8,8 +10,8 @@ MainWindow* getMainWindow()
     for (QWidget* widget : QApplication::topLevelWidgets()) {
         if (auto *mainWindow = qobject_cast<MainWindow*>(widget)) {
             return mainWindow;
-}
-}
+        }
+    }
     return nullptr;
 }
 

@@ -1,7 +1,8 @@
 #pragma once
 
 #include <QWidget>
-#include "videoplayerwidget.h"
+
+class VideoPlayerWidget;
 
 namespace Ui
 {

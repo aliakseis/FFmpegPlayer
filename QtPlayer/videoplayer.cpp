@@ -3,8 +3,7 @@
 
 #include <QDebug>
 
-VideoPlayer::VideoPlayer()
-= default;
+VideoPlayer::VideoPlayer() = default;
 
 VideoPlayer::~VideoPlayer()
 {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ffmpegdecoder.h"
-#include "videodisplay.h"
 
 
 class VideoPlayer

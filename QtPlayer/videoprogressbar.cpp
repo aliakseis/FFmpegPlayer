@@ -7,10 +7,10 @@
 #include <QToolTip>
 
 #include <qdrawutil.h>
+#include <algorithm>
 
 VideoProgressBar::VideoProgressBar(QWidget* parent) :
 	QProgressBar(parent)
-	
 {
 	m_downloaded = 0;
 	m_played = 0;
@@ -20,8 +20,7 @@ VideoProgressBar::VideoProgressBar(QWidget* parent) :
 	installEventFilter(this);
 }
 
-VideoProgressBar::~VideoProgressBar()
-= default;
+VideoProgressBar::~VideoProgressBar() = default;
 
 void VideoProgressBar::paintEvent(QPaintEvent* event)
 {
@@ -61,14 +60,7 @@ void VideoProgressBar::paintEvent(QPaintEvent* event)
 
 void VideoProgressBar::setDownloadedCounter(int downloaded)
 {
-	if (downloaded > m_scale)
-	{
-		downloaded = m_scale;
-	}
-	else if (downloaded < 0)
-	{
-		downloaded = 0;
-	}
+    downloaded = std::clamp(downloaded, 0, m_scale);
 
 	if (m_downloaded == downloaded)
 	{
@@ -128,14 +120,7 @@ bool VideoProgressBar::eventFilter(QObject* obj, QEvent* event)
 
 		if (m_btn_down)
 		{
-			if (percent > 1.0)
-			{
-				percent = 1.0;
-			}
-			if (percent < 0)
-			{
-				percent = 0;
-			}
+            percent = std::clamp(percent, 0.f, 1.f);
 
 			if (!m_seekDisabled)
 			{
@@ -154,14 +139,7 @@ bool VideoProgressBar::eventFilter(QObject* obj, QEvent* event)
 		auto* mevent = static_cast<QMouseEvent*>(event);
 		float percent = (mevent->x() * 1.0) / width();
 
-		if (percent > 1.0)
-		{
-			percent = 1.0;
-		}
-		if (percent < 0)
-		{
-			percent = 0;
-		}
+        percent = std::clamp(percent, 0.f, 1.f);
 
 		if (!m_seekDisabled)
 		{
