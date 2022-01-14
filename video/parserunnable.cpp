@@ -19,14 +19,18 @@ template<typename T>
 bool RendezVous(
     boost::atomic_int64_t& duration,
     RendezVousData& data,
-    unsigned int threshold, T func)
+    unsigned int threshold,
+    bool& encountered,
+    T func)
 {
     if (threshold == 1)
     {
         const auto prevDuration = duration.exchange(AV_NOPTS_VALUE);
         if (prevDuration != AV_NOPTS_VALUE)
         {
-            return func(prevDuration);
+            if (!func(prevDuration))
+                return false;
+            encountered = true;
         }
 
         return true;
@@ -45,9 +49,11 @@ bool RendezVous(
         const bool result = func(prevDuration);
         lock.unlock();
         data.cond.notify_all();
+        encountered = result;
         return result;
     }
 
+    encountered = true;
     ++data.count;
     const unsigned int gen = data.generation;
     while (gen == data.generation)
@@ -89,12 +95,20 @@ void FFmpegDecoder::parseRunnable(int idx)
             return;
         }
 
-        RendezVous(m_seekDuration, m_seekRendezVous, m_formatContexts.size(),
+        bool restarted = false;
+
+        RendezVous(m_seekDuration, m_seekRendezVous, m_formatContexts.size(), restarted,
             std::bind(&FFmpegDecoder::resetDecoding, this, std::placeholders::_1, false));
 
-        if (!RendezVous(m_videoResetDuration, m_videoResetRendezVous, m_formatContexts.size(),
+        if (!RendezVous(m_videoResetDuration, m_videoResetRendezVous, m_formatContexts.size(), restarted,
                 std::bind(&FFmpegDecoder::resetDecoding, this, std::placeholders::_1, true))) {
             return;
+        }
+
+        if (restarted)
+        {
+            eof = UNSET;
+            recovering = RECOVERED;
         }
 
         const int readStatus = av_read_frame(m_formatContexts[idx], &packet);
