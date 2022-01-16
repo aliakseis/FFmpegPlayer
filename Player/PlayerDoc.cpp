@@ -144,6 +144,8 @@ auto GetAddToSubtitlesMapLambda(T& map)
     };
 }
 
+CCriticalSection s_csSubtitles;
+
 } // namespace
 
 
@@ -839,6 +841,7 @@ double CPlayerDoc::soundVolume() const
 std::string CPlayerDoc::getSubtitle() const
 {
     std::string result;
+    CSingleLock lock(&s_csSubtitles, TRUE);
     if (m_subtitles)
     {
         auto it = m_subtitles->find(m_currentTime); 
@@ -852,6 +855,7 @@ std::string CPlayerDoc::getSubtitle() const
 
 bool CPlayerDoc::isUnicodeSubtitles() const
 {
+    CSingleLock lock(&s_csSubtitles, TRUE);
     return m_subtitles && m_subtitles->m_unicodeSubtitles;
 }
 
@@ -1011,17 +1015,17 @@ void CPlayerDoc::OnOpensubtitlesfile()
     auto map(std::make_unique<SubtitlesMap>());
     if (OpenSubtitlesFile(dlg.GetPathName(), map->m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map)))
     {
-        std::atomic_thread_fence(std::memory_order_acq_rel);
-        m_subtitles = std::move(map);
         m_subtitlesFileDiff = std::make_unique<StringDifference>(
             static_cast<LPCTSTR>(m_strPathName), static_cast<LPCTSTR>(dlg.GetPathName()));
+        CSingleLock lock(&s_csSubtitles, TRUE);
+        m_subtitles = std::move(map);
     }
 }
 
 
 void CPlayerDoc::OnUpdateOpensubtitlesfile(CCmdUI *pCmdUI)
 {
-    pCmdUI->Enable(isPlaying() && m_url.empty() && !m_subtitles);
+    pCmdUI->Enable(isPlaying() && m_url.empty());
 }
 
 #ifdef _UNICODE
@@ -1083,13 +1087,37 @@ void CPlayerDoc::OnUpdateHwAcceleration(CCmdUI *pCmdUI)
 
 void CPlayerDoc::OnGetSubtitles(UINT id)
 {
-    CWaitCursor wait;
-    auto map(std::make_unique<SubtitlesMap>());
-    if (m_frameDecoder->getSubtitles(id - ID_FIRST_SUBTITLE, GetAddToSubtitlesMapLambda(map))) {
-        std::atomic_thread_fence(std::memory_order_acq_rel);
+    typedef std::pair<CPlayerDoc*, int> GetSubtitlesParams;
+
+    auto threadLam = [](LPVOID pParam) {
+        auto params = static_cast<const GetSubtitlesParams*>(pParam);
+
+        auto map(std::make_shared<SubtitlesMap>());
+
         map->m_unicodeSubtitles = true;
-        m_subtitles = std::move(map);
-    }
+
+        auto addToSubtitlesLam = [weakPtr = std::weak_ptr<SubtitlesMap>(map)](
+                double start, double end, const std::string& subtitle) {
+            if (auto map = weakPtr.lock()) {
+                CSingleLock lock(&s_csSubtitles, TRUE);
+                map->add({ boost::icl::interval<double>::closed(start, end), subtitle });
+                return true;
+            }
+            return false;
+        };
+
+        {
+            CSingleLock lock(&s_csSubtitles, TRUE);
+            params->first->m_subtitles = std::move(map);
+        }
+        params->first->m_frameDecoder->getSubtitles(params->second, addToSubtitlesLam);
+
+        delete params;
+
+        return UINT();
+    };
+
+    AfxBeginThread(threadLam, new GetSubtitlesParams(this, id - ID_FIRST_SUBTITLE));
 }
 
 

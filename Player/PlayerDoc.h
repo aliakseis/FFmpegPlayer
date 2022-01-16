@@ -143,7 +143,7 @@ private:
     double m_rangeEndTime{};
 
     class SubtitlesMap;
-    std::unique_ptr<SubtitlesMap> m_subtitles;
+    std::shared_ptr<SubtitlesMap> m_subtitles;
     bool m_onEndOfStream = false;
     bool m_autoPlay = false;
     bool m_looping = false;

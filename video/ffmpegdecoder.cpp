@@ -1148,7 +1148,7 @@ std::vector<std::string> FFmpegDecoder::listSubtitles() const
     return result;
 }
 
-bool FFmpegDecoder::getSubtitles(int idx, std::function<void(double, double, const std::string&)> addIntervalCallback) const
+bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, const std::string&)> addIntervalCallback) const
 {
     if (idx < 0 || idx >= m_subtitleItems.size())
         return false;
@@ -1225,7 +1225,11 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<void(double, double, con
 
                 if (!text.empty())
                 {
-                    addIntervalCallback(packet.pts / 1000., (packet.pts + packet.duration) / 1000., text);
+                    if (!addIntervalCallback(packet.pts / 1000., (packet.pts + packet.duration) / 1000., text))
+                    {
+                        av_packet_unref(&packet);
+                        return false;
+                    }
                     ok = true;
                 }
             }
