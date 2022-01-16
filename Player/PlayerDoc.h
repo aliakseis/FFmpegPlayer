@@ -103,7 +103,7 @@ public:
     boost::signals2::signal<void()> onDestructing;
 
     std::string getSubtitle() const;
-    bool isUnicodeSubtitles() const { return m_unicodeSubtitles; }
+    bool isUnicodeSubtitles() const;
 
     void OnDropFiles(HDROP hDropInfo);
     void OnEditPaste(const std::string& text);
@@ -144,7 +144,6 @@ private:
 
     class SubtitlesMap;
     std::unique_ptr<SubtitlesMap> m_subtitles;
-    bool m_unicodeSubtitles = false;
     bool m_onEndOfStream = false;
     bool m_autoPlay = false;
     bool m_looping = false;

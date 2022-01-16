@@ -148,7 +148,10 @@ auto GetAddToSubtitlesMapLambda(T& map)
 
 
 class CPlayerDoc::SubtitlesMap : public boost::icl::interval_map<double, std::string>
-{};
+{
+public:
+    bool m_unicodeSubtitles = false;
+};
 
 class CPlayerDoc::StringDifference
 {
@@ -320,7 +323,7 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl)
                     boost::algorithm::trim_copy(text) + '\n' });
             }))
         {
-            m_unicodeSubtitles = true;
+            map->m_unicodeSubtitles = true;
             m_subtitles = std::move(map);
         }
         m_frameDecoder->pauseResume();
@@ -662,7 +665,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
             const auto s = m_subtitlesFileDiff->patch(lpszPathName);
             auto map(std::make_unique<SubtitlesMap>());
             if (!s.empty() && 0 != _tcscmp(s.c_str(), lpszPathName)
-                    && OpenSubtitlesFile(s.c_str(), m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map))) {
+                    && OpenSubtitlesFile(s.c_str(), map->m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map))) {
                 m_subtitles = std::move(map);
             }
             else {
@@ -675,7 +678,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
 
         if (!m_subtitles) {
             auto map(std::make_unique<SubtitlesMap>());
-            if (OpenMatchingSubtitlesFile(lpszPathName, m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map)))
+            if (OpenMatchingSubtitlesFile(lpszPathName, map->m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map)))
             {
                 m_subtitles = std::move(map);
             }
@@ -847,6 +850,11 @@ std::string CPlayerDoc::getSubtitle() const
     return result;
 }
 
+bool CPlayerDoc::isUnicodeSubtitles() const
+{
+    return m_subtitles && m_subtitles->m_unicodeSubtitles;
+}
+
 void CPlayerDoc::setRangeStartTime(double time)
 {
     if (time < min(0., m_startTime))
@@ -1001,7 +1009,7 @@ void CPlayerDoc::OnOpensubtitlesfile()
     }
 
     auto map(std::make_unique<SubtitlesMap>());
-    if (OpenSubtitlesFile(dlg.GetPathName(), m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map)))
+    if (OpenSubtitlesFile(dlg.GetPathName(), map->m_unicodeSubtitles, GetAddToSubtitlesMapLambda(map)))
     {
         std::atomic_thread_fence(std::memory_order_acq_rel);
         m_subtitles = std::move(map);
@@ -1079,7 +1087,7 @@ void CPlayerDoc::OnGetSubtitles(UINT id)
     auto map(std::make_unique<SubtitlesMap>());
     if (m_frameDecoder->getSubtitles(id - ID_FIRST_SUBTITLE, GetAddToSubtitlesMapLambda(map))) {
         std::atomic_thread_fence(std::memory_order_acq_rel);
-        m_unicodeSubtitles = true;
+        map->m_unicodeSubtitles = true;
         m_subtitles = std::move(map);
     }
 }
