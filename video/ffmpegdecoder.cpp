@@ -1179,7 +1179,6 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<void(double, double, con
         return false;
     }
 
-
     auto codec = avcodec_find_decoder(codecContext->codec_id);
     if (codec == nullptr)
     {
@@ -1193,7 +1192,7 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<void(double, double, con
         return false;  // Could not open codec
     }
 
-
+    bool ok = false;
     AVPacket packet;
     while (av_read_frame(formatContext, &packet) >= 0)
     {
@@ -1205,35 +1204,36 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<void(double, double, con
 
             int got_subtitle = 0;
             int ret = avcodec_decode_subtitle2(codecContext, &sub, &got_subtitle, &packet);
-            if (ret < 0 || !got_subtitle)
-                continue;
-
-            std::string text;
-
-            for (unsigned i = 0; i < sub.num_rects; i++) {
-                switch (sub.rects[i]->type) {
-                case SUBTITLE_ASS:
-                    text += fromAss(sub.rects[i]->ass);
-                    text += '\n';
-                    break;
-                case SUBTITLE_TEXT:
-                    text += sub.rects[i]->text;
-                    text += '\n';
-                    break;
-                default:
-                    break;
-                }
-            }
-
-            if (!text.empty())
+            if (ret >= 0 && got_subtitle)
             {
-                addIntervalCallback(packet.pts / 1000., (packet.pts + packet.duration) / 1000., text);
+                std::string text;
+
+                for (unsigned i = 0; i < sub.num_rects; i++) {
+                    switch (sub.rects[i]->type) {
+                    case SUBTITLE_ASS:
+                        text += fromAss(sub.rects[i]->ass);
+                        text += '\n';
+                        break;
+                    case SUBTITLE_TEXT:
+                        text += sub.rects[i]->text;
+                        text += '\n';
+                        break;
+                    default:
+                        break;
+                    }
+                }
+
+                if (!text.empty())
+                {
+                    addIntervalCallback(packet.pts / 1000., (packet.pts + packet.duration) / 1000., text);
+                    ok = true;
+                }
             }
         }
         av_packet_unref(&packet);
     }
 
-    return true;
+    return ok;
 }
 
 void FFmpegDecoder::setImageConversionFunc(ImageConversionFunc func)
