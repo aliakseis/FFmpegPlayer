@@ -1121,8 +1121,7 @@ bool CPlayerView::ProcessVideo()
     }
 #endif
 
-    auto subtitle = GetDocument()->getSubtitle();
-    if (!subtitle.empty())
+    if (auto subtitle = GetDocument()->getSubtitle())
     {
         //const auto& convertedSubtitle = CA2T(subtitle.c_str(), CP_UTF8);
         hr = m_pD3DD9->BeginScene();
@@ -1137,7 +1136,7 @@ bool CPlayerView::ProcessVideo()
             //m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
 
             DrawSubtitleText(m_pD3DD9, target.Width(), target.Height(), 
-                CA2W(subtitle.c_str(), GetDocument()->isUnicodeSubtitles()? CP_UTF8 : CP_ACP));
+                CA2W(subtitle->text.c_str(), subtitle->isUnicodeSubtitles? CP_UTF8 : CP_ACP));
 
             m_pD3DD9->EndScene();
         }

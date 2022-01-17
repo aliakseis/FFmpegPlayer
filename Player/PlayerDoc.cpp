@@ -838,26 +838,20 @@ double CPlayerDoc::soundVolume() const
 }
 
 
-std::string CPlayerDoc::getSubtitle() const
+std::optional<CPlayerDoc::SubtitleData> CPlayerDoc::getSubtitle() const
 {
-    std::string result;
     CSingleLock lock(&s_csSubtitles, TRUE);
     if (m_subtitles)
     {
         auto it = m_subtitles->find(m_currentTime); 
         if (it != m_subtitles->end())
         {
-            result = it->second;
+            return SubtitleData{ it->second, m_subtitles->m_unicodeSubtitles };
         }
     }
-    return result;
+    return {};
 }
 
-bool CPlayerDoc::isUnicodeSubtitles() const
-{
-    CSingleLock lock(&s_csSubtitles, TRUE);
-    return m_subtitles && m_subtitles->m_unicodeSubtitles;
-}
 
 void CPlayerDoc::setRangeStartTime(double time)
 {
@@ -1090,7 +1084,7 @@ void CPlayerDoc::OnGetSubtitles(UINT id)
     typedef std::pair<CPlayerDoc*, int> GetSubtitlesParams;
 
     auto threadLam = [](LPVOID pParam) {
-        auto params = static_cast<const GetSubtitlesParams*>(pParam);
+        std::unique_ptr<GetSubtitlesParams> params(static_cast<GetSubtitlesParams*>(pParam));
 
         auto map(std::make_shared<SubtitlesMap>());
 
@@ -1111,8 +1105,6 @@ void CPlayerDoc::OnGetSubtitles(UINT id)
             params->first->m_subtitles = std::move(map);
         }
         params->first->m_frameDecoder->getSubtitles(params->second, addToSubtitlesLam);
-
-        delete params;
 
         return UINT();
     };

@@ -229,10 +229,9 @@ afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
             );
     }
 
-    auto subtitle = GetDocument()->getSubtitle();
-    if (!subtitle.empty())
+    if (auto subtitle = GetDocument()->getSubtitle())
     {
-        const auto& convertedSubtitle = CA2T(subtitle.c_str(), GetDocument()->isUnicodeSubtitles() ? CP_UTF8 : CP_ACP);
+        const auto& convertedSubtitle = CA2T(subtitle->text.c_str(), subtitle->isUnicodeSubtitles ? CP_UTF8 : CP_ACP);
         CComPtr<IDWriteTextFormat> pTextFormat;
         if (SUCCEEDED(AfxGetD2DState()->GetWriteFactory()->CreateTextFormat(
             L"MS Sans Serif",
