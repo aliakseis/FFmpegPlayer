@@ -18,10 +18,6 @@ public:
     ~OpenGLDisplay() override;
 
     void InitDrawBuffer(unsigned bsize);
-    //void DisplayVideoFrame(unsigned char *data, int frameWidth, int frameHeight);
-
-
-    void displayFrame(unsigned int generation);
 
     void showPicture(const QImage& img) override;
     void showPicture(const QPixmap& picture) override;
