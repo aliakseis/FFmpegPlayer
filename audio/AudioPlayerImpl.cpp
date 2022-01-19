@@ -211,7 +211,7 @@ bool AudioPlayerImpl::WriteAudio(uint8_t* write_data, int64_t write_size)
 //////////////////////////////////////////////////////////////////////////////
 
 
-void CALLBACK AudioPlayerImpl::waveOutProc(HWAVEOUT, UINT uMsg, DWORD dwInstance, DWORD, DWORD)
+void CALLBACK AudioPlayerImpl::waveOutProc(HWAVEOUT, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR, DWORD_PTR)
 {
     // ignore calls that occur due to openining and closing the device.
     if (uMsg == WOM_DONE)

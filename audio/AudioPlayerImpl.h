@@ -41,7 +41,7 @@ private:
 
     HWAVEOUT			m_waveOutput;
 
-    static void CALLBACK waveOutProc(HWAVEOUT, UINT, DWORD, DWORD, DWORD);
+    static void CALLBACK waveOutProc(HWAVEOUT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR);
 
     WAVEHDR*			m_waveBlocks;
     volatile long		m_waveFreeBlockCount {};
