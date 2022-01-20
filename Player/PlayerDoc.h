@@ -11,7 +11,6 @@
 #include <deque>
 #include <string>
 #include <functional>
-#include <optional>
 
 #include <boost/signals2/signal.hpp>
 
@@ -103,11 +102,7 @@ public:
 
     boost::signals2::signal<void()> onDestructing;
 
-    struct SubtitleData {
-        std::string text;
-        bool isUnicodeSubtitles = false;
-    };
-    std::optional<SubtitleData> getSubtitle() const;
+    std::wstring getSubtitle() const;
 
     void OnDropFiles(HDROP hDropInfo);
     void OnEditPaste(const std::string& text);

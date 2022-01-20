@@ -838,7 +838,7 @@ double CPlayerDoc::soundVolume() const
 }
 
 
-std::optional<CPlayerDoc::SubtitleData> CPlayerDoc::getSubtitle() const
+std::wstring CPlayerDoc::getSubtitle() const
 {
     CSingleLock lock(&s_csSubtitles, TRUE);
     if (m_subtitles)
@@ -846,7 +846,7 @@ std::optional<CPlayerDoc::SubtitleData> CPlayerDoc::getSubtitle() const
         auto it = m_subtitles->find(m_currentTime); 
         if (it != m_subtitles->end())
         {
-            return SubtitleData{ it->second, m_subtitles->m_unicodeSubtitles };
+            return std::wstring(CA2W(it->second.c_str(), m_subtitles->m_unicodeSubtitles ? CP_UTF8 : CP_ACP));
         }
     }
     return {};

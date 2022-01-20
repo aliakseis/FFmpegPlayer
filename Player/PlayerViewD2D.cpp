@@ -27,16 +27,15 @@ enum { WM_DRAW_FRAME = WM_USER + 101 };
 namespace {
 
 //Use IDWriteTextLayout to get the text size
-HRESULT GetTextSize(const WCHAR* text, IDWriteTextFormat* pTextFormat, const SIZE& sourceSize, D2D1_SIZE_F& size)
+HRESULT GetTextSize(const std::wstring& text, IDWriteTextFormat* pTextFormat, const SIZE& sourceSize, D2D1_SIZE_F& size)
 {
-    HRESULT hr = S_OK;
     CComPtr<IDWriteTextLayout> pTextLayout;
     // Create a text layout
-    auto len = wcslen(text);
+    auto len = text.length();
     if (len > 0 && text[len - 1] == L'\n')
         --len;
-    hr = AfxGetD2DState()->GetWriteFactory()->CreateTextLayout(
-        text, 
+    auto hr = AfxGetD2DState()->GetWriteFactory()->CreateTextLayout(
+        text.c_str(),
         len,
         pTextFormat, 
         sourceSize.cx, 
@@ -229,9 +228,8 @@ afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
             );
     }
 
-    if (auto subtitle = GetDocument()->getSubtitle())
+    if (auto subtitle = GetDocument()->getSubtitle(); !subtitle.empty())
     {
-        const auto& convertedSubtitle = CA2T(subtitle->text.c_str(), subtitle->isUnicodeSubtitles ? CP_UTF8 : CP_ACP);
         CComPtr<IDWriteTextFormat> pTextFormat;
         if (SUCCEEDED(AfxGetD2DState()->GetWriteFactory()->CreateTextFormat(
             L"MS Sans Serif",
@@ -244,7 +242,7 @@ afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
             &pTextFormat)))
         {
             D2D1_SIZE_F boundingBox;
-            if (SUCCEEDED(GetTextSize(convertedSubtitle, pTextFormat, m_sourceSize, boundingBox)))
+            if (SUCCEEDED(GetTextSize(subtitle, pTextFormat, m_sourceSize, boundingBox)))
             {
                 const auto left = (m_sourceSize.cx - boundingBox.width) / 2;
                 const auto top = m_sourceSize.cy - boundingBox.height - 2;
@@ -255,14 +253,14 @@ afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
                     SUCCEEDED(spContext->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &pWhiteBrush)))
                 {
                     spContext->DrawText(
-                        convertedSubtitle,
-                        wcslen(convertedSubtitle),
+                        subtitle.c_str(),
+                        subtitle.length(),
                         pTextFormat,
                         D2D1::RectF(left + 1, top + 1, left + 1 + boundingBox.width, top + 1 + boundingBox.height),
                         pBlackBrush);
                     spContext->DrawText(
-                        convertedSubtitle,
-                        wcslen(convertedSubtitle),
+                        subtitle.c_str(),
+                        subtitle.length(),
                         pTextFormat,
                         D2D1::RectF(left, top, left + boundingBox.width, top + boundingBox.height),
                         pWhiteBrush);

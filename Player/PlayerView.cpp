@@ -405,21 +405,20 @@ CComPtr<IDirect3DStateBlock9> InitStateBlock(LPDIRECT3DDEVICE9 pd3dDevice,
     return result;
 }
 
-void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const WCHAR* text)
+void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const std::wstring& text)
 {
     using namespace Gdiplus;
 
     const int fontSize = max(width / 60, 9);
     Gdiplus::Font font(L"MS Sans Serif", (REAL)fontSize);
 
-    const auto length = wcslen(text);
     RectF boundingBox;
 
     {
         Bitmap bitmap(1, 1);
         Graphics graphics(&bitmap);
         graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
-        graphics.MeasureString(text, length, &font, PointF(0, 0), &boundingBox);
+        graphics.MeasureString(text.c_str(), text.length(), &font, PointF(0, 0), &boundingBox);
     }
 
     CComPtr<IDirect3DTexture9> pTexture;
@@ -446,7 +445,7 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
         graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
 
         SolidBrush whiteBrush(Color(0xFF, 0xFF, 0xFF));
-        graphics.DrawString(text, length, &font, PointF(0, 0), &whiteBrush);
+        graphics.DrawString(text.c_str(), text.length(), &font, PointF(0, 0), &whiteBrush);
     }
 
     pTexture->UnlockRect(0);
@@ -1121,7 +1120,7 @@ bool CPlayerView::ProcessVideo()
     }
 #endif
 
-    if (auto subtitle = GetDocument()->getSubtitle())
+    if (auto subtitle = GetDocument()->getSubtitle(); !subtitle.empty())
     {
         //const auto& convertedSubtitle = CA2T(subtitle.c_str(), CP_UTF8);
         hr = m_pD3DD9->BeginScene();
@@ -1135,8 +1134,7 @@ bool CPlayerView::ProcessVideo()
             //m_subtitleFont->DrawText(left + 1, top + 1, D3DCOLOR_XRGB(0, 0, 0), convertedSubtitle);
             //m_subtitleFont->DrawText(left, top, D3DCOLOR_XRGB(255, 255, 255), convertedSubtitle);
 
-            DrawSubtitleText(m_pD3DD9, target.Width(), target.Height(), 
-                CA2W(subtitle->text.c_str(), subtitle->isUnicodeSubtitles? CP_UTF8 : CP_ACP));
+            DrawSubtitleText(m_pD3DD9, target.Width(), target.Height(), subtitle);
 
             m_pD3DD9->EndScene();
         }
