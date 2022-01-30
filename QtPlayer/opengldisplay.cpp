@@ -332,7 +332,7 @@ void OpenGLDisplay::showPicture(const QImage& img)
 {
     if (img.isNull()) {
         return;
-}
+    }
 
     if(img.format()!=QImage::Format_RGB32 && img.format() != QImage::Format_ARGB32 && img.format() != QImage::Format_RGB888)
     {
@@ -342,8 +342,8 @@ void OpenGLDisplay::showPicture(const QImage& img)
 
     const auto step = (img.format() == QImage::Format_RGB888)? 3 : 4;
 
-    const int width = img.width();
-    const int height = img.height();
+    const int width = img.width() & ~1;
+    const int height = img.height() & ~1;
 
     std::unique_lock<std::mutex> lock(impl->m_mutex);
 
@@ -404,6 +404,9 @@ void OpenGLDisplay::showPicture(const QImage& img)
           s+=step * 2;
        }
     }
+
+    lock.unlock();
+    emit update();
 }
 
 void OpenGLDisplay::showPicture(const QPixmap& picture)

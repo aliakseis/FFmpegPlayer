@@ -163,7 +163,7 @@ def install_and_import(package):
         importlib.import_module(package)
     except ImportError:
         import subprocess
-        subprocess.call(["pip", "install", package])
+        subprocess.call(["pip3", "install", package])
     finally:
         globals()[package] = importlib.import_module(package)
 
@@ -734,7 +734,7 @@ bool getYoutubeTranscripts(std::string url, AddYoutubeTranscriptCallback cb)
             return buddy.getYoutubeTranscripts(url, cb);
     }
 
-    return{};
+    return false;
 }
 
 #else // YOUTUBE_EXPERIMENT

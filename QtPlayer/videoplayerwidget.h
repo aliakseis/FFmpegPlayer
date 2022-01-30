@@ -17,7 +17,7 @@ inline VideoPlayerWidget* VideoPlayerWidgetInstance()
 {
     if (auto mainWindow = getMainWindow()) {
         return mainWindow->getPlayer();
-}
+    }
     return nullptr;
 }
 
