@@ -120,7 +120,7 @@ bool VideoProgressBar::eventFilter(QObject* obj, QEvent* event)
 
 		if (m_btn_down)
 		{
-            percent = std::clamp(percent, 0.f, 1.f);
+            percent = std::clamp(percent, 0.F, 1.F);
 
 			if (!m_seekDisabled)
 			{
@@ -139,7 +139,7 @@ bool VideoProgressBar::eventFilter(QObject* obj, QEvent* event)
 		auto* mevent = static_cast<QMouseEvent*>(event);
 		float percent = (mevent->x() * 1.0) / width();
 
-        percent = std::clamp(percent, 0.f, 1.f);
+        percent = std::clamp(percent, 0.F, 1.F);
 
 		if (!m_seekDisabled)
 		{

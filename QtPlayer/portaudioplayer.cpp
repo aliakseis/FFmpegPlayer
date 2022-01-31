@@ -41,8 +41,9 @@ bool PortAudioPlayer::Open(int bytesPerSample, int channels, int* samplesPerSec)
     auto err{ Pa_OpenStream(&m_stream, nullptr, &params, *samplesPerSec, paFramesPerBufferUnspecified,
         paNoFlag, nullptr, nullptr) };
 
-    if (err != paNoError)
+    if (err != paNoError) {
         return false;
+    }
 
     err = Pa_StartStream(m_stream);
 
@@ -61,12 +62,14 @@ void PortAudioPlayer::Close()
 
 bool PortAudioPlayer::WriteAudio(uint8_t* write_data, int64_t write_size)
 {
-    if (!m_stream)
+    if (!m_stream) {
         return false;
+    }
 
-    int16_t* realData = (int16_t*)write_data;
-    for (unsigned int i = 0; i < write_size / 2; ++i)
+    auto* realData = (int16_t*)write_data;
+    for (unsigned int i = 0; i < write_size / 2; ++i) {
         realData[i] *= m_volume;
+    }
 
     const auto framesToWrite = write_size / m_FrameSize;
     auto err = Pa_WriteStream(m_stream, write_data, framesToWrite);

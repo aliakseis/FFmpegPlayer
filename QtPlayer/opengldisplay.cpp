@@ -234,8 +234,9 @@ void OpenGLDisplay::paintGL()
 {
     std::unique_lock<std::mutex> lock(impl->m_mutex);
 
-    if (!impl->mBufYuv)
+    if (!impl->mBufYuv) {
         return;
+    }
 
     // Load y data texture
     // Activate the texture unit GL_TEXTURE0
@@ -372,7 +373,7 @@ void OpenGLDisplay::showPicture(const QImage& img)
           unsigned int g=s[1];
           unsigned int b=s[0];
 
-          unsigned Y = std::min((r*2104 + g*4130 + b*802 + 4096 + 131072) >> 13, 235u);
+          unsigned Y = std::min((r*2104 + g*4130 + b*802 + 4096 + 131072) >> 13, 235U);
           *d = Y;
 
           d++;
