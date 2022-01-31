@@ -223,7 +223,7 @@ void OpenGLDisplay::resizeGL(int w, int h)
 {
     if(h == 0) {// prevents being divided by zero
         h = 1;// set the height to 1
-}
+    }
 
     // Set the viewport
     glViewport(0, 0, w, h);
@@ -233,6 +233,9 @@ void OpenGLDisplay::resizeGL(int w, int h)
 void OpenGLDisplay::paintGL()
 {
     std::unique_lock<std::mutex> lock(impl->m_mutex);
+
+    if (!impl->mBufYuv)
+        return;
 
     // Load y data texture
     // Activate the texture unit GL_TEXTURE0
