@@ -28,9 +28,9 @@ QWidget* getPlayer()
 static const int HEIGHT_FIX = 1;
 
 #ifdef DEVELOPER_OPENGL
-VideoWidget::VideoWidget(QWidget* parent) : OpenGLDisplay(parent),
+VideoWidget::VideoWidget(VideoPlayerWidget* parent) : OpenGLDisplay(parent),
 #else
-VideoWidget::VideoWidget(QWidget* parent) : WidgetDisplay(parent),
+VideoWidget::VideoWidget(VideoPlayerWidget* parent) : WidgetDisplay(parent),
 #endif
 	
 	m_defPlayButton(":/images/video___btn_play___default___(94x94).png"),
@@ -325,4 +325,9 @@ void VideoWidget::onCursorTimer()
 	{
 		hideElements();
 	}
+}
+
+VideoPlayerWidget* VideoWidget::VideoPlayerWidgetInstance()
+{
+    return static_cast<VideoPlayerWidget*>(parent());
 }

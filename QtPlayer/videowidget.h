@@ -10,6 +10,8 @@
 #include "widgetdisplay.h"
 #endif
 
+class VideoPlayerWidget;
+
 // FIXME: OpenGL full support
 #ifdef DEVELOPER_OPENGL
 class VideoWidget : public OpenGLDisplay
@@ -20,7 +22,7 @@ class VideoWidget : public WidgetDisplay
 	Q_OBJECT
 	Q_PROPERTY(QImage m_noPreviewImg READ noPreviewImage WRITE setNoPreviewImage);
 public:
-	explicit VideoWidget(QWidget* parent = nullptr);
+	explicit VideoWidget(VideoPlayerWidget* parent = nullptr);
 	~VideoWidget() override;
 
 	void setDefaultPreviewPicture();
@@ -44,6 +46,8 @@ protected:
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void wheelEvent(QWheelEvent* event) override;
 	void resizeEvent(QResizeEvent* event) override;
+
+    VideoPlayerWidget* VideoPlayerWidgetInstance();
 
 	QImage m_startImgButton;
 	QImage m_noPreviewImg;
