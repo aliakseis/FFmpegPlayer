@@ -73,6 +73,10 @@ bool PortAudioPlayer::WriteAudio(uint8_t* write_data, int64_t write_size)
 
     const auto framesToWrite = write_size / m_FrameSize;
     auto err = Pa_WriteStream(m_stream, write_data, framesToWrite);
+    if (err == paStreamIsStopped && Pa_StartStream(m_stream) == paNoError)
+    {
+        err = Pa_WriteStream(m_stream, write_data, framesToWrite);
+    }
 
     // count audio pts
     const double frame_clock = (double)framesToWrite / m_samplesPerSec;
