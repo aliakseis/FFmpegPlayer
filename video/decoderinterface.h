@@ -76,7 +76,15 @@ struct IFrameDecoder
         PIX_FMT_BGR24,     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
     };
 
-    typedef std::function<void(uint8_t*, int, int, int, std::vector<uint8_t>&, int&, int&)> ImageConversionFunc;
+    // input and output in NV12 format
+    typedef std::function<void(
+        uint8_t* /*input*/,
+        int /*input stride*/,
+        int /*input width*/,
+        int /*input height*/,
+        std::vector<uint8_t>& /*output*/,
+        int& /*output width*/,
+        int& /*output height*/)> ImageConversionFunc;
 
     virtual ~IFrameDecoder() = default;
 
