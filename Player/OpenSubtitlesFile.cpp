@@ -138,7 +138,9 @@ bool OpenSubRipFile(std::istream& s,
         const double end = endHr * 3600 + endMin * 60 + endSec + endMsec / 1000.;
 
         std::string subtitle;
-        while (std::getline(s, buffer) && !buffer.empty())
+        while (std::getline(s, buffer)
+            && std::find_if(buffer.begin(), buffer.end(), [](unsigned char c) { return !std::isspace(c); })
+            != buffer.end())
         {
             subtitle += buffer;
             subtitle += '\n'; // The last '\n' is for aggregating overlapped subtitles (if any)
