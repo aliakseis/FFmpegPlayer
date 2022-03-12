@@ -45,7 +45,7 @@ struct OpenGLDisplay::OpenGLDisplayImpl
 
 OpenGLDisplay::OpenGLDisplay(QWidget* parent)
     : QOpenGLWidget(parent)
-    , impl(new OpenGLDisplayImpl)
+    , impl(new OpenGLDisplayImpl())
 {
     connect(this, &OpenGLDisplay::display, this, &OpenGLDisplay::currentDisplay);
 }

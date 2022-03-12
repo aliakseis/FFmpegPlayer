@@ -96,11 +96,11 @@ std::string fromAss(const char* ass) {
     if (sscanf_s(b.c_str(), "Dialogue: Marked=%*d,%d:%d:%d.%d,%d:%d:%d.%d%[^\r\n]", //&nothing,
                             &hour1, &min1, &sec1, &hunsec1,
                             &hour2, &min2, &sec2, &hunsec2,
-                            line, sizeof(line) / sizeof(line[0])) < 9)
+                            line, static_cast<unsigned>(sizeof(line) / sizeof(line[0]))) < 9)
         if (sscanf_s(b.c_str(), "Dialogue: %*d,%d:%d:%d.%d,%d:%d:%d.%d%[^\r\n]", //&nothing,
                 &hour1, &min1, &sec1, &hunsec1,
                 &hour2, &min2, &sec2, &hunsec2,
-                line, sizeof(line) / sizeof(line[0])) < 9)
+                line, static_cast<unsigned>(sizeof(line) / sizeof(line[0]))) < 9)
             return b; //libass ASS_Event.Text has no Dialogue
     ret = strchr(line, ',');
     if (!ret)
