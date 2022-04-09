@@ -29,8 +29,8 @@ Install vcpkg from https://github.com/Microsoft/vcpkg.
 Install Boost, FFmpeg, OpenCV etc... :
 
 ```
-vcpkg install boost boost:x86-windows
-vcpkg install ffmpeg ffmpeg:x86-windows
+vcpkg install boost
+vcpkg install ffmpeg[ffmpeg,x264,nonfree,gpl,vpx,webp,zlib]
 ...
 
 ```
