@@ -645,10 +645,6 @@ std::vector<std::string> ParsePlaylist(std::string url, bool force)
 
 std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName)
 {
-    if (!_tcsstr(fileName, _T("playlist")) && !_tcsstr(fileName, _T("watch"))
-		&& (_tcslen(fileName) <= 5 || _tcsicmp(fileName + _tcslen(fileName) - 5, _T(".html")) != 0))
-        return{};
-
     MemoryMappedFile memoryMappedFile;
     if (!memoryMappedFile.MapFlie(fileName))
         return{};

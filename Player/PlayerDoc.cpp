@@ -612,7 +612,9 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
     }
     else
     {
-        if (extension[0] == _T('\0') || !_tcsicmp(extension, _T(".html"))) // https://community.spiceworks.com/topic/1968971-opening-web-links-downloading-1-item-to-zcrksihu
+        // https://community.spiceworks.com/topic/1968971-opening-web-links-downloading-1-item-to-zcrksihu
+        if (extension[0] == _T('\0') && (_tcsstr(lpszPathName, _T("playlist")) || _tcsstr(lpszPathName, _T("watch")))
+            || !_tcsicmp(extension, _T(".html")) || !_tcsicmp(extension, _T(".txt")))
         {
             auto playList = ParsePlaylistFile(lpszPathName);
             if (!playList.empty())
