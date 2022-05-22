@@ -105,6 +105,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;$(VcpkgInstalledDir)$(VcpkgTriplet)\lib\Python*.lib;%(AdditionalDependencies);$(INTELOCLSDKROOT)\lib\x86\OpenCL.lib</AdditionalDependencies>
+      <DelayLoadDLLs>opencl.dll</DelayLoadDLLs>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -135,6 +136,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;$(INTELOCLSDKROOT)\lib\x64\OpenCL.lib;$(VcpkgInstalledDir)$(VcpkgTriplet)\lib\Python*.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>opencl.dll</DelayLoadDLLs>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -170,6 +172,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;%(AdditionalDependencies);$(INTELOCLSDKROOT)\lib\x86\OpenCL.lib</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <DelayLoadDLLs>opencl.dll</DelayLoadDLLs>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -206,6 +209,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;$(INTELOCLSDKROOT)\lib\x64\OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <DelayLoadDLLs>opencl.dll</DelayLoadDLLs>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

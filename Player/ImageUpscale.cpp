@@ -13,7 +13,8 @@ const int currDeviceID = 0;
 
 bool CanUpscaleImage()
 {
-    static const bool ok = Anime4KCPP::OpenCL::checkGPUSupport(currPlatformID, currDeviceID);
+    static const bool ok = LoadLibrary(_T("opencl.dll")) != NULL
+        && Anime4KCPP::OpenCL::checkGPUSupport(currPlatformID, currDeviceID);
     return ok;
 }
 
