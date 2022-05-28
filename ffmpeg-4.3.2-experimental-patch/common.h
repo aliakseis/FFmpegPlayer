@@ -191,8 +191,8 @@ static av_always_inline av_const uint16_t av_clip_uint16_c(int a)
  */
 static av_always_inline av_const int16_t av_clip_int16_c(int a)
 {
-    if ((a+0x8000U) & ~0xFFFF) return (a>>31) ^ 0x7FFF;
-    else                      return a;
+    const int16_t noOverflowCandidate = a;
+    return (noOverflowCandidate == a) ? noOverflowCandidate : ((noOverflowCandidate < a) ? INT16_MAX : INT16_MIN);
 }
 
 /**
@@ -228,8 +228,8 @@ static av_always_inline av_const int av_clip_intp2_c(int a, int p)
  */
 static av_always_inline av_const unsigned av_clip_uintp2_c(int a, int p)
 {
-    if (a & ~((1<<p) - 1)) return (~a) >> 31 & ((1<<p) - 1);
-    else                   return  a;
+    const unsigned int bits = ((1 << p) - 1);
+    return (((unsigned int)a) <= bits) ? a : ((a < 0) ? 0 : bits);
 }
 
 /**
