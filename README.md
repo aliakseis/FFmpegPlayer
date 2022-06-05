@@ -60,7 +60,7 @@ https://github.com/pytube/pytube/archive/master.zip = https://github.com/kinshuk
 ```
 
 Sometimes it is needed to visit pytube issues list and apply fixes, for example 
-- https://github.com/pytube/pytube/issues/1163
+- https://github.com/pytube/pytube/issues/1326
 
 Take into account https://www.psiphon3.com if you encounter HTTP Error 429.
 
@@ -68,6 +68,10 @@ Just in case: "In fact in boost-python, the default behavior is that even when d
 
 Tiny demos here: https://www.youtube.com/watch?v=dySA4yEGdEc https://www.youtube.com/watch?v=t5iW2ZsEzrA
 
-Hint: hold Ctrl+Shift while submitting File Open dialog to choose a separate audio file. It works for the file opening from the Windows Explorer as well.
+Tip: hold Ctrl+Shift while submitting File Open dialog to choose a separate audio file. It works for the file opening from the Windows Explorer as well.
 
 Please take into account specific Windows 10 behavior while opening Internet shortcuts: https://community.spiceworks.com/topic/1968971-opening-web-links-downloading-1-item-to-zcrksihu You can avoid this by dragging and dropping them.
+
+### Bonus tip
+
+Playing YouTube videos in browsers may result in poor performance on slow hardware. Assign a keyboard shortcut to the FFmpeg player by editing its shortcut. Hover your mouse over the YouTube link in Firefox and bring up the shortcut. A player pop-up window will appear, starting the video playback. The same can be achieved in Chrome with some tweaking.
