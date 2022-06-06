@@ -32,14 +32,19 @@ VOID CALLBACK SendAsyncProc(
     if (FAILED(ObjectFromLresult(lResult, __uuidof(IAccessible), 0, (void**)&pacc)))
         return;
 
+    enum { MAX_ITER_NUM = 100 };
+
     POINT ptScreen{ LOWORD(dwData), HIWORD(dwData) };
     {
+        int iter = 0;
         CComVariant vtChild;
         CComQIPtr<IAccessible> paccChild;
         for (; SUCCEEDED(pacc->accHitTest(ptScreen.x, ptScreen.y, &vtChild))
             && VT_DISPATCH == vtChild.vt && (paccChild = vtChild.pdispVal) != NULL;
             vtChild.Clear())
         {
+            if (iter++ >= MAX_ITER_NUM)
+                return;
             pacc.Attach(paccChild.Detach());
         }
     }
@@ -48,6 +53,7 @@ VOID CALLBACK SendAsyncProc(
     v.vt = VT_I4;
     v.lVal = CHILDID_SELF;
 
+    int iter = 0;
     while (pacc)
     {
         CComVariant vRole;
@@ -55,12 +61,15 @@ VOID CALLBACK SendAsyncProc(
         if (SUCCEEDED(pacc->get_accRole(v, &vRole)) && vRole.vt == VT_I4 && vRole.lVal == ROLE_SYSTEM_LINK)
         {
             CComBSTR url;
-            if (FAILED(pacc->get_accValue(v, &url)))
+            if (SUCCEEDED(pacc->get_accValue(v, &url)) && url != NULL)
+            {
+                AfxGetApp()->PostThreadMessage(WM_ON_ASYNC_URL, (WPARAM)url.Detach(), NULL);
                 return;
-
-            AfxGetApp()->PostThreadMessage(WM_ON_ASYNC_URL, (WPARAM)url.Detach(), NULL);
-            return;
+            }
         }
+
+        if (iter++ >= MAX_ITER_NUM)
+            return;
 
         CComPtr<IDispatch> spDisp;
         if (FAILED(pacc->get_accParent(&spDisp)))
