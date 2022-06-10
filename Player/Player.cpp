@@ -222,11 +222,11 @@ BOOL CPlayerApp::InitInstance()
     ttParams.m_bVislManagerTheme = TRUE;
     theApp.GetTooltipManager()->
         SetTooltipParams(AFX_TOOLTIP_TYPE_ALL,
-        RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
+            RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
 
     // Register the application's document templates.  Document templates
     //  serve as the connection between documents, frame windows and views
-    CSingleDocTemplate* pDocTemplate = new CSingleDocTemplate(
+    auto* pDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,
         RUNTIME_CLASS(CPlayerDoc),
         RUNTIME_CLASS(CMainFrame),       // main SDI frame window
@@ -235,16 +235,18 @@ BOOL CPlayerApp::InitInstance()
 #else
         RUNTIME_CLASS(CPlayerView));
 #endif
-    if (!pDocTemplate)
+    if (!pDocTemplate) {
         return FALSE;
+    }
     AddDocTemplate(pDocTemplate);
 
     HandleMruList();
 
     // Dispatch commands specified on the command line.  Will return FALSE if
     // app was launched with /RegServer, /Register, /Unregserver or /Unregister.
-    if (!ProcessShellCommand(cmdInfo))
+    if (!ProcessShellCommand(cmdInfo)) {
         return FALSE;
+    }
 
     // https://stackoverflow.com/a/56079903/10472202
     //enum { TIME_PERIOD = 1 };
@@ -271,13 +273,13 @@ public:
 
     BOOL OnInitDialog() override;
 
-// Dialog Data
+    // Dialog Data
     enum { IDD = IDD_ABOUTBOX };
 
     CString m_videoProperties;
 
 protected:
-    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    void DoDataExchange(CDataExchange* pDX) override;    // DDX/DDV support
 
 // Implementation
 protected:
@@ -333,8 +335,9 @@ void CPlayerApp::OnAppAbout()
         const auto properties = doc->getFrameDecoder()->getProperties();
         for (const auto& prop : properties)
         {
-            if (!aboutDlg.m_videoProperties.IsEmpty())
+            if (!aboutDlg.m_videoProperties.IsEmpty()) {
                 aboutDlg.m_videoProperties += '\n';
+            }
             aboutDlg.m_videoProperties += prop.c_str();
         }
     }
@@ -344,7 +347,7 @@ void CPlayerApp::OnAppAbout()
 
 // CPlayerApp message handlers
 
-void CPlayerApp::OnAsyncUrl(WPARAM wParam, LPARAM)
+void CPlayerApp::OnAsyncUrl(WPARAM wParam, LPARAM /*unused*/)
 {
     CComBSTR url;
     url.Attach((BSTR)wParam);
@@ -364,8 +367,9 @@ bool CPlayerApp::GetMappedAudioFiles(CMapStringToString& map)
 
     LPBYTE pData = nullptr;
     UINT bytes = 0;
-    if (!GetBinary(szMappedAudioFilesEntry, &pData, &bytes) || bytes == 0)
+    if (!GetBinary(szMappedAudioFilesEntry, &pData, &bytes) || bytes == 0) {
         return false;
+    }
 
     const auto size = 65536;
 
@@ -380,8 +384,9 @@ bool CPlayerApp::GetMappedAudioFiles(CMapStringToString& map)
 
         int version = 0;
         ar >> version;
-        if (version != MappedAudioFilesEntryVersion)
+        if (version != MappedAudioFilesEntryVersion) {
             return false;
+        }
         map.Serialize(ar);
     }
     mf.Detach();
@@ -401,16 +406,18 @@ void CPlayerApp::SetMappedAudioFiles(CMapStringToString& map)
 
     UINT uiDataSize = static_cast<UINT>(mf.GetLength());
     LPBYTE lpbData = mf.Detach();
-    if (lpbData == nullptr)
+    if (lpbData == nullptr) {
         return;
+    }
 
     int nLenDst = GetMaxCompressedLen(uiDataSize);
     std::vector<BYTE> packed(nLenDst);
 
     int nLenPacked = CompressData(lpbData, uiDataSize, packed.data(), nLenDst);
     free(lpbData);
-    if (nLenPacked == -1)
+    if (nLenPacked == -1) {
         return;  // error
+    }
 
     WriteBinary(szMappedAudioFilesEntry, packed.data(), nLenPacked);
 }
@@ -427,19 +434,22 @@ void CPlayerApp::HandleMruList()
         for (int i = m_pRecentFileList->GetSize(); --i >= 0;)
         {
             const auto& key = (*m_pRecentFileList)[i];
-            if (_taccess(key, 04) != 0)
+            if (_taccess(key, 04) != 0) {
                 m_pRecentFileList->Remove(i);
+            }
             else
             {
                 CString value;
-                if (oldMappedAudioFiles.Lookup(key, value))
+                if (oldMappedAudioFiles.Lookup(key, value)) {
                     newMappedAudioFiles[key] = value;
+                }
             }
         }
     }
 
-    if (oldMappedAudioFiles.GetSize() != newMappedAudioFiles.GetSize())
+    if (oldMappedAudioFiles.GetSize() != newMappedAudioFiles.GetSize()) {
         SetMappedAudioFiles(newMappedAudioFiles);
+    }
 }
 
 CString CPlayerApp::GetMappedAudioFile(LPCTSTR key)

@@ -52,7 +52,7 @@ const UINT VIDEO_FPS = 60;
 
 HMODULE g_hRgb9rastDLL = NULL;
 
-PVOID g_pfnD3D9GetSWInfo = NULL;
+PVOID g_pfnD3D9GetSWInfo = nullptr;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -427,14 +427,15 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
     if (FAILED(pd3dDevice->CreateTexture(boundingBox.Width, boundingBox.Height, 1,
         0,
         D3DFMT_A4R4G4B4,
-        D3DPOOL_MANAGED, &pTexture, NULL)))
+        D3DPOOL_MANAGED, &pTexture, nullptr)))
     {
         return;
     }
 
     D3DLOCKED_RECT d3dlr;
-    if (FAILED(pTexture->LockRect(0, &d3dlr, 0, 0)))
+    if (FAILED(pTexture->LockRect(0, &d3dlr, nullptr, 0))) {
         return;
+    }
 
     {
         Bitmap bitmap(boundingBox.Width, boundingBox.Height, d3dlr.Pitch,
@@ -454,24 +455,26 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
     // Create vertex buffer for the letters
     if (FAILED(pd3dDevice->CreateVertexBuffer(MAX_NUM_VERTICES * sizeof(FONT2DVERTEX),
         D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, 0,
-        D3DPOOL_DEFAULT, &pVB, NULL)))
+        D3DPOOL_DEFAULT, &pVB, nullptr)))
     {
         return;
     }
 
     CComPtr<IDirect3DStateBlock9> pStateBlockSaved(InitStateBlock(pd3dDevice, pTexture));
-    if (!pStateBlockSaved)
+    if (!pStateBlockSaved) {
         return;
+    }
 
     CComPtr<IDirect3DStateBlock9> pStateBlockDrawText(InitStateBlock(pd3dDevice, pTexture));
-    if (!pStateBlockDrawText)
+    if (!pStateBlockDrawText) {
         return;
+    }
 
     // Setup renderstate
     pStateBlockSaved->Capture();
     pStateBlockDrawText->Apply();
     pd3dDevice->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
-    pd3dDevice->SetPixelShader(NULL);
+    pd3dDevice->SetPixelShader(nullptr);
     pd3dDevice->SetStreamSource(0, pVB, 0, sizeof(FONT2DVERTEX));
 
     const FLOAT tx1 = 0;
@@ -483,10 +486,11 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
     const FLOAT h = boundingBox.Height;
 
     // Fill vertex buffer
-    FONT2DVERTEX* pVertices = NULL;
+    FONT2DVERTEX* pVertices = nullptr;
     DWORD         dwNumTriangles = 0;
-    if (FAILED(pVB->Lock(0, 0, (void**)&pVertices, D3DLOCK_DISCARD)))
+    if (FAILED(pVB->Lock(0, 0, (void**)&pVertices, D3DLOCK_DISCARD))) {
         return;
+    }
 
     for (int pass = 0; pass < 2; ++pass)
     {
@@ -495,20 +499,21 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
 
         const DWORD dwColor = pass? D3DCOLOR_XRGB(255, 255, 255) : D3DCOLOR_XRGB(0, 0, 0);
 
-        *pVertices++ = { { sx + 0, sy + h, 0.9f, 1.0f }, dwColor, tx1, ty2 };
-        *pVertices++ = { { sx + 0, sy + 0, 0.9f, 1.0f }, dwColor, tx1, ty1 };
-        *pVertices++ = { { sx + w, sy + h, 0.9f, 1.0f }, dwColor, tx2, ty2 };
-        *pVertices++ = { { sx + w, sy + 0, 0.9f, 1.0f }, dwColor, tx2, ty1 };
-        *pVertices++ = { { sx + w, sy + h, 0.9f, 1.0f }, dwColor, tx2, ty2 };
-        *pVertices++ = { { sx + 0, sy + 0, 0.9f, 1.0f }, dwColor, tx1, ty1 };
+        *pVertices++ = { { sx + 0, sy + h, 0.9F, 1.0F }, dwColor, tx1, ty2 };
+        *pVertices++ = { { sx + 0, sy + 0, 0.9F, 1.0F }, dwColor, tx1, ty1 };
+        *pVertices++ = { { sx + w, sy + h, 0.9F, 1.0F }, dwColor, tx2, ty2 };
+        *pVertices++ = { { sx + w, sy + 0, 0.9F, 1.0F }, dwColor, tx2, ty1 };
+        *pVertices++ = { { sx + w, sy + h, 0.9F, 1.0F }, dwColor, tx2, ty2 };
+        *pVertices++ = { { sx + 0, sy + 0, 0.9F, 1.0F }, dwColor, tx1, ty1 };
 
         dwNumTriangles += 2;
     }
 
     // Unlock and render the vertex buffer
     pVB->Unlock();
-    if (dwNumTriangles > 0)
+    if (dwNumTriangles > 0) {
         pd3dDevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, dwNumTriangles);
+    }
 
     // Restore the modified renderstates
     pStateBlockSaved->Apply();
@@ -523,7 +528,7 @@ public:
     explicit FrameListener(CPlayerView* playerView) : m_playerView(playerView) {}
 
 private:
-    void updateFrame(IFrameDecoder*) override
+    void updateFrame(IFrameDecoder* /*decoder*/) override
     {
         m_playerView->updateFrame();
     }
@@ -531,7 +536,7 @@ private:
     {
         m_playerView->ProcessVideo();
         //m_playerView->Invalidate();
-	    decoder->finishedDisplayingFrame(generation);
+        decoder->finishedDisplayingFrame(generation);
     }
     void decoderClosing() override
     {
@@ -551,8 +556,8 @@ private:
 IMPLEMENT_DYNCREATE(CPlayerView, CView)
 
 CPlayerView::CPlayerView()
-: m_frameListener(new FrameListener(this))
-, m_aspectRatio(1, 1)
+    : m_frameListener(new FrameListener(this))
+    , m_aspectRatio(1, 1)
 {
 }
 
@@ -623,12 +628,7 @@ bool CPlayerView::InitializeD3D9()
         }
     }
 
-    if (!m_pD3DD9)
-    {
-        return false;
-    }
-
-    return true;
+    return !!m_pD3DD9;
 }
 
 #ifdef USE_DXVA2
@@ -913,7 +913,7 @@ bool CPlayerView::InitializeExtra(bool createSurface)
             VIDEO_MAIN_FORMAT,
             D3DPOOL_DEFAULT,
             &m_pMainStream,
-            NULL);
+            nullptr);
         if (FAILED(hr))
         {
             TRACE("CreateOffscreenPlainSurface failed with error 0x%x.\n", hr);
@@ -992,12 +992,7 @@ bool CPlayerView::ResetDevice()
         }
     }
 
-    if (fullInitialization && (!InitializeD3D9() || !InitializeExtra(true)))
-    {
-        return false;
-    }
-
-    return true;
+    return !(fullInitialization && (!InitializeD3D9() || !InitializeExtra(true)));
 }
 
 
@@ -1065,7 +1060,7 @@ bool CPlayerView::ProcessVideo()
             GetDocument()->getFrameDecoder()->videoReset();
             return false;
         }
-        else if (!ResetDevice())
+        if (!ResetDevice())
         {
             return false;
         }
@@ -1102,10 +1097,10 @@ bool CPlayerView::ProcessVideo()
 #else
     m_pD3DD9->Clear(
         0,
-        NULL,
+        nullptr,
         D3DCLEAR_TARGET,
         D3DCOLOR_XRGB(0, 0, 0),
-        1.0f,
+        1.0F,
         0);
 
     hr = m_pD3DD9->StretchRect(
@@ -1141,7 +1136,7 @@ bool CPlayerView::ProcessVideo()
     }
 
 
-    hr = m_pD3DD9->Present(&target, &screenPosition, GetSafeHwnd(), NULL);
+    hr = m_pD3DD9->Present(&target, &screenPosition, GetSafeHwnd(), nullptr);
     if (FAILED(hr))
     {
         TRACE("Present failed with error 0x%x.\n", hr);
@@ -1201,7 +1196,7 @@ void CPlayerView::OnPaint()
     else
     {
         ProcessVideo();
-        ValidateRect(NULL);
+        ValidateRect(nullptr);
     }
 }
 
@@ -1218,11 +1213,13 @@ BOOL CPlayerView::PreCreateWindow(CREATESTRUCT& cs)
 
 int CPlayerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-    if (!InitializeModule())
+    if (!InitializeModule()) {
         return -1;
+    }
 
-    if (CView::OnCreate(lpCreateStruct) == -1)
+    if (CView::OnCreate(lpCreateStruct) == -1) {
         return -1;
+    }
 
     GetDocument()->getFrameDecoder()->setFrameListener(m_frameListener.get());
     GetDocument()->getFrameDecoder()->SetFrameFormat(IFrameDecoder::
@@ -1288,7 +1285,7 @@ void CPlayerView::updateFrame()
             return;
         }
         D3DLOCKED_RECT lr;
-        HRESULT hr = m_pMainStream->LockRect(&lr, NULL, D3DLOCK_NOSYSLOCK);
+        HRESULT hr = m_pMainStream->LockRect(&lr, nullptr, D3DLOCK_NOSYSLOCK);
         if (FAILED(hr))
         {
             TRACE("LockRect failed with error 0x%x.\n", hr);
@@ -1324,11 +1321,12 @@ void CPlayerView::updateFrame()
 
     lock.Unlock();
 
-    if (CFrameWndEx* pMainWnd = dynamic_cast<CFrameWndEx*>(AfxGetApp()->GetMainWnd()))
+    if (auto* pMainWnd = dynamic_cast<CFrameWndEx*>(AfxGetApp()->GetMainWnd())) {
         if (pMainWnd->IsFullScreen())
         {
             ::SetThreadExecutionState(ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED | ES_CONTINUOUS);
         }
+    }
 }
 
 
@@ -1411,11 +1409,13 @@ void CPlayerView::OnDropFiles(HDROP hDropInfo)
 
 void CPlayerView::OnEditCopy()
 {
-    if (!m_pMainStream)
+    if (!m_pMainStream) {
         return;
+    }
 
-    if (!OpenClipboard())
+    if (!OpenClipboard()) {
         return;
+    }
 
     if (HGLOBAL hglbl = FrameToHglobal(m_pMainStream, m_sourceSize.cx, m_sourceSize.cy))
     {
