@@ -96,7 +96,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     void SetFrameFormat(FrameFormat format, bool allowDirect3dData) override;
 
     //bool openFile(const PathType& file) override;
-    bool openUrls(std::initializer_list<std::string> urls) override;
+    bool openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat = {}) override;
     bool seekDuration(int64_t duration);
     bool seekByPercent(double percent) override;
 

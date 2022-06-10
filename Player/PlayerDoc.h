@@ -123,7 +123,7 @@ private:
 
     bool openDocument(LPCTSTR lpszPathName, bool openSeparateFile = false);
     bool openTopLevelUrl(const CString& url, bool force, const CString& pathName = {});
-    bool openUrl(const std::string& url);
+    bool openUrl(const std::string& url, const std::string& inputFormat = {});
     bool openUrlFromList();
     bool openUrlFromList(const std::vector<std::string>& playList, const CString& pathName = {});
 

@@ -38,6 +38,7 @@
 #define IDC_PARSE                       1016
 #define IDC_VIDEO_PROPERTIES            1017
 #define IDC_APP_NAME_VERSION            1018
+#define IDC_EDIT_INPUT_FORMAT           1019
 #define ID_TRACK1_DUMMY                 32771
 #define ID_AUTOPLAY                     32775
 #define ID_LOOPING                      32776
@@ -63,7 +64,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
 #define _APS_NEXT_COMMAND_VALUE         32792
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

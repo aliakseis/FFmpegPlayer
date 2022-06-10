@@ -271,6 +271,12 @@ BOOL CPlayerDoc::OnNewDocument()
         if (dlg.DoModal() == IDOK && !dlg.m_URL.IsEmpty() && CDocument::OnNewDocument())
         {
             reset();
+            if (!dlg.m_inputFormt.IsEmpty())
+            {
+                std::string url(CT2A(dlg.m_URL, CP_UTF8));
+                std::string inputFormat(CT2A(dlg.m_inputFormt, CP_UTF8));
+                return openUrl(url, inputFormat);
+            }
             return openTopLevelUrl(dlg.m_URL, dlg.m_bParse);
         }
 
@@ -305,48 +311,62 @@ bool CPlayerDoc::openTopLevelUrl(const CString& topLevelUrl, bool force, const C
     return false;
 }
 
-bool CPlayerDoc::openUrl(const std::string& originalUrl)
+bool CPlayerDoc::openUrl(const std::string& originalUrl, const std::string& inputFormat)
 {
-    const auto urls = getYoutubeUrl(originalUrl, m_maximalResolution);
-    if (!urls.first.empty() && (m_maximalResolution && !urls.second.empty())
-            ? m_frameDecoder->openUrls({ urls.first, urls.second }) 
-            : m_frameDecoder->openUrls({ urls.first }))
+    std::pair<std::string, std::string> urls;
+
+    if (!inputFormat.empty())
     {
-        m_frameDecoder->play(true);
-        m_originalUrl = originalUrl;
-        m_url = urls.first;
-
-        if (m_maximalResolution && !urls.second.empty()) {
-            m_separateFileDiff = std::make_unique<StringDifference>(
-                std::basic_string<TCHAR>(urls.first.begin(), urls.first.end()),
-                std::basic_string<TCHAR>(urls.second.begin(), urls.second.end()));
+        if (!m_frameDecoder->openUrls({ originalUrl }, inputFormat))
+            return false;
+        urls.first = originalUrl;
+    }
+    else
+    {
+        urls = getYoutubeUrl(originalUrl, m_maximalResolution);
+        if (urls.first.empty() || !((m_maximalResolution && !urls.second.empty())
+            ? m_frameDecoder->openUrls({ urls.first, urls.second })
+            : m_frameDecoder->openUrls({ urls.first })))
+        {
+            return false;
         }
-        else {
-            m_separateFileDiff.reset();
-        }
+    }
 
-        m_subtitles.reset();
-        m_nightcore = false;
-        ++m_documentGeneration;
-        UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
+    m_frameDecoder->play(true);
+    m_originalUrl = originalUrl;
+    m_url = urls.first;
 
+    if (m_maximalResolution && !urls.second.empty()) {
+        m_separateFileDiff = std::make_unique<StringDifference>(
+            std::basic_string<TCHAR>(urls.first.begin(), urls.first.end()),
+            std::basic_string<TCHAR>(urls.second.begin(), urls.second.end()));
+    }
+    else {
+        m_separateFileDiff.reset();
+    }
+
+    m_subtitles.reset();
+    m_nightcore = false;
+    ++m_documentGeneration;
+    UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
+
+    if (inputFormat.empty())
+    {
         auto map(std::make_unique<SubtitlesMap>());
-        if (getYoutubeTranscripts(originalUrl, 
+        if (getYoutubeTranscripts(originalUrl,
             [&map](double start, double duration, const std::string& text) {
-                map->add({
-                    boost::icl::interval<double>::closed(start, start + duration),
-                    boost::algorithm::trim_copy(text) + '\n' });
-            }))
+            map->add({
+                boost::icl::interval<double>::closed(start, start + duration),
+                boost::algorithm::trim_copy(text) + '\n' });
+        }))
         {
             map->m_unicodeSubtitles = true;
             m_subtitles = std::move(map);
         }
-        m_frameDecoder->pauseResume();
-        onPauseResume(false);
-        return true;
     }
-
-    return false;
+    m_frameDecoder->pauseResume();
+    onPauseResume(false);
+    return true;
 }
 
 bool CPlayerDoc::openUrlFromList()

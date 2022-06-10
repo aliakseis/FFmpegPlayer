@@ -19,6 +19,7 @@
 extern "C"
 {
 #include "libavutil/pixdesc.h"
+#include "libavdevice/avdevice.h"
 }
 
 #ifdef _WIN32
@@ -368,7 +369,8 @@ FFmpegDecoder::FFmpegDecoder(std::unique_ptr<IAudioPlayer> audioPlayer)
     av_register_all();
 #endif
 
-    //avdevice_register_all();
+    avdevice_register_all();
+
     avformat_network_init();
 }
 
@@ -495,7 +497,7 @@ void FFmpegDecoder::closeProcessing()
 }
 
 
-bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls)
+bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat)
 {
     close();
 
@@ -522,7 +524,13 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls)
         auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
 
         // Open video file
-        const int error = avformat_open_input(&formatContext, url.c_str(), nullptr, &streamOpts);
+        AVInputFormat* iformat = nullptr;
+        if (!inputFormat.empty())
+        {
+            iformat = av_find_input_format(inputFormat.c_str());
+            av_dict_set(&streamOpts, "rtbufsize", "15000000", 0); // https://superuser.com/questions/1158820/ffmpeg-real-time-buffer-issue-rtbufsize-parameter
+        }
+        const int error = avformat_open_input(&formatContext, url.c_str(), iformat, &streamOpts);
         if (error != 0)
         {
             BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error: " << error;
