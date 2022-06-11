@@ -408,6 +408,8 @@ void FFmpegDecoder::resetVariables()
 
     m_videoResetting = false;
 
+    m_videoStartClock = VIDEO_START_CLOCK_NOT_INITIALIZED;
+
     m_isVideoSeekingWhilePaused = false;
 
     m_isPlaying = false;
@@ -580,7 +582,7 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
                     //char* buffer{};
                     //av_dict_get_string(formatContext->streams[i]->metadata, &buffer, ':', ',');
                     if (auto title = av_dict_get(formatContext->streams[i]->metadata, "title", nullptr, 0))
-                        m_subtitleItems.push_back({ contextIdx, i, title->value });
+                        m_subtitleItems.push_back({ contextIdx, i, title->value, *(urls.begin() + contextIdx) });
                     //av_freep(&buffer);
                 }
                 break;
@@ -1168,7 +1170,7 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, con
 
     auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
 
-    int error = avformat_open_input(&formatContext, m_formatContexts[m_subtitleItems[idx].contextIdx]->url, nullptr, nullptr);
+    int error = avformat_open_input(&formatContext, m_subtitleItems[idx].url.c_str(), nullptr, nullptr);
     if (error != 0)
     {
         return false;

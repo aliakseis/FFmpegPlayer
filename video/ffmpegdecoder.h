@@ -308,6 +308,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
         int contextIdx;
         int streamIdx;
         std::string description;
+        std::string url;
     };
 
     std::vector<SubtitleItem> m_subtitleItems;

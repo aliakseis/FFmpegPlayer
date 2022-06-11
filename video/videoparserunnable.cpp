@@ -248,10 +248,13 @@ bool FFmpegDecoder::handleVideoFrame(
     {
         boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
 
-        inNextFrame = m_isPaused && m_isVideoSeekingWhilePaused;
+        const bool isPaused = m_isPaused;
+        inNextFrame = isPaused && m_isVideoSeekingWhilePaused;
         if (!context.initialized || inNextFrame)
         {
-            m_videoStartClock = (m_isPaused ? m_pauseTimer : GetHiResTime()) - pts;
+            const auto val = (isPaused ? m_pauseTimer : GetHiResTime()) - pts;
+            m_videoStartClock = val;
+            CHANNEL_LOG(ffmpeg_sync) << "isPaused = " << isPaused << " m_videoStartClock = " << val;
         }
 
         // Skipping frames
@@ -280,7 +283,7 @@ bool FFmpegDecoder::handleVideoFrame(
                     CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
 
                     // pause
-                    return !(m_isPaused && !m_isVideoSeekingWhilePaused);
+                    return !(isPaused && !m_isVideoSeekingWhilePaused);
                 }
             }
             else

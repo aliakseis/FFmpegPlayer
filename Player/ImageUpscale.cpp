@@ -2,6 +2,8 @@
 
 #include "ImageUpscale.h"
 
+#if __has_include("AC.hpp")
+
 #include"AC.hpp"
 #include"ACCreator.hpp"
 #include"ACProcessor.hpp"
@@ -65,3 +67,21 @@ void ImageUpscale(uint8_t* input, int inputStride, int inputWidth, int inputHeig
     output.assign(out_y_image.datastart, out_y_image.dataend);
     output.insert(output.end(), CrCb.datastart, CrCb.dataend);
 }
+
+#else
+
+bool CanUpscaleImage()
+{
+    return false;
+}
+
+bool EnableImageUpscale()
+{
+    return false;
+}
+
+void ImageUpscale(uint8_t*, int, int, int, std::vector<uint8_t>&, int&, int&)
+{
+}
+
+#endif

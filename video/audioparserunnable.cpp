@@ -313,6 +313,7 @@ bool FFmpegDecoder::handleAudioFrame(
     // Audio sync
     if (!failed && !skipAll && fabs(delta) > 0.1)
     {
+        CHANNEL_LOG(ffmpeg_sync) << "Audio sync delta = " << delta;
         InterlockedAdd(m_videoStartClock, delta / 2);
     }
 
