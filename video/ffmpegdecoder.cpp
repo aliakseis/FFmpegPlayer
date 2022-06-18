@@ -556,6 +556,7 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
     m_videoStreamNumber = -1;
     m_audioContextIndex = -1;
     m_audioStreamNumber = -1;
+    int lastSubtitleNr = 0;
     for (int contextIdx = m_formatContexts.size(); --contextIdx >= 0;)
     {
         const auto formatContext = m_formatContexts[contextIdx];
@@ -581,8 +582,18 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
                 {
                     //char* buffer{};
                     //av_dict_get_string(formatContext->streams[i]->metadata, &buffer, ':', ',');
+                    char buf[100];
+                    const char* description;
                     if (auto title = av_dict_get(formatContext->streams[i]->metadata, "title", nullptr, 0))
-                        m_subtitleItems.push_back({ contextIdx, i, title->value, *(urls.begin() + contextIdx) });
+                    {
+                        description = title->value;
+                    }
+                    else
+                    {
+                        sprintf_s(buf, "Track %d", ++lastSubtitleNr);
+                        description = buf;
+                    }
+                    m_subtitleItems.push_back({ contextIdx, i, description, *(urls.begin() + contextIdx) });
                     //av_freep(&buffer);
                 }
                 break;
