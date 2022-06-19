@@ -92,13 +92,13 @@ std::string ass_to_plaintext(const char *in)
 std::string fromAss(const char* ass) {
     const auto b = ass_to_plaintext(ass);
     int hour1, min1, sec1, hunsec1,hour2, min2, sec2, hunsec2;
-    char line[512], *ret;
+    char line[1024], *ret;
     // fixme: "\0" maybe not allowed
-    if (sscanf(b.c_str(), "Dialogue: Marked=%*d,%d:%d:%d.%d,%d:%d:%d.%d%[^\r\n]", //&nothing,
+    if (sscanf(b.c_str(), "Dialogue: Marked=%*d,%d:%d:%d.%d,%d:%d:%d.%d%1023[^\r\n]", //&nothing,
                             &hour1, &min1, &sec1, &hunsec1,
                             &hour2, &min2, &sec2, &hunsec2,
                             line) < 9)
-        if (sscanf(b.c_str(), "Dialogue: %*d,%d:%d:%d.%d,%d:%d:%d.%d%[^\r\n]", //&nothing,
+        if (sscanf(b.c_str(), "Dialogue: %*d,%d:%d:%d.%d,%d:%d:%d.%d%1023[^\r\n]", //&nothing,
                 &hour1, &min1, &sec1, &hunsec1,
                 &hour2, &min2, &sec2, &hunsec2,
                 line) < 9)
@@ -531,10 +531,9 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
         auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
 
         // Open video file
-        const AVInputFormat* iformat = nullptr;
-        if (!inputFormat.empty())
+        auto iformat = inputFormat.empty()? nullptr : av_find_input_format(inputFormat.c_str());
+        if (iformat)
         {
-            iformat = av_find_input_format(inputFormat.c_str());
             av_dict_set(&streamOpts, "rtbufsize", "15000000", 0); // https://superuser.com/questions/1158820/ffmpeg-real-time-buffer-issue-rtbufsize-parameter
         }
         const int error = avformat_open_input(&formatContext, url.c_str(), iformat, &streamOpts);

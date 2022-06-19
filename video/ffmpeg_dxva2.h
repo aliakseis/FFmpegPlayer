@@ -55,7 +55,7 @@ typedef struct InputStream {
 #define DECODING_FOR_FILTER 2
 
     AVCodecContext *dec_ctx;
-    AVCodec *dec;
+    const AVCodec *dec;
     AVFrame *decoded_frame;
     AVFrame *filter_frame; /* a ref of decoded_frame, to be sent to filters */
 
