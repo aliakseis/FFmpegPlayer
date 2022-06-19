@@ -62,7 +62,7 @@ private:
 	bool m_isMousePressed{false};
 	const int m_playBtnRadius{29};
 #ifdef Q_OS_LINUX
-	bool m_resizeIndicator;
+    bool m_resizeIndicator = false;
 #endif
 
 	qint64 m_lastMouseTime{0};

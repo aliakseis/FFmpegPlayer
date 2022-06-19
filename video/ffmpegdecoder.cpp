@@ -94,14 +94,14 @@ std::string fromAss(const char* ass) {
     int hour1, min1, sec1, hunsec1,hour2, min2, sec2, hunsec2;
     char line[512], *ret;
     // fixme: "\0" maybe not allowed
-    if (sscanf_s(b.c_str(), "Dialogue: Marked=%*d,%d:%d:%d.%d,%d:%d:%d.%d%[^\r\n]", //&nothing,
+    if (sscanf(b.c_str(), "Dialogue: Marked=%*d,%d:%d:%d.%d,%d:%d:%d.%d%[^\r\n]", //&nothing,
                             &hour1, &min1, &sec1, &hunsec1,
                             &hour2, &min2, &sec2, &hunsec2,
-                            line, static_cast<unsigned>(sizeof(line) / sizeof(line[0]))) < 9)
-        if (sscanf_s(b.c_str(), "Dialogue: %*d,%d:%d:%d.%d,%d:%d:%d.%d%[^\r\n]", //&nothing,
+                            line) < 9)
+        if (sscanf(b.c_str(), "Dialogue: %*d,%d:%d:%d.%d,%d:%d:%d.%d%[^\r\n]", //&nothing,
                 &hour1, &min1, &sec1, &hunsec1,
                 &hour2, &min2, &sec2, &hunsec2,
-                line, static_cast<unsigned>(sizeof(line) / sizeof(line[0]))) < 9)
+                line) < 9)
             return b; //libass ASS_Event.Text has no Dialogue
     ret = strchr(line, ',');
     if (!ret)
@@ -182,7 +182,7 @@ void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
     if (level <= AV_LOG_ERROR)
     {
         char buffer[4096];
-        int length = vsprintf_s(buffer, fmt, vargs);
+        int length = vsnprintf(buffer, sizeof(buffer), fmt, vargs);
         if (length > 0)
         {
             for (; length > 0 && (isspace(static_cast<unsigned char>(buffer[length - 1])) != 0); --length) {
@@ -252,6 +252,11 @@ int FFmpegDecoder::IOContext::IOReadFunc(void *data, uint8_t *buf, int buf_size)
     return static_cast<int>(len);
 }
 
+#ifdef _WIN32
+#define ftello64 _ftelli64
+#define fseeko64 _fseeki64
+#endif
+
 // whence: SEEK_SET, SEEK_CUR, SEEK_END (like fseek) and AVSEEK_SIZE
 // static
 int64_t FFmpegDecoder::IOContext::IOSeekFunc(void *data, int64_t pos, int whence)
@@ -261,23 +266,23 @@ int64_t FFmpegDecoder::IOContext::IOSeekFunc(void *data, int64_t pos, int whence
     if (whence == AVSEEK_SIZE)
     {
         // return the file size if you wish to
-        auto current = _ftelli64(hctx->fh);
-        int rs = _fseeki64(hctx->fh, 0, SEEK_END);
+        auto current = ftello64(hctx->fh);
+        int rs = fseeko64(hctx->fh, 0, SEEK_END);
         if (rs != 0)
         {
             return -1LL;
         }
-        int64_t result = _ftelli64(hctx->fh);
-        _fseeki64(hctx->fh, current, SEEK_SET);  // reset to the saved position
+        int64_t result = ftello64(hctx->fh);
+        fseeko64(hctx->fh, current, SEEK_SET);  // reset to the saved position
         return result;
     }
 
-    int rs = _fseeki64(hctx->fh, pos, whence);
+    int rs = fseeko64(hctx->fh, pos, whence);
     if (rs != 0)
     {
         return -1LL;
     }
-    return _ftelli64(hctx->fh);  // int64_t is usually long long
+    return ftello64(hctx->fh);  // int64_t is usually long long
 }
 
 FFmpegDecoder::IOContext::IOContext(const PathType &s)
@@ -291,7 +296,7 @@ FFmpegDecoder::IOContext::IOContext(const PathType &s)
 #ifdef _WIN32
         _wfsopen(s.c_str(), L"rb", _SH_DENYNO)
 #else
-        _fsopen(s.c_str(), "rb", _SH_DENYNO)
+        fopen(s.c_str(), "rb")
 #endif
     ) == nullptr)
     {
@@ -336,7 +341,7 @@ void FFmpegDecoder::IOContext::initAVFormatContext(AVFormatContext *pCtx)
     if (len == 0) {
         return;
     }
-    _fseeki64(fh, 0, SEEK_SET);  // reset to beginning of file
+    fseeko64(fh, 0, SEEK_SET);  // reset to beginning of file
 
     AVProbeData probeData = { nullptr };
     probeData.buf = buffer;
@@ -526,7 +531,7 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
         auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
 
         // Open video file
-        AVInputFormat* iformat = nullptr;
+        const AVInputFormat* iformat = nullptr;
         if (!inputFormat.empty())
         {
             iformat = av_find_input_format(inputFormat.c_str());
@@ -590,7 +595,7 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
                     }
                     else
                     {
-                        sprintf_s(buf, "Track %d", ++lastSubtitleNr);
+                        snprintf(buf, sizeof(buf), "Track %d", ++lastSubtitleNr);
                         description = buf;
                     }
                     m_subtitleItems.push_back({ contextIdx, i, description, *(urls.begin() + contextIdx) });
@@ -1116,7 +1121,7 @@ std::vector<std::string> FFmpegDecoder::getProperties() const
         }
 
         char buffer[1000];
-        sprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]),
+        snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
             "%d / %d @ %.2f FPS %d BPP %d bits", 
             m_videoCodecContext->width, m_videoCodecContext->height, fps, bpp, depth);
         result.emplace_back(buffer);

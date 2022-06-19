@@ -237,14 +237,14 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     enum { VIDEO_START_CLOCK_NOT_INITIALIZED = -1000000000 };
     boost::atomic<double> m_videoStartClock;
 
-    AVCodec* m_videoCodec;
+    const AVCodec* m_videoCodec;
     AVCodecContext* m_videoCodecContext;
     AVStream* m_videoStream;
     int m_videoContextIndex;
     int m_videoStreamNumber;
 
     // Audio Stuff
-    AVCodec* m_audioCodec;
+    const AVCodec* m_audioCodec;
     AVCodecContext* m_audioCodecContext;
     AVStream* m_audioStream;
     int m_audioContextIndex;

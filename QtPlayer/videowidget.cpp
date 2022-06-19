@@ -6,6 +6,8 @@
 #include <QPainter>
 #include <QDateTime>
 
+#include <cmath>
+
 namespace {
 
 QWidget* videoControlWidget()
@@ -37,10 +39,6 @@ VideoWidget::VideoWidget(VideoPlayerWidget* parent) : WidgetDisplay(parent),
 	m_hoverPlayButton(":/images/video___btn_play___hover___(94x94).png"),
 	m_clickedPlayButton(":/images/video___btn_play___clicked___(94x94).png"),
 	m_selImage(&m_defPlayButton)
-#ifdef Q_OS_LINUX
-	m_resizeIndicator(false)
-#endif
-	
 {
 	m_noPreviewImg = QImage(":/images/fvd_banner.png");
 	setMouseTracking(true);
@@ -221,10 +219,7 @@ bool VideoWidget::pointInButton(const QPoint& point)
 	if (point.x() >= centerPoint.x() - m_playBtnRadius && point.x() <= centerPoint.x() + m_playBtnRadius &&
 			point.y() >= centerPoint.y() - m_playBtnRadius && point.y() <= centerPoint.y() + m_playBtnRadius)
 	{
-		double xDistance = abs(centerPoint.x() - point.x());
-		double yDistance = abs(centerPoint.y() - point.y());
-
-		return sqrt(xDistance * xDistance + yDistance * yDistance) < m_playBtnRadius;
+        return std::hypot(centerPoint.x() - point.x(), centerPoint.y() - point.y()) < m_playBtnRadius;
 	}
 	return false;
 }

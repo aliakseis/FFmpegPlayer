@@ -291,7 +291,7 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
 
     const int64_t currentTime = m_currentTime;
     const bool backward = seekDuration < currentTime;
-    const int streamNumber = (idx == m_videoContextIndex) ? m_videoStreamNumber : m_audioStreamNumber;
+    const int streamNumber = (idx == m_videoContextIndex) ? m_videoStreamNumber : m_audioStreamNumber.load();
 
     auto convertedSeekDuration = seekDuration;
     if (idx != m_videoContextIndex && m_videoContextIndex != -1)
@@ -421,7 +421,7 @@ void FFmpegDecoder::fixDuration()
     if (m_duration <= 0)
     {
         const int streamNumber =
-            (m_videoContextIndex == 0) ? m_videoStreamNumber : m_audioStreamNumber;
+            (m_videoContextIndex == 0) ? m_videoStreamNumber : m_audioStreamNumber.load();
 
         m_duration = 0;
         if (!isSeekable(m_formatContexts[0]))

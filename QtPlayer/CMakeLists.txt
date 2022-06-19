@@ -23,6 +23,8 @@ if(DEVELOPER_OPENGL)
         )
 endif(DEVELOPER_OPENGL)
 
+add_definitions(-DBOOST_LOG_DYN_LINK)
+
 # QtCreator supports the following variables for Android, which are identical to qmake Android variables.
 # Check http://doc.qt.io/qt-5/deployment-android.html for more information.
 # They need to be set before the find_package(Qt5 ...) call.
@@ -41,25 +43,57 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 find_package(Boost REQUIRED thread log)
 
-find_package(portaudio CONFIG REQUIRED)
+#find_package(portaudio CONFIG REQUIRED)
 
-find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)
-find_library(AVCODEC_LIBRARY avcodec)
+find_path(PORTAUDIO_INCLUDE_DIR
+          NAMES portaudio.h
+          DOC "The PortAudio include directory"
+)
+find_library(PORTAUDIO_LIBRARY
+             NAMES portaudio
+             DOC "The PortAudio library"
+)
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(PortAudio
+    REQUIRED_VARS PORTAUDIO_LIBRARY PORTAUDIO_INCLUDE_DIR
+)
+if(PORTAUDIO_FOUND)
+    set(PORTAUDIO_LIBRARIES ${PORTAUDIO_LIBRARY})
+    set(PORTAUDIO_INCLUDE_DIRS ${PORTAUDIO_INCLUDE_DIR})
+endif()
 
-find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h)
-find_library(AVFORMAT_LIBRARY avformat)
 
-find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)
-find_library(AVUTIL_LIBRARY avutil)
 
-find_path(AVDEVICE_INCLUDE_DIR libavdevice/avdevice.h)
-find_library(AVDEVICE_LIBRARY avdevice)
+#find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)
+#find_library(AVCODEC_LIBRARY avcodec)
 
-find_path(SWSCALE_INCLUDE_DIR libswscale/swscale.h)
-find_library(SWSCALE_LIBRARY swscale)
+#find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h)
+#find_library(AVFORMAT_LIBRARY avformat)
 
-find_path(SWRESAMPLE_INCLUDE_DIR libswresample/swresample.h)
-find_library(SWRESAMPLE_LIBRARY swresample)
+#find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)
+#find_library(AVUTIL_LIBRARY avutil)
+
+#find_path(AVDEVICE_INCLUDE_DIR libavdevice/avdevice.h)
+#find_library(AVDEVICE_LIBRARY avdevice)
+
+#find_path(SWSCALE_INCLUDE_DIR libswscale/swscale.h)
+#find_library(SWSCALE_LIBRARY swscale)
+
+#find_path(SWRESAMPLE_INCLUDE_DIR libswresample/swresample.h)
+#find_library(SWRESAMPLE_LIBRARY swresample)
+
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
+    libavdevice
+    libavfilter
+    libavformat
+    libavcodec
+    libswresample
+    libswscale
+    libavutil
+)
+
 
 set(SOURCES
     customdockwidget.cpp
@@ -102,16 +136,19 @@ file(GLOB VIDEO_SRCS ../video/*.cpp)
 add_library(video STATIC
                ${VIDEO_SRCS})
 target_include_directories(video PRIVATE ../video 
-	${AVCODEC_INCLUDE_DIR} ${AVFORMAT_INCLUDE_DIR} ${AVUTIL_INCLUDE_DIR} ${AVDEVICE_INCLUDE_DIR} ${SWSCALE_INCLUDE_DIR} ${SWRESAMPLE_INCLUDE_DIR})
+        #${AVCODEC_INCLUDE_DIR} ${AVFORMAT_INCLUDE_DIR} ${AVUTIL_INCLUDE_DIR} ${AVDEVICE_INCLUDE_DIR} ${SWSCALE_INCLUDE_DIR} ${SWRESAMPLE_INCLUDE_DIR}
+        )
 target_link_libraries(video 
-	${FFMPEG_LIBRARIES} 
-	${Boost_LIBRARIES} 
-	${AVCODEC_LIBRARY} 
-	${AVFORMAT_LIBRARY} 
-	${AVUTIL_LIBRARY} 
-	${AVDEVICE_LIBRARY}
-	${SWSCALE_LIBRARY}
-	${SWRESAMPLE_LIBRARY})
+        #${FFMPEG_LIBRARIES}
+        ${Boost_LIBRARIES}
+        PkgConfig::LIBAV
+        #${AVCODEC_LIBRARY}
+        #${AVFORMAT_LIBRARY}
+        #${AVUTIL_LIBRARY}
+        #${AVDEVICE_LIBRARY}
+        #${SWSCALE_LIBRARY}
+        #${SWRESAMPLE_LIBRARY}
+        )
 
 
 #file(GLOB AUDIO_SRCS ../audio/*.cpp)
