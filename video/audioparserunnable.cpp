@@ -4,6 +4,7 @@
 
 #include <boost/log/trivial.hpp>
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <tuple>
@@ -308,6 +309,15 @@ bool FFmpegDecoder::handleAudioFrame(
     {
         CHANNEL_LOG(ffmpeg_sync) << "Skip audio frame";
         skipAll = true;
+    }
+
+    if (!skipAll && m_mainVideoThread != nullptr
+        && std::all_of(write_data, write_data + write_size, [](uint8_t data) { return data == 0; })
+        && m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED
+        && m_videoPacketsQueue.empty()
+        && (boost::lock_guard<boost::mutex>(m_videoFramesMutex), !m_videoFramesQueue.canPop()))
+    {
+        return true; // just ignore?
     }
 
     // Audio sync
