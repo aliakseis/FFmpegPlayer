@@ -519,6 +519,114 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
     pStateBlockSaved->Apply();
 }
 
+bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
+               const CSize& m_sourceSize, int w, int h, bool mirrorX, bool mirrorY, bool upend)
+{
+    CComPtr<IDirect3DTexture9> pTexture;
+
+    // Create a new texture for the font
+    if (FAILED(m_pD3DD9->CreateTexture(m_sourceSize.cx, m_sourceSize.cy, 1, D3DUSAGE_RENDERTARGET,
+                                       D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &pTexture, nullptr)))
+    {
+        return false;
+    }
+
+    CComPtr<IDirect3DSurface9> dest;
+
+    if (FAILED(pTexture->GetSurfaceLevel(0, &dest)))
+    {
+        return false;
+    }
+
+    if (FAILED(m_pD3DD9->StretchRect(m_pMainStream,
+                                     NULL,  //&srcRect,
+                                     dest,
+                                     NULL,  //&srcRect,
+                                     D3DTEXF_LINEAR)))
+    {
+        return false;
+    }
+
+    CComPtr<IDirect3DVertexBuffer9> pVB;
+    // Create vertex buffer for the letters
+    if (FAILED(m_pD3DD9->CreateVertexBuffer(MAX_NUM_VERTICES * sizeof(FONT2DVERTEX),
+                                            D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, 0,
+                                            D3DPOOL_DEFAULT, &pVB, nullptr)))
+    {
+        return false;
+    }
+
+    // capture/apply?
+    CComPtr<IDirect3DStateBlock9> pStateBlockSaved(InitStateBlock(m_pD3DD9, pTexture));
+    if (!pStateBlockSaved)
+    {
+        return false;
+    }
+
+    CComPtr<IDirect3DStateBlock9> pStateBlockDrawText(InitStateBlock(m_pD3DD9, pTexture));
+    if (!pStateBlockDrawText)
+    {
+        return false;
+    }
+
+    // Setup renderstate
+    pStateBlockSaved->Capture();
+    pStateBlockDrawText->Apply();
+
+    m_pD3DD9->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+    m_pD3DD9->SetPixelShader(nullptr);
+    m_pD3DD9->SetStreamSource(0, pVB, 0, sizeof(FONT2DVERTEX));
+
+    // const FLOAT tx1 = 0;
+    // const FLOAT ty1 = 0;
+    // const FLOAT tx2 = 1;
+    // const FLOAT ty2 = 1;
+
+    const FLOAT tx1 = mirrorX;
+    const FLOAT tx2 = !mirrorX;
+    const FLOAT ty1 = mirrorY;
+    const FLOAT ty2 = !mirrorY;
+
+    // const FLOAT w = screenPosition.Width();
+    // const FLOAT h = screenPosition.Height();
+
+    // Fill vertex buffer
+    FONT2DVERTEX* pVertices = nullptr;
+    DWORD dwNumTriangles = 0;
+    if (FAILED(pVB->Lock(0, 0, (void**)&pVertices, D3DLOCK_DISCARD)))
+    {
+        return false;
+    }
+
+    const FLOAT sx = 0;  //(width - boundingBox.Width) / 2 + !pass;
+    const FLOAT sy = 0;  // height - boundingBox.Height - fontSize / 3 + !pass;
+
+    const DWORD dwColor = D3DCOLOR_XRGB(255, 255, 255);
+
+    *pVertices++ = {{sx + 0, sy + h, 0.9F, 1.0F}, dwColor, upend ? tx2 : tx1, upend ? ty1 : ty2};
+    *pVertices++ = {{sx + 0, sy + 0, 0.9F, 1.0F}, dwColor, tx1, ty1};
+    *pVertices++ = {{sx + w, sy + h, 0.9F, 1.0F}, dwColor, tx2, ty2};
+    *pVertices++ = {{sx + w, sy + 0, 0.9F, 1.0F}, dwColor, upend ? tx1 : tx2, upend ? ty2 : ty1};
+    *pVertices++ = {{sx + w, sy + h, 0.9F, 1.0F}, dwColor, tx2, ty2};
+    *pVertices++ = {{sx + 0, sy + 0, 0.9F, 1.0F}, dwColor, tx1, ty1};
+
+    dwNumTriangles += 2;
+
+    // Unlock and render the vertex buffer
+    pVB->Unlock();
+    if (dwNumTriangles > 0)
+    {
+        if (FAILED(m_pD3DD9->DrawPrimitive(D3DPT_TRIANGLELIST, 0, dwNumTriangles)))
+        {
+            return false;
+        }
+    }
+    // Restore the modified renderstates
+    pStateBlockSaved->Apply();
+
+    return true;
+}
+
 } // namespace
 
 
@@ -573,6 +681,12 @@ BEGIN_MESSAGE_MAP(CPlayerView, CView)
     ON_WM_ERASEBKGND()
     ON_WM_DROPFILES()
     ON_COMMAND(ID_EDIT_COPY, &CPlayerView::OnEditCopy)
+    ON_COMMAND(ID_ORIENTATION_MIRRORX, &CPlayerView::OnOrientationMirrorx)
+    ON_UPDATE_COMMAND_UI(ID_ORIENTATION_MIRRORX, &CPlayerView::OnUpdateOrientationMirrorx)
+    ON_COMMAND(ID_ORIENTATION_MIRRORY, &CPlayerView::OnOrientationMirrory)
+    ON_UPDATE_COMMAND_UI(ID_ORIENTATION_MIRRORY, &CPlayerView::OnUpdateOrientationMirrory)
+    ON_COMMAND(ID_ORIENTATION_UPEND, &CPlayerView::OnOrientationUpend)
+    ON_UPDATE_COMMAND_UI(ID_ORIENTATION_UPEND, &CPlayerView::OnUpdateOrientationUpend)
 END_MESSAGE_MAP()
 
 
@@ -996,13 +1110,17 @@ bool CPlayerView::ResetDevice()
 }
 
 
-CRect CPlayerView::GetScreenPosition()
+CRect CPlayerView::GetScreenPosition(bool swapXY)
 {
     CRect desc;
     GetClientRect(&desc);
 
     long long aspectFrameX(m_sourceSize.cx * m_aspectRatio.cx);
     long long aspectFrameY(m_sourceSize.cy * m_aspectRatio.cy);
+    if (swapXY)
+    {
+        std::swap(aspectFrameX, aspectFrameY);
+    }
 
     CRect target;
     if (aspectFrameY * desc.Width() > aspectFrameX * desc.Height())
@@ -1073,7 +1191,7 @@ bool CPlayerView::ProcessVideo()
     }
 
     RECT srcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
-    CRect screenPosition = GetScreenPosition();
+    CRect screenPosition = GetScreenPosition(m_bOrientationUpend);
     CRect target(POINT{}, screenPosition.Size());
 
 
@@ -1103,15 +1221,30 @@ bool CPlayerView::ProcessVideo()
         1.0F,
         0);
 
-    hr = m_pD3DD9->StretchRect(
-        m_pMainStream,
-        &srcRect,
-        m_pD3DRT,
-        &target,
-        D3DTEXF_NONE);
-    if (FAILED(hr))
+    if (!m_bOrientationMirrorx && !m_bOrientationMirrory && !m_bOrientationUpend)
     {
-        TRACE("StretchRect failed with error 0x%x.\n", hr);
+        hr = m_pD3DD9->StretchRect(
+            m_pMainStream,
+            &srcRect,
+            m_pD3DRT,
+            &target,
+            D3DTEXF_NONE);
+        if (FAILED(hr))
+        {
+            TRACE("StretchRect failed with error 0x%x.\n", hr);
+        }
+    }
+    else
+    {
+        hr = m_pD3DD9->BeginScene();
+        if (SUCCEEDED(hr))
+        {
+            Transform(m_pD3DD9, m_pMainStream,
+                m_sourceSize, screenPosition.Width(), screenPosition.Height(),
+                m_bOrientationMirrorx, m_bOrientationMirrory, m_bOrientationUpend);
+
+            m_pD3DD9->EndScene();
+        }
     }
 #endif
 
@@ -1363,7 +1496,7 @@ void CPlayerView::OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen)
             GetClientRect(&rect);
             MapWindowPoints(pInitiator, &rect);
         }
-        CRect targetRect = GetScreenPosition();
+        CRect targetRect = GetScreenPosition(m_bOrientationUpend);
         targetRect.DeflateRect(1, 1);
         MapWindowPoints(pInitiator, &targetRect);
 
@@ -1423,4 +1556,43 @@ void CPlayerView::OnEditCopy()
         SetClipboardData(CF_DIB, hglbl);
     }
     CloseClipboard();
+}
+
+
+void CPlayerView::OnOrientationMirrorx()
+{
+    m_bOrientationMirrorx = !m_bOrientationMirrorx;
+    GetParentFrame()->Invalidate();
+}
+
+
+void CPlayerView::OnUpdateOrientationMirrorx(CCmdUI *pCmdUI)
+{
+    pCmdUI->SetCheck(m_bOrientationMirrorx);
+}
+
+
+void CPlayerView::OnOrientationMirrory()
+{
+    m_bOrientationMirrory = !m_bOrientationMirrory;
+    GetParentFrame()->Invalidate();
+}
+
+
+void CPlayerView::OnUpdateOrientationMirrory(CCmdUI *pCmdUI)
+{
+    pCmdUI->SetCheck(m_bOrientationMirrory);
+}
+
+
+void CPlayerView::OnOrientationUpend()
+{
+    m_bOrientationUpend = !m_bOrientationUpend;
+    GetParentFrame()->Invalidate();
+}
+
+
+void CPlayerView::OnUpdateOrientationUpend(CCmdUI *pCmdUI)
+{
+    pCmdUI->SetCheck(m_bOrientationUpend);
 }
