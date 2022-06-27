@@ -22,7 +22,6 @@
     <ProjectGuid>{A4113679-4736-494B-B8D2-3C35B34E5491}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>HttpDownload</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
