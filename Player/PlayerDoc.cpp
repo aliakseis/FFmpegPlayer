@@ -553,7 +553,8 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
     if (source.IsEmpty())
         return false;
 
-    if (isLocalFile && isFullFrameRange())
+    if (isLocalFile && isFullFrameRange() 
+        && !m_bOrientationMirrorx && !m_bOrientationMirrory && !m_bOrientationUpend)
     {
         return CopyFile(source, lpszPathName, TRUE);
     }
@@ -587,6 +588,17 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
                     + _T("\" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0");
             }
         }
+
+        // rotation https://webcache.googleusercontent.com/search?q=cache:IiCyGV1Tp7oJ:https://annimon.com/article/3997+
+        if (m_bOrientationUpend)
+            if (m_bOrientationMirrory)
+                strParams += m_bOrientationMirrorx ? _T(" -vf transpose=3") : _T(" -vf transpose=1");
+            else 
+                strParams += m_bOrientationMirrorx ? _T(" -vf transpose=2") : _T(" -vf transpose=0");
+        else if (m_bOrientationMirrory)
+            strParams += m_bOrientationMirrorx ? _T(" -vf hflip,vflip") : _T(" -vf vflip");
+        else if (m_bOrientationMirrorx)
+            strParams += _T(" -vf hflip");
 
         if (!isFullFrameRange())
         {
