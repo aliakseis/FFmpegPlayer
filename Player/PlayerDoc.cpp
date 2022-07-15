@@ -235,6 +235,12 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_UPDATE_COMMAND_UI_RANGE(ID_FIRST_SUBTITLE, ID_FIRST_SUBTITLE + 99, OnUpdateOpensubtitlesfile)
     ON_COMMAND(ID_SUPER_RESOLUTION, &CPlayerDoc::OnSuperResolution)
     ON_UPDATE_COMMAND_UI(ID_SUPER_RESOLUTION, &CPlayerDoc::OnUpdateSuperResolution)
+    ON_COMMAND(ID_ORIENTATION_MIRRORX, &CPlayerDoc::OnOrientationMirrorx)
+    ON_UPDATE_COMMAND_UI(ID_ORIENTATION_MIRRORX, &CPlayerDoc::OnUpdateOrientationMirrorx)
+    ON_COMMAND(ID_ORIENTATION_MIRRORY, &CPlayerDoc::OnOrientationMirrory)
+    ON_UPDATE_COMMAND_UI(ID_ORIENTATION_MIRRORY, &CPlayerDoc::OnUpdateOrientationMirrory)
+    ON_COMMAND(ID_ORIENTATION_UPEND, &CPlayerDoc::OnOrientationUpend)
+    ON_UPDATE_COMMAND_UI(ID_ORIENTATION_UPEND, &CPlayerDoc::OnUpdateOrientationUpend)
 END_MESSAGE_MAP()
 
 
@@ -1166,4 +1172,42 @@ void CPlayerDoc::OnUpdateSuperResolution(CCmdUI *pCmdUI)
 {
     pCmdUI->Enable(CanUpscaleImage());
     pCmdUI->SetCheck(m_superResolution);
+}
+
+
+void CPlayerDoc::OnOrientationMirrorx()
+{
+    m_bOrientationMirrorx = !m_bOrientationMirrorx;
+    AfxGetApp()->GetMainWnd()->Invalidate();
+}
+
+void CPlayerDoc::OnUpdateOrientationMirrorx(CCmdUI *pCmdUI)
+{
+    pCmdUI->SetCheck(m_bOrientationMirrorx);
+}
+
+
+void CPlayerDoc::OnOrientationMirrory()
+{
+    m_bOrientationMirrory = !m_bOrientationMirrory;
+    AfxGetApp()->GetMainWnd()->Invalidate();
+}
+
+
+void CPlayerDoc::OnUpdateOrientationMirrory(CCmdUI *pCmdUI)
+{
+    pCmdUI->SetCheck(m_bOrientationMirrory);
+}
+
+
+void CPlayerDoc::OnOrientationUpend()
+{
+    m_bOrientationUpend = !m_bOrientationUpend;
+    AfxGetApp()->GetMainWnd()->Invalidate();
+}
+
+
+void CPlayerDoc::OnUpdateOrientationUpend(CCmdUI *pCmdUI)
+{
+    pCmdUI->SetCheck(m_bOrientationUpend);
 }

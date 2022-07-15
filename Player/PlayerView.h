@@ -72,10 +72,6 @@ private:
     CComPtr<IDirect3DSurface9> m_pD3DRT;
     CComPtr<IDirect3DSurface9> m_pMainStream;
 
-    bool m_bOrientationMirrorx = false;
-    bool m_bOrientationMirrory = false;
-    bool m_bOrientationUpend = false;
-
 #ifdef USE_DXVA2
     CComPtr<IDirectXVideoProcessorService> m_pDXVAVPS;
     CComPtr<IDirectXVideoProcessor> m_pDXVAVPD;
@@ -96,10 +92,4 @@ public:
     afx_msg void OnDropFiles(HDROP hDropInfo);
     afx_msg void OnEditPaste();
     afx_msg void OnEditCopy();
-    afx_msg void OnOrientationMirrorx();
-    afx_msg void OnUpdateOrientationMirrorx(CCmdUI *pCmdUI);
-    afx_msg void OnOrientationMirrory();
-    afx_msg void OnUpdateOrientationMirrory(CCmdUI *pCmdUI);
-    afx_msg void OnOrientationUpend();
-    afx_msg void OnUpdateOrientationUpend(CCmdUI *pCmdUI);
 };
