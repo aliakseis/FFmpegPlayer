@@ -561,7 +561,8 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
     CString strFile;
     CString strParams;
-    if (isFullFrameRange() && !m_separateFileDiff)
+    if (isFullFrameRange() && !m_separateFileDiff
+        && !m_bOrientationMirrorx && !m_bOrientationMirrory && !m_bOrientationUpend)
     {
         strFile = _T("HttpDownload.exe");
         strParams = source + _T(" \"") + lpszPathName + _T('"');
