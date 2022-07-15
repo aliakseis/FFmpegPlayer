@@ -118,6 +118,10 @@ public:
 
     void OnAsyncUrl(const CString& url);
 
+    bool isOrientationMirrorx() const { return m_bOrientationMirrorx; }
+    bool isOrientationMirrory() const { return m_bOrientationMirrory; }
+    bool isOrientationUpend() const { return m_bOrientationUpend; }
+
 private:
     void MoveToNextFile();
 
@@ -163,6 +167,11 @@ private:
 
     bool m_maximalResolution = false;
     bool m_superResolution = false;
+
+    bool m_bOrientationMirrorx = false;
+    bool m_bOrientationMirrory = false;
+    bool m_bOrientationUpend = false;
+
 public:
     afx_msg void OnMaximalresolution();
     afx_msg void OnUpdateMaximalresolution(CCmdUI *pCmdUI);
@@ -170,4 +179,10 @@ public:
     afx_msg void OnUpdateHwAcceleration(CCmdUI *pCmdUI);
     afx_msg void OnSuperResolution();
     afx_msg void OnUpdateSuperResolution(CCmdUI *pCmdUI);
+    afx_msg void OnOrientationMirrorx();
+    afx_msg void OnUpdateOrientationMirrorx(CCmdUI *pCmdUI);
+    afx_msg void OnOrientationMirrory();
+    afx_msg void OnUpdateOrientationMirrory(CCmdUI *pCmdUI);
+    afx_msg void OnOrientationUpend();
+    afx_msg void OnUpdateOrientationUpend(CCmdUI *pCmdUI);
 };

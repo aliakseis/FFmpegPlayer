@@ -681,12 +681,6 @@ BEGIN_MESSAGE_MAP(CPlayerView, CView)
     ON_WM_ERASEBKGND()
     ON_WM_DROPFILES()
     ON_COMMAND(ID_EDIT_COPY, &CPlayerView::OnEditCopy)
-    ON_COMMAND(ID_ORIENTATION_MIRRORX, &CPlayerView::OnOrientationMirrorx)
-    ON_UPDATE_COMMAND_UI(ID_ORIENTATION_MIRRORX, &CPlayerView::OnUpdateOrientationMirrorx)
-    ON_COMMAND(ID_ORIENTATION_MIRRORY, &CPlayerView::OnOrientationMirrory)
-    ON_UPDATE_COMMAND_UI(ID_ORIENTATION_MIRRORY, &CPlayerView::OnUpdateOrientationMirrory)
-    ON_COMMAND(ID_ORIENTATION_UPEND, &CPlayerView::OnOrientationUpend)
-    ON_UPDATE_COMMAND_UI(ID_ORIENTATION_UPEND, &CPlayerView::OnUpdateOrientationUpend)
 END_MESSAGE_MAP()
 
 
@@ -1191,7 +1185,7 @@ bool CPlayerView::ProcessVideo()
     }
 
     RECT srcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
-    CRect screenPosition = GetScreenPosition(m_bOrientationUpend);
+    CRect screenPosition = GetScreenPosition(GetDocument()->isOrientationUpend());
     CRect target(POINT{}, screenPosition.Size());
 
 
@@ -1221,7 +1215,9 @@ bool CPlayerView::ProcessVideo()
         1.0F,
         0);
 
-    if (!m_bOrientationMirrorx && !m_bOrientationMirrory && !m_bOrientationUpend)
+    if (!GetDocument()->isOrientationMirrorx() 
+        && !GetDocument()->isOrientationMirrory() 
+        && !GetDocument()->isOrientationUpend())
     {
         hr = m_pD3DD9->StretchRect(
             m_pMainStream,
@@ -1241,7 +1237,9 @@ bool CPlayerView::ProcessVideo()
         {
             Transform(m_pD3DD9, m_pMainStream,
                 m_sourceSize, screenPosition.Width(), screenPosition.Height(),
-                m_bOrientationMirrorx, m_bOrientationMirrory, m_bOrientationUpend);
+                GetDocument()->isOrientationMirrorx(),
+                GetDocument()->isOrientationMirrory(),
+                GetDocument()->isOrientationUpend());
 
             m_pD3DD9->EndScene();
         }
@@ -1496,7 +1494,7 @@ void CPlayerView::OnErase(CWnd* pInitiator, CDC* pDC, BOOL isFullScreen)
             GetClientRect(&rect);
             MapWindowPoints(pInitiator, &rect);
         }
-        CRect targetRect = GetScreenPosition(m_bOrientationUpend);
+        CRect targetRect = GetScreenPosition(GetDocument()->isOrientationUpend());
         targetRect.DeflateRect(1, 1);
         MapWindowPoints(pInitiator, &targetRect);
 
@@ -1556,43 +1554,4 @@ void CPlayerView::OnEditCopy()
         SetClipboardData(CF_DIB, hglbl);
     }
     CloseClipboard();
-}
-
-
-void CPlayerView::OnOrientationMirrorx()
-{
-    m_bOrientationMirrorx = !m_bOrientationMirrorx;
-    GetParentFrame()->Invalidate();
-}
-
-
-void CPlayerView::OnUpdateOrientationMirrorx(CCmdUI *pCmdUI)
-{
-    pCmdUI->SetCheck(m_bOrientationMirrorx);
-}
-
-
-void CPlayerView::OnOrientationMirrory()
-{
-    m_bOrientationMirrory = !m_bOrientationMirrory;
-    GetParentFrame()->Invalidate();
-}
-
-
-void CPlayerView::OnUpdateOrientationMirrory(CCmdUI *pCmdUI)
-{
-    pCmdUI->SetCheck(m_bOrientationMirrory);
-}
-
-
-void CPlayerView::OnOrientationUpend()
-{
-    m_bOrientationUpend = !m_bOrientationUpend;
-    GetParentFrame()->Invalidate();
-}
-
-
-void CPlayerView::OnUpdateOrientationUpend(CCmdUI *pCmdUI)
-{
-    pCmdUI->SetCheck(m_bOrientationUpend);
 }
