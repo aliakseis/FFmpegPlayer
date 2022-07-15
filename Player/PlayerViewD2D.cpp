@@ -198,32 +198,53 @@ afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
     spContext->GetDpi(&dpiX, &dpiY);
 
     auto sourceSize = m_sourceSize;
+    auto aspectRatio = m_aspectRatio;
 
-    //std::swap(sourceSize.cx, sourceSize.cy);
+    if (GetDocument()->isOrientationUpend())
+    {
+        std::swap(sourceSize.cx, sourceSize.cy);
+        aspectRatio = 1. / aspectRatio;
+    }
 
     float scaleW = rect.Width() / (float) sourceSize.cx;
     float scaleH = rect.Height() / (float) sourceSize.cy;
 
     D2D1_POINT_2F offset;
-    if (scaleH * m_aspectRatio <= scaleW) {
-        scaleW = scaleH * m_aspectRatio;
+    if (scaleH * aspectRatio <= scaleW) {
+        scaleW = scaleH * aspectRatio;
         offset.x = (rect.Width() -
             (sourceSize.cx * scaleW)) / 2.0f;
         offset.y = 0.0f;
     }
     else {
-        scaleH = scaleW / m_aspectRatio;
+        scaleH = scaleW / aspectRatio;
         offset.x = 0.0f;
         offset.y = (rect.Height() -
             (sourceSize.cy * scaleH)) / 2.0f;
     }
 
-    D2D1::Matrix3x2F transform =
+    auto transform = D2D1::Matrix3x2F::Identity();
+    if (GetDocument()->isOrientationUpend())
+    {
+        std::swap(transform._11, transform._21);
+        std::swap(transform._12, transform._22);
+    }
+    if (GetDocument()->isOrientationMirrorx())
+    {
+        transform._11 = -transform._11;
+        transform._21 = -transform._21;
+        transform._31 += sourceSize.cx;
+    }
+    if (GetDocument()->isOrientationMirrory())
+    {
+        transform._12 = -transform._12;
+        transform._22 = -transform._22;
+        transform._32 += sourceSize.cy;
+    }
+
+    transform = transform *
         D2D1::Matrix3x2F::Scale(scaleW, scaleH) *
         D2D1::Matrix3x2F::Translation(offset.x, offset.y);
-
-    //std::swap(transform._11, transform._21);
-    //std::swap(transform._12, transform._22);
 
     spContext->SetTransform(transform);
     spContext->Clear(D2D1::ColorF(D2D1::ColorF::Black));
@@ -235,10 +256,8 @@ afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
             );
     }
 
-    //std::swap(transform._11, transform._21);
-    //std::swap(transform._12, transform._22);
-
-    //spContext->SetTransform(transform);
+    spContext->SetTransform(D2D1::Matrix3x2F::Scale(scaleW, scaleH) *
+        D2D1::Matrix3x2F::Translation(offset.x, offset.y));
 
     if (auto subtitle = GetDocument()->getSubtitle(); !subtitle.empty())
     {
