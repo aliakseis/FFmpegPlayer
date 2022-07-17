@@ -560,7 +560,6 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
     m_videoStreamNumber = -1;
     m_audioContextIndex = -1;
     m_audioStreamNumber = -1;
-    int lastSubtitleNr = 0;
     for (int contextIdx = m_formatContexts.size(); --contextIdx >= 0;)
     {
         const auto formatContext = m_formatContexts[contextIdx];
@@ -582,30 +581,38 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
                     m_audioStreamNumber = i;
                 }
                 break;
-            case AVMEDIA_TYPE_SUBTITLE:
-                {
-                    //char* buffer{};
-                    //av_dict_get_string(formatContext->streams[i]->metadata, &buffer, ':', ',');
-                    char buf[100];
-                    const char* description;
-                    if (auto title = av_dict_get(formatContext->streams[i]->metadata, "title", nullptr, 0))
-                    {
-                        description = title->value;
-                    }
-                    else
-                    {
-                        snprintf(buf, sizeof(buf), "Track %d", ++lastSubtitleNr);
-                        description = buf;
-                    }
-                    m_subtitleItems.push_back({ contextIdx, i, description, *(urls.begin() + contextIdx) });
-                    //av_freep(&buffer);
-                }
-                break;
             }
         }
     }
     std::reverse(m_audioIndices.begin(), m_audioIndices.end());
-    std::reverse(m_subtitleItems.begin(), m_subtitleItems.end());
+
+    int lastSubtitleNr = 0;
+    for (int contextIdx = 0; contextIdx < m_formatContexts.size(); ++contextIdx)
+    {
+        const auto formatContext = m_formatContexts[contextIdx];
+        for (int i = 0; i < formatContext->nb_streams; ++i)
+        {
+            if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE)
+            {
+                std::string description;
+                if (auto title = av_dict_get(formatContext->streams[i]->metadata, "title", nullptr, 0))
+                {
+                    description = title->value;
+                }
+                else
+                {
+                    description = "Track " + std::to_string(++lastSubtitleNr);
+                    if (auto lang = av_dict_get(formatContext->streams[i]->metadata, "language", nullptr, 0))
+                    {
+                        description += " (";
+                        description += lang->value;
+                        description += ')';
+                    }
+                }
+                m_subtitleItems.push_back({ contextIdx, i, std::move(description), *(urls.begin() + contextIdx) });
+            }
+        }
+    }
 
     AVStream* timeStream = nullptr;
 
