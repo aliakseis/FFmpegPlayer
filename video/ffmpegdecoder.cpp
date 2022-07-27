@@ -92,7 +92,7 @@ std::string ass_to_plaintext(const char *in)
 std::string fromAss(const char* ass) {
     const auto b = ass_to_plaintext(ass);
     int hour1, min1, sec1, hunsec1,hour2, min2, sec2, hunsec2;
-    char line[1024], *ret;
+    char line[1024];
     // fixme: "\0" maybe not allowed
     if (sscanf(b.c_str(), "Dialogue: Marked=%*d,%d:%d:%d.%d,%d:%d:%d.%d%1023[^\r\n]", //&nothing,
                             &hour1, &min1, &sec1, &hunsec1,
@@ -103,7 +103,7 @@ std::string fromAss(const char* ass) {
                 &hour2, &min2, &sec2, &hunsec2,
                 line) < 9)
             return b; //libass ASS_Event.Text has no Dialogue
-    ret = strchr(line, ',');
+    auto ret = strchr(line, ',');
     if (!ret)
         return line;
     static const char kDefaultStyle[] = "Default,";
