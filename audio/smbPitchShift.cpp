@@ -175,7 +175,7 @@ inline float smbAtan2(float y, float x)
     if (y == 0) 
         return 0;
     if (x == 0)
-        return (y > 0) ? (M_PI / 2.) : (M_PI / 2.);
+        return (y > 0) ? (M_PI / 2.) : -(M_PI / 2.);
 
     float abs_y = fabsf(y);
     float angle;
