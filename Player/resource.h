@@ -60,13 +60,17 @@
 #define ID_ORIENTATION_MIRRORX          32792
 #define ID_ORIENTATION_MIRRORY          32793
 #define ID_ORIENTATION_UPEND            32794
+#define ID_ORIENTATION_DO_NOTHING       32795
+#define ID_ORIENTATION_RORATE_90        32796
+#define ID_ORIENTATION_RORATE_180       32797
+#define ID_ORIENTATION_RORATE_270       32798
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
-#define _APS_NEXT_COMMAND_VALUE         32795
+#define _APS_NEXT_COMMAND_VALUE         32799
 #define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

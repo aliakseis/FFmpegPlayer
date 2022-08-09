@@ -173,8 +173,13 @@ BEGIN
         MENUITEM "Super Resolution",            ID_SUPER_RESOLUTION
         POPUP "Orientation"
         BEGIN
-            MENUITEM "Mirror X",                    ID_ORIENTATION_MIRRORX
-            MENUITEM "Mirror Y",                    ID_ORIENTATION_MIRRORY
+            MENUITEM "Do Nothing",                    ID_ORIENTATION_DO_NOTHING
+            MENUITEM "Rotate 90",                    ID_ORIENTATION_RORATE_90
+            MENUITEM "Rotate 180",                    ID_ORIENTATION_RORATE_180
+            MENUITEM "Rotate 270",                    ID_ORIENTATION_RORATE_270
+            MENUITEM SEPARATOR
+            MENUITEM "Horizontal Mirror",                    ID_ORIENTATION_MIRRORX
+            MENUITEM "Vertical Mirror",                    ID_ORIENTATION_MIRRORY
             MENUITEM "Upend",                       ID_ORIENTATION_UPEND
         END
         MENUITEM "Open Subtitles File...",      ID_OPENSUBTITLESFILE

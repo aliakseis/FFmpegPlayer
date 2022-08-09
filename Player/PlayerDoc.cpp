@@ -241,6 +241,10 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_UPDATE_COMMAND_UI(ID_ORIENTATION_MIRRORY, &CPlayerDoc::OnUpdateOrientationMirrory)
     ON_COMMAND(ID_ORIENTATION_UPEND, &CPlayerDoc::OnOrientationUpend)
     ON_UPDATE_COMMAND_UI(ID_ORIENTATION_UPEND, &CPlayerDoc::OnUpdateOrientationUpend)
+    ON_COMMAND(ID_ORIENTATION_DO_NOTHING, &CPlayerDoc::OnOrientationDoNothing)
+    ON_COMMAND(ID_ORIENTATION_RORATE_90, &CPlayerDoc::OnOrientationRotate90)
+    ON_COMMAND(ID_ORIENTATION_RORATE_180, &CPlayerDoc::OnOrientationRotate180)
+    ON_COMMAND(ID_ORIENTATION_RORATE_270, &CPlayerDoc::OnOrientationRotate270)
 END_MESSAGE_MAP()
 
 
@@ -1223,4 +1227,36 @@ void CPlayerDoc::OnOrientationUpend()
 void CPlayerDoc::OnUpdateOrientationUpend(CCmdUI *pCmdUI)
 {
     pCmdUI->SetCheck(m_bOrientationUpend);
+}
+
+void CPlayerDoc::OnOrientationDoNothing()
+{
+    m_bOrientationMirrorx = false;
+    m_bOrientationMirrory = false;
+    m_bOrientationUpend = false;
+    AfxGetApp()->GetMainWnd()->Invalidate();
+}
+
+void CPlayerDoc::OnOrientationRotate90()
+{
+    m_bOrientationMirrorx = false;
+    m_bOrientationMirrory = true;
+    m_bOrientationUpend = true;
+    AfxGetApp()->GetMainWnd()->Invalidate();
+}
+
+void CPlayerDoc::OnOrientationRotate180()
+{
+    m_bOrientationMirrorx = true;
+    m_bOrientationMirrory = true;
+    m_bOrientationUpend = false;
+    AfxGetApp()->GetMainWnd()->Invalidate();
+}
+
+void CPlayerDoc::OnOrientationRotate270()
+{
+    m_bOrientationMirrorx = true;
+    m_bOrientationMirrory = false;
+    m_bOrientationUpend = true;
+    AfxGetApp()->GetMainWnd()->Invalidate();
 }

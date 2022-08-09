@@ -185,4 +185,8 @@ public:
     afx_msg void OnUpdateOrientationMirrory(CCmdUI *pCmdUI);
     afx_msg void OnOrientationUpend();
     afx_msg void OnUpdateOrientationUpend(CCmdUI *pCmdUI);
+    afx_msg void OnOrientationDoNothing();
+    afx_msg void OnOrientationRotate90();
+    afx_msg void OnOrientationRotate180();
+    afx_msg void OnOrientationRotate270();
 };
