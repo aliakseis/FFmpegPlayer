@@ -8,6 +8,7 @@
 #include <QResizeEvent>
 
 #include <algorithm>
+#include <atomic>
 #include <mutex>
 
 
@@ -22,7 +23,10 @@ ATTRIB_TEXTURE = 1,
 struct OpenGLDisplay::OpenGLDisplayImpl
 {
     GLvoid*                 mBufYuv{nullptr};
-    int                     mFrameSize{0};
+    unsigned int mFrameSize{0};
+
+    int mW{0};
+    int mH{0};
 
     QOpenGLShader*          mVShader;
     QOpenGLShader*          mFShader;
@@ -39,6 +43,8 @@ struct OpenGLDisplay::OpenGLDisplayImpl
     std::mutex m_mutex;
 
     float m_aspectRatio{ 0.75F };
+
+    std::atomic_bool m_pendingUpdate = false;
 };
 
 /*************************************************************************/
@@ -57,7 +63,7 @@ OpenGLDisplay::~OpenGLDisplay()
 
 void OpenGLDisplay::InitDrawBuffer(unsigned bsize)
 {
-    if (impl->mFrameSize != bsize)
+    if (impl->mFrameSize < bsize)
     {
         delete[] reinterpret_cast<unsigned char*>(impl->mBufYuv);
         impl->mFrameSize = bsize;
@@ -225,8 +231,8 @@ void OpenGLDisplay::resizeGL(int w, int h)
         h = 1;// set the height to 1
     }
 
-    // Set the viewport
-    glViewport(0, 0, w, h);
+    impl->mW = w;
+    impl->mH = h;
     update();
 }
 
@@ -237,6 +243,10 @@ void OpenGLDisplay::paintGL()
     if (!impl->mBufYuv) {
         return;
     }
+
+    // https://stackoverflow.com/questions/33059185/qopenglwidgets-resizegl-is-not-the-place-to-call-glviewport
+    // Set the viewport
+    glViewport(0, 0, impl->mW, impl->mH);
 
     // Load y data texture
     // Activate the texture unit GL_TEXTURE0
@@ -285,15 +295,23 @@ void OpenGLDisplay::paintGL()
     glUniform1i(impl->textureUniformV, 2);
     // Use the vertex array way to draw graphics
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    glFlush();
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void OpenGLDisplay::currentDisplay(unsigned int generation)
 {
-    //paintGL();
-    update();
-
+    if (!(impl->m_pendingUpdate.exchange(true)))
+    {
+        QMetaObject::invokeMethod(this, [this]
+            {
+                impl->m_pendingUpdate = false;
+                setUpdatesEnabled(true);
+                update();
+            });
+    }
     finishedDisplayingFrame(generation);
 }
 
@@ -363,7 +381,6 @@ void OpenGLDisplay::showPicture(const QImage& img)
     // Y
     for(unsigned y=0;y<height;y++)
     {
-
        const auto *s = img.scanLine(y);
        unsigned char *d = reinterpret_cast<unsigned char*>(impl->mBufYuv) + y*width;
 
