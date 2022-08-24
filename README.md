@@ -75,3 +75,5 @@ Please take into account specific Windows 10 behavior while opening Internet sho
 ### Bonus tip
 
 Playing YouTube videos in browsers may result in poor performance on slow hardware. Assign a keyboard shortcut to the FFmpeg player by editing its shortcut. Hover your mouse over the YouTube link in Firefox and bring up the shortcut. A player pop-up window will appear, starting the video playback. The same can be achieved in Chrome with some tweaking.
+
+![redline](https://user-images.githubusercontent.com/11851670/184552270-73cb8ba4-31f7-47f2-9f50-2b4ceae601e7.gif)
