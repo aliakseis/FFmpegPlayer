@@ -424,6 +424,11 @@ void FFmpegDecoder::resetVariables()
 
     m_subtitleItems.clear();
 
+    m_subtitleIdx = -1;
+    m_addIntervalCallback = {};
+
+    m_subtitlesCodecContext = nullptr;
+
     m_speedRational = { 1, 1 };
 
     CHANNEL_LOG(ffmpeg_closing) << "Variables reset";
@@ -482,6 +487,8 @@ void FFmpegDecoder::closeProcessing()
 
     // Close the audio codec
     avcodec_free_context(&m_audioCodecContext);
+
+    avcodec_free_context(&m_subtitlesCodecContext);
 
     bool isFileReallyClosed = false;
 
@@ -1180,7 +1187,71 @@ std::vector<std::string> FFmpegDecoder::listSubtitles() const
     return result;
 }
 
-bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, const std::string&)> addIntervalCallback) const
+AVCodecContext* FFmpegDecoder::MakeSubtitlesCodecContext(AVCodecParameters* codecpar)
+{
+    auto codecContext = avcodec_alloc_context3(nullptr);
+    if (codecContext == nullptr) {
+        return nullptr;
+    }
+
+    auto codecContextGuard = MakeGuard(&codecContext, avcodec_free_context);
+
+    if (avcodec_parameters_to_context(codecContext, codecpar) < 0) {
+        return nullptr;
+    }
+
+    auto codec = avcodec_find_decoder(codecContext->codec_id);
+    if (codec == nullptr)
+    {
+        return nullptr;  // Codec not found
+    }
+
+    // Open codec
+    if (avcodec_open2(codecContext, codec, nullptr) < 0)
+    {
+        assert(false && "Error on codec opening");
+        return nullptr;  // Could not open codec
+    }
+
+    codecContextGuard.release();
+
+    return codecContext;
+}
+
+std::string FFmpegDecoder::GetSubtitle(AVCodecContext* ctx, AVPacket& packet)
+{
+    AVSubtitle sub{};
+
+    auto subtitleGuard = MakeGuard(&sub, avsubtitle_free);
+
+    int got_subtitle = 0;
+    int ret = avcodec_decode_subtitle2(ctx, &sub, &got_subtitle, &packet);
+    if (ret >= 0 && got_subtitle)
+    {
+        std::string text;
+
+        for (unsigned i = 0; i < sub.num_rects; i++) {
+            switch (sub.rects[i]->type) {
+            case SUBTITLE_ASS:
+                text += fromAss(sub.rects[i]->ass);
+                text += '\n';
+                break;
+            case SUBTITLE_TEXT:
+                text += sub.rects[i]->text;
+                text += '\n';
+                break;
+            default:
+                break;
+            }
+        }
+
+        return text;
+    }
+
+    return {};
+}
+
+bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, const std::string&)> addIntervalCallback)
 {
     if (idx < 0 || idx >= m_subtitleItems.size())
         return false;
@@ -1200,28 +1271,19 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, con
         return false;
     }
 
-    auto codecContext = avcodec_alloc_context3(nullptr);
+    auto codecContext = MakeSubtitlesCodecContext(formatContext->streams[streamNumber]->codecpar);
     if (codecContext == nullptr) {
         return false;
     }
 
     auto codecContextGuard = MakeGuard(&codecContext, avcodec_free_context);
 
-    if (avcodec_parameters_to_context(codecContext, formatContext->streams[streamNumber]->codecpar) < 0) {
-        return false;
-    }
-
-    auto codec = avcodec_find_decoder(codecContext->codec_id);
-    if (codec == nullptr)
     {
-        return false;  // Codec not found
-    }
+        boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+        m_subtitleIdx = idx;
+        m_addIntervalCallback = addIntervalCallback;
 
-    // Open codec
-    if (avcodec_open2(codecContext, codec, nullptr) < 0)
-    {
-        assert(false && "Error on codec opening");
-        return false;  // Could not open codec
+        avcodec_free_context(&m_subtitlesCodecContext);
     }
 
     bool ok = false;
@@ -1230,40 +1292,15 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, con
     {
         if (packet.stream_index == streamNumber)
         {
-            AVSubtitle sub{};
-
-            auto subtitleGuard = MakeGuard(&sub, avsubtitle_free);
-
-            int got_subtitle = 0;
-            int ret = avcodec_decode_subtitle2(codecContext, &sub, &got_subtitle, &packet);
-            if (ret >= 0 && got_subtitle)
+            std::string text = GetSubtitle(codecContext, packet);
+            if (!text.empty())
             {
-                std::string text;
-
-                for (unsigned i = 0; i < sub.num_rects; i++) {
-                    switch (sub.rects[i]->type) {
-                    case SUBTITLE_ASS:
-                        text += fromAss(sub.rects[i]->ass);
-                        text += '\n';
-                        break;
-                    case SUBTITLE_TEXT:
-                        text += sub.rects[i]->text;
-                        text += '\n';
-                        break;
-                    default:
-                        break;
-                    }
-                }
-
-                if (!text.empty())
+                if (!addIntervalCallback(packet.pts / 1000., (packet.pts + packet.duration) / 1000., text))
                 {
-                    if (!addIntervalCallback(packet.pts / 1000., (packet.pts + packet.duration) / 1000., text))
-                    {
-                        av_packet_unref(&packet);
-                        return false;
-                    }
-                    ok = true;
+                    av_packet_unref(&packet);
+                    return false;
                 }
+                ok = true;
             }
         }
         av_packet_unref(&packet);

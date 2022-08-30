@@ -204,20 +204,43 @@ bool FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
             return true;
         }
     }
-    //else
-    //{
-    //    auto codec = m_formatContext->streams[packet.stream_index]->codec;
-    //    if (codec->codec_type == AVMEDIA_TYPE_SUBTITLE)
-    //    {
-    //        AVSubtitle subtitle {};
-    //        int has_subtitle = 0;
-    //        avcodec_decode_subtitle2(codec, &subtitle, &has_subtitle, &packet);
-    //        if (has_subtitle)
-    //        {
-    //            auto format = subtitle.format;
-    //        }
-    //    }
-    //}
+    else if (m_formatContexts[idx]->streams[packet.stream_index]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE)
+    {
+        std::function<bool(double, double, const std::string&)> addIntervalCallback;
+        {
+            boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+            if (m_subtitleIdx == -1 || !m_addIntervalCallback)
+                return false;
+
+            const auto& subtitleItem = m_subtitleItems.at(m_subtitleIdx);
+            if (subtitleItem.contextIdx != idx || subtitleItem.streamIdx != packet.stream_index)
+                return false;
+
+            addIntervalCallback = m_addIntervalCallback;
+
+            if (m_subtitlesCodecContext == nullptr)
+            {
+                m_subtitlesCodecContext = MakeSubtitlesCodecContext(m_formatContexts[idx]->streams[packet.stream_index]->codecpar);
+                if (m_subtitlesCodecContext == nullptr)
+                {
+                    return false;
+                }
+            }
+        }
+
+        std::string text = GetSubtitle(m_subtitlesCodecContext, packet);
+        if (!text.empty())
+        {
+            if (!addIntervalCallback(packet.pts / 1000., (packet.pts + packet.duration) / 1000., text))
+            {
+                boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+
+                m_subtitleIdx = -1;
+                m_addIntervalCallback = {};
+                avcodec_free_context(&m_subtitlesCodecContext);
+            }
+        }
+    }
 
     return false;
 }

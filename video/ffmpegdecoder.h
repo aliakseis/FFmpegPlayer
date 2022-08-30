@@ -142,7 +142,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     std::vector<std::string> getProperties() const override;
 
     std::vector<std::string> listSubtitles() const override;
-    bool getSubtitles(int idx, std::function<bool(double, double, const std::string&)> addIntervalCallback) const override;
+    bool getSubtitles(int idx, std::function<bool(double, double, const std::string&)> addIntervalCallback) override;
 
     void setImageConversionFunc(ImageConversionFunc func) override;
 
@@ -200,6 +200,9 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     void handleDirect3dData(AVFrame* videoFrame, bool forceConversion);
 
     double GetHiResTime();
+
+    static AVCodecContext* MakeSubtitlesCodecContext(AVCodecParameters* codecpar);
+    static std::string GetSubtitle(AVCodecContext* ctx, AVPacket& packet);
 
     // Frame display listener
     IFrameListener* m_frameListener;
@@ -312,6 +315,13 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     };
 
     std::vector<SubtitleItem> m_subtitleItems;
+
+    boost::mutex m_addIntervalMutex;
+
+    int m_subtitleIdx;
+    std::function<bool(double, double, const std::string&)> m_addIntervalCallback;
+
+    AVCodecContext* m_subtitlesCodecContext;
 
     boost::atomic_shared_ptr<ImageConversionFunc> m_imageConversionFunc;
 };
