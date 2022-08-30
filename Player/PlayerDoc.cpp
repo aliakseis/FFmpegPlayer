@@ -666,10 +666,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
             }
         }
 
-        std::string separateFilePath;
-
         CString mappedAudioFile;
-
         if (openSeparateFile) {
             if (!AfxGetApp()->m_pMainWnd && AfxGetMainWnd()) {
                 SetForegroundWindowInternal(*AfxGetMainWnd());
@@ -689,6 +686,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
             mappedAudioFile = static_cast<CPlayerApp*>(AfxGetApp())->GetMappedAudioFile(lpszPathName);
         }
 
+        std::string separateFilePath;
         if (!mappedAudioFile.IsEmpty()) {
             separateFilePath = CT2A(mappedAudioFile, CP_UTF8);
             m_separateFileDiff = std::make_unique<StringDifference>(

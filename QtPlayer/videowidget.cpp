@@ -184,7 +184,7 @@ void VideoWidget::mouseReleaseEvent(QMouseEvent* event)
             fullScreen(false);
         } else {
             dockWidget()->setVisibilityState(CustomDockWidget::FullScreen);
-}
+        }
 	}
 }
 
