@@ -1192,13 +1192,13 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, con
 
     auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
 
-    int error = avformat_open_input(&formatContext, m_subtitleItems[idx].url.c_str(), nullptr, nullptr);
+    const auto& subtitleItem = m_subtitleItems.at(idx);
+    const auto streamNumber = subtitleItem.streamIdx;
+    int error = avformat_open_input(&formatContext, subtitleItem.url.c_str(), nullptr, nullptr);
     if (error != 0)
     {
         return false;
     }
-
-    const auto streamNumber = m_subtitleItems[idx].streamIdx;
 
     auto codecContext = avcodec_alloc_context3(nullptr);
     if (codecContext == nullptr) {
