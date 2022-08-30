@@ -1150,7 +1150,7 @@ void CPlayerDoc::OnGetSubtitles(UINT id)
                 double start, double end, const std::string& subtitle) {
             if (auto map = weakPtr.lock()) {
                 CSingleLock lock(&s_csSubtitles, TRUE);
-                map->add({ boost::icl::interval<double>::closed(start, end), subtitle });
+                map->set({ boost::icl::interval<double>::closed(start, end), subtitle });
                 return true;
             }
             return false;
