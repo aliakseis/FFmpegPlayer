@@ -286,10 +286,12 @@ void VideoPlayerWidget::updateLayout()
 		yPos += playerHeight;
 	}
 
-    auto progressWidget = findChild<QWidget*>("videoProgress");
-    int progressHeight = progressWidget->height();
-	progressWidget->move(0, yPos - (progressHeight + PROGRESSBAR_VISIBLE_HEIGHT) / 2);
-	progressWidget->resize(playerWidth, progressHeight);
+    if (m_progressBar != nullptr)
+    {
+        int progressHeight = m_progressBar->height();
+        m_progressBar->move(0, yPos - (progressHeight + PROGRESSBAR_VISIBLE_HEIGHT) / 2);
+        m_progressBar->resize(playerWidth, progressHeight);
+    }
 
 	int controlsPos = (playerWidth - m_controls->getWidth()) / 2;
 	if (controlsPos < 0)
