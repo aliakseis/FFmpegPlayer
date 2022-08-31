@@ -201,9 +201,6 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     double GetHiResTime();
 
-    static AVCodecContext* MakeSubtitlesCodecContext(AVCodecParameters* codecpar);
-    static std::string GetSubtitle(AVCodecContext* ctx, AVPacket& packet);
-
     // Frame display listener
     IFrameListener* m_frameListener;
 

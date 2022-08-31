@@ -144,6 +144,7 @@
     <ClCompile Include="ffmpegdecoder.cpp" />
     <ClCompile Include="ffmpeg_dxva2.cpp" />
     <ClCompile Include="parserunnable.cpp" />
+    <ClCompile Include="subtitles.cpp" />
     <ClCompile Include="videoparserunnable.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -154,6 +155,7 @@
     <ClInclude Include="decoderinterface.h" />
     <ClInclude Include="interlockedadd.h" />
     <ClInclude Include="makeguard.h" />
+    <ClInclude Include="subtitles.h" />
     <ClInclude Include="videoframe.h" />
     <ClInclude Include="vqueue.h" />
   </ItemGroup>

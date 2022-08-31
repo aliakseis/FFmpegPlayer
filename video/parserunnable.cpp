@@ -1,5 +1,6 @@
 #include "ffmpegdecoder.h"
 #include "makeguard.h"
+#include "subtitles.h"
 
 #include <algorithm>
 #include <memory>

@@ -229,3 +229,5 @@ CMakeLists.txt.user*
 .vs/
 
 Player/version.h
+
+build-*/
