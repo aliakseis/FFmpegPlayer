@@ -53,7 +53,6 @@ OpenGLDisplay::OpenGLDisplay(QWidget* parent)
     : QOpenGLWidget(parent)
     , impl(new OpenGLDisplayImpl())
 {
-    connect(this, &OpenGLDisplay::display, this, &OpenGLDisplay::currentDisplay);
 }
 
 OpenGLDisplay::~OpenGLDisplay()
@@ -115,26 +114,25 @@ void OpenGLDisplay::initializeGL()
 
     // Fragment shader source code
 
-#ifdef QT_OPENGL_ES_2
-    const char *fsrc = "precision mediump float; \
+    const char *fsrc = (context()->isOpenGLES())
+    ? "precision mediump float; \
     varying vec2 textureOut; \
-        uniform sampler2D tex_y; \
-        uniform sampler2D tex_u; \
-        uniform sampler2D tex_v; \
-        void main(void) \
-        { \
-            vec3 yuv; \
-            vec3 rgb; \
-            yuv.x = texture2D(tex_y, textureOut).r; \
-            yuv.y = texture2D(tex_u, textureOut).r - 0.5; \
-            yuv.z = texture2D(tex_v, textureOut).r - 0.5; \
-            rgb = mat3( 1,       1,         1, \
-                        0,       -0.39465,  2.03211, \
-                        1.13983, -0.58060,  0) * yuv; \
-            gl_FragColor = vec4(rgb, 1); \
-        }";
-#else
-    const char *fsrc = "varying vec2 textureOut; \
+    uniform sampler2D tex_y; \
+    uniform sampler2D tex_u; \
+    uniform sampler2D tex_v; \
+    void main(void) \
+    { \
+        vec3 yuv; \
+        vec3 rgb; \
+        yuv.x = texture2D(tex_y, textureOut).r; \
+        yuv.y = texture2D(tex_u, textureOut).r - 0.5; \
+        yuv.z = texture2D(tex_v, textureOut).r - 0.5; \
+        rgb = mat3( 1,       1,         1, \
+                    0,       -0.39465,  2.03211, \
+                    1.13983, -0.58060,  0) * yuv; \
+        gl_FragColor = vec4(rgb, 1); \
+    }"
+    : "varying vec2 textureOut; \
     uniform sampler2D tex_y; \
     uniform sampler2D tex_u; \
     uniform sampler2D tex_v; \
@@ -150,7 +148,6 @@ void OpenGLDisplay::initializeGL()
                     1.13983, -0.58060,  0) * yuv; \
         gl_FragColor = vec4(rgb, 1); \
     }";
-#endif
 
     bCompile = impl->mFShader->compileSourceCode(fsrc);
     if(!bCompile)
@@ -301,20 +298,6 @@ void OpenGLDisplay::paintGL()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void OpenGLDisplay::currentDisplay(unsigned int generation)
-{
-    if (!(impl->m_pendingUpdate.exchange(true)))
-    {
-        QMetaObject::invokeMethod(this, [this]
-            {
-                impl->m_pendingUpdate = false;
-                setUpdatesEnabled(true);
-                update();
-            });
-    }
-    finishedDisplayingFrame(generation);
-}
-
 void OpenGLDisplay::updateFrame(IFrameDecoder* decoder)
 {
     FrameRenderingData data;
@@ -437,7 +420,16 @@ void OpenGLDisplay::showPicture(const QPixmap& picture)
 
 void OpenGLDisplay::drawFrame(IFrameDecoder* decoder, unsigned int generation)
 {
-    emit display(generation);
+    if (!(impl->m_pendingUpdate.exchange(true)))
+    {
+        QMetaObject::invokeMethod(this, [this]
+            {
+                impl->m_pendingUpdate = false;
+                setUpdatesEnabled(true);
+                update();
+            });
+    }
+    finishedDisplayingFrame(generation);
 }
 
 void OpenGLDisplay::decoderClosing()
