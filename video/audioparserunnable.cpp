@@ -313,7 +313,7 @@ bool FFmpegDecoder::handleAudioFrame(
 
     if (!skipAll && m_mainVideoThread != nullptr
         && std::all_of(write_data, write_data + write_size, [](uint8_t data) { return data == 0; })
-        && m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED
+        //&& m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED
         && m_videoPacketsQueue.empty()
         && (boost::lock_guard<boost::mutex>(m_videoFramesMutex), !m_videoFramesQueue.canPop()))
     {
