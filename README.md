@@ -72,6 +72,10 @@ Tip: hold Ctrl+Shift while submitting File Open dialog to choose a separate audi
 
 Please take into account specific Windows 10 behavior while opening Internet shortcuts: https://community.spiceworks.com/topic/1968971-opening-web-links-downloading-1-item-to-zcrksihu You can avoid this by dragging and dropping them.
 
+Note that the FFmpeg patch speeds up HEVC decoding without GPU support by ~10%:
+
+![image](https://user-images.githubusercontent.com/11851670/171165625-3a111046-672c-4a75-8184-c91fde994e00.png)
+
 ### Bonus tip
 
 Playing YouTube videos in browsers may result in poor performance on slow hardware. Assign a keyboard shortcut to the FFmpeg player by editing its shortcut. Hover your mouse over the YouTube link in Firefox and bring up the shortcut. A player pop-up window will appear, starting the video playback. The same can be achieved in Chrome with some tweaking.
