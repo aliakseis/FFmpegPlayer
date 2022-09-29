@@ -54,7 +54,6 @@ public:
 
 protected:
 	void resizeEvent(QResizeEvent* event) override;
-	void wheelEvent(QWheelEvent* event) override;
 	bool eventFilter(QObject* object, QEvent* event) override;
 
 public slots:

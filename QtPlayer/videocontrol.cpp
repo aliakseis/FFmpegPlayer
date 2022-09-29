@@ -9,6 +9,8 @@
 
 #include <QtWidgets/qdrawutil.h>
 
+#include <algorithm>
+
 VideoControl::VideoControl(VideoPlayerWidget* parent)
 	: QWidget(parent), ui(new Ui::VideoControl) 
 {
@@ -110,6 +112,21 @@ void VideoControl::resizeEvent(QResizeEvent* event)
 
 	ui->progressBar->move(ui->btnVolume->pos().x() + ui->btnVolume->width(), (height() - ui->progressBar->height()) / 2 + 1); // +1 for just more nice looking
 	ui->progressBar->setFixedSize(width() - ui->progressBar->pos().x() - 3 * margin, ui->progressBar->height());
+}
+
+void VideoControl::wheelEvent(QWheelEvent* event)
+{
+    if (event->orientation() != Qt::Horizontal)
+    {
+        if (auto decoder = videoPlayer->getDecoder())
+        {
+            const int numDegrees = event->delta() / 8;
+            const int numSteps = numDegrees / 15;
+            const double newVolume = std::clamp(decoder->volume() + ((double)numSteps / 20), 0., 1.);
+            decoder->setVolume(newVolume);
+        }
+    }
+    event->accept();
 }
 
 int VideoControl::getWidth() const

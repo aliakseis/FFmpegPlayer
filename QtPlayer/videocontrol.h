@@ -30,6 +30,7 @@ protected:
 	bool eventFilter(QObject* obj, QEvent* event) override;
 	void paintEvent(QPaintEvent* event) override;
 	void resizeEvent(QResizeEvent* event)override;
+    void wheelEvent(QWheelEvent* event) override;
 
 public slots:
 	void on_btnPlay_clicked();
