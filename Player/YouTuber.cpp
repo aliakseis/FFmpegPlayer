@@ -565,24 +565,26 @@ std::vector<std::string> DoParsePlaylist(
 {
     std::vector<std::string> result;
 
-    auto doSearch = [pDataBegin, pDataEnd, &result](const auto& watch) {
+    auto doSearch = [pDataBegin, pDataEnd, &result](const auto& watch, const char* prefix) {
+        enum { WATCH_SIZE = sizeof(watch) / sizeof(watch[0]) - 1 };
         auto pData = pDataBegin;
         while ((pData = std::search(pData, pDataEnd, std::begin(watch), std::prev(std::end(watch)))) != pDataEnd)
         {
-            const auto localEnd = std::find_if(pData, pDataEnd, [](char ch) {
+            const auto localEnd = std::find_if(pData + WATCH_SIZE, pDataEnd, [](char ch) {
                 return ch == '&' || ch == '"' || ch == '\'' || ch == '\\' || std::isspace(static_cast<unsigned char>(ch));
             });
-            auto el = "https://www.youtube.com" + std::string(pData, localEnd);
+            auto el = prefix + std::string(pData, localEnd);
             if (std::find(result.begin(), result.end(), el) == result.end())
                 result.push_back(std::move(el));
-            pData += sizeof(watch) / sizeof(watch[0]) - 1;
+            pData += WATCH_SIZE;
         }
     };
 
-    doSearch("/watch?v=");
+    doSearch("/watch?v=", "https://www.youtube.com");
+    doSearch("youtu.be/", "https://");
     if (includeLists)
     {
-        doSearch("/playlist?list=");
+        doSearch("/playlist?list=", "https://www.youtube.com");
     }
 
     return result;
