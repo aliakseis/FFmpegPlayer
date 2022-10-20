@@ -919,6 +919,7 @@ bool FFmpegDecoder::pauseResume()
         if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED) {
             InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
         }
+        m_isVideoSeekingWhilePaused = false;
         m_isPaused = false;
     }
     m_isPausedCV.notify_all();
