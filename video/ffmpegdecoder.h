@@ -157,7 +157,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     void displayRunnable();
 
     bool dispatchPacket(int idx, AVPacket& packet);
-    void flush();
+    void flush(int idx);
     void startAudioThread();
     void startVideoThread();
     bool resetDecoding(int64_t seekDuration, bool resetVideo);

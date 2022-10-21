@@ -152,12 +152,11 @@ void FFmpegDecoder::parseRunnable(int idx)
                     && m_audioPacketsQueue.empty()
                     && (lock_guard<mutex>(m_videoFramesMutex), !m_videoFramesQueue.canPop()))
                 {
-                    if (idx == 0)
+                    if (eof == SET_EOF)
                     {
-                        if (eof == SET_EOF)
-                            flush();
-                        m_decoderListener->onEndOfStream(eof == SET_INVALID);
+                        flush(idx);
                     }
+                    m_decoderListener->onEndOfStream(idx, eof == SET_INVALID);
                     eof = REPORTED;
                 }
             }
@@ -178,15 +177,21 @@ bool FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
 {
     auto guard = MakeGuard(&packet, av_packet_unref);
 
-    auto seekLambda = [this]
-    {
-        return m_seekDuration != AV_NOPTS_VALUE || m_videoResetDuration != AV_NOPTS_VALUE;
-    };
-
-    if (seekLambda())
+    if (m_seekDuration != AV_NOPTS_VALUE || m_videoResetDuration != AV_NOPTS_VALUE)
     {
         return false;
     }
+
+    auto seekLambda = [this, idx]
+    {
+        if (m_seekDuration != AV_NOPTS_VALUE || m_videoResetDuration != AV_NOPTS_VALUE)
+            return true;
+
+        if (m_decoderListener != nullptr)
+            m_decoderListener->onQueueFull(idx);
+
+        return false;
+    };
 
     if (idx == m_videoContextIndex && packet.stream_index == m_videoStreamNumber)
     { 
@@ -246,9 +251,9 @@ bool FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
     return false;
 }
 
-void FFmpegDecoder::flush()
+void FFmpegDecoder::flush(int idx)
 {
-    if (m_videoStreamNumber >= 0)
+    if (m_videoStreamNumber >= 0 && m_videoContextIndex == idx)
     {
         AVPacket packet{};
         packet.stream_index = m_videoStreamNumber;
@@ -256,7 +261,7 @@ void FFmpegDecoder::flush()
         packet.dts = AV_NOPTS_VALUE;
         dispatchPacket(m_videoContextIndex, packet);
     }
-    if (m_audioStreamNumber >= 0)
+    if (m_audioStreamNumber >= 0 && m_audioContextIndex == idx)
     {
         AVPacket packet{};
         packet.stream_index = m_audioStreamNumber;

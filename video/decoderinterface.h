@@ -51,7 +51,8 @@ struct FrameDecoderListener
     virtual void fileLoaded(long long /*start*/, long long /*total*/) {}
     virtual void volumeChanged(double /*volume*/) {}
 
-    virtual void onEndOfStream(bool /*error*/) {}
+    virtual void onEndOfStream(int /*idx*/, bool /*error*/) {}
+    virtual void onQueueFull(int /*idx*/) {}
 
     virtual void playingFinished() {}
 };
