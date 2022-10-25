@@ -164,32 +164,15 @@ void FFmpegDecoder::videoParseRunnable()
 
     for (;;)
     {
-        if (m_isPaused && !m_isVideoSeekingWhilePaused)
+        AVPacket packet;
+        if (!m_videoPacketsQueue.pop(packet))
         {
-            boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
-            while (m_isPaused && !m_isVideoSeekingWhilePaused)
-            {
-                m_isPausedCV.wait(locker);
-            }
+            break;
         }
 
-        for (;;)
-        {
-            AVPacket packet;
-            if (!m_videoPacketsQueue.pop(packet,
-                [this] { return m_isPaused && !m_isVideoSeekingWhilePaused; }))
-            {
-                break;
-            }
+        auto packetGuard = MakeGuard(&packet, av_packet_unref);
 
-            auto packetGuard = MakeGuard(&packet, av_packet_unref);
-
-            if (!handleVideoPacket(packet, videoClock, context)
-                || m_isPaused && !m_isVideoSeekingWhilePaused)
-            {
-                break;
-            }
-        }
+        handleVideoPacket(packet, videoClock, context);
     }
 }
 
@@ -243,10 +226,13 @@ bool FFmpegDecoder::handleVideoFrame(
 
     boost::posix_time::time_duration td(boost::posix_time::pos_infin);
     bool inNextFrame = false;
-    const bool haveVideoPackets = !m_videoPacketsQueue.empty();
 
     {
-        boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+        boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
+        while (m_isPaused && !m_isVideoSeekingWhilePaused)
+        {
+            m_isPausedCV.wait(locker);
+        }
 
         const bool isPaused = m_isPaused;
         inNextFrame = isPaused && m_isVideoSeekingWhilePaused;
@@ -258,7 +244,7 @@ bool FFmpegDecoder::handleVideoFrame(
         }
 
         // Skipping frames
-        if (context.initialized && !inNextFrame && haveVideoPackets)
+        if (context.initialized && !inNextFrame && !m_videoPacketsQueue.empty())
         {
             const double curTime = GetHiResTime();
             if (m_videoStartClock + pts <= curTime)
