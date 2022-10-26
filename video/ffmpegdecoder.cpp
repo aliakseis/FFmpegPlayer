@@ -418,10 +418,6 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
 {
     close();
 
-    m_referenceTime = boost::chrono::high_resolution_clock::now().time_since_epoch();
-
-    m_formatContexts.clear();
-
     for (const auto& url : urls)
     {
         auto formatContext = avformat_alloc_context();
@@ -441,7 +437,7 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
         auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
 
         // Open video file
-        auto iformat = inputFormat.empty()? nullptr : av_find_input_format(inputFormat.c_str());
+        auto iformat = inputFormat.empty() ? nullptr : av_find_input_format(inputFormat.c_str());
         if (iformat)
         {
             av_dict_set(&streamOpts, "rtbufsize", "15000000", 0); // https://superuser.com/questions/1158820/ffmpeg-real-time-buffer-issue-rtbufsize-parameter
@@ -464,6 +460,13 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
         m_formatContexts.push_back(formatContext);
         formatContextGuard.release();
     }
+
+    return doOpen(urls);
+}
+
+bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
+{
+    m_referenceTime = boost::chrono::high_resolution_clock::now().time_since_epoch();
 
     // Find the first video stream
     m_videoContextIndex = -1;
@@ -519,7 +522,8 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
                         description += ')';
                     }
                 }
-                m_subtitleItems.push_back({ contextIdx, i, std::move(description), *(urls.begin() + contextIdx) });
+                m_subtitleItems.push_back({ contextIdx, i, std::move(description), 
+                    (urls.size() == 0) ? std::string() : *(urls.begin() + contextIdx) });
             }
         }
     }
@@ -1096,6 +1100,20 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, con
     if (idx < 0 || idx >= m_subtitleItems.size())
         return false;
 
+    {
+        boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+        m_subtitleIdx = idx;
+        m_addIntervalCallback = addIntervalCallback;
+
+        avcodec_free_context(&m_subtitlesCodecContext);
+    }
+
+    const auto& subtitleItem = m_subtitleItems.at(idx);
+    if (subtitleItem.url.empty())
+    { 
+        return true;
+    }
+
     auto formatContext = avformat_alloc_context();
     if (formatContext == nullptr) {
         return false;
@@ -1103,7 +1121,6 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, con
 
     auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
 
-    const auto& subtitleItem = m_subtitleItems.at(idx);
     const auto streamNumber = subtitleItem.streamIdx;
     int error = avformat_open_input(&formatContext, subtitleItem.url.c_str(), nullptr, nullptr);
     if (error != 0)
@@ -1117,14 +1134,6 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, con
     }
 
     auto codecContextGuard = MakeGuard(&codecContext, avcodec_free_context);
-
-    {
-        boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
-        m_subtitleIdx = idx;
-        m_addIntervalCallback = addIntervalCallback;
-
-        avcodec_free_context(&m_subtitlesCodecContext);
-    }
 
     bool ok = false;
     AVPacket packet;

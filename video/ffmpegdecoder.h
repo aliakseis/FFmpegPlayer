@@ -156,6 +156,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     void videoParseRunnable();
     void displayRunnable();
 
+    bool doOpen(const std::initializer_list<std::string>& urls = {});
     bool dispatchPacket(int idx, AVPacket& packet);
     void flush(int idx);
     void startAudioThread();
