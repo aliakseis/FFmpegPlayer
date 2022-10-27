@@ -228,6 +228,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AsyncGetUrlUnderMouseCursor.h" />
+    <ClInclude Include="ByteStreamBuffer.h" />
     <ClInclude Include="D3DFONT.H" />
     <ClInclude Include="DialogBarPlayerControl.h" />
     <ClInclude Include="DialogBarRange.h" />
