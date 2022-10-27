@@ -17,6 +17,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/log/trivial.hpp>
 
+
 extern "C"
 {
 #include "libavutil/pixdesc.h"
@@ -128,15 +129,13 @@ private:
     AVIOContext *ioCtx;
     uint8_t *buffer;  // internal buffer for ffmpeg
     int bufferSize;
-    FILE *fh;
+    std::unique_ptr<std::streambuf> stream;
 
 public:
-    IOContext(const PathType &datafile);
+    IOContext(std::unique_ptr<std::streambuf> s);
     ~IOContext();
 
     void initAVFormatContext(AVFormatContext * /*pCtx*/);
-
-    bool valid() const { return fh != nullptr; }
 
     static int IOReadFunc(void *data, uint8_t *buf, int buf_size);
     static int64_t IOSeekFunc(void *data, int64_t pos, int whence);
@@ -146,19 +145,14 @@ public:
 int FFmpegDecoder::IOContext::IOReadFunc(void *data, uint8_t *buf, int buf_size)
 {
     auto *hctx = static_cast<IOContext *>(data);
-    size_t len = fread(buf, 1, buf_size, hctx->fh);
-    if (len == 0)
+    auto len = hctx->stream->sgetn((char*)buf, buf_size);
+    if (len <= 0)
     {
         // Let FFmpeg know that we have reached EOF, or do something else
         return AVERROR_EOF;
     }
     return static_cast<int>(len);
 }
-
-#ifdef _WIN32
-#define ftello64 _ftelli64
-#define fseeko64 _fseeki64
-#endif
 
 // whence: SEEK_SET, SEEK_CUR, SEEK_END (like fseek) and AVSEEK_SIZE
 // static
@@ -169,43 +163,30 @@ int64_t FFmpegDecoder::IOContext::IOSeekFunc(void *data, int64_t pos, int whence
     if (whence == AVSEEK_SIZE)
     {
         // return the file size if you wish to
-        auto current = ftello64(hctx->fh);
-        int rs = fseeko64(hctx->fh, 0, SEEK_END);
-        if (rs != 0)
-        {
-            return -1LL;
-        }
-        int64_t result = ftello64(hctx->fh);
-        fseeko64(hctx->fh, current, SEEK_SET);  // reset to the saved position
+        auto current = hctx->stream->pubseekoff(0, std::ios_base::cur, std::ios_base::in);
+        auto result = hctx->stream->pubseekoff(0, std::ios_base::end, std::ios_base::in);
+        hctx->stream->pubseekoff(current, std::ios_base::beg, std::ios_base::in);
         return result;
     }
 
-    int rs = fseeko64(hctx->fh, pos, whence);
-    if (rs != 0)
+    std::ios_base::seekdir dir;
+    switch (whence)
     {
-        return -1LL;
+    case SEEK_SET: dir = std::ios_base::beg; break;
+    case SEEK_CUR: dir = std::ios_base::cur; break;
+    case SEEK_END: dir = std::ios_base::end; break;
+    default: return -1LL;
     }
-    return ftello64(hctx->fh);  // int64_t is usually long long
+
+    return hctx->stream->pubseekoff(pos, dir);
 }
 
-FFmpegDecoder::IOContext::IOContext(const PathType &s)
+FFmpegDecoder::IOContext::IOContext(std::unique_ptr<std::streambuf> s)
+    : stream(std::move(s))
 {
     // allocate buffer
     bufferSize = 1024 * 64;                     // FIXME: not sure what size to use
     buffer = static_cast<uint8_t *>(av_malloc(bufferSize));  // see destructor for details
-
-                                                // open file
-    if ((fh = 
-#ifdef _WIN32
-        _wfsopen(s.c_str(), L"rb", _SH_DENYNO)
-#else
-        fopen(s.c_str(), "rb")
-#endif
-    ) == nullptr)
-    {
-        // fprintf(stderr, "MyIOContext: failed to open file %s\n", s.c_str());
-        BOOST_LOG_TRIVIAL(error) << "MyIOContext: failed to open file";
-    }
 
     // allocate the AVIOContext
     ioCtx =
@@ -220,9 +201,6 @@ FFmpegDecoder::IOContext::IOContext(const PathType &s)
 FFmpegDecoder::IOContext::~IOContext()
 {
     CHANNEL_LOG(ffmpeg_closing) << "In IOContext::~IOContext()";
-    if (fh != nullptr) {
-        fclose(fh);
-    }
 
     // NOTE: ffmpeg messes up the buffer
     // so free the buffer first then free the context
@@ -240,11 +218,12 @@ void FFmpegDecoder::IOContext::initAVFormatContext(AVFormatContext *pCtx)
     // pCtx->iformat = av_find_input_format("h264");
 
     // or read some of the file and let ffmpeg do the guessing
-    size_t len = fread(buffer, 1, bufferSize, fh);
-    if (len == 0) {
+    auto len = stream->sgetn((char*)buffer, bufferSize);
+    if (len <= 0) {
         return;
     }
-    fseeko64(fh, 0, SEEK_SET);  // reset to beginning of file
+    // reset to beginning of file
+    stream->pubseekoff(0, std::ios_base::beg, std::ios_base::in);
 
     AVProbeData probeData = { nullptr };
     probeData.buf = buffer;
@@ -403,6 +382,7 @@ void FFmpegDecoder::closeProcessing()
             isFileReallyClosed = true;
         }
 
+    m_ioCtx.reset();
 
     CHANNEL_LOG(ffmpeg_closing) << "Old file closed";
 
@@ -462,6 +442,45 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
     }
 
     return doOpen(urls);
+}
+
+bool FFmpegDecoder::openStream(std::unique_ptr<std::streambuf> stream)
+{
+    close();
+
+    auto ioCtx = std::make_unique<IOContext>(std::move(stream));
+
+    auto formatContext = avformat_alloc_context();
+
+    auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
+
+    ioCtx->initAVFormatContext(formatContext);
+
+    formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
+
+    AVDictionary *streamOpts = nullptr;
+    auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
+
+    const int error = avformat_open_input(&formatContext, nullptr, nullptr, &streamOpts);
+    if (error != 0)
+    {
+        BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error: " << error;
+        return false;
+    }
+    CHANNEL_LOG(ffmpeg_opening) << "Opening video/audio file...";
+
+    // Retrieve stream information
+    if (avformat_find_stream_info(formatContext, nullptr) < 0)
+    {
+        CHANNEL_LOG(ffmpeg_opening) << "Couldn't find stream information";
+        return false;
+    }
+
+    m_formatContexts.push_back(formatContext);
+    formatContextGuard.release();
+    m_ioCtx = std::move(ioCtx);
+
+    return doOpen();
 }
 
 bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)

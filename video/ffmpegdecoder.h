@@ -95,8 +95,8 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     void SetFrameFormat(FrameFormat format, bool allowDirect3dData) override;
 
-    //bool openFile(const PathType& file) override;
     bool openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat = {}) override;
+    bool openStream(std::unique_ptr<std::streambuf> stream) override;
     bool seekDuration(int64_t duration);
     bool seekByPercent(double percent) override;
 
@@ -104,8 +104,8 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     double volume() const override;
 
-    inline bool isPlaying() const override { return m_isPlaying; }
-    inline bool isPaused() const override { return m_isPaused; }
+    bool isPlaying() const override { return m_isPlaying; }
+    bool isPaused() const override { return m_isPaused; }
 
     void setFrameListener(IFrameListener* listener) override { m_frameListener = listener; }
 
@@ -188,8 +188,6 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     void resetVariables();
     void closeProcessing();
-
-    //bool openDecoder(const PathType& file, const std::string& url, bool isFile);
 
     bool resetVideoProcessing();
     bool setupAudioProcessing();
@@ -298,6 +296,8 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     bool m_audioPaused;
 
     std::vector<int> m_audioIndices;
+
+    std::unique_ptr<IOContext> m_ioCtx;
 
     boost::atomic<boost::chrono::high_resolution_clock::duration> m_referenceTime;
 

@@ -20,6 +20,7 @@
 #define IDI_FULL_SCREEN                 315
 #define IDD_DIALOG_OPEN_URL             317
 #define IDD_DIALOGBAR_RANGE             319
+#define IDR_LAUNCH                      320
 #define IDC_PROGRESS_SLIDER             1000
 #define IDC_PLAY_PAUSE                  1001
 #define IDC_AUDIO_ON_OFF                1002

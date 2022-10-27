@@ -7,13 +7,8 @@
 #include <vector>
 #include <initializer_list>
 #include <functional>
+#include <streambuf>
 
-
-#ifdef _WIN32
-using PathType = std::wstring;
-#else
-using PathType = std::string;
-#endif
 
 struct IDirect3DDevice9;
 struct IDirect3DSurface9;
@@ -92,6 +87,7 @@ struct IFrameDecoder
     virtual void SetFrameFormat(FrameFormat format, bool allowDirect3dData) = 0;
 
     virtual bool openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat = {}) = 0;
+    virtual bool openStream(std::unique_ptr<std::streambuf> stream) = 0;
 
     virtual void play(bool isPaused = false) = 0;
     virtual bool pauseResume() = 0;

@@ -22,6 +22,8 @@
 
 #include "ImageUpscale.h"
 
+#include "ByteStreamBuffer.h"
+
 #include <propkey.h>
 #include <memory>
 
@@ -291,6 +293,24 @@ BOOL CPlayerDoc::OnNewDocument()
         }
 
         return false;
+    }
+    else if (GetAsyncKeyState(VK_SHIFT) < 0
+        && GetAsyncKeyState(VK_CONTROL) < 0)
+    {
+        HRSRC hFound = ::FindResource(NULL, MAKEINTRESOURCE(IDR_LAUNCH), RT_RCDATA);
+        HGLOBAL hRes = ::LoadResource(NULL, hFound);
+
+        if (!m_frameDecoder->openStream(std::make_unique<ByteStreamBuffer>(
+            (char*)::LockResource(hRes), ::SizeofResource(NULL, hFound))))
+        {
+            return false;
+        }
+
+        m_frameDecoder->play(true);
+        UpdateAllViews(nullptr, UPDATE_HINT_CLOSING);
+        m_frameDecoder->pauseResume();
+        onPauseResume(false);
+        return true;
     }
 
     return CDocument::OnNewDocument();
