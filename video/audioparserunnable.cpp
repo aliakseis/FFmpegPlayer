@@ -34,8 +34,6 @@ int64_t getChannelLayout(AVFrame* audioFrame)
 void FFmpegDecoder::audioParseRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Audio thread started";
-    AVPacket packet;
-
     bool initialized = false;
     bool failed = false;
 
@@ -70,6 +68,7 @@ void FFmpegDecoder::audioParseRunnable()
 
     while (!boost::this_thread::interruption_requested())
     {
+        AVPacket packet;
         if (!m_audioPacketsQueue.pop(packet))
         {
             break;

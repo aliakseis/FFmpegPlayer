@@ -162,7 +162,7 @@ void FFmpegDecoder::videoParseRunnable()
 
     VideoParseContext context{};
 
-    for (;;)
+    while (!boost::this_thread::interruption_requested())
     {
         AVPacket packet;
         if (!m_videoPacketsQueue.pop(packet))
