@@ -14,7 +14,7 @@ void FFmpegDecoder::displayRunnable()
     int numIndications = 0;
 #endif
 
-    for (;;)
+    while (!boost::this_thread::interruption_requested())
     {
         {
             boost::unique_lock<boost::mutex> locker(m_videoFramesMutex);

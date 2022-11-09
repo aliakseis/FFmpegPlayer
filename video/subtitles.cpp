@@ -63,7 +63,7 @@ std::string ass_to_plaintext(const char *in)
 }
 
 std::string fromAss(const char* ass) {
-    const auto b = ass_to_plaintext(ass);
+    auto b = ass_to_plaintext(ass);
     int hour1, min1, sec1, hunsec1,hour2, min2, sec2, hunsec2;
     char line[1024];
     // fixme: "\0" maybe not allowed
