@@ -283,7 +283,7 @@ void FFmpegDecoder::resetVariables()
 
     m_frameDisplayingRequested = false;
 
-    m_generation = 0;
+    ++m_generation;
 
     m_isPaused = false;
 
@@ -356,7 +356,10 @@ void FFmpegDecoder::closeProcessing()
     m_mainDisplayThread.reset();
 
     // Free videoFrames
-    m_videoFramesQueue.clear();
+    {
+        boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
+        m_videoFramesQueue.clear();
+    }
 
     sws_freeContext(m_imageCovertContext);
 
@@ -807,16 +810,17 @@ void FFmpegDecoder::finishedDisplayingFrame(unsigned int generation)
 {
     {
         boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
-        if (generation == m_generation && m_videoFramesQueue.canPop())
+        if (generation != m_generation || !m_videoFramesQueue.canPop())
         {
-            VideoFrame &current_frame = m_videoFramesQueue.front();
-            if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
-            {
-                av_frame_unref(current_frame.m_image.get());
-            }
-
-            m_videoFramesQueue.popFront();
+            return;
         }
+        VideoFrame &current_frame = m_videoFramesQueue.front();
+        if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
+        {
+            av_frame_unref(current_frame.m_image.get());
+        }
+
+        m_videoFramesQueue.popFront();
         m_frameDisplayingRequested = false;
     }
     m_videoFramesCV.notify_all();

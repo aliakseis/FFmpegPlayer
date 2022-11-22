@@ -279,7 +279,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     bool m_frameDisplayingRequested;
 
-    unsigned int m_generation;
+    unsigned int m_generation = 0;
 
     boost::mutex m_videoFramesMutex;
     boost::condition_variable m_videoFramesCV;
