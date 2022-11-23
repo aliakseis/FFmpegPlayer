@@ -22,8 +22,9 @@ public:
     void showPicture(const QImage& img) override;
     void showPicture(const QPixmap& picture) override;
 
-    void updateFrame(IFrameDecoder* decoder) override;
-    void drawFrame(IFrameDecoder* decoder, unsigned int generation) override; // decoder->finishedDisplayingFrame() must be called
+    // decoder->finishedDisplayingFrame() must be called
+    void updateFrame(IFrameDecoder* decoder, unsigned int generation) override;
+    void drawFrame(IFrameDecoder* decoder, unsigned int generation) override;
     void decoderClosing() override;
 
     float aspectRatio() const;

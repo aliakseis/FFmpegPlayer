@@ -29,7 +29,7 @@ void WidgetDisplay::showPicture(const QPixmap& picture)
 }
 
 
-void WidgetDisplay::updateFrame(IFrameDecoder* decoder)
+void WidgetDisplay::updateFrame(IFrameDecoder* decoder, unsigned int generation)
 {
     FrameRenderingData data;
     if (!decoder->getFrameRenderingData(&data))

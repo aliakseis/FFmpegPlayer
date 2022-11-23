@@ -26,6 +26,7 @@ void FFmpegDecoder::displayRunnable()
         }
 
         VideoFrame& current_frame = m_videoFramesQueue.front();
+        m_frameDisplayingRequested = true;
 
         if (current_frame.m_convert.valid() && !current_frame.m_convert.get()) {
                 finishedDisplayingFrame(m_generation);
@@ -41,12 +42,10 @@ void FFmpegDecoder::displayRunnable()
             continue;
         }
 
-        m_frameDisplayingRequested = true;
-
         // Possibly give it time to render frame
         if (m_frameListener != nullptr)
         {
-            m_frameListener->updateFrame(this);
+            m_frameListener->updateFrame(this, m_generation);
         }
 
         const auto speed = getSpeedRational();

@@ -282,38 +282,38 @@ void OpenGLDisplay::paintGL()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void OpenGLDisplay::updateFrame(IFrameDecoder* decoder)
+void OpenGLDisplay::updateFrame(IFrameDecoder* decoder, unsigned int generation)
 {
     FrameRenderingData data;
-    if (!decoder->getFrameRenderingData(&data))
+    if (decoder->getFrameRenderingData(&data))
     {
-        return;
-    }
+        std::unique_lock<std::mutex> lock(impl->m_mutex);
 
-    std::unique_lock<std::mutex> lock(impl->m_mutex);
+        impl->m_aspectRatio = float(data.height) / data.width;
 
-    impl->m_aspectRatio = float(data.height) / data.width;
+        impl->mVideoW = data.width;
+        impl->mVideoH = data.height;
 
-    impl->mVideoW = data.width;
-    impl->mVideoH = data.height;
+        InitDrawBuffer(data.height * data.width * 3 / 2);
 
-    InitDrawBuffer(data.height * data.width * 3 / 2);
-
-    auto dst = reinterpret_cast<unsigned char*>(impl->mBufYuv);
-    int width = data.width;
-    int height = data.height;
-    for (int i = 0; i < 3; ++i)
-    {
-        auto src = data.image[i];
-        for (int j = 0; j < height; ++j)
+        auto dst = reinterpret_cast<unsigned char*>(impl->mBufYuv);
+        int width = data.width;
+        int height = data.height;
+        for (int i = 0; i < 3; ++i)
         {
-            memcpy(dst, src, width);
-            dst += width;
-            src += data.pitch[i];
+            auto src = data.image[i];
+            for (int j = 0; j < height; ++j)
+            {
+                memcpy(dst, src, width);
+                dst += width;
+                src += data.pitch[i];
+            }
+            width = data.width / 2;
+            height = data.height / 2;
         }
-        width = data.width / 2;
-        height = data.height / 2;
     }
+
+    finishedDisplayingFrame(generation);
 }
 
 
@@ -413,7 +413,7 @@ void OpenGLDisplay::drawFrame(IFrameDecoder* decoder, unsigned int generation)
                 update();
             });
     }
-    finishedDisplayingFrame(generation);
+    //finishedDisplayingFrame(generation);
 }
 
 void OpenGLDisplay::decoderClosing()

@@ -810,7 +810,7 @@ void FFmpegDecoder::finishedDisplayingFrame(unsigned int generation)
 {
     {
         boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
-        if (generation != m_generation || !m_videoFramesQueue.canPop())
+        if (!m_frameDisplayingRequested || generation != m_generation || !m_videoFramesQueue.canPop())
         {
             return;
         }

@@ -636,15 +636,16 @@ public:
     explicit FrameListener(CPlayerView* playerView) : m_playerView(playerView) {}
 
 private:
-    void updateFrame(IFrameDecoder* /*decoder*/) override
+    void updateFrame(IFrameDecoder* decoder, unsigned int generation) override
     {
         m_playerView->updateFrame();
+        decoder->finishedDisplayingFrame(generation);
     }
     void drawFrame(IFrameDecoder* decoder, unsigned int generation) override
     {
         m_playerView->ProcessVideo();
         //m_playerView->Invalidate();
-        decoder->finishedDisplayingFrame(generation);
+        //decoder->finishedDisplayingFrame(generation);
     }
     void decoderClosing() override
     {
