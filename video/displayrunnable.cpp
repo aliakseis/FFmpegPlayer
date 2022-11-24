@@ -42,6 +42,9 @@ void FFmpegDecoder::displayRunnable()
             continue;
         }
 
+        const auto pts = current_frame.m_pts;
+        const auto duration = current_frame.m_duration;
+
         // Possibly give it time to render frame
         if (m_frameListener != nullptr)
         {
@@ -52,7 +55,7 @@ void FFmpegDecoder::displayRunnable()
 
         for (;;)
         {
-            const double delay = m_videoStartClock + current_frame.m_pts - GetHiResTime();
+            const double delay = m_videoStartClock + pts - GetHiResTime();
             if (delay < 0.005) {
                 break;
             }
@@ -69,20 +72,20 @@ void FFmpegDecoder::displayRunnable()
         }
 
         // It's time to display converted frame
-        if (current_frame.m_duration != AV_NOPTS_VALUE)
+        if (duration != AV_NOPTS_VALUE)
         {
-            m_currentTime = current_frame.m_duration;
+            m_currentTime = duration;
             if ((m_decoderListener != nullptr) && m_seekDuration == AV_NOPTS_VALUE)
             {
                 m_decoderListener->changedFramePosition(
                     m_startTime,
-                    current_frame.m_duration,
+                    duration,
                     m_duration + m_startTime);
             }
         }
 
 #ifdef TRACE_DELAY_STATS
-        const double delay = m_videoStartClock + current_frame.m_pts - GetHiResTime();
+        const double delay = m_videoStartClock + pts - GetHiResTime();
         sumIndications += delay;
         sqSumIndications += delay * delay;
         if (++numIndications >= MAX_INDICATIONS)
