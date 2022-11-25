@@ -806,22 +806,30 @@ void FFmpegDecoder::SetFrameFormat(FrameFormat format, bool allowDirect3dData)
     m_allowDirect3dData = allowDirect3dData;
 }
 
-void FFmpegDecoder::finishedDisplayingFrame(unsigned int generation)
+void FFmpegDecoder::doOnFinishedDisplayingFrame(unsigned int generation, FinishedDisplayingMode mode)
 {
     {
         boost::lock_guard<boost::mutex> locker(m_videoFramesMutex);
-        if (!m_frameDisplayingRequested || generation != m_generation || !m_videoFramesQueue.canPop())
+        if (!m_frameDisplayingRequested || generation != m_generation)
         {
             return;
         }
-        VideoFrame &current_frame = m_videoFramesQueue.front();
-        if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
+
+        if (mode != FINALIZE_DISPLAY && m_videoFramesQueue.canPop())
         {
-            av_frame_unref(current_frame.m_image.get());
+            VideoFrame &current_frame = m_videoFramesQueue.front();
+            if (current_frame.m_image->format == AV_PIX_FMT_DXVA2_VLD)
+            {
+                av_frame_unref(current_frame.m_image.get());
+            }
+
+            m_videoFramesQueue.popFront();
         }
 
-        m_videoFramesQueue.popFront();
-        m_frameDisplayingRequested = false;
+        if (mode != RELEASE_FRAME)
+        {
+            m_frameDisplayingRequested = false;
+        }
     }
     m_videoFramesCV.notify_all();
 }

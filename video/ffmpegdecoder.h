@@ -121,7 +121,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
         return av_q2d((m_videoStream != nullptr)? m_videoStream->time_base : m_audioStream->time_base) * duration;
     }
 
-    void finishedDisplayingFrame(unsigned int generation) override;
+    void doOnFinishedDisplayingFrame(unsigned int generation, FinishedDisplayingMode mode) override;
 
     void close() override;
     void play(bool isPaused = false) override;

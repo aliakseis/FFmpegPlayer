@@ -72,6 +72,12 @@ struct IFrameDecoder
         PIX_FMT_BGR24,     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
     };
 
+    enum FinishedDisplayingMode {
+        RELEASE_FRAME,
+        FINALIZE_DISPLAY, // a separate notification is not needed if redraw is done synchronously
+        RELEASE_AND_FINALIZE
+    };
+
     // input and output in NV12 format
     typedef std::function<void(
         uint8_t* /*input*/,
@@ -101,7 +107,11 @@ struct IFrameDecoder
     virtual void setFrameListener(IFrameListener* listener) = 0;
     virtual void setDecoderListener(FrameDecoderListener* listener) = 0;
     virtual bool getFrameRenderingData(FrameRenderingData* data) = 0;
-    virtual void finishedDisplayingFrame(unsigned int generation) = 0;
+    virtual void doOnFinishedDisplayingFrame(unsigned int generation, FinishedDisplayingMode mode) = 0;
+    void finishedDisplayingFrame(unsigned int generation, FinishedDisplayingMode mode = RELEASE_AND_FINALIZE)
+    {
+        doOnFinishedDisplayingFrame(generation, mode);
+    }
 
     virtual void close() = 0;
 

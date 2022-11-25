@@ -62,7 +62,7 @@ private:
     void updateFrame(IFrameDecoder* decoder, unsigned int generation) override
     {
         m_playerView->updateFrame();
-        decoder->finishedDisplayingFrame(generation);
+        decoder->finishedDisplayingFrame(generation, IFrameDecoder::RELEASE_FRAME);
     }
     void drawFrame(IFrameDecoder*, unsigned int generation) override
     {
@@ -391,7 +391,7 @@ LRESULT CPlayerViewD2D::DrawFrame(WPARAM, LPARAM generation)
         DoD2DPaint();
     }
 
-    //GetDocument()->getFrameDecoder()->finishedDisplayingFrame(generation);
+    GetDocument()->getFrameDecoder()->finishedDisplayingFrame(generation, IFrameDecoder::FINALIZE_DISPLAY);
 
     return 0;
 }
