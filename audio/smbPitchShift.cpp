@@ -48,8 +48,6 @@
 #include <pmmintrin.h>
 #include <xmmintrin.h>
 
-#define M_PI 3.14159265358979323846
-
 
 namespace {
 
@@ -164,28 +162,56 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
     
 */
 
-// https://gist.github.com/voidqk/fc5a58b7d9fc020ecf7f2f5fc907dfa5
-inline float smbAtan2(float y, float x)
+// Approximation was taken from:
+// http://www-labs.iro.umontreal.ca/~mignotte/IFT2425/Documents/EfficientApproximationArctgFunction.pdf
+//
+// |Error = fast_atan2(y, x) - atan2f(y, x)| < 0.00468 rad
+//
+// Octants:
+//         pi/2
+//       ` 3 | 2 /
+//        `  |  /
+//       4 ` | / 1
+//   pi -----+----- 0
+//       5 / | ` 8
+//        /  |  `
+//       / 6 | 7 `
+//         3pi/2
+
+double smbAtan2(double y, double x)
 {
-    static const float c1 = M_PI / 4.0;
-    static const float c2 = M_PI * 3.0 / 4.0;
-    //if (y == 0 && x == 0)
-    //    return 0;
+    constexpr double scaling_constant = 0.28086;
 
-    if (y == 0) 
-        return 0;
-    if (x == 0)
-        return (y > 0) ? (M_PI / 2.) : -(M_PI / 2.);
+    if (x == 0.) {
+        // Special case atan2(0.0, 0.0) = 0.0
+        if (y == 0.) {
+            return 0.;
+        }
 
-    float abs_y = fabsf(y);
-    float angle;
-    if (x >= 0)
-        angle = c1 - c1 * ((x - abs_y) / (x + abs_y));
-    else
-        angle = c2 - c1 * ((x + abs_y) / (abs_y - x));
-    if (y < 0)
-        return -angle;
-    return angle;
+        // x is zero so we are either at pi/2 for (y > 0) or -pi/2 for (y < 0)
+        return std::copysign(M_PI_2, y);
+    }
+
+    // Calculate quotient of y and x
+    const auto div = y / x;
+
+    // Determine in which octants we can be, if |y| is smaller than |x| (|div|<1)
+    // then we are either in 1,4,5 or 8 else we are in 2,3,6 or 7.
+    if (fabs(div) < 1.) {
+        // We are in 1,4,5 or 8
+
+        const auto atan = div / (1. + scaling_constant * div * div);
+
+        // If we are in 4 or 5 we need to add pi or -pi respectively
+        if (x < 0.) {
+            return std::copysign(M_PI, y) + atan;
+        }
+        return atan;
+    }
+
+    // We are in 2,3,6 or 7
+    return std::copysign(M_PI_2, y) -
+        div / (div * div + scaling_constant);
 }
 
 //double smbAtan2(double x, double y)
