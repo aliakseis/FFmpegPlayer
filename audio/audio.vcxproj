@@ -78,6 +78,7 @@
       <PreprocessorDefinitions>_USE_MATH_DEFINES;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/std:c++latest /D_HAS_CXX17=1 %(AdditionalOptions)</AdditionalOptions>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -92,6 +93,7 @@
       <PreprocessorDefinitions>_USE_MATH_DEFINES;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/std:c++latest /D_HAS_CXX17=1 %(AdditionalOptions)</AdditionalOptions>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -108,6 +110,7 @@
       <PreprocessorDefinitions>_USE_MATH_DEFINES;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/std:c++latest /D_HAS_CXX17=1 %(AdditionalOptions)</AdditionalOptions>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -126,6 +129,7 @@
       <PreprocessorDefinitions>_USE_MATH_DEFINES;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/std:c++latest /D_HAS_CXX17=1 %(AdditionalOptions)</AdditionalOptions>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -178,6 +178,11 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
 //       / 6 | 7 `
 //         3pi/2
 
+template<typename T> T CopySign(T v, T x)
+{
+    return (x >= 0) ? v : -v;
+}
+
 double smbAtan2(double y, double x)
 {
     constexpr double scaling_constant = 0.28086;
@@ -189,7 +194,7 @@ double smbAtan2(double y, double x)
         }
 
         // x is zero so we are either at pi/2 for (y > 0) or -pi/2 for (y < 0)
-        return std::copysign(M_PI_2, y);
+        return CopySign(M_PI_2, y);
     }
 
     // Calculate quotient of y and x
@@ -204,14 +209,13 @@ double smbAtan2(double y, double x)
 
         // If we are in 4 or 5 we need to add pi or -pi respectively
         if (x < 0.) {
-            return std::copysign(M_PI, y) + atan;
+            return CopySign(M_PI, y) + atan;
         }
         return atan;
     }
 
     // We are in 2,3,6 or 7
-    return std::copysign(M_PI_2, y) -
-        div / (div * div + scaling_constant);
+    return CopySign(M_PI_2, y) - div / (div * div + scaling_constant);
 }
 
 //double smbAtan2(double x, double y)
