@@ -13,7 +13,7 @@ bool isSeekable(AVFormatContext* formatContext)
 #ifdef AVFMTCTX_UNSEEKABLE
         ((formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE) == 0) &&
 #endif
-        (formatContext->pb != nullptr) && ((formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL) != 0);
+        (formatContext->pb == nullptr || (formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL) != 0);
 }
 
 template<typename T>
