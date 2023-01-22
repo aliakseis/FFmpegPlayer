@@ -4,6 +4,7 @@
 #include "videowidget.h"
 
 #include <QFileDialog>
+#include <QInputDialog>
 
 MainWindow* getMainWindow()
 {
@@ -34,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_player->videoWidget(), &VideoWidget::leaveFullScreen, ui->dockWidget, &CustomDockWidget::onLeaveFullScreen);
 
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::onFileOpen);
+    connect(ui->actionOpenUrl, &QAction::triggered, this, &MainWindow::onUrlOpen);
 }
 
 MainWindow::~MainWindow()
@@ -64,5 +66,20 @@ void MainWindow::onFileOpen()
     if (!fileName.isEmpty())
     {
         getPlayer()->playFile(fileName);
+    }
+}
+
+void MainWindow::onUrlOpen()
+{
+    QInputDialog dialog(this);
+    dialog.setWindowTitle(tr("Open URL"));
+    dialog.setLabelText(tr("Url to open:"));
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        QString fileName = dialog.textValue();
+        if (!fileName.isEmpty())
+        {
+            getPlayer()->playFile(fileName);
+        }
     }
 }

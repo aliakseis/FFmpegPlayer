@@ -23,7 +23,7 @@ void FFmpegDecoderWrapper::setFrameListener(VideoDisplay* listener)
 }
 }
 
-void FFmpegDecoderWrapper::openFile(const QString& file)
+bool FFmpegDecoderWrapper::openFile(const QString& file)
 {
-    m_frameDecoder->openUrls({file.toStdString()});
+    return m_frameDecoder->openUrls({file.toStdString()});
 }

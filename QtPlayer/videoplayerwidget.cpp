@@ -63,12 +63,11 @@ void VideoPlayerWidget::stopVideo(bool showDefaultImage)
 
 void VideoPlayerWidget::playFile(const QString& fileName)
 {
-	if (QFile::exists(fileName))
-	{
-		Q_ASSERT(!fileName.isEmpty());
-		m_currentFile = fileName;
-        FFmpegDecoderWrapper* decoder = getDecoder();
-		decoder->openFile(m_currentFile);
+	Q_ASSERT(!fileName.isEmpty());
+	m_currentFile = fileName;
+    FFmpegDecoderWrapper* decoder = getDecoder();
+	if (decoder->openFile(m_currentFile))
+    {
         decoder->play();
         setState(Playing);
         m_controls->showPlaybutton(false);
@@ -87,7 +86,7 @@ void VideoPlayerWidget::playFile(const QString& fileName)
 		m_progressBar->setDownloadedCounter(0);
 		setState(InitialState);
 		m_controls->showPlaybutton(true);
-        QMessageBox::information(this, "Player", tr("File %1 cannot be played as it doesn't exist.").arg(fileName));
+        QMessageBox::information(this, "Player", tr("File %1 cannot be played.").arg(fileName));
 	}
 }
 

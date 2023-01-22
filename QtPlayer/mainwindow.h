@@ -24,6 +24,7 @@ public:
 
 private:
     void onFileOpen();
+    void onUrlOpen();
 
 private:
     Ui::MainWindow *ui;
