@@ -33,6 +33,8 @@ void FFmpegDecoder::displayRunnable()
                 continue;
         }
 
+        assert(m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED);
+
         // Frame skip
         if (!m_videoFramesQueue.canPush()
             && m_videoStartClock + current_frame.m_pts < GetHiResTime())

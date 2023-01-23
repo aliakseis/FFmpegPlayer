@@ -246,10 +246,10 @@ bool FFmpegDecoder::handleVideoFrame(
         // Skipping frames
         if (context.initialized && !inNextFrame && !m_videoPacketsQueue.empty())
         {
-            const double curTime = GetHiResTime();
-            if (m_videoStartClock + pts <= curTime)
+            const double deltaTime = m_videoStartClock + pts - GetHiResTime();
+            if (deltaTime <= 0)
             {
-                if (m_videoStartClock + pts < curTime - MAX_DELAY)
+                if (deltaTime < -MAX_DELAY)
                 {
                     InterlockedAdd(m_videoStartClock, MAX_DELAY);
                 }
@@ -277,7 +277,7 @@ bool FFmpegDecoder::handleVideoFrame(
                 const auto speed = getSpeedRational();
                 context.numSkipped = 0;
                 td = boost::posix_time::milliseconds(
-                    int((m_videoStartClock + pts - curTime) * 1000.  * speed.denominator / speed.numerator) + 1);
+                    int(deltaTime * 1000.  * speed.denominator / speed.numerator) + 1);
             }
         }
     }
