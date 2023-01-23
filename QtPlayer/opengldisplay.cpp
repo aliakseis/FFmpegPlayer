@@ -50,6 +50,7 @@ OpenGLDisplay::OpenGLDisplay(QWidget* parent)
     : QOpenGLWidget(parent)
     , impl(new OpenGLDisplayImpl())
 {
+    setAttribute(Qt::WA_OpaquePaintEvent, true);
 }
 
 OpenGLDisplay::~OpenGLDisplay()
