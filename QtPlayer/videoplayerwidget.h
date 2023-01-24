@@ -74,6 +74,9 @@ private slots:
 
 	void onPlayingFinished();
 
+    void onLeftSliderValueChanged(int value);
+    void onRightSliderValueChanged(int value);
+
 signals:
 	void fileReleased();
 

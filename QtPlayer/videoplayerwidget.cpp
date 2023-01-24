@@ -16,6 +16,11 @@
 
 enum { PROGRESSBAR_VISIBLE_HEIGHT = 5 };
 
+enum {
+    SLIDER_MINIMUM = 0,
+    SLIDER_MAXIMUM = 1000,
+};
+
 VideoPlayerWidget::VideoPlayerWidget(QWidget* parent) :
 	QFrame(parent)
 	, m_videoWidget(new VideoWidget(this))
@@ -58,11 +63,19 @@ void VideoPlayerWidget::setProgressbar(VideoProgressBar* progressbar)
 void VideoPlayerWidget::setLeftSlider(QSlider *slider)
 {
     m_leftSlider = slider;
+    slider->setMinimum(SLIDER_MINIMUM);
+    slider->setMaximum(SLIDER_MAXIMUM);
+    slider->setValue((SLIDER_MAXIMUM + SLIDER_MINIMUM) / 2);
+    connect(slider, &QSlider::valueChanged, this, &VideoPlayerWidget::onLeftSliderValueChanged);
 }
 
 void VideoPlayerWidget::setRightSlider(QSlider *slider)
 {
     m_rightSlider = slider;
+    slider->setMinimum(SLIDER_MINIMUM);
+    slider->setMaximum(SLIDER_MAXIMUM);
+    slider->setValue((SLIDER_MAXIMUM + SLIDER_MINIMUM) / 2);
+    connect(slider, &QSlider::valueChanged, this, &VideoPlayerWidget::onRightSliderValueChanged);
 }
 
 void VideoPlayerWidget::setControl(VideoControl* controlWidget)
@@ -276,7 +289,7 @@ void VideoPlayerWidget::updateLayout()
 		yPos += playerHeight;
 	}
 
-    m_overlay->move(sliderWidth, 0);
+    m_overlay->move(0/*sliderWidth*/, 0);
     m_overlay->resize(playerWidth, yPos);
 
     if (m_progressBar != nullptr)
@@ -318,4 +331,16 @@ void VideoPlayerWidget::onPlayingFinished()
 	{
 		m_videoWidget->fullScreen(false);
 	}
+}
+
+void VideoPlayerWidget::onLeftSliderValueChanged(int value)
+{
+    m_overlay->onLeftProportionChanged(
+        static_cast<double>(SLIDER_MAXIMUM - value) / (SLIDER_MAXIMUM - SLIDER_MINIMUM));
+}
+
+void VideoPlayerWidget::onRightSliderValueChanged(int value)
+{
+    m_overlay->onRightProportionChanged(
+        static_cast<double>(SLIDER_MAXIMUM - value) / (SLIDER_MAXIMUM - SLIDER_MINIMUM));
 }
