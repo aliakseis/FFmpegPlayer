@@ -250,14 +250,14 @@ void VideoPlayerWidget::updateLayout()
 
 		if (m_videoWidget->isFullScreen())
 		{
-			m_videoWidget->setGeometry(0, 0, currWidth, currHeight);
+			m_videoWidget->setGeometry(sliderWidth, 0, currWidth, currHeight);
 //#ifndef DEVELOPER_OPENGL
             m_videoWidget->setPreferredSize(currWidth, currHeight);
 //#endif
 		}
 		else
 		{
-			m_videoWidget->setGeometry(0, yPos, playerWidth, playerHeight - PROGRESSBAR_VISIBLE_HEIGHT);
+			m_videoWidget->setGeometry(sliderWidth, yPos, playerWidth, playerHeight - PROGRESSBAR_VISIBLE_HEIGHT);
 //#ifndef DEVELOPER_OPENGL
             m_videoWidget->setPreferredSize(playerWidth, playerHeight);
 //#endif
