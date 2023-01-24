@@ -210,7 +210,7 @@ void VideoPlayerWidget::updateLayout()
     int minPlayerHeight = currHeight - controlsHeight;
 
     // !
-    const int sliderWidth = 12;
+    const int sliderWidth = (m_leftSlider != nullptr)? m_leftSlider->minimumSizeHint().width() : 0;  //12;
 
 	int playerWidth = currWidth - sliderWidth * 2;
 	int yPos = 1;
@@ -222,7 +222,7 @@ void VideoPlayerWidget::updateLayout()
                 (m_videoWidget->getPictureSize().height() > 0 && m_videoWidget->getPictureSize().width() >0)
                 ? static_cast<double>(m_videoWidget->getPictureSize().height()) / m_videoWidget->getPictureSize().width()
                 : 0.75;
-		int height = aspectRatio * currWidth;
+        int height = aspectRatio * playerWidth;// currWidth;
 		// Display too big: do recalculation
 		if (height > minPlayerHeight)	// TODO(Usrer): code refactoring
 		{

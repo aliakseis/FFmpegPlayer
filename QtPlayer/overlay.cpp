@@ -1,6 +1,7 @@
 #include "overlay.h"
 
 #include <QPainter>
+#include <QPainterPath>
 
 Overlay::Overlay(QWidget* parent)
     : QWidget(parent)
