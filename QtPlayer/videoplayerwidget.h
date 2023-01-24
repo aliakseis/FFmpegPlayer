@@ -8,6 +8,8 @@
 
 class Overlay;
 
+class QSlider;
+
 class VideoControl;
 class VideoProgressBar;
 class VideoWidget;
@@ -42,6 +44,10 @@ public:
 	VideoWidget* videoWidget() {return m_videoWidget;}
 
 	void setProgressbar(VideoProgressBar* progressbar);
+
+    void setLeftSlider(QSlider *slider);
+    void setRightSlider(QSlider *slider);
+
 	void setControl(VideoControl* controlWidget);
 
 	void setDefaultPreviewPicture();
@@ -79,4 +85,7 @@ private:
 	QString m_currentFile;
     Overlay* m_overlay{};
 	VideoWidget* m_videoWidget;
+
+    QSlider *m_leftSlider{};
+    QSlider *m_rightSlider{};
 };

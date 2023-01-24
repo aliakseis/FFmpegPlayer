@@ -27,6 +27,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_player->setProgressbar(ui->videoProgress);
 
+    m_player->setLeftSlider(ui->leftSlider);
+    m_player->setRightSlider(ui->rightSlider);
+
     ui->dockWidget->installEventFilter(m_player);
     ui->dockWidget->setDisplayForFullscreen(m_player->getCurrentDisplay());
 

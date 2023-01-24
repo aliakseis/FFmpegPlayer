@@ -91,6 +91,13 @@
         <bool>false</bool>
        </property>
       </widget>
+
+<widget class="QSlider" name="leftSlider">
+</widget>
+
+<widget class="QSlider" name="rightSlider">
+</widget>
+
      </widget>
     </item>
    </layout>

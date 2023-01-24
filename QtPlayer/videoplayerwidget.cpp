@@ -11,6 +11,9 @@
 #include <QMessageBox>
 #include <QDebug>
 
+#include <QSlider>
+
+
 enum { PROGRESSBAR_VISIBLE_HEIGHT = 5 };
 
 VideoPlayerWidget::VideoPlayerWidget(QWidget* parent) :
@@ -50,6 +53,16 @@ void VideoPlayerWidget::setProgressbar(VideoProgressBar* progressbar)
 	m_progressBar = progressbar;
     connect(getDecoder(), &FFmpegDecoderWrapper::onChangedFramePosition, m_progressBar, &VideoProgressBar::displayPlayedProgress);
 	progressbar->installEventFilter(this);
+}
+
+void VideoPlayerWidget::setLeftSlider(QSlider *slider)
+{
+    m_leftSlider = slider;
+}
+
+void VideoPlayerWidget::setRightSlider(QSlider *slider)
+{
+    m_rightSlider = slider;
 }
 
 void VideoPlayerWidget::setControl(VideoControl* controlWidget)
@@ -183,7 +196,10 @@ void VideoPlayerWidget::updateLayout()
 
     int minPlayerHeight = currHeight - controlsHeight;
 
-	int playerWidth = currWidth;
+    // !
+    const int sliderWidth = 12;
+
+	int playerWidth = currWidth - sliderWidth * 2;
 	int yPos = 1;
     FFmpegDecoderWrapper* dec = getDecoder();
 	Q_ASSERT(dec != nullptr);
@@ -201,7 +217,7 @@ void VideoPlayerWidget::updateLayout()
 			playerWidth = static_cast<int>(static_cast<double>(minPlayerHeight) / aspectRatio);
 		}
 
-		m_videoWidget->setGeometry(0, yPos, playerWidth, height - PROGRESSBAR_VISIBLE_HEIGHT);
+		m_videoWidget->setGeometry(sliderWidth, yPos, playerWidth, height - PROGRESSBAR_VISIBLE_HEIGHT);
 		yPos += height;
 
 		QImage previewPic = m_videoWidget->startImageButton().scaled(playerWidth, yPos - PROGRESSBAR_VISIBLE_HEIGHT, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -260,17 +276,29 @@ void VideoPlayerWidget::updateLayout()
 		yPos += playerHeight;
 	}
 
-    m_overlay->move(0, 0);
+    m_overlay->move(sliderWidth, 0);
     m_overlay->resize(playerWidth, yPos);
 
     if (m_progressBar != nullptr)
     {
         int progressHeight = m_progressBar->height();
-        m_progressBar->move(0, yPos - (progressHeight + PROGRESSBAR_VISIBLE_HEIGHT) / 2);
+        m_progressBar->move(sliderWidth, yPos - (progressHeight + PROGRESSBAR_VISIBLE_HEIGHT) / 2);
         m_progressBar->resize(playerWidth, progressHeight);
     }
 
-	int controlsPos = (playerWidth - m_controls->getWidth()) / 2;
+    if (m_leftSlider)
+    {
+        m_leftSlider->move(0, 0);
+        m_leftSlider->resize(sliderWidth, yPos);
+    }
+
+    if (m_rightSlider)
+    {
+        m_rightSlider->move(sliderWidth + playerWidth, 0);
+        m_rightSlider->resize(sliderWidth, yPos);
+    }
+
+    int controlsPos = (playerWidth - m_controls->getWidth()) / 2 + sliderWidth;
 	if (controlsPos < 0)
 	{
 		controlsPos = 0;
