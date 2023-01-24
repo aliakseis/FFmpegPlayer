@@ -3,6 +3,8 @@
 #include "videocontrol.h"
 #include "videoprogressbar.h"
 
+#include "overlay.h"
+
 #include <QDesktopServices>
 #include <QResizeEvent>
 #include <QPointer>
@@ -18,7 +20,8 @@ VideoPlayerWidget::VideoPlayerWidget(QWidget* parent) :
     connect(getDecoder(), &FFmpegDecoderWrapper::onPlayingFinished, this, &VideoPlayerWidget::onPlayingFinished);
 
 	setDisplay(m_videoWidget);
-	m_videoWidget->installEventFilter(this);
+    m_overlay = new Overlay(m_videoWidget);
+    m_videoWidget->installEventFilter(this);
 }
 
 void VideoPlayerWidget::setVideoFilename(const QString& fileName)
@@ -256,6 +259,9 @@ void VideoPlayerWidget::updateLayout()
 #endif
 		yPos += playerHeight;
 	}
+
+    m_overlay->move(0, 0);
+    m_overlay->resize(playerWidth, yPos);
 
     if (m_progressBar != nullptr)
     {

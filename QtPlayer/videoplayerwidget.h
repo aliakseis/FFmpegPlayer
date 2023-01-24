@@ -6,6 +6,8 @@
 #include <QFrame>
 #include <QPointer>
 
+class Overlay;
+
 class VideoControl;
 class VideoProgressBar;
 class VideoWidget;
@@ -75,5 +77,6 @@ private:
 	VideoControl* m_controls{nullptr};
 	VideoProgressBar* m_progressBar{nullptr};
 	QString m_currentFile;
+    Overlay* m_overlay{};
 	VideoWidget* m_videoWidget;
 };

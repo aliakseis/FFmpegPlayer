@@ -109,6 +109,8 @@ set(SOURCES
     mousehoverbutton.h
     opengldisplay.cpp
     opengldisplay.h   
+    overlay.cpp
+    overlay.h
     portaudioplayer.cpp
     portaudioplayer.h
     videocontrol.cpp
