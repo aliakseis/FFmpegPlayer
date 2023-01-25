@@ -213,6 +213,7 @@ void VideoPlayerWidget::updateLayout()
     const int sliderWidth = (m_leftSlider != nullptr)? m_leftSlider->minimumSizeHint().width() : 0;  //12;
 
 	int playerWidth = currWidth - sliderWidth * 2;
+    int playerHeight = 0;
 	int yPos = 1;
     FFmpegDecoderWrapper* dec = getDecoder();
 	Q_ASSERT(dec != nullptr);
@@ -222,16 +223,16 @@ void VideoPlayerWidget::updateLayout()
                 (m_videoWidget->getPictureSize().height() > 0 && m_videoWidget->getPictureSize().width() >0)
                 ? static_cast<double>(m_videoWidget->getPictureSize().height()) / m_videoWidget->getPictureSize().width()
                 : 0.75;
-        int height = aspectRatio * playerWidth;// currWidth;
+        playerHeight = aspectRatio * playerWidth;// currWidth;
 		// Display too big: do recalculation
-		if (height > minPlayerHeight)	// TODO(Usrer): code refactoring
+		if (playerHeight > minPlayerHeight)	// TODO(Usrer): code refactoring
 		{
-			height = minPlayerHeight;
+            playerHeight = minPlayerHeight;
 			playerWidth = static_cast<int>(static_cast<double>(minPlayerHeight) / aspectRatio);
 		}
 
-		m_videoWidget->setGeometry(sliderWidth, yPos, playerWidth, height - PROGRESSBAR_VISIBLE_HEIGHT);
-		yPos += height;
+		m_videoWidget->setGeometry(sliderWidth, yPos, playerWidth, playerHeight - PROGRESSBAR_VISIBLE_HEIGHT);
+		yPos += playerHeight;
 
 		QImage previewPic = m_videoWidget->startImageButton().scaled(playerWidth, yPos - PROGRESSBAR_VISIBLE_HEIGHT, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 		if (m_videoWidget->startImageButton() == m_videoWidget->noPreviewImage())
@@ -253,7 +254,7 @@ void VideoPlayerWidget::updateLayout()
 //		QSize pictureSize = dec->getPreferredSize(playerWidth, playerWidth).size();
 //		double aspectRatio = (double)pictureSize.height() / pictureSize.width();
 //#endif
-		int playerHeight = pictureSize.width() * aspectRatio;
+		playerHeight = pictureSize.width() * aspectRatio;
 		// Display too big: do recalculation
 		if (playerHeight > minPlayerHeight)
 		{
@@ -290,7 +291,7 @@ void VideoPlayerWidget::updateLayout()
 	}
 
     m_overlay->move(0/*sliderWidth*/, 0);
-    m_overlay->resize(playerWidth, yPos);
+    m_overlay->resize(playerWidth, playerHeight - PROGRESSBAR_VISIBLE_HEIGHT);
 
     if (m_progressBar != nullptr)
     {
