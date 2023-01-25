@@ -22,7 +22,7 @@ bool PortAudioPlayer::Open(int bytesPerSample, int channels, int* samplesPerSec)
 {
     PaStreamParameters params{};
     params.device = Pa_GetDefaultOutputDevice();
-    params.suggestedLatency = Pa_GetDeviceInfo(params.device)->defaultHighOutputLatency;
+    params.suggestedLatency = Pa_GetDeviceInfo(params.device)->defaultLowOutputLatency;
     params.channelCount = channels;
 
     switch (bytesPerSample)
