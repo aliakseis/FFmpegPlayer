@@ -424,6 +424,10 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
         if (iformat)
         {
             av_dict_set(&streamOpts, "rtbufsize", "15000000", 0); // https://superuser.com/questions/1158820/ffmpeg-real-time-buffer-issue-rtbufsize-parameter
+            if (iformat->name != nullptr && strcmp(iformat->name, "sdp") == 0)
+            {
+                av_dict_set(&streamOpts, "protocol_whitelist", "file,http,https,tls,rtp,tcp,udp,crypto,httpproxy,data", 0);
+            }
         }
         const int error = avformat_open_input(&formatContext, url.c_str(), iformat, &streamOpts);
         if (error != 0)
@@ -667,12 +671,12 @@ bool FFmpegDecoder::resetVideoProcessing()
             return false;  // Could not open codec
         }
 
-        // Some broken files can pass codec check but don't have width x height
-        if (m_videoCodecContext->width <= 0 || m_videoCodecContext->height <= 0)
-        {
-            assert(false && "This file lacks resolution");
-            return false;  // Could not open codec
-        }
+        // this may be a valid case
+        //if (m_videoCodecContext->width <= 0 || m_videoCodecContext->height <= 0)
+        //{
+        //    assert(false && "This file lacks resolution");
+        //    return false;  // Could not open codec
+        //}
 
         videoCodecContextGuard.release();
     }
