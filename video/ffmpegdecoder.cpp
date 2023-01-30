@@ -304,7 +304,10 @@ void FFmpegDecoder::resetVariables()
     m_audioPaused = false;
     m_audioIndices.clear();
 
-    m_subtitleItems.clear();
+    {
+        boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+        m_subtitleItems.clear();
+    }
 
     m_subtitleIdx = -1;
     m_addIntervalCallback = {};
@@ -548,7 +551,8 @@ bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
                         description += ')';
                     }
                 }
-                m_subtitleItems.push_back({ contextIdx, i, std::move(description), 
+                boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+                m_subtitleItems.push_back({ contextIdx, i, std::move(description),
                     (urls.size() == 0) ? std::string() : *(urls.begin() + contextIdx) });
             }
         }
@@ -1122,6 +1126,7 @@ void FFmpegDecoder::setHwAccelerated(bool hwAccelerated)
 std::vector<std::string> FFmpegDecoder::listSubtitles() const
 {
     std::vector<std::string> result;
+    boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
     for (const auto& item : m_subtitleItems)
     {
         result.push_back(item.description);
@@ -1132,22 +1137,30 @@ std::vector<std::string> FFmpegDecoder::listSubtitles() const
 
 bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, const std::string&)> addIntervalCallback)
 {
-    if (idx < 0 || idx >= m_subtitleItems.size())
-        return false;
+    int streamNumber;
+    std::string url;
 
     {
         boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+
+        if (idx < 0 || idx >= m_subtitleItems.size())
+            return false;
+
         m_subtitleIdx = idx;
         m_addIntervalCallback = addIntervalCallback;
 
         avcodec_free_context(&m_subtitlesCodecContext);
+
+        const auto& subtitleItem = m_subtitleItems.at(idx);
+        if (subtitleItem.url.empty())
+        {
+            return true;
+        }
+
+        streamNumber = subtitleItem.streamIdx;
+        url = subtitleItem.url;
     }
 
-    const auto& subtitleItem = m_subtitleItems.at(idx);
-    if (subtitleItem.url.empty())
-    { 
-        return true;
-    }
 
     auto formatContext = avformat_alloc_context();
     if (formatContext == nullptr) {
@@ -1156,8 +1169,7 @@ bool FFmpegDecoder::getSubtitles(int idx, std::function<bool(double, double, con
 
     auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
 
-    const auto streamNumber = subtitleItem.streamIdx;
-    int error = avformat_open_input(&formatContext, subtitleItem.url.c_str(), nullptr, nullptr);
+    int error = avformat_open_input(&formatContext, url.c_str(), nullptr, nullptr);
     if (error != 0)
     {
         return false;

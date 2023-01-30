@@ -314,7 +314,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     std::vector<SubtitleItem> m_subtitleItems;
 
-    boost::mutex m_addIntervalMutex;
+    mutable boost::mutex m_addIntervalMutex;
 
     int m_subtitleIdx;
     std::function<bool(double, double, const std::string&)> m_addIntervalCallback;
