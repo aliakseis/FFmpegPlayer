@@ -12,6 +12,158 @@ extern "C"
 
 namespace {
 
+#ifdef _MSC_VER
+
+// Use scale to convert lsb formats to msb, depending how many bits there are:
+// 32768 = 9 bits
+// 16384 = 10 bits
+// 4096 = 12 bits
+// 256 = 16 bits
+void Convert16To8Row_SSSE3(const __m128i* src_y,
+                           __m128i* dst_y,
+                           int scale,
+                           int width) {
+    /*
+  asm volatile (
+    "movd      %3,%%xmm2                      \n"
+    "punpcklwd %%xmm2,%%xmm2                  \n"
+    "pshufd    $0x0,%%xmm2,%%xmm2             \n"
+
+    // 32 pixels per loop.
+    LABELALIGN
+    "1:                                       \n"
+    "movdqu    (%0),%%xmm0                    \n"
+    "movdqu    0x10(%0),%%xmm1                \n"
+    "add       $0x20,%0                       \n"
+    "pmulhuw   %%xmm2,%%xmm0                  \n"
+    "pmulhuw   %%xmm2,%%xmm1                  \n"
+    "packuswb  %%xmm1,%%xmm0                  \n"
+    "movdqu    %%xmm0,(%1)                    \n"
+    "add       $0x10,%1                       \n"
+    "sub       $0x10,%2                       \n"
+    "jg        1b                             \n"
+  : "+r"(src_y),   // %0
+    "+r"(dst_y),   // %1
+    "+r"(width)    // %2
+  : "r"(scale)     // %3
+  : "memory", "cc", "xmm0", "xmm1", "xmm2");
+  */
+
+    __m128i s = _mm_cvtsi32_si128(scale);
+    s = _mm_unpacklo_epi16(s, s);
+    s = _mm_shuffle_epi32(s, 0);
+
+    for (; width > 0; width -= 16)
+    {
+        __m128i a0 = *src_y++;
+        __m128i a1 = *src_y++;
+
+        a0 = _mm_mulhi_epu16(a0, s);
+        a1 = _mm_mulhi_epu16(a1, s);
+
+        a0 = _mm_packus_epi16(a0, a1);
+
+        *dst_y++ = a0;
+    }
+}
+
+void Convert16To8Row_Any_SSSE3(const uint16_t* src_ptr, uint8_t* dst_ptr, int scale, int width) 
+{
+    enum {
+          SBPP = 2, 
+          BPP = 1,
+          MASK = 15,
+    };
+
+    const int r = width & MASK;                            
+    const int n = width & ~MASK;
+    if (n > 0) {                                     
+        Convert16To8Row_SSSE3((const __m128i*)src_ptr, (__m128i*)dst_ptr, scale, n);
+    }     
+    if (r > 0) {
+        __declspec(align(16)) uint16_t temp[32];
+        __declspec(align(16)) uint8_t out[32];
+        memset(temp, 0, 32 * SBPP); /* for msan */
+        memcpy(temp, src_ptr + n, r * SBPP);
+        Convert16To8Row_SSSE3((const __m128i*)temp, (__m128i*)out, scale, MASK + 1);
+        memcpy(dst_ptr + n, out, r * BPP);
+    }
+}
+
+void Convert16To8Plane(const uint16_t* src_y,
+                       int src_stride_y,
+                       uint8_t* dst_y,
+                       int dst_stride_y,
+                       int scale,  // 16384 for 10 bits
+                       int width,
+                       int height) 
+{
+  // Negative height means invert the image.
+  if (height < 0) {
+    height = -height;
+    dst_y = dst_y + (height - 1) * dst_stride_y;
+    dst_stride_y = -dst_stride_y;
+  }
+  // Coalesce rows.
+  if (src_stride_y == width && dst_stride_y == width) {
+    width *= height;
+    height = 1;
+    src_stride_y = dst_stride_y = 0;
+  }
+
+  // Convert plane
+  for (int y = 0; y < height; ++y) {
+      Convert16To8Row_Any_SSSE3(src_y, dst_y, scale, width);
+    src_y += src_stride_y;
+    dst_y += dst_stride_y;
+  }
+}
+
+int I010ToI420(const uint16_t* src_y,
+               int src_stride_y,
+               const uint16_t* src_u,
+               int src_stride_u,
+               const uint16_t* src_v,
+               int src_stride_v,
+               uint8_t* dst_y,
+               int dst_stride_y,
+               uint8_t* dst_u,
+               int dst_stride_u,
+               uint8_t* dst_v,
+               int dst_stride_v,
+               int width,
+               int height)
+{
+  int halfwidth = (width + 1) >> 1;
+  int halfheight = (height + 1) >> 1;
+  if (!src_u || !src_v || !dst_u || !dst_v || width <= 0 || height == 0) {
+    return -1;
+  }
+  // Negative height means invert the image.
+  if (height < 0) {
+    height = -height;
+    halfheight = (height + 1) >> 1;
+    src_y = src_y + (height - 1) * src_stride_y;
+    src_u = src_u + (halfheight - 1) * src_stride_u;
+    src_v = src_v + (halfheight - 1) * src_stride_v;
+    src_stride_y = -src_stride_y;
+    src_stride_u = -src_stride_u;
+    src_stride_v = -src_stride_v;
+  }
+
+  // Convert Y plane.
+  Convert16To8Plane(src_y, src_stride_y, dst_y, dst_stride_y, 16384, width,
+                    height);
+  // Convert UV planes.
+  Convert16To8Plane(src_u, src_stride_u, dst_u, dst_stride_u, 16384, halfwidth,
+                    halfheight);
+  Convert16To8Plane(src_v, src_stride_v, dst_v, dst_stride_v, 16384, halfwidth,
+                    halfheight);
+  return 0;
+}
+
+#endif
+
 bool frameToImage(
     VideoFrame& videoFrameData,
     AVFramePtr& m_videoFrame,
@@ -30,26 +182,52 @@ bool frameToImage(
 
         videoFrameData.realloc(m_pixelFormat, width, height);
 
-        // Prepare image conversion
-        m_imageCovertContext =
-            sws_getCachedContext(m_imageCovertContext, m_videoFrame->width, m_videoFrame->height,
-            static_cast<AVPixelFormat>(m_videoFrame->format), width, height, m_pixelFormat,
-            0, nullptr, nullptr, nullptr);
-
-        assert(m_imageCovertContext != nullptr);
-
-        if (m_imageCovertContext == nullptr)
+#ifdef _MSC_VER
+        if (m_videoFrame->format == AV_PIX_FMT_YUV420P10LE && m_pixelFormat == AV_PIX_FMT_YUV420P
+            && !((intptr_t(m_videoFrame->data[0]) & 15) || (m_videoFrame->linesize[0] & 15)
+            || (intptr_t(m_videoFrame->data[1]) & 15) || (m_videoFrame->linesize[1] & 15)
+            || (intptr_t(m_videoFrame->data[2]) & 15) || (m_videoFrame->linesize[2] & 15)))
         {
-            return false;
+            I010ToI420(
+                (const uint16_t*)m_videoFrame->data[0],
+                m_videoFrame->linesize[0] / 2,
+                (const uint16_t*)m_videoFrame->data[1],
+                m_videoFrame->linesize[1] / 2,
+                (const uint16_t*)m_videoFrame->data[2],
+                m_videoFrame->linesize[2] / 2,
+                videoFrameData.m_image->data[0],
+                videoFrameData.m_image->linesize[0],
+                videoFrameData.m_image->data[1],
+                videoFrameData.m_image->linesize[1],
+                videoFrameData.m_image->data[2],
+                videoFrameData.m_image->linesize[2],
+                width, height
+                );
         }
-
-        // Doing conversion
-        if (sws_scale(m_imageCovertContext, m_videoFrame->data, m_videoFrame->linesize, 0,
-            m_videoFrame->height, videoFrameData.m_image->data, videoFrameData.m_image->linesize) <= 0)
+        else
+#endif
         {
-            assert(false && "sws_scale failed");
-            BOOST_LOG_TRIVIAL(error) << "sws_scale failed";
-            return false;
+            // Prepare image conversion
+            m_imageCovertContext =
+                sws_getCachedContext(m_imageCovertContext, m_videoFrame->width, m_videoFrame->height,
+                    static_cast<AVPixelFormat>(m_videoFrame->format), width, height, m_pixelFormat,
+                    0, nullptr, nullptr, nullptr);
+
+            assert(m_imageCovertContext != nullptr);
+
+            if (m_imageCovertContext == nullptr)
+            {
+                return false;
+            }
+
+            // Doing conversion
+            if (sws_scale(m_imageCovertContext, m_videoFrame->data, m_videoFrame->linesize, 0,
+                m_videoFrame->height, videoFrameData.m_image->data, videoFrameData.m_image->linesize) <= 0)
+            {
+                assert(false && "sws_scale failed");
+                BOOST_LOG_TRIVIAL(error) << "sws_scale failed";
+                return false;
+            }
         }
 
         videoFrameData.m_image->sample_aspect_ratio = m_videoFrame->sample_aspect_ratio;
