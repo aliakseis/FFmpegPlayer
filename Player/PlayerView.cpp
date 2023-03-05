@@ -41,7 +41,7 @@ const UINT VIDEO_REQUIED_OP = DXVA2_VideoProcess_YUV2RGB |
 
 const D3DFORMAT VIDEO_RENDER_TARGET_FORMAT = D3DFMT_X8R8G8B8;
 const D3DFORMAT VIDEO_MAIN_FORMAT = D3DFMT_YUY2;
-//const D3DFORMAT VIDEO_MAIN_FORMAT = (D3DFORMAT)MAKEFOURCC('I', 'M', 'C', '3');
+const D3DFORMAT VIDEO_IMC3_FORMAT = (D3DFORMAT)MAKEFOURCC('I', 'M', 'C', '3');
 
 const UINT BACK_BUFFER_COUNT = 1;
 const UINT SUB_STREAM_COUNT = 0;
@@ -948,6 +948,8 @@ bool CPlayerView::CreateDXVA2VPDevice(REFGUID guid, bool bDXVA2SW, bool createSu
 
 bool CPlayerView::InitializeExtra(bool createSurface)
 {
+    m_bUseIMC3 = false;
+
     // Retrieve a back buffer as the video render target.
     HRESULT hr = m_pD3DD9->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &m_pD3DRT);
 
@@ -1016,17 +1018,33 @@ bool CPlayerView::InitializeExtra(bool createSurface)
 #else
     if (createSurface)
     {
+#ifdef CONVERT_FROM_YUV420P
         hr = m_pD3DD9->CreateOffscreenPlainSurface(
             (m_sourceSize.cx + 7) & ~7,
-            m_sourceSize.cy,
-            VIDEO_MAIN_FORMAT,
+            (m_sourceSize.cy + 31) & ~31,
+            VIDEO_IMC3_FORMAT,
             D3DPOOL_DEFAULT,
             &m_pMainStream,
             nullptr);
-        if (FAILED(hr))
+        if (SUCCEEDED(hr))
         {
-            TRACE("CreateOffscreenPlainSurface failed with error 0x%x.\n", hr);
-            return false;
+            m_bUseIMC3 = true;
+        }
+        else
+#endif
+        {
+            hr = m_pD3DD9->CreateOffscreenPlainSurface(
+                (m_sourceSize.cx + 7) & ~7,
+                m_sourceSize.cy,
+                VIDEO_MAIN_FORMAT,
+                D3DPOOL_DEFAULT,
+                &m_pMainStream,
+                nullptr);
+            if (FAILED(hr))
+            {
+                TRACE("CreateOffscreenPlainSurface failed with error 0x%x.\n", hr);
+                return false;
+            }
         }
     }
 #endif
@@ -1425,16 +1443,41 @@ void CPlayerView::updateFrame()
         }
 
 #ifdef CONVERT_FROM_YUV420P
-        for (int i = 0; i < data.height / 2; ++i)
+        if (m_bUseIMC3)
         {
-            CopyAndConvert(
-                (uint32_t*)((char*)lr.pBits + lr.Pitch * 2 * i),
-                (uint32_t*)((char*)lr.pBits + lr.Pitch * (2 * i + 1)),
-                data.image[0] + data.pitch[0] * 2 * i,
-                data.image[0] + data.pitch[0] * (2 * i + 1),
-                data.image[1] + data.pitch[1] * i,
-                data.image[2] + data.pitch[2] * i,
-                data.width / 2);
+            const int normalizedHeight = (data.height + 31) & ~31;
+
+            uint8_t* const pU = (uint8_t*)lr.pBits + (normalizedHeight * lr.Pitch);
+            uint8_t* const pV = (uint8_t*)lr.pBits + (((normalizedHeight * 3) / 2) * lr.Pitch);
+            
+            uint8_t* const planes[] { (uint8_t*)lr.pBits, pU, pV };
+            
+            int width = data.width;
+            int height = data.height;
+            for (int plane = 0; plane < 3; ++plane)
+            {
+                auto bits = planes[plane];
+                for (int i = 0; i < height; ++i)
+                {
+                    memcpy(bits + lr.Pitch * i, data.image[plane] + data.pitch[plane] * i, width);
+                }
+                width = data.width / 2;
+                height = data.height / 2;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < data.height / 2; ++i)
+            {
+                CopyAndConvert(
+                    (uint32_t*)((char*)lr.pBits + lr.Pitch * 2 * i),
+                    (uint32_t*)((char*)lr.pBits + lr.Pitch * (2 * i + 1)),
+                    data.image[0] + data.pitch[0] * 2 * i,
+                    data.image[0] + data.pitch[0] * (2 * i + 1),
+                    data.image[1] + data.pitch[1] * i,
+                    data.image[2] + data.pitch[2] * i,
+                    data.width / 2);
+            }
         }
 #else
         const size_t lineSize = (size_t)min(lr.Pitch, data.width * 2);
