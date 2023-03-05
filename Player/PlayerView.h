@@ -72,6 +72,8 @@ private:
     CComPtr<IDirect3DSurface9> m_pD3DRT;
     CComPtr<IDirect3DSurface9> m_pMainStream;
 
+    bool m_bUseIMC3 = false;
+
 #ifdef USE_DXVA2
     CComPtr<IDirectXVideoProcessorService> m_pDXVAVPS;
     CComPtr<IDirectXVideoProcessor> m_pDXVAVPD;
