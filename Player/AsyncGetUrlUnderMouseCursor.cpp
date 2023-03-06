@@ -19,6 +19,25 @@ public:
     }
 };
 
+bool LinkHandled(const CComPtr<IAccessible>& pacc)
+{
+    VARIANT v;
+    v.vt = VT_I4;
+    v.lVal = CHILDID_SELF;
+
+    CComVariant vRole;
+    if (SUCCEEDED(pacc->get_accRole(v, &vRole)) && vRole.vt == VT_I4 && vRole.lVal == ROLE_SYSTEM_LINK)
+    {
+        CComBSTR url;
+        if (SUCCEEDED(pacc->get_accValue(v, &url)) && url != NULL)
+        {
+            AfxGetApp()->PostThreadMessage(WM_ON_ASYNC_URL, (WPARAM)url.Detach(), NULL);
+            return true;
+        }
+    }
+
+    return false;
+}
 
 VOID CALLBACK SendAsyncProc(
     HWND,
@@ -34,10 +53,6 @@ VOID CALLBACK SendAsyncProc(
 
     enum { MAX_ITER_NUM = 100 };
 
-    VARIANT v;
-    v.vt = VT_I4;
-    v.lVal = CHILDID_SELF;
-
     POINT ptScreen{ LOWORD(dwData), HIWORD(dwData) };
 
     for (int i = 0; i < 2; ++i)
@@ -51,16 +66,8 @@ VOID CALLBACK SendAsyncProc(
                 && VT_DISPATCH == vtChild.vt && (paccChild = vtChild.pdispVal) != NULL;
                 vtChild.Clear())
             {
-                CComVariant vRole;
-                if (SUCCEEDED(pacc->get_accRole(v, &vRole)) && vRole.vt == VT_I4 && vRole.lVal == ROLE_SYSTEM_LINK)
-                {
-                    CComBSTR url;
-                    if (SUCCEEDED(pacc->get_accValue(v, &url)) && url != NULL)
-                    {
-                        AfxGetApp()->PostThreadMessage(WM_ON_ASYNC_URL, (WPARAM)url.Detach(), NULL);
-                        return;
-                    }
-                }
+                if (LinkHandled(pacc))
+                    return;
 
                 if (iter++ >= MAX_ITER_NUM)
                     return;
@@ -71,16 +78,8 @@ VOID CALLBACK SendAsyncProc(
         int iter = 0;
         while (pacc)
         {
-            CComVariant vRole;
-            if (SUCCEEDED(pacc->get_accRole(v, &vRole)) && vRole.vt == VT_I4 && vRole.lVal == ROLE_SYSTEM_LINK)
-            {
-                CComBSTR url;
-                if (SUCCEEDED(pacc->get_accValue(v, &url)) && url != NULL)
-                {
-                    AfxGetApp()->PostThreadMessage(WM_ON_ASYNC_URL, (WPARAM)url.Detach(), NULL);
-                    return;
-                }
-            }
+            if (LinkHandled(pacc))
+                return;
 
             if (iter++ >= MAX_ITER_NUM)
                 return;
