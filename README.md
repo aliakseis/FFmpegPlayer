@@ -78,6 +78,6 @@ Note that the FFmpeg patch speeds up HEVC decoding without GPU support by ~10%:
 
 ### Bonus tip
 
-Playing YouTube videos in browsers may result in poor performance on slow hardware. Assign a keyboard shortcut to the FFmpeg player by editing its shortcut. Hover your mouse over the YouTube link in Firefox and bring up the shortcut. A player pop-up window will appear, starting the video playback. The same can be achieved in Chrome with some tweaking.
+Playing YouTube videos in browsers may result in poor performance on slow hardware. Assign a keyboard shortcut to the FFmpeg player by editing its shortcut. Hover your mouse over the YouTube link in Firefox and bring up the shortcut. A player pop-up window will appear, starting the video playback. The same can be achieved in Chrome with some tweaking. [Start Chrome with this flag: --force-renderer-accessibility](https://www.chromium.org/developers/design-documents/accessibility/) and / or [set up IAccessible2 COM proxy stub DLL](https://github.com/aliakseis/IAccessible2Proxy).
 
 ![redline](https://user-images.githubusercontent.com/11851670/184552270-73cb8ba4-31f7-47f2-9f50-2b4ceae601e7.gif)
