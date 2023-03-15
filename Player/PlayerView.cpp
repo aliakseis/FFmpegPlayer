@@ -1592,7 +1592,8 @@ void CPlayerView::OnEditCopy()
         return;
     }
 
-    if (HGLOBAL hglbl = FrameToHglobal(m_pMainStream, m_sourceSize.cx, m_sourceSize.cy))
+    const int allocatedHeight = m_bUseIMC3 ? ((m_sourceSize.cy + 31) & ~31) : m_sourceSize.cy;
+    if (HGLOBAL hglbl = FrameToHglobal(m_pMainStream, m_sourceSize.cx, m_sourceSize.cy, allocatedHeight))
     {
         EmptyClipboard();
         SetClipboardData(CF_DIB, hglbl);

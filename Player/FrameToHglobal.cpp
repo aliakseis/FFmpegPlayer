@@ -8,11 +8,11 @@ extern "C"
 #include "libswscale/swscale.h"
 };
 
-HGLOBAL FrameToHglobal(IDirect3DSurface9* surface, int width, int height)
+HGLOBAL FrameToHglobal(IDirect3DSurface9* surface, int width, int height, int allocatedHeight)
 {
     AVFrame* tmp_frame = av_frame_alloc();
 
-    int res = dxva2_convert_data(surface, tmp_frame, width, height);
+    int res = dxva2_convert_data(surface, tmp_frame, width, allocatedHeight);
     if (res != 0)
     {
         av_frame_free(&tmp_frame);
@@ -47,7 +47,7 @@ HGLOBAL FrameToHglobal(IDirect3DSurface9* surface, int width, int height)
     const auto pData = static_cast<uint8_t*>(static_cast<void*>(bmi + 1));
 
     auto img_convert_ctx = sws_getContext(tmp_frame->width, tmp_frame->height, (AVPixelFormat)tmp_frame->format,
-        width, height, AV_PIX_FMT_BGR24, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+        width, allocatedHeight, AV_PIX_FMT_BGR24, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
     sws_scale(img_convert_ctx, tmp_frame->data, tmp_frame->linesize, 0, height,
         &pData, &stride);
