@@ -168,6 +168,7 @@ BEGIN
             MENUITEM "2x",                          ID_VIDEO_SPEED7
             MENUITEM "Nightcore",                   ID_NIGHTCORE
         END
+        MENUITEM SEPARATOR
         MENUITEM "Maximal Resolution",          ID_MAXIMALRESOLUTION
         MENUITEM "Hardware Acceleration",       ID_HW_ACCELERATION
         MENUITEM "Super Resolution",            ID_SUPER_RESOLUTION
@@ -182,6 +183,7 @@ BEGIN
             MENUITEM "Vertical Mirror",                    ID_ORIENTATION_MIRRORY
             MENUITEM "Upend",                       ID_ORIENTATION_UPEND
         END
+        MENUITEM SEPARATOR
         MENUITEM "Open Subtitles File...",      ID_OPENSUBTITLESFILE
         POPUP "Open Subtitles"
         BEGIN

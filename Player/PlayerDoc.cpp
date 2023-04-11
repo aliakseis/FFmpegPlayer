@@ -294,8 +294,7 @@ BOOL CPlayerDoc::OnNewDocument()
 
         return false;
     }
-    else if (GetAsyncKeyState(VK_SHIFT) < 0
-        && GetAsyncKeyState(VK_CONTROL) < 0)
+    else if (GetKeyState(VK_SHIFT) < 0 && GetKeyState(VK_CONTROL) < 0)
     {
         HRSRC hFound = ::FindResource(NULL, MAKEINTRESOURCE(IDR_LAUNCH), RT_RCDATA);
         HGLOBAL hRes = ::LoadResource(NULL, hFound);
@@ -559,8 +558,8 @@ void CPlayerDoc::Dump(CDumpContext& dc) const
 
 BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
-    const bool shiftAndControlPressed = GetAsyncKeyState(VK_SHIFT) < 0
-        && GetAsyncKeyState(VK_CONTROL) < 0;
+    const bool shiftAndControlPressed = GetKeyState(VK_SHIFT) < 0
+        && GetKeyState(VK_CONTROL) < 0;
     if (shiftAndControlPressed && IsCalledFromMruList())
         return false;
 
@@ -1109,8 +1108,8 @@ void CPlayerDoc::OnUpdateOpensubtitlesfile(CCmdUI *pCmdUI)
 
 void CPlayerDoc::OnCopyUrlToClipboard()
 {
-    const bool shiftAndControlPressed = GetAsyncKeyState(VK_SHIFT) < 0
-        && GetAsyncKeyState(VK_CONTROL) < 0;
+    const bool shiftAndControlPressed = GetKeyState(VK_SHIFT) < 0
+        && GetKeyState(VK_CONTROL) < 0;
 
     const auto& url = shiftAndControlPressed ? m_url : m_originalUrl;
 

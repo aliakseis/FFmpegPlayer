@@ -37,7 +37,8 @@ public:
         DWORD dwExStyle = 0,
         CCreateContext* pContext = NULL) override;
 
-    BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
+    BOOL PreTranslateMessage(MSG* pMsg) override;
+
 
 // Implementation
 public:

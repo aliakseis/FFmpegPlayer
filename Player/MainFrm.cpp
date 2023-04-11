@@ -124,9 +124,10 @@ BOOL CMainFrame::Create(LPCTSTR lpszClassName,
     return result;
 }
 
-BOOL CMainFrame::OnCommand(WPARAM wParam, LPARAM lParam)
+BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 {
-    if (LOWORD(wParam) == IDC_PLAY_PAUSE)
+    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_SPACE
+        && GetKeyState(VK_SHIFT) >= 0 && GetKeyState(VK_CONTROL) >= 0 && GetKeyState(VK_MENU) >= 0)
     {
         if (CView* pView = dynamic_cast<CView*>(GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE)))
         {
@@ -138,7 +139,7 @@ BOOL CMainFrame::OnCommand(WPARAM wParam, LPARAM lParam)
         }
         return TRUE;
     }
-    return __super::OnCommand(wParam, lParam);
+    return __super::PreTranslateMessage(pMsg);
 }
 
 
@@ -321,7 +322,7 @@ void CMainFrame::OnFullScreen()
 {
     ModifyStyle(WS_OVERLAPPEDWINDOW, 0, SWP_FRAMECHANGED);
     const bool semiTransparentMode
-        = GetAsyncKeyState(VK_SHIFT) < 0 && GetAsyncKeyState(VK_CONTROL) < 0;
+        = GetKeyState(VK_SHIFT) < 0 && GetKeyState(VK_CONTROL) < 0;
     if (semiTransparentMode)
     {
         SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
