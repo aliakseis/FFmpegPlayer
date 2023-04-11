@@ -56,11 +56,11 @@ You may need to remove pytube stuff from your profile folder for the player appl
 You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mapping file that contains, for example,
 
 ```
-https://github.com/pytube/pytube/archive/master.zip = https://github.com/sadeghastaneh/pytube/archive/refs/heads/patch-1.zip
+https://github.com/pytube/pytube/archive/master.zip = https://github.com/duvu/pytube/archive/refs/heads/master.zip
 ```
 
 Sometimes it is needed to visit pytube issues list and apply fixes, for example 
-- https://github.com/pytube/pytube/issues/1453
+- https://github.com/pytube/pytube/issues/1498
 
 Take into account https://www.psiphon3.com if you encounter HTTP Error 429.
 
