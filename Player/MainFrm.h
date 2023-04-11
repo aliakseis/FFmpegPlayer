@@ -21,11 +21,13 @@ public:
 
 // Operations
 private:
+    void pauseResume();
     void onPauseResume(bool paused);
 
 
 // Overrides
 public:
+    BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
     BOOL PreCreateWindow(CREATESTRUCT& cs) override;
 
     BOOL Create(LPCTSTR lpszClassName,

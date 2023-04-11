@@ -124,19 +124,34 @@ BOOL CMainFrame::Create(LPCTSTR lpszClassName,
     return result;
 }
 
+void CMainFrame::pauseResume()
+{
+    if (CView* pView = dynamic_cast<CView*>(GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE)))
+    {
+        if (CPlayerDoc* pDoc = static_cast<DocumentAccessor*>(pView)->GetDocument())
+        {
+            if (pDoc->isPlaying())
+                pDoc->pauseResume();
+        }
+    }
+}
+
+BOOL CMainFrame::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+    if (LOWORD(wParam) == IDC_PLAY_PAUSE)
+    {
+        pauseResume();
+        return TRUE;
+    }
+    return __super::OnCommand(wParam, lParam);
+}
+
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 {
     if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_SPACE
         && GetKeyState(VK_SHIFT) >= 0 && GetKeyState(VK_CONTROL) >= 0 && GetKeyState(VK_MENU) >= 0)
     {
-        if (CView* pView = dynamic_cast<CView*>(GetDescendantWindow(AFX_IDW_PANE_FIRST, TRUE)))
-        {
-            if (CPlayerDoc* pDoc = static_cast<DocumentAccessor*>(pView)->GetDocument())
-            {
-                if (pDoc->isPlaying())
-                    pDoc->pauseResume();
-            }
-        }
+        pauseResume();
         return TRUE;
     }
     return __super::PreTranslateMessage(pMsg);
