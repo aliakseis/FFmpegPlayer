@@ -114,6 +114,8 @@ public:
     void setRangeStartTime(double time);
     void setRangeEndTime(double time);
 
+    void setLosslessCut(bool flag);
+
 	bool isFullFrameRange() const;
 
     void OnAsyncUrl(const CString& url);
@@ -144,6 +146,8 @@ private:
 
     double m_rangeStartTime{};
     double m_rangeEndTime{};
+
+    bool m_losslessCut = false;
 
     class SubtitlesMap;
     std::shared_ptr<SubtitlesMap> m_subtitles;

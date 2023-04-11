@@ -73,6 +73,7 @@ BEGIN_MESSAGE_MAP(CDialogBarRange, CPaneDialog)
     ON_UPDATE_COMMAND_UI(ID_FILE_SAVE_COPY_AS, &CDialogBarRange::OnUpdateSave)
     ON_EN_CHANGE(IDC_EDIT_START, &CDialogBarRange::OnChangeStart)
     ON_EN_CHANGE(IDC_EDIT_END, &CDialogBarRange::OnChangeEnd)
+    ON_BN_CLICKED(IDC_LOSSLESS_CUT, &CDialogBarRange::OnBnClickedLosslessCut)
 END_MESSAGE_MAP()
 
 
@@ -160,5 +161,14 @@ void CDialogBarRange::OnChangeEnd()
     if (!m_endTime.IsEmpty())
     {
         m_pDoc->setRangeEndTime(m_endTime.GetValue());
+    }
+}
+
+
+void CDialogBarRange::OnBnClickedLosslessCut()
+{
+    if (auto control = static_cast<CButton*>(GetDlgItem(IDC_LOSSLESS_CUT)))
+    {
+        m_pDoc->setLosslessCut(control->GetCheck() != BST_UNCHECKED);
     }
 }

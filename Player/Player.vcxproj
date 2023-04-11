@@ -283,6 +283,7 @@
     <ResourceCompile Include="Player.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\launch.mkv" />
     <None Include="res\Player.rc2" />
   </ItemGroup>
   <ItemGroup>

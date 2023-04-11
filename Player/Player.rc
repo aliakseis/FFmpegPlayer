@@ -174,13 +174,13 @@ BEGIN
         MENUITEM "Super Resolution",            ID_SUPER_RESOLUTION
         POPUP "Orientation"
         BEGIN
-            MENUITEM "Do Nothing",                    ID_ORIENTATION_DO_NOTHING
-            MENUITEM "Rotate 90",                    ID_ORIENTATION_RORATE_90
-            MENUITEM "Rotate 180",                    ID_ORIENTATION_RORATE_180
-            MENUITEM "Rotate 270",                    ID_ORIENTATION_RORATE_270
+            MENUITEM "Do Nothing",                  ID_ORIENTATION_DO_NOTHING
+            MENUITEM "Rotate 90",                   ID_ORIENTATION_RORATE_90
+            MENUITEM "Rotate 180",                  ID_ORIENTATION_RORATE_180
+            MENUITEM "Rotate 270",                  ID_ORIENTATION_RORATE_270
             MENUITEM SEPARATOR
-            MENUITEM "Horizontal Mirror",                    ID_ORIENTATION_MIRRORX
-            MENUITEM "Vertical Mirror",                    ID_ORIENTATION_MIRRORY
+            MENUITEM "Horizontal Mirror",           ID_ORIENTATION_MIRRORX
+            MENUITEM "Vertical Mirror",             ID_ORIENTATION_MIRRORY
             MENUITEM "Upend",                       ID_ORIENTATION_UPEND
         END
         MENUITEM SEPARATOR
@@ -277,7 +277,7 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,252,49,50,14
 END
 
-IDD_DIALOGBAR_RANGE DIALOGEX 0, 0, 374, 16
+IDD_DIALOGBAR_RANGE DIALOGEX 0, 0, 431, 16
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
@@ -287,15 +287,18 @@ BEGIN
     PUSHBUTTON      "End",IDC_END,162,1,50,14
     EDITTEXT        IDC_EDIT_END,217,1,40,14,ES_AUTOHSCROLL
     PUSHBUTTON      "Reset",IDC_END_RESET,262,1,50,14
-    PUSHBUTTON      "Save",ID_FILE_SAVE_COPY_AS,317,1,50,14
+    CONTROL         "Lossless Cut",IDC_LOSSLESS_CUT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,318,3,55,10
+    PUSHBUTTON      "Save",ID_FILE_SAVE_COPY_AS,373,1,50,14
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RCDATA
 //
 
-IDR_LAUNCH             RCDATA                  "res\\launch.mkv"
+IDR_LAUNCH              RCDATA                  "res\\launch.mkv"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -369,6 +372,7 @@ BEGIN
 
     IDD_DIALOGBAR_RANGE, DIALOG
     BEGIN
+        RIGHTMARGIN, 374
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -401,6 +405,7 @@ BEGIN
     50, 50, 0, 0,
     50, 50, 0, 0,
     50, 50, 0, 0,
+    75, 50, 0, 0,
     75, 50, 0, 0
 END
 

@@ -609,9 +609,12 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
             const auto s = m_separateFileDiff->patch({ source.GetString(), source.GetString() + source.GetLength() });
             if (!s.empty()) {
                 strParams += _T(" ") + timeClause + _T("-i \"") + s.c_str() 
-                    + _T("\" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0");
+                    + _T("\" -map 0:v:0 -map 1:a:0");
             }
         }
+
+        if (m_losslessCut || isFullFrameRange())
+            strParams += _T(" -c copy");
 
         // rotation https://webcache.googleusercontent.com/search?q=cache:IiCyGV1Tp7oJ:https://annimon.com/article/3997+
         if (m_bOrientationUpend)
@@ -628,7 +631,10 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         {
             strParams += _T(" -avoid_negative_ts 1 -map_chapters -1");
         }
-        strParams += _T(" -q:v 4 \"");
+        if (m_losslessCut || isFullFrameRange())
+            strParams += _T(" \"");
+        else
+            strParams += _T(" -q:v 4 \"");
         strParams += lpszPathName;
         strParams += _T('"');
     }
@@ -945,6 +951,11 @@ void CPlayerDoc::setRangeEndTime(double time)
         time = m_endTime + time;
     m_rangeEndTime = time;
     rangeEndTimeChanged(time - m_startTime, m_endTime - m_startTime);
+}
+
+void CPlayerDoc::setLosslessCut(bool flag)
+{
+    m_losslessCut = flag;
 }
 
 bool CPlayerDoc::isFullFrameRange() const

@@ -162,6 +162,7 @@
     <None Include="res\Player.rc2">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="res\launch.mkv" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\PlayerDoc.ico">
