@@ -328,7 +328,10 @@ void CDialogBarPlayerControl::OnClickedPlayPause()
     {
         if (m_pDoc->isPaused() && IsDlgButtonChecked(IDC_FRAME_STEP))
         {
-            m_pDoc->nextFrame();
+            if (GetKeyState(VK_SHIFT) < 0)
+                m_pDoc->prevFrame();
+            else
+                m_pDoc->nextFrame();
         }
         else
         {

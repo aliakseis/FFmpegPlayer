@@ -321,6 +321,16 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
     if (!isSeekable(formatContext))
         return true;//continue;
 
+    const bool handlingPrevFrame = m_isPaused && seekDuration == m_currentTime && packet != nullptr;
+
+    if (handlingPrevFrame)
+    {
+        const auto threshold
+            = m_videoStream->r_frame_rate.den * m_videoStream->time_base.den * 3
+            / (m_videoStream->r_frame_rate.num * m_videoStream->time_base.num * 2);
+        seekDuration -= threshold;
+    }
+
     const int64_t currentTime = m_currentTime;
     const bool backward = seekDuration < currentTime;
     const int streamNumber = (idx == m_videoContextIndex) ? m_videoStreamNumber : m_audioStreamNumber.load();
@@ -331,13 +341,24 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
         convertedSeekDuration = seekDuration * av_q2d(m_videoStream->time_base) / av_q2d(m_audioStream->time_base);
     }
 
-    if (av_seek_frame(formatContext, streamNumber, convertedSeekDuration, 0) < 0
-        && ((convertedSeekDuration >= 0
-            ? av_seek_frame(formatContext, streamNumber, convertedSeekDuration, AVSEEK_FLAG_BACKWARD)
-            : av_seek_frame(formatContext, streamNumber, 0, 0)) < 0))
+    if (handlingPrevFrame)
     {
-        CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
-        return false;
+        if (av_seek_frame(formatContext, streamNumber, convertedSeekDuration, AVSEEK_FLAG_BACKWARD) < 0)
+        {
+            CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
+            return false;
+        }
+    }
+    else
+    {
+        if (av_seek_frame(formatContext, streamNumber, convertedSeekDuration, 0) < 0
+            && ((convertedSeekDuration >= 0
+                ? av_seek_frame(formatContext, streamNumber, convertedSeekDuration, AVSEEK_FLAG_BACKWARD)
+                : av_seek_frame(formatContext, streamNumber, 0, 0)) < 0))
+        {
+            CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
+            return false;
+        }
     }
 
     if (packet && backward && idx == m_videoContextIndex && convertedSeekDuration > m_startTime)
@@ -356,9 +377,10 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
                 }
                 if (pts > currentTime)
                 {
+                    const int flags = handlingPrevFrame ? AVSEEK_FLAG_BACKWARD : 0;
                     av_packet_unref(packet);
-                    if (av_seek_frame(formatContext, streamNumber, m_startTime, 0) < 0
-                        || av_seek_frame(formatContext, streamNumber, convertedSeekDuration, 0) < 0)
+                    if (av_seek_frame(formatContext, streamNumber, m_startTime, flags) < 0
+                        || av_seek_frame(formatContext, streamNumber, convertedSeekDuration, flags) < 0)
                     {
                         CHANNEL_LOG(ffmpeg_seek) << "Seek correction failed";
                         return false;
@@ -366,6 +388,12 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
                 }
             }
         }
+    }
+
+    if (handlingPrevFrame)
+    {
+        m_prevTime = seekDuration;
+        m_isVideoSeekingWhilePaused = true;
     }
 
     return true;

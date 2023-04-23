@@ -127,6 +127,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     void play(bool isPaused = false) override;
     bool pauseResume() override;
     bool nextFrame() override;
+    bool prevFrame() override;
     void setVolume(double volume) override;
 
     int getNumAudioTracks() const override;
@@ -220,6 +221,8 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     int64_t m_startTime;
     boost::atomic_int64_t m_currentTime;
     int64_t m_duration;
+
+    int64_t m_prevTime;
 
     // Basic stuff
     std::vector<AVFormatContext*> m_formatContexts;

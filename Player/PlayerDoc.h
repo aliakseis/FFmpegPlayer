@@ -83,6 +83,7 @@ public:
 
     bool pauseResume();
     bool nextFrame();
+    bool prevFrame();
     bool seekByPercent(double percent);
     void setVolume(double volume);
 

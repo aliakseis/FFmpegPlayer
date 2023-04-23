@@ -896,6 +896,11 @@ bool CPlayerDoc::nextFrame()
     return m_frameDecoder->nextFrame();
 }
 
+bool CPlayerDoc::prevFrame()
+{
+    return m_frameDecoder->prevFrame();
+}
+
 bool CPlayerDoc::seekByPercent(double percent)
 {
     return m_frameDecoder->seekByPercent(percent);

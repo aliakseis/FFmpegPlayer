@@ -277,6 +277,8 @@ void FFmpegDecoder::resetVariables()
     m_currentTime = 0;
     m_duration = 0;
 
+    m_prevTime = AV_NOPTS_VALUE;
+
     m_imageCovertContext = nullptr;
 
     m_audioPTS = 0;
@@ -844,6 +846,11 @@ void FFmpegDecoder::doOnFinishedDisplayingFrame(unsigned int generation, Finishe
 
 bool FFmpegDecoder::seekDuration(int64_t duration)
 {
+    if (m_isPaused && duration == m_currentTime)
+    {
+        return true;
+    }
+
     if (!m_mainParseThreads.empty() && m_seekDuration.exchange(duration) == AV_NOPTS_VALUE)
     {
         m_videoPacketsQueue.notify();
@@ -1003,6 +1010,33 @@ bool FFmpegDecoder::nextFrame()
     m_videoPacketsQueue.notify();
     return true;
 }
+
+bool FFmpegDecoder::prevFrame()
+{
+    if (m_mainParseThreads.empty())
+    {
+        return false;
+    }
+
+    CHANNEL_LOG(ffmpeg_pause) << "Previous frame";
+    {
+        boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+
+        if (!m_isPaused || m_isVideoSeekingWhilePaused)
+        {
+            return false;
+        }
+        int64_t expected = AV_NOPTS_VALUE;
+        if (!m_seekDuration.compare_exchange_strong(expected, m_currentTime))
+        {
+            return false;
+        }
+    }
+    m_videoPacketsQueue.notify();
+    m_audioPacketsQueue.notify();
+    return true;
+}
+
 
 int FFmpegDecoder::getNumAudioTracks() const
 {

@@ -513,6 +513,18 @@ bool FFmpegDecoder::handleVideoFrame(
     if (inNextFrame)
     {
         m_isPausedCV.notify_all();
+
+        if (m_prevTime != AV_NOPTS_VALUE)
+        {
+            const int64_t duration_stamp = videoFrame->best_effort_timestamp;
+            if (duration_stamp != AV_NOPTS_VALUE && duration_stamp < m_prevTime)
+            {
+                m_isVideoSeekingWhilePaused = true;
+                return true;
+            }
+
+            m_prevTime = AV_NOPTS_VALUE;
+        }
     }
 
     VideoFrame& current_frame = m_videoFramesQueue.back();

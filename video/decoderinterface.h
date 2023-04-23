@@ -98,6 +98,7 @@ struct IFrameDecoder
     virtual void play(bool isPaused = false) = 0;
     virtual bool pauseResume() = 0;
     virtual bool nextFrame() = 0;
+    virtual bool prevFrame() = 0;
     virtual void setVolume(double volume) = 0;
 
     virtual bool seekByPercent(double percent) = 0;
