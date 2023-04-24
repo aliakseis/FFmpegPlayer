@@ -848,7 +848,7 @@ bool FFmpegDecoder::seekDuration(int64_t duration)
 {
     if (m_isPaused && duration == m_currentTime)
     {
-        return true;
+        return true; // previous frame special case
     }
 
     if (!m_mainParseThreads.empty() && m_seekDuration.exchange(duration) == AV_NOPTS_VALUE)
@@ -971,6 +971,7 @@ bool FFmpegDecoder::pauseResume()
         }
         m_isVideoSeekingWhilePaused = false;
         m_isPaused = false;
+        m_prevTime = AV_NOPTS_VALUE;
     }
     m_isPausedCV.notify_all();
 
@@ -1014,6 +1015,12 @@ bool FFmpegDecoder::nextFrame()
 bool FFmpegDecoder::prevFrame()
 {
     if (m_mainParseThreads.empty())
+    {
+        return false;
+    }
+
+    if (!m_videoStream || m_videoStream->r_frame_rate.den <= 0 || m_videoStream->time_base.den <= 0
+        || m_videoStream->r_frame_rate.num <= 0 || m_videoStream->time_base.num <= 0)
     {
         return false;
     }

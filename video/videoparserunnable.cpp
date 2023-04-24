@@ -519,8 +519,12 @@ bool FFmpegDecoder::handleVideoFrame(
             const int64_t duration_stamp = videoFrame->best_effort_timestamp;
             if (duration_stamp != AV_NOPTS_VALUE && duration_stamp < m_prevTime)
             {
-                m_isVideoSeekingWhilePaused = true;
-                return true;
+                boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
+                if (m_isPaused)
+                {
+                    m_isVideoSeekingWhilePaused = true;
+                    return true;
+                }
             }
 
             m_prevTime = AV_NOPTS_VALUE;

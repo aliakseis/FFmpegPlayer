@@ -326,8 +326,8 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
     if (handlingPrevFrame)
     {
         const auto threshold
-            = m_videoStream->r_frame_rate.den * m_videoStream->time_base.den * 3
-            / (m_videoStream->r_frame_rate.num * m_videoStream->time_base.num * 2);
+            = 3LL * m_videoStream->r_frame_rate.den * m_videoStream->time_base.den
+            / (2LL * m_videoStream->r_frame_rate.num * m_videoStream->time_base.num);
         seekDuration -= threshold;
     }
 
