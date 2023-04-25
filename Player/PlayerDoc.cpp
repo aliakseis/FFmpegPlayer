@@ -576,16 +576,16 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
     if (source.IsEmpty())
         return false;
 
-    if (isLocalFile && isFullFrameRange() 
-        && !m_bOrientationMirrorx && !m_bOrientationMirrory && !m_bOrientationUpend)
+    const bool transform = m_bOrientationMirrorx || m_bOrientationMirrory || m_bOrientationUpend;
+
+    if (isLocalFile && isFullFrameRange() && !transform)
     {
         return CopyFile(source, lpszPathName, TRUE);
     }
 
     CString strFile;
     CString strParams;
-    if (isFullFrameRange() && !m_separateFileDiff
-        && !m_bOrientationMirrorx && !m_bOrientationMirrory && !m_bOrientationUpend)
+    if (isFullFrameRange() && !m_separateFileDiff && !transform)
     {
         strFile = _T("HttpDownload.exe");
         strParams = source + _T(" \"") + lpszPathName + _T('"');
@@ -613,7 +613,9 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
             }
         }
 
-        if (m_losslessCut || isFullFrameRange())
+        const bool streamcopy = (m_losslessCut || isFullFrameRange()) && !transform;
+
+        if (streamcopy)
             strParams += _T(" -c copy");
 
         // rotation https://webcache.googleusercontent.com/search?q=cache:IiCyGV1Tp7oJ:https://annimon.com/article/3997+
@@ -631,7 +633,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         {
             strParams += _T(" -avoid_negative_ts 1 -map_chapters -1");
         }
-        if (m_losslessCut || isFullFrameRange())
+        if (streamcopy)
             strParams += _T(" \"");
         else
             strParams += _T(" -q:v 4 \"");
