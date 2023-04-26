@@ -569,6 +569,12 @@ BOOL CPlayerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 {
     const bool isLocalFile = m_url.empty();
+
+    if (isLocalFile && !_tcsicmp(m_strPathName, lpszPathName))
+    {
+        return false;
+    }
+
     CString source(isLocalFile
         ? m_strPathName
         : CString(m_url.data(), m_url.length()));
@@ -580,7 +586,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
     if (isLocalFile && isFullFrameRange() && !transform)
     {
-        return CopyFile(source, lpszPathName, TRUE);
+        return CopyFile(source, lpszPathName, FALSE); // overwrites the existing file
     }
 
     CString strFile;
@@ -633,10 +639,9 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         {
             strParams += _T(" -avoid_negative_ts 1 -map_chapters -1");
         }
-        if (streamcopy)
-            strParams += _T(" \"");
-        else
-            strParams += _T(" -q:v 4 \"");
+        if (!streamcopy)
+            strParams += _T(" -q:v 4");
+        strParams += _T(" -y \"");
         strParams += lpszPathName;
         strParams += _T('"');
     }
