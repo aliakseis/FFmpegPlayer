@@ -74,9 +74,20 @@ BEGIN_MESSAGE_MAP(CDialogBarRange, CPaneDialog)
     ON_EN_CHANGE(IDC_EDIT_START, &CDialogBarRange::OnChangeStart)
     ON_EN_CHANGE(IDC_EDIT_END, &CDialogBarRange::OnChangeEnd)
     ON_BN_CLICKED(IDC_LOSSLESS_CUT, &CDialogBarRange::OnBnClickedLosslessCut)
+    ON_MESSAGE(WM_INITDIALOG, &CDialogBarRange::HandleInitDialog)
 END_MESSAGE_MAP()
 
+LRESULT CDialogBarRange::HandleInitDialog(WPARAM wParam, LPARAM lParam)
+{
+    __super::HandleInitDialog(wParam, lParam);
 
+    if (auto control = static_cast<CButton*>(GetDlgItem(IDC_LOSSLESS_CUT)))
+    {
+        control->SetCheck(BST_CHECKED);
+    }
+
+    return TRUE;
+}
 
 void CDialogBarRange::onTotalTimeUpdated(double)
 {

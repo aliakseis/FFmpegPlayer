@@ -148,7 +148,7 @@ private:
     double m_rangeStartTime{};
     double m_rangeEndTime{};
 
-    bool m_losslessCut = false;
+    bool m_losslessCut = true;
 
     class SubtitlesMap;
     std::shared_ptr<SubtitlesMap> m_subtitles;

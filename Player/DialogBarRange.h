@@ -34,6 +34,7 @@ protected:
 
 protected:
 	DECLARE_MESSAGE_MAP()
+    afx_msg LRESULT HandleInitDialog(WPARAM wParam, LPARAM lParam);
 private:
     CPlayerDoc* m_pDoc;
 public:
