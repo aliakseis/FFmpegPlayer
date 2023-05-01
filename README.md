@@ -56,7 +56,7 @@ You may need to remove pytube stuff from your profile folder for the player appl
 You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mapping file that contains, for example,
 
 ```
-https://github.com/pytube/pytube/archive/master.zip = https://github.com/duvu/pytube/archive/refs/heads/master.zip
+https://github.com/pytube/pytube/archive/master.zip = https://github.com/felipeucelli/pytube/archive/refs/heads/fix-client.zip
 ```
 
 Sometimes it is needed to visit pytube issues list and apply fixes, for example 
