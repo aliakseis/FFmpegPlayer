@@ -524,9 +524,9 @@ bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
 {
     CComPtr<IDirect3DTexture9> pTexture;
 
-    // Create a new texture for the font
+    // Create a new texture for the stuff
     if (FAILED(m_pD3DD9->CreateTexture(m_sourceSize.cx, m_sourceSize.cy, 1, D3DUSAGE_RENDERTARGET,
-                                       D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &pTexture, nullptr)))
+        D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pTexture, nullptr)))
     {
         return false;
     }
@@ -539,16 +539,16 @@ bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
     }
 
     if (FAILED(m_pD3DD9->StretchRect(m_pMainStream,
-                                     NULL,  //&srcRect,
+                                     NULL,
                                      dest,
-                                     NULL,  //&srcRect,
+                                     NULL,
                                      D3DTEXF_LINEAR)))
     {
         return false;
     }
 
     CComPtr<IDirect3DVertexBuffer9> pVB;
-    // Create vertex buffer for the letters
+    // Create vertex buffer for the stuff
     if (FAILED(m_pD3DD9->CreateVertexBuffer(MAX_NUM_VERTICES * sizeof(FONT2DVERTEX),
                                             D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, 0,
                                             D3DPOOL_DEFAULT, &pVB, nullptr)))
@@ -577,18 +577,10 @@ bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
     m_pD3DD9->SetPixelShader(nullptr);
     m_pD3DD9->SetStreamSource(0, pVB, 0, sizeof(FONT2DVERTEX));
 
-    // const FLOAT tx1 = 0;
-    // const FLOAT ty1 = 0;
-    // const FLOAT tx2 = 1;
-    // const FLOAT ty2 = 1;
-
     const FLOAT tx1 = mirrorX;
     const FLOAT tx2 = !mirrorX;
     const FLOAT ty1 = mirrorY;
     const FLOAT ty2 = !mirrorY;
-
-    // const FLOAT w = screenPosition.Width();
-    // const FLOAT h = screenPosition.Height();
 
     // Fill vertex buffer
     FONT2DVERTEX* pVertices = nullptr;
@@ -598,8 +590,8 @@ bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
         return false;
     }
 
-    const FLOAT sx = 0;  //(width - boundingBox.Width) / 2 + !pass;
-    const FLOAT sy = 0;  // height - boundingBox.Height - fontSize / 3 + !pass;
+    const FLOAT sx = 0;
+    const FLOAT sy = 0;
 
     const DWORD dwColor = D3DCOLOR_XRGB(255, 255, 255);
 
@@ -641,7 +633,7 @@ private:
         m_playerView->updateFrame();
         decoder->finishedDisplayingFrame(generation);
     }
-    void drawFrame(IFrameDecoder* decoder, unsigned int generation) override
+    void drawFrame(IFrameDecoder* /*decoder*/, unsigned int /*generation*/) override
     {
         m_playerView->ProcessVideo();
         //m_playerView->Invalidate();
