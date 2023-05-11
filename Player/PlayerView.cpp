@@ -584,7 +584,6 @@ bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
 
     // Fill vertex buffer
     FONT2DVERTEX* pVertices = nullptr;
-    DWORD dwNumTriangles = 0;
     if (FAILED(pVB->Lock(0, 0, (void**)&pVertices, D3DLOCK_DISCARD)))
     {
         return false;
@@ -602,16 +601,13 @@ bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
     *pVertices++ = {{sx + w, sy + h, 0.9F, 1.0F}, dwColor, tx2, ty2};
     *pVertices++ = {{sx + 0, sy + 0, 0.9F, 1.0F}, dwColor, tx1, ty1};
 
-    dwNumTriangles += 2;
+    const UINT dwNumTriangles = 2;
 
     // Unlock and render the vertex buffer
     pVB->Unlock();
-    if (dwNumTriangles > 0)
+    if (FAILED(m_pD3DD9->DrawPrimitive(D3DPT_TRIANGLELIST, 0, dwNumTriangles)))
     {
-        if (FAILED(m_pD3DD9->DrawPrimitive(D3DPT_TRIANGLELIST, 0, dwNumTriangles)))
-        {
-            return false;
-        }
+        return false;
     }
     // Restore the modified renderstates
     pStateBlockSaved->Apply();
