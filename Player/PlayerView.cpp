@@ -538,8 +538,10 @@ bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
         return false;
     }
 
+    RECT srcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+
     if (FAILED(m_pD3DD9->StretchRect(m_pMainStream,
-                                     NULL,
+                                     &srcRect,
                                      dest,
                                      NULL,
                                      D3DTEXF_LINEAR)))
