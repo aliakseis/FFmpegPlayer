@@ -148,11 +148,21 @@ BOOL CMainFrame::OnCommand(WPARAM wParam, LPARAM lParam)
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 {
-    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_SPACE
+    if (pMsg->message == WM_KEYDOWN
         && GetKeyState(VK_SHIFT) >= 0 && GetKeyState(VK_CONTROL) >= 0 && GetKeyState(VK_MENU) >= 0)
     {
-        pauseResume();
-        return TRUE;
+        switch (pMsg->wParam)
+        {
+        case VK_SPACE:
+            pauseResume();
+            return TRUE;
+        case VK_F11:
+            if (IsFullScreen())
+                ShowFullScreen();
+            else
+                OnFullScreen();
+            return TRUE;
+        }
     }
     return __super::PreTranslateMessage(pMsg);
 }
