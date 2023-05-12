@@ -261,6 +261,19 @@ void CDialogBarPlayerControl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pSc
         {
             switch (nSBCode)
             {
+                case SB_LINELEFT:
+                    if (m_pDoc->isPaused())
+                    {
+                        m_pDoc->prevFrame();
+                    }
+                    break;
+                case SB_LINERIGHT:
+                    if (m_pDoc->isPaused())
+                    {
+                        m_pDoc->nextFrame();
+                    }
+                    break;
+
                 case SB_PAGELEFT: 
                 case SB_PAGERIGHT:
                     m_pDoc->seekByPercent(GetValueByMouseClick(this, &m_progressSlider));
