@@ -528,6 +528,18 @@ bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
             }
         }
     }
+
+    const auto firstUnused = std::max(m_videoContextIndex, m_audioContextIndex) + 1;
+    if (firstUnused == 0)
+        return false;
+
+    for (int contextIdx = m_formatContexts.size(); --contextIdx >= firstUnused;)
+    {
+        avformat_close_input(&m_formatContexts[contextIdx]);
+    }
+
+    m_formatContexts.resize(firstUnused);
+
     std::reverse(m_audioIndices.begin(), m_audioIndices.end());
 
     int lastSubtitleNr = 0;
