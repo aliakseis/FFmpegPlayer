@@ -257,8 +257,17 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     {
         int frequency;
         int channels;
+#if LIBAVUTIL_VERSION_MAJOR < 57
         int64_t channel_layout;
+#else
+        AVChannelLayout channel_layout;
+#endif
         AVSampleFormat format;
+
+        AudioParams() = default;
+        AudioParams(int freq, int chans, AVSampleFormat fmt);
+        ~AudioParams();
+        AudioParams& operator=(const AudioParams& other);
     };
     AudioParams m_audioSettings;
     AudioParams m_audioCurrentPref;

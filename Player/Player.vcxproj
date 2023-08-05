@@ -22,6 +22,7 @@
     <ProjectGuid>{C90196CD-7354-4ED4-BFC0-E51A7E1CBE3C}</ProjectGuid>
     <RootNamespace>Player</RootNamespace>
     <Keyword>MFCProj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -94,7 +95,7 @@
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;ENABLE_OPENCL;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -103,7 +104,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;$(VcpkgInstalledDir)$(VcpkgTriplet)\lib\Python*.lib;%(AdditionalDependencies);$(INTELOCLSDKROOT)\lib\x86\OpenCL.lib</AdditionalDependencies>
+      <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;$(VcpkgRoot)\installed\$(VcpkgTriplet)\lib\Python*.lib;%(AdditionalDependencies);$(INTELOCLSDKROOT)\lib\x86\OpenCL.lib</AdditionalDependencies>
       <DelayLoadDLLs>opencl.dll</DelayLoadDLLs>
     </Link>
     <Midl>
@@ -126,7 +127,7 @@
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;ENABLE_OPENCL;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -134,7 +135,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;$(INTELOCLSDKROOT)\lib\x64\OpenCL.lib;$(VcpkgInstalledDir)$(VcpkgTriplet)\lib\Python*.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;$(INTELOCLSDKROOT)\lib\x64\OpenCL.lib;$(VcpkgRoot)\installed\$(VcpkgTriplet)\lib\Python*.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>opencl.dll</DelayLoadDLLs>
     </Link>
     <Midl>
@@ -159,7 +160,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;ENABLE_OPENCL;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -196,7 +197,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;ENABLE_OPENCL;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgInstalledDir)$(VcpkgTriplet)\include\python3.9;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>

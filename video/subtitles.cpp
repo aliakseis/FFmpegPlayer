@@ -75,7 +75,9 @@ std::string fromAss(const char* ass) {
                 &hour1, &min1, &sec1, &hunsec1,
                 &hour2, &min2, &sec2, &hunsec2,
                 line) < 9)
-            return b; //libass ASS_Event.Text has no Dialogue
+            if (sscanf(b.c_str(), "%d,%d%1023[^\r\n]",  //&nothing,
+                       &sec1, &sec2, line) < 3)
+                return b;  // libass ASS_Event.Text has no Dialogue
     auto ret = strchr(line, ',');
     if (!ret)
         return line;

@@ -19,16 +19,70 @@ uint8_t** getAudioData(AVFrame* audioFrame)
         : &audioFrame->data[0];
 }
 
+#if LIBAVUTIL_VERSION_MAJOR < 57
+
 int64_t getChannelLayout(AVFrame* audioFrame)
 {
-	const int audioFrameChannels = audioFrame->channels; //av_frame_get_channels(audioFrame);
+	const int audioFrameChannels = audioFrame->channels;
     return ((audioFrame->channel_layout != 0u) &&
         audioFrameChannels == av_get_channel_layout_nb_channels(audioFrame->channel_layout))
         ? audioFrame->channel_layout
         : av_get_default_channel_layout(audioFrameChannels);
 }
 
+#else
+
+auto getChannelLayout(AVFrame* audioFrame)
+{
+    return audioFrame->ch_layout;
+}
+
+bool operator == (const AVChannelLayout& left, const AVChannelLayout& right)
+{
+    return av_channel_layout_compare(&left, &right) == 0;
+}
+
+bool operator != (const AVChannelLayout& left, const AVChannelLayout& right)
+{
+    return av_channel_layout_compare(&left, &right) != 0;
+}
+
+#endif
+
 } // namespace
+
+
+FFmpegDecoder::AudioParams::AudioParams(int freq, int chans, AVSampleFormat fmt) 
+    : frequency(freq), channels(chans), format(fmt)
+{
+#if LIBAVUTIL_VERSION_MAJOR < 57
+    channel_layout = av_get_default_channel_layout(chans);
+#else
+    av_channel_layout_default(&channel_layout, chans);
+#endif
+}
+
+FFmpegDecoder::AudioParams::~AudioParams()
+{
+#if LIBAVUTIL_VERSION_MAJOR >= 57
+    av_channel_layout_uninit(&channel_layout);
+#endif
+}
+
+FFmpegDecoder::AudioParams& 
+FFmpegDecoder::AudioParams::operator =(const FFmpegDecoder::AudioParams& other)
+{
+    frequency = other.frequency;
+    channels = other.channels;
+    format = other.format;
+#if LIBAVUTIL_VERSION_MAJOR < 57
+    channel_layout = other.channel_layout;
+#else
+    av_channel_layout_uninit(&channel_layout);
+    av_channel_layout_copy(&channel_layout, &other.channel_layout);
+#endif
+    return *this;
+}
 
 
 void FFmpegDecoder::audioParseRunnable()
@@ -165,7 +219,12 @@ bool FFmpegDecoder::handleAudioPacket(
         }
 
         const int original_buffer_size = av_samples_get_buffer_size(
-            nullptr, audioFrame->channels,
+            nullptr,
+#if LIBAVUTIL_VERSION_MAJOR < 57
+            audioFrame->channels,
+#else
+            audioFrame->ch_layout.nb_channels,
+#endif
             audioFrame->nb_samples,
             static_cast<AVSampleFormat>(audioFrame->format), 1);
 
@@ -237,9 +296,8 @@ bool FFmpegDecoder::handleAudioPacket(
 void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
 {
     const auto audioFrameFormat = static_cast<AVSampleFormat>(audioFrame->format);
-    const int audioFrameChannels = audioFrame->channels;
 
-    const int64_t dec_channel_layout = getChannelLayout(audioFrame);
+    auto dec_channel_layout = getChannelLayout(audioFrame);
 
     const auto speed = getSpeedRational();
 
@@ -248,12 +306,27 @@ void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
         dec_channel_layout != m_audioCurrentPref.channel_layout ||
         (audioFrame->sample_rate * speed.numerator) / speed.denominator != m_audioCurrentPref.frequency)
     {
+
         swr_free(&m_audioSwrContext);
+
+#if LIBAVUTIL_VERSION_MAJOR < 57
+
         m_audioSwrContext = swr_alloc_set_opts(
             nullptr, m_audioSettings.channel_layout, m_audioSettings.format,
             m_audioSettings.frequency * speed.denominator,
             dec_channel_layout, audioFrameFormat,
             audioFrame->sample_rate * speed.numerator, 0, nullptr);
+
+#else
+
+        swr_alloc_set_opts2(&m_audioSwrContext, &m_audioSettings.channel_layout,
+            m_audioSettings.format,
+            m_audioSettings.frequency * speed.denominator,
+            &dec_channel_layout, audioFrameFormat,
+            audioFrame->sample_rate * speed.numerator, 0, nullptr);
+
+#endif
+
 
         if ((m_audioSwrContext == nullptr) || swr_init(m_audioSwrContext) < 0)
         {
@@ -261,8 +334,14 @@ void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
         }
 
         m_audioCurrentPref.format = audioFrameFormat;
-        m_audioCurrentPref.channels = audioFrameChannels;
+#if LIBAVUTIL_VERSION_MAJOR < 57
+        m_audioCurrentPref.channels = audioFrame->channels;
         m_audioCurrentPref.channel_layout = dec_channel_layout;
+#else
+        m_audioCurrentPref.channels = dec_channel_layout.nb_channels;
+        av_channel_layout_uninit(&m_audioCurrentPref.channel_layout);
+        av_channel_layout_copy(&m_audioCurrentPref.channel_layout, &dec_channel_layout);
+#endif
         m_audioCurrentPref.frequency = (audioFrame->sample_rate * speed.numerator) / speed.denominator;
     }
 }

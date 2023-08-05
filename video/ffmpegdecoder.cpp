@@ -237,7 +237,7 @@ void FFmpegDecoder::IOContext::initAVFormatContext(AVFormatContext *pCtx)
 FFmpegDecoder::FFmpegDecoder(std::unique_ptr<IAudioPlayer> audioPlayer)
     : m_frameListener(nullptr),
       m_decoderListener(nullptr),
-      m_audioSettings({48000, 2, av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16}),
+      m_audioSettings(48000, 2, AV_SAMPLE_FMT_S16),
       m_pixelFormat(AV_PIX_FMT_YUV420P),
       m_allowDirect3dData(false),
       m_audioPlayer(std::move(audioPlayer)),
@@ -663,7 +663,9 @@ bool FFmpegDecoder::resetVideoProcessing()
             {
                 m_videoCodecContext->get_buffer2 = ist->hwaccel_get_buffer;
                 m_videoCodecContext->get_format = GetHwFormat;
+#if LIBAVCODEC_VERSION_MAJOR < 59
                 m_videoCodecContext->thread_safe_callbacks = 1;
+#endif
             }
             else
             {
