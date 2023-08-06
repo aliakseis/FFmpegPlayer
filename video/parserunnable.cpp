@@ -336,6 +336,8 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
     const int streamNumber = (idx == m_videoContextIndex) ? m_videoStreamNumber : m_audioStreamNumber.load();
 
     auto convertedSeekDuration = seekDuration;
+    if (handlingPrevFrame)
+        --convertedSeekDuration;
     if (idx != m_videoContextIndex && m_videoContextIndex != -1)
     {
         convertedSeekDuration = seekDuration * av_q2d(m_videoStream->time_base) / av_q2d(m_audioStream->time_base);
