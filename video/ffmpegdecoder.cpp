@@ -1006,6 +1006,9 @@ bool FFmpegDecoder::nextFrame()
 
     CHANNEL_LOG(ffmpeg_pause) << "Next frame";
     {
+        if (m_prevTime != AV_NOPTS_VALUE)
+            return false;
+
         boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
 
         if (!m_isPaused || m_isVideoSeekingWhilePaused)
@@ -1041,6 +1044,9 @@ bool FFmpegDecoder::prevFrame()
 
     CHANNEL_LOG(ffmpeg_pause) << "Previous frame";
     {
+        if (m_prevTime != AV_NOPTS_VALUE)
+            return false;
+
         boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
 
         if (!m_isPaused || m_isVideoSeekingWhilePaused)

@@ -222,7 +222,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     boost::atomic_int64_t m_currentTime;
     int64_t m_duration;
 
-    int64_t m_prevTime;
+    boost::atomic_int64_t m_prevTime;
 
     // Basic stuff
     std::vector<AVFormatContext*> m_formatContexts;

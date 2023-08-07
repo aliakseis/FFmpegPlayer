@@ -371,14 +371,11 @@ bool FFmpegDecoder::handleAudioFrame(
             m_audioPaused = true;
         }
 
-        const bool hasVideo = m_mainVideoThread != nullptr;
-
         boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
 
-        while (m_isVideoSeekingWhilePaused && hasVideo
-            || (delta = (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
+        while (delta = (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
                 ? (m_isPaused ? m_pauseTimer : GetHiResTime()) - m_videoStartClock - m_audioPTS : 0
-                , m_isPaused && !(skipAll = delta >= frame_clock)))
+                , m_isPaused && !(skipAll = delta >= frame_clock))
         {
             m_isPausedCV.wait(locker);
         }

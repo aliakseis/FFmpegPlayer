@@ -418,7 +418,8 @@ bool FFmpegDecoder::handleVideoFrame(
         {
             const auto val = (isPaused ? m_pauseTimer : GetHiResTime()) - pts;
             m_videoStartClock = val;
-            CHANNEL_LOG(ffmpeg_sync) << "isPaused = " << isPaused << " m_videoStartClock = " << val;
+            CHANNEL_LOG(ffmpeg_sync) << "isPaused = " << isPaused
+                << " m_videoStartClock = " << val << " pts = " << pts;
         }
 
         // Skipping frames
