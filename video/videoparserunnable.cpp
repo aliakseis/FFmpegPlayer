@@ -501,34 +501,39 @@ bool FFmpegDecoder::handleVideoFrame(
         }
     }
 
+    bool continueHandlingPrevTime = false;
+
     {
         boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
-        if (m_isPaused && !m_isVideoSeekingWhilePaused)
+        if (m_isPaused)
         {
-            return false;
+            if (!m_isVideoSeekingWhilePaused)
+            {
+                return false;
+            }
+            if (inNextFrame && m_prevTime != AV_NOPTS_VALUE)
+            {
+                const int64_t duration_stamp = videoFrame->best_effort_timestamp;
+                if (duration_stamp != AV_NOPTS_VALUE && duration_stamp < m_prevTime)
+                {
+                    continueHandlingPrevTime = true;
+                }
+                else
+                {
+                    m_prevTime = AV_NOPTS_VALUE;
+                }
+            }
         }
 
-        m_isVideoSeekingWhilePaused = false;
+        m_isVideoSeekingWhilePaused = continueHandlingPrevTime;
     }
 
     if (inNextFrame)
     {
         m_isPausedCV.notify_all();
-
-        if (m_prevTime != AV_NOPTS_VALUE)
+        if (continueHandlingPrevTime)
         {
-            const int64_t duration_stamp = videoFrame->best_effort_timestamp;
-            if (duration_stamp != AV_NOPTS_VALUE && duration_stamp < m_prevTime)
-            {
-                boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
-                if (m_isPaused)
-                {
-                    m_isVideoSeekingWhilePaused = true;
-                    return true;
-                }
-            }
-
-            m_prevTime = AV_NOPTS_VALUE;
+            return true;
         }
     }
 
