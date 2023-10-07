@@ -74,11 +74,11 @@ CString ChangePathExtension(const TCHAR* videoPathName, const TCHAR* ext)
     return subRipPathName;
 }
 
-// https://chromium.googlesource.com/chromium/src/third_party/+/refs/heads/master/unrar/src/unicode.cpp
-// Source data can be both with and without UTF-8 BOM.
-bool IsTextUtf8(const char *Src, size_t SrcSize)
+bool IsTextUtf8(const std::string& text)
 {
-    while (SrcSize-- > 0)
+    auto Src = text.begin();
+    const auto SrcEnd = text.end();
+    while (Src != SrcEnd)
     {
         int C = *(Src++);
         int HighOne = 0; // Number of leftmost '1' bits.
@@ -87,17 +87,11 @@ bool IsTextUtf8(const char *Src, size_t SrcSize)
         if (HighOne == 1 || HighOne > 4)
             return false;
         while (--HighOne > 0)
-            if (SrcSize-- == 0 || (*(Src++) & 0xc0) != 0x80)
+            if (Src == SrcEnd || (*(Src++) & 0xc0) != 0x80)
                 return false;
     }
     return true;
 }
-
-bool IsTextUtf8(const std::string& Src)
-{
-    return IsTextUtf8(Src.c_str(), Src.length());
-}
-
 
 bool OpenSubRipFile(std::istream& s,
     bool& unicodeSubtitles,
