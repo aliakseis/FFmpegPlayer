@@ -340,6 +340,50 @@ void CopyAndConvert(
     }
 }
 
+void CopyBuffer(uint8_t* dst, const uint8_t* src, size_t numBytes)
+{
+    if ((intptr_t(dst) & 15) || (intptr_t(src) & 15))
+    {
+        memcpy(dst, src, numBytes);
+        return;
+    }
+
+    size_t i = 0;
+    for (; i + 128 <= numBytes; i += 128)
+    {
+        __m128i d0 = _mm_load_si128((__m128i*)&src[i + 0 * 16]);
+        __m128i d1 = _mm_load_si128((__m128i*)&src[i + 1 * 16]);
+        __m128i d2 = _mm_load_si128((__m128i*)&src[i + 2 * 16]);
+        __m128i d3 = _mm_load_si128((__m128i*)&src[i + 3 * 16]);
+        __m128i d4 = _mm_load_si128((__m128i*)&src[i + 4 * 16]);
+        __m128i d5 = _mm_load_si128((__m128i*)&src[i + 5 * 16]);
+        __m128i d6 = _mm_load_si128((__m128i*)&src[i + 6 * 16]);
+        __m128i d7 = _mm_load_si128((__m128i*)&src[i + 7 * 16]);
+        _mm_stream_si128((__m128i*)&dst[i + 0 * 16], d0);
+        _mm_stream_si128((__m128i*)&dst[i + 1 * 16], d1);
+        _mm_stream_si128((__m128i*)&dst[i + 2 * 16], d2);
+        _mm_stream_si128((__m128i*)&dst[i + 3 * 16], d3);
+        _mm_stream_si128((__m128i*)&dst[i + 4 * 16], d4);
+        _mm_stream_si128((__m128i*)&dst[i + 5 * 16], d5);
+        _mm_stream_si128((__m128i*)&dst[i + 6 * 16], d6);
+        _mm_stream_si128((__m128i*)&dst[i + 7 * 16], d7);
+    }
+    for (; i + 16 <= numBytes; i += 16)
+    {
+        __m128i d = _mm_load_si128((__m128i*)&src[i]);
+        _mm_stream_si128((__m128i*)&dst[i], d);
+    }
+    for (; i + 4 <= numBytes; i += 4)
+    {
+        *(uint32_t*)&dst[i] = *(const uint32_t*)&src[i];
+    }
+    for (; i < numBytes; i++)
+    {
+        dst[i] = src[i];
+    }
+    //_mm_sfence();
+}
+
 // subtitles
 
 enum { MAX_NUM_VERTICES = 50 * 6 };
@@ -525,7 +569,8 @@ bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
     CComPtr<IDirect3DTexture9> pTexture;
 
     // Create a new texture for the stuff
-    if (FAILED(m_pD3DD9->CreateTexture(m_sourceSize.cx, m_sourceSize.cy, 1, D3DUSAGE_RENDERTARGET,
+    if (FAILED(m_pD3DD9->CreateTexture(m_sourceSize.cx & ~1, m_sourceSize.cy & ~1,
+        1, D3DUSAGE_RENDERTARGET,
         D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pTexture, nullptr)))
     {
         return false;
@@ -538,7 +583,7 @@ bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
         return false;
     }
 
-    RECT srcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+    RECT srcRect = {0, 0, m_sourceSize.cx & ~1, m_sourceSize.cy & ~1};
 
     if (FAILED(m_pD3DD9->StretchRect(m_pMainStream,
                                      &srcRect,
@@ -696,7 +741,7 @@ bool CPlayerView::InitializeD3D9()
         m_hWnd,
         D3DCREATE_FPU_PRESERVE |
         D3DCREATE_MULTITHREADED |
-        D3DCREATE_SOFTWARE_VERTEXPROCESSING,
+        D3DCREATE_HARDWARE_VERTEXPROCESSING,
         &D3DPP,
         &m_pD3DD9);
 
@@ -940,14 +985,7 @@ bool CPlayerView::InitializeExtra(bool createSurface)
 {
     m_bUseIMC3 = false;
 
-    // Retrieve a back buffer as the video render target.
-    HRESULT hr = m_pD3DD9->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &m_pD3DRT);
-
-    if (FAILED(hr))
-    {
-        TRACE("GetBackBuffer failed with error 0x%x.\n", hr);
-        return false;
-    }
+    HRESULT hr = S_OK;
 
 #ifdef USE_DXVA2
     // Create DXVA2 Video Processor Service.
@@ -1038,6 +1076,15 @@ bool CPlayerView::InitializeExtra(bool createSurface)
         }
     }
 #endif
+
+    // Retrieve a back buffer as the video render target.
+    hr = m_pD3DD9->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &m_pD3DRT);
+
+    if (FAILED(hr))
+    {
+        TRACE("GetBackBuffer failed with error 0x%x.\n", hr);
+        return false;
+    }
 
     //m_subtitleFont = std::make_unique<CD3DFont>(
     //    _T("MS Sans Serif"),
@@ -1193,7 +1240,7 @@ bool CPlayerView::ProcessVideo()
         return false;
     }
 
-    RECT srcRect = { 0, 0, m_sourceSize.cx, m_sourceSize.cy };
+    RECT srcRect = {0, 0, m_sourceSize.cx & ~1, m_sourceSize.cy & ~1};
     CRect screenPosition = GetScreenPosition(GetDocument()->isOrientationUpend());
     CRect target(POINT{}, screenPosition.Size());
 
@@ -1449,7 +1496,8 @@ void CPlayerView::updateFrame()
                 auto bits = planes[plane];
                 for (int i = 0; i < height; ++i)
                 {
-                    memcpy(bits + lr.Pitch * i, data.image[plane] + data.pitch[plane] * i, width);
+                    CopyBuffer(bits + lr.Pitch * i, data.image[plane] + data.pitch[plane] * i,
+                               width);
                 }
                 width = data.width / 2;
                 height = data.height / 2;

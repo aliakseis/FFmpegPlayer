@@ -888,6 +888,21 @@ int dxva2_init(AVCodecContext *s)
     InputStream *ist = (InputStream *)s->opaque;
     int loglevel = (ist->hwaccel_id == HWACCEL_AUTO) ? AV_LOG_VERBOSE : AV_LOG_ERROR;
 
+    bool ok = false;
+    for (const dxva2_mode *mode = dxva2_modes; mode->guid; mode++)
+    {
+        if (mode->codec == s->codec_id)
+        {
+            ok = true;
+            break;
+        }
+    }
+    if (!ok)
+    {
+        av_log(NULL, loglevel, "Unsupported codec for DXVA2 HWAccel: %d\n", s->codec_id);
+        return AVERROR(EINVAL);
+    }
+
     if (s->codec_id == AV_CODEC_ID_H264 &&
         (s->profile & ~FF_PROFILE_H264_CONSTRAINED) > FF_PROFILE_H264_HIGH) {
         av_log(NULL, loglevel, "Unsupported H.264 profile for DXVA2 HWAccel: %d\n", s->profile);
