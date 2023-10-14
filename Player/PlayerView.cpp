@@ -750,6 +750,23 @@ bool CPlayerView::InitializeD3D9()
         TRACE("CreateDevice(HAL) failed with error 0x%x.\n", hr);
     }
 
+    if (!m_pD3DD9)
+    {
+        hr = m_pD3D9->CreateDevice(D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL,
+            m_hWnd,
+            D3DCREATE_FPU_PRESERVE |
+            D3DCREATE_MULTITHREADED |
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING,
+            &D3DPP,
+            &m_pD3DD9);
+
+        if (FAILED(hr))
+        {
+            TRACE("CreateDevice(HAL+SOFTWARE_VERTEXPROCESSING) failed with error 0x%x.\n", hr);
+        }
+    }
+
     //
     // Next try to create a software D3D9 device.
     //
