@@ -177,6 +177,8 @@ private:
     bool m_bOrientationMirrory = false;
     bool m_bOrientationUpend = false;
 
+    bool m_bFixEncoding = false;
+
 public:
     afx_msg void OnMaximalresolution();
     afx_msg void OnUpdateMaximalresolution(CCmdUI *pCmdUI);
@@ -194,4 +196,6 @@ public:
     afx_msg void OnOrientationRotate90();
     afx_msg void OnOrientationRotate180();
     afx_msg void OnOrientationRotate270();
+    afx_msg void OnFixEncoding();
+    afx_msg void OnUpdateFixEncoding(CCmdUI* pCmdUI);
 };

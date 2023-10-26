@@ -189,6 +189,7 @@ BEGIN
         BEGIN
             MENUITEM "Subtitle 1",                  ID_FIRST_SUBTITLE_DUMMY
         END
+        MENUITEM "Fix Encoding",            ID_FIX_ENCODING
     END
     POPUP "&View"
     BEGIN

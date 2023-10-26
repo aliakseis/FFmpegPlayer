@@ -247,7 +247,9 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND(ID_ORIENTATION_RORATE_90, &CPlayerDoc::OnOrientationRotate90)
     ON_COMMAND(ID_ORIENTATION_RORATE_180, &CPlayerDoc::OnOrientationRotate180)
     ON_COMMAND(ID_ORIENTATION_RORATE_270, &CPlayerDoc::OnOrientationRotate270)
-END_MESSAGE_MAP()
+    ON_COMMAND(ID_FIX_ENCODING, &CPlayerDoc::OnFixEncoding)
+    ON_UPDATE_COMMAND_UI(ID_FIX_ENCODING, &CPlayerDoc::OnUpdateFixEncoding)
+    END_MESSAGE_MAP()
 
 
 // CPlayerDoc construction/destruction
@@ -942,6 +944,12 @@ std::wstring CPlayerDoc::getSubtitle() const
         auto it = m_subtitles->find(m_currentTime); 
         if (it != m_subtitles->end())
         {
+            if (m_subtitles->m_unicodeSubtitles && m_bFixEncoding)
+            {
+                CA2W bufW(it->second.c_str(), CP_UTF8);
+                CW2A bufA(bufW, CP_ACP);
+                return std::wstring(CA2W(bufA, CP_UTF8));
+            }
             return std::wstring(CA2W(it->second.c_str(), m_subtitles->m_unicodeSubtitles ? CP_UTF8 : CP_ACP));
         }
     }
@@ -1302,4 +1310,14 @@ void CPlayerDoc::OnOrientationRotate270()
     m_bOrientationMirrory = false;
     m_bOrientationUpend = true;
     AfxGetApp()->GetMainWnd()->Invalidate();
+}
+
+void CPlayerDoc::OnFixEncoding()
+{ 
+    m_bFixEncoding = !m_bFixEncoding;
+}
+
+void CPlayerDoc::OnUpdateFixEncoding(CCmdUI* pCmdUI)
+{
+   pCmdUI->SetCheck(m_bFixEncoding); 
 }
