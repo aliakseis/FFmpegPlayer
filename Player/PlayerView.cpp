@@ -580,7 +580,7 @@ bool Transform(LPDIRECT3DDEVICE9 m_pD3DD9, IDirect3DSurface9* m_pMainStream,
     // Create a new texture for the stuff
     if (FAILED(m_pD3DD9->CreateTexture(m_sourceSize.cx & ~1, m_sourceSize.cy & ~1,
         1, D3DUSAGE_RENDERTARGET,
-        D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pTexture, nullptr)))
+        VIDEO_RENDER_TARGET_FORMAT, D3DPOOL_DEFAULT, &pTexture, nullptr)))
     {
         return false;
     }
