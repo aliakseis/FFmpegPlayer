@@ -454,7 +454,7 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
     using namespace Gdiplus;
 
     const int fontSize = max(width / 60, 9);
-    Gdiplus::Font font(L"MS Sans Serif", (REAL)fontSize);
+    auto font = std::make_unique<Gdiplus::Font>(L"MS Sans Serif", (REAL)fontSize);
 
     RectF boundingBox;
 
@@ -462,7 +462,16 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
         Bitmap bitmap(1, 1);
         Graphics graphics(&bitmap);
         graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
-        graphics.MeasureString(text.c_str(), text.length(), &font, PointF(0, 0), &boundingBox);
+        graphics.MeasureString(text.c_str(), text.length(), font.get(), PointF(0, 0), &boundingBox);
+    }
+
+    if (boundingBox.Width > width)
+    {
+        font = std::make_unique<Gdiplus::Font>(L"Arial Narrow", (REAL)fontSize);
+        Bitmap bitmap(1, 1);
+        Graphics graphics(&bitmap);
+        graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
+        graphics.MeasureString(text.c_str(), text.length(), font.get(), PointF(0, 0), &boundingBox);
     }
 
     CComPtr<IDirect3DTexture9> pTexture;
@@ -490,7 +499,7 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
         graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
 
         SolidBrush whiteBrush(Color(0xFF, 0xFF, 0xFF));
-        graphics.DrawString(text.c_str(), text.length(), &font, PointF(0, 0), &whiteBrush);
+        graphics.DrawString(text.c_str(), text.length(), font.get(), PointF(0, 0), &whiteBrush);
     }
 
     pTexture->UnlockRect(0);
