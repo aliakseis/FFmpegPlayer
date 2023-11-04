@@ -51,6 +51,7 @@ public:
 
 protected:
     void changedFramePosition(long long start, long long frame, long long total) override;
+    void decoderClosed(bool fileReleased) override;
     void fileLoaded(long long start, long long total) override;
     void onEndOfStream(int idx, bool error) override;
 
@@ -85,6 +86,7 @@ public:
     bool nextFrame();
     bool prevFrame();
     bool seekByPercent(double percent);
+    void seekToEnd();
     void setVolume(double volume);
 
     bool isPlaying() const;

@@ -855,6 +855,11 @@ void CPlayerDoc::changedFramePosition(long long start, long long frame, long lon
     }
 }
 
+void CPlayerDoc::decoderClosed(bool /*fileReleased*/)
+{
+    m_onEndOfStream = false;
+}
+
 void CPlayerDoc::fileLoaded(long long start, long long total)
 {
     const double startTime = m_frameDecoder->getDurationSecs(start);
@@ -884,10 +889,12 @@ void CPlayerDoc::onEndOfStream(int idx, bool error)
             return;
     }
 
-    m_onEndOfStream = true;
-
-    if (CWnd* pMainWnd = AfxGetApp()->GetMainWnd())
-        pMainWnd->PostMessage(WM_KICKIDLE); // trigger idle update
+    if (!m_onEndOfStream)
+    {
+        m_onEndOfStream = true;
+        if (CWnd* pMainWnd = AfxGetApp()->GetMainWnd())
+            pMainWnd->PostMessage(WM_KICKIDLE);  // trigger idle update
+    }
 }
 
 bool CPlayerDoc::pauseResume()
@@ -913,6 +920,15 @@ bool CPlayerDoc::prevFrame()
 bool CPlayerDoc::seekByPercent(double percent)
 {
     return m_frameDecoder->seekByPercent(percent);
+}
+
+void CPlayerDoc::seekToEnd()
+{
+    if (m_autoPlay && m_currentTime - m_startTime > 5) // enable after 5 seconds
+    {
+        m_onEndOfStream = false;
+        MoveToNextFile();
+    }
 }
 
 void CPlayerDoc::setVolume(double volume)

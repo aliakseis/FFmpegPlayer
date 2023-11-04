@@ -284,6 +284,10 @@ void CDialogBarPlayerControl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pSc
                     m_tracking = true;
                     break;
 
+                case SB_RIGHT:
+                    m_pDoc->seekToEnd();
+                    break;
+
                 case SB_ENDSCROLL:
                     m_tracking = false;
                     break;
