@@ -583,6 +583,8 @@ bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
         timeStream = m_videoStream;
     }
 
+    int contextIdx = m_videoContextIndex;
+
     if (m_audioStreamNumber == -1)
     {
         CHANNEL_LOG(ffmpeg_opening) << "No audio stream";
@@ -591,20 +593,21 @@ bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
             return false; // no multimedia
         }
     }
-    else if (m_videoStreamNumber == -1)
+    else if (!basedOnVideoStream())
     {
         // Changing video -> audio duration
         timeStream = m_audioStream;
+        contextIdx = m_audioContextIndex;
     }
 
     m_startTime = (timeStream->start_time > 0)
         ? timeStream->start_time
-        : ((m_formatContexts[0]->start_time == AV_NOPTS_VALUE)? 0 
-            : int64_t((m_formatContexts[0]->start_time / av_q2d(timeStream->time_base)) / AV_TIME_BASE));
+        : ((m_formatContexts[contextIdx]->start_time == AV_NOPTS_VALUE)? 0 
+            : int64_t((m_formatContexts[contextIdx]->start_time / av_q2d(timeStream->time_base)) / AV_TIME_BASE));
     m_duration = (timeStream->duration > 0)
         ? timeStream->duration
-        : ((m_formatContexts[0]->duration == AV_NOPTS_VALUE)? 0
-            : int64_t((m_formatContexts[0]->duration / av_q2d(timeStream->time_base)) / AV_TIME_BASE));
+        : ((m_formatContexts[contextIdx]->duration == AV_NOPTS_VALUE)? 0
+            : int64_t((m_formatContexts[contextIdx]->duration / av_q2d(timeStream->time_base)) / AV_TIME_BASE));
 
     if (!resetVideoProcessing())
     {
@@ -789,7 +792,7 @@ void FFmpegDecoder::play(bool isPaused)
 
 void FFmpegDecoder::AppendFrameClock(double frame_clock)
 {
-    if (!m_mainVideoThread && (m_decoderListener != nullptr) && m_seekDuration == AV_NOPTS_VALUE)
+    if (!basedOnVideoStream() && m_decoderListener != nullptr && m_seekDuration == AV_NOPTS_VALUE)
     {
         m_decoderListener->changedFramePosition(
             m_startTime,
@@ -953,6 +956,14 @@ bool FFmpegDecoder::getFrameRenderingData(FrameRenderingData *data)
     }
 
     return true;
+}
+
+double FFmpegDecoder::getDurationSecs(int64_t duration) const
+{
+    return av_q2d(basedOnVideoStream()
+                      ? m_videoStream->time_base
+                      : m_audioStream->time_base) *
+           duration;
 }
 
 bool FFmpegDecoder::pauseResume()
@@ -1170,12 +1181,19 @@ void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame, bool forceConversion
 #endif
 }
 
-double FFmpegDecoder::GetHiResTime()
+double FFmpegDecoder::GetHiResTime() const
 {
     const auto speed = getSpeedRational();
     return boost::chrono::duration_cast<boost::chrono::microseconds>(
         boost::chrono::high_resolution_clock::now() - boost::chrono::high_resolution_clock::time_point(m_referenceTime)).count()
             / 1000000. * speed.numerator / speed.denominator;
+}
+
+bool FFmpegDecoder::basedOnVideoStream() const 
+{ 
+    return m_videoStream != nullptr &&
+           (m_audioStream == nullptr ||
+            (m_videoStream->disposition & AV_DISPOSITION_ATTACHED_PIC) == 0);
 }
 
 bool FFmpegDecoder::getHwAccelerated() const

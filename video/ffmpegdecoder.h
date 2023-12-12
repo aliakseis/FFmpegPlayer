@@ -116,10 +116,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     bool getFrameRenderingData(FrameRenderingData* data) override;
 
-    double getDurationSecs(int64_t duration) const override
-    {
-        return av_q2d((m_videoStream != nullptr)? m_videoStream->time_base : m_audioStream->time_base) * duration;
-    }
+    double getDurationSecs(int64_t duration) const override;
 
     void doOnFinishedDisplayingFrame(unsigned int generation, FinishedDisplayingMode mode) override;
 
@@ -199,7 +196,9 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     void handleDirect3dData(AVFrame* videoFrame, bool forceConversion);
 
-    double GetHiResTime();
+    double GetHiResTime() const;
+
+    bool basedOnVideoStream() const;
 
     // Frame display listener
     IFrameListener* m_frameListener;
