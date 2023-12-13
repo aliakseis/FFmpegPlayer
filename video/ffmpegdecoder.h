@@ -279,12 +279,13 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     // Video and audio queues
     enum
     {
-        MAX_QUEUE_SIZE = (15 * 1024 * 1024),
+        MAX_VIDEO_QUEUE_SIZE = 100 * 1024 * 1024,
+        MAX_AUDIO_QUEUE_SIZE = 15 * 1024 * 1024,
         MAX_VIDEO_FRAMES = 500,
         MAX_AUDIO_FRAMES = 500,
     };
-    FQueue<MAX_QUEUE_SIZE, MAX_VIDEO_FRAMES> m_videoPacketsQueue;
-    FQueue<MAX_QUEUE_SIZE, MAX_AUDIO_FRAMES> m_audioPacketsQueue;
+    FQueue<MAX_VIDEO_QUEUE_SIZE, MAX_VIDEO_FRAMES> m_videoPacketsQueue;
+    FQueue<MAX_AUDIO_QUEUE_SIZE, MAX_AUDIO_FRAMES> m_audioPacketsQueue;
 
     VQueue m_videoFramesQueue;
 
