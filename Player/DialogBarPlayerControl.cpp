@@ -246,8 +246,8 @@ void CDialogBarPlayerControl::onTotalTimeUpdated(double secs)
 void CDialogBarPlayerControl::onCurrentTimeUpdated(double secs)
 {
     int currentTime = int(secs * 1000);
-    const bool notify = (currentTime / 1000 == m_oldCurrentTime / 1000) ||
-                        m_pDoc && m_pDoc->isPaused() && currentTime == m_oldCurrentTime;
+    const bool notify = (currentTime / 1000 != m_oldCurrentTime / 1000) ||
+                        m_pDoc && m_pDoc->isPaused() && currentTime != m_oldCurrentTime;
 
     m_oldCurrentTime = currentTime;
 
