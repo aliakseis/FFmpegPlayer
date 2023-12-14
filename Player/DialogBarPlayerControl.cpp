@@ -28,9 +28,11 @@ enum { WM_SET_TIME = WM_USER + 101 };
 
 namespace {
 
-std::basic_string<TCHAR> secondsToString(int seconds)
+std::basic_string<TCHAR> secondsToString(int seconds, bool milli)
 {
     std::basic_ostringstream<TCHAR> buffer;
+    int ms = seconds % 1000;
+    seconds /= 1000;
     int s = seconds % 60;
     int m = (seconds / 60) % 60;
     int h = seconds / 3600;
@@ -40,6 +42,10 @@ std::basic_string<TCHAR> secondsToString(int seconds)
         buffer << h << ':';
     }
     buffer << setfill(_T('0')) << setw(2) << m << ':' << setfill(_T('0')) << setw(2) << s;
+    if (milli)
+    {
+        buffer << '.' << setfill(_T('0')) << setw(3) << ms;
+    }
 
     return buffer.str();
 }
@@ -143,7 +149,8 @@ BEGIN_MESSAGE_MAP(CDialogBarPlayerControl, CPaneDialog)
     ON_MESSAGE(WM_INITDIALOG, &CDialogBarPlayerControl::HandleInitDialog)
     ON_UPDATE_COMMAND_UI(IDC_FRAME_STEP, &CDialogBarPlayerControl::OnUpdateFrameStep)
     ON_UPDATE_COMMAND_UI(IDC_VOLUME_SLIDER, &CDialogBarPlayerControl::OnUpdateVolumeSlider)
-END_MESSAGE_MAP()
+    ON_UPDATE_COMMAND_UI(IDC_CURRENT_TIME, &CDialogBarPlayerControl::OnUpdateCurrentTime)
+    END_MESSAGE_MAP()
 
 
 
@@ -227,7 +234,7 @@ void CDialogBarPlayerControl::onRangeEndTimeChanged(long long frame, long long t
 
 void CDialogBarPlayerControl::onTotalTimeUpdated(double secs)
 {
-    int totalTime = int(secs + 0.5);
+    int totalTime = int(secs * 1000);
     if (totalTime == m_oldTotalTime)
         return;
 
@@ -238,18 +245,20 @@ void CDialogBarPlayerControl::onTotalTimeUpdated(double secs)
 
 void CDialogBarPlayerControl::onCurrentTimeUpdated(double secs)
 {
-    int currentTime = int(secs + 0.5);
-    if (currentTime == m_oldCurrentTime)
-        return;
+    int currentTime = int(secs * 1000);
+    const bool notify = (currentTime / 1000 == m_oldCurrentTime / 1000) ||
+                        m_pDoc && m_pDoc->isPaused() && currentTime == m_oldCurrentTime;
 
     m_oldCurrentTime = currentTime;
 
-    SendNotifyMessage(WM_SET_TIME, IDC_CURRENT_TIME, currentTime);
+    if (notify)
+        SendNotifyMessage(WM_SET_TIME, IDC_CURRENT_TIME, currentTime);
 }
 
 LRESULT CDialogBarPlayerControl::OnSetTime(WPARAM wParam, LPARAM lParam)
 {
-    SetDlgItemText(wParam, secondsToString(lParam).c_str());
+    const bool milli = wParam == IDC_CURRENT_TIME && m_pDoc && m_pDoc->isPaused();
+    SetDlgItemText(wParam, secondsToString(lParam, milli).c_str());
     return 0;
 }
 
@@ -393,5 +402,13 @@ void CDialogBarPlayerControl::OnUpdateVolumeSlider(CCmdUI *pCmdUI)
     {
         pCmdUI->m_pOther->ShowWindow(
             (m_pDoc && m_pDoc->isPaused()) ? SW_HIDE : SW_SHOWNA);
+    }
+}
+
+void CDialogBarPlayerControl::OnUpdateCurrentTime(CCmdUI* pCmdUI)
+{
+    if (pCmdUI->m_pOther && m_pDoc && m_pDoc->isPaused())
+    {
+        pCmdUI->m_pOther->SetWindowText(secondsToString(m_oldCurrentTime, true).c_str());
     }
 }

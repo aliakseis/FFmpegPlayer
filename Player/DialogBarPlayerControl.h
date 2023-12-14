@@ -72,6 +72,7 @@ public:
     afx_msg void OnClickedAudioOnOff();
     afx_msg void OnUpdateFrameStep(CCmdUI *pCmdUI);
     afx_msg void OnUpdateVolumeSlider(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateCurrentTime(CCmdUI *pCmdUI);
 };
 
 
