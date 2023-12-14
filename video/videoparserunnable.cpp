@@ -383,8 +383,8 @@ bool FFmpegDecoder::handleVideoPacket(
             (1. + videoFrame->repeat_pict * 0.5);
         videoClock += frameDelay;
 
-        if (!handleVideoFrame(videoFrame, pts, context)) {
-            break;
+        while (!handleVideoFrame(videoFrame, pts, context))
+        {
         }
     }
 
@@ -446,9 +446,7 @@ bool FFmpegDecoder::handleVideoFrame(
                 if ((context.numSkipped % MAX_SKIPPED_TILL_REDRAW) != 0)
                 {
                     CHANNEL_LOG(ffmpeg_sync) << "Hard skip frame";
-
-                    // pause
-                    return !(isPaused && !m_isVideoSeekingWhilePaused);
+                    return true;
                 }
             }
             else
