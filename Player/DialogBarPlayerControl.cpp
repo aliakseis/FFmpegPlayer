@@ -31,6 +31,11 @@ namespace {
 std::basic_string<TCHAR> secondsToString(int seconds, bool milli)
 {
     std::basic_ostringstream<TCHAR> buffer;
+    if (seconds < 0)
+    {
+        buffer << '-';
+        seconds = -seconds;
+    }
     int ms = seconds % 1000;
     seconds /= 1000;
     int s = seconds % 60;
