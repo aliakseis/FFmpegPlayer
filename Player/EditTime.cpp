@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "EditTime.h"
 
-#include <boost/regex.hpp>
+#include <cmath>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -14,50 +14,71 @@ static char THIS_FILE[] = __FILE__;
 
 namespace {
 
-void EscapeString(CString &str)
+
+enum
 {
-    int iIndex = 0;
+    TIME_INVALID = -1000000000
+};
 
-    while (iIndex < str.GetLength())
+int ReadUint(const TCHAR*& s)
+{
+    int buf = 0;
+    for (; *s >= '0' && *s <= '9'; ++s) 
+        buf = buf * 10 + *s - '0';
+
+    return buf;
+}
+
+double ParseTime(const TCHAR* timeStr)
+{
+    int seconds = 0;
+
+    int numDelims = 0;
+
+    const bool minus = *timeStr == '-';
+    if (minus)
+        ++timeStr;
+
+    for (;;)
     {
-        if (_tcschr(_T(".|*?+(){}[]^$\\"), str[iIndex]))
+        switch (*timeStr)
         {
-            str.Insert(iIndex++, _T("\\"));
+        case '\0':
+            return minus ? -seconds : seconds;
+        case ':':
+            if (++numDelims > 2)
+                return TIME_INVALID;
+            seconds *= 60;
+            ++timeStr;
+            break;
+        case '.':
+        {
+            ++timeStr;
+            const auto prevPtr = timeStr;
+            const auto millis = ReadUint(timeStr);
+            if (*timeStr != '\0')
+                return TIME_INVALID;
+            const int msecStringLen = timeStr - prevPtr;
+            if (msecStringLen > 3)
+                return TIME_INVALID;
+            if (msecStringLen == 0)
+                return minus ? -seconds : seconds;
+            const auto absResult = seconds + millis / std::pow(10, msecStringLen);
+            return minus ? -absResult : absResult;
         }
-
-        ++iIndex;
+        break;
+        default:
+            const auto prevPtr = timeStr;
+            seconds += ReadUint(timeStr);
+            if (prevPtr == timeStr)
+                return TIME_INVALID;
+        }
     }
 }
 
-bool Match(const CString& strText)
-{
-    if (strText.IsEmpty())
-        return true;
-
-    const unsigned int uiWhole = 19;
-    TCHAR szSeparator[4] = _T("");
-    CString strSeparator;
-    CString strSignedRegEx;
-
-    ::GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, szSeparator, 4);
-    strSeparator = szSeparator;
-    EscapeString(strSeparator);
-    strSignedRegEx.Format(_T("[-+]?([0-9]{1,%d}(%s[0-9]{0,2})?")
-        _T("|%s[0-9]{1,2})"), uiWhole, strSeparator, strSeparator);
-
-#ifdef _UNICODE
-    typedef boost::wregex CRegEx;
-#else
-    typedef boost::regex CRegEx;
-#endif
-
-    CRegEx signedRegEx;
-    signedRegEx.assign(strSignedRegEx);
-
-    boost::match_results<const TCHAR*> what;
-
-    return boost::regex_match(static_cast<const TCHAR*>(strText),
-        what, signedRegEx, boost::match_default | boost::match_partial);
+bool Match(const TCHAR* timeStr)
+{ 
+    return ParseTime(timeStr) != TIME_INVALID; 
 }
 
 } // namespace
@@ -121,7 +142,7 @@ double CEditTime::GetValue() const
 {
 	CString strBuf;
 	GetWindowText(strBuf);
-	return _ttof(strBuf);
+    return ParseTime(strBuf);
 }
 
 bool CEditTime::IsEmpty() const
