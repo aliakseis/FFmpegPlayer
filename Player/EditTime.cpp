@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "EditTime.h"
+#include "SecondsToString.h"
 
 #include <cmath>
 
@@ -133,9 +134,7 @@ void CEditTime::Reset()
 
 void CEditTime::SetValue(double fTime)
 {
-	CString strBuf;
-	strBuf.Format(_T("%.2f"), fTime);
-	SetWindowText(strBuf);
+    SetWindowText(secondsToString(fTime * 1000, true).c_str());
 }
 
 double CEditTime::GetValue() const
