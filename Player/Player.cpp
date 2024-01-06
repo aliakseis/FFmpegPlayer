@@ -244,7 +244,14 @@ BOOL CPlayerApp::InitInstance()
 
     // Dispatch commands specified on the command line.  Will return FALSE if
     // app was launched with /RegServer, /Register, /Unregserver or /Unregister.
-    if (!ProcessShellCommand(cmdInfo)) {
+    if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen)
+    {
+        if (!pDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName))
+        {
+            return FALSE;
+        }
+    }
+    else if (!ProcessShellCommand(cmdInfo)) {
         return FALSE;
     }
 

@@ -36,6 +36,7 @@ public:
     BOOL OnNewDocument() override;
     void Serialize(CArchive& ar) override;
     void OnCloseDocument() override;
+    void SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU = TRUE) override;
 #ifdef SHARED_HANDLERS
     virtual void InitializeSearchContent();
     virtual void OnDrawThumbnail(CDC& dc, LPRECT lprcBounds);

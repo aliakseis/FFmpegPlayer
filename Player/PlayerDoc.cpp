@@ -720,16 +720,14 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
             mappedAudioFile = static_cast<CPlayerApp*>(AfxGetApp())->GetMappedAudioFile(lpszPathName);
         }
 
-        std::string separateFilePath;
         if (!mappedAudioFile.IsEmpty()) {
-            separateFilePath = CT2A(mappedAudioFile, CP_UTF8);
             m_separateFileDiff = std::make_unique<StringDifference>(
                 lpszPathName, static_cast<LPCTSTR>(mappedAudioFile));
         }
         else if (m_autoPlay && m_separateFileDiff) {
             const auto s = m_separateFileDiff->patch(lpszPathName);
             if (!s.empty() && 0 != _tcscmp(s.c_str(), lpszPathName) && 0 == _taccess(s.c_str(), 04)) {
-                separateFilePath = CT2A(s.c_str(), CP_UTF8);
+                mappedAudioFile = s.c_str();
             }
             else {
                 m_separateFileDiff.reset();
@@ -739,15 +737,15 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
             m_separateFileDiff.reset();
         }
 
-        if (!separateFilePath.empty()) {
-            if (!m_frameDecoder->openUrls({
-                std::string(CT2A(lpszPathName, CP_UTF8)),
-                separateFilePath
-            })) {
+        std::string pathNameA(CT2A(lpszPathName, CP_UTF8));
+        if (!mappedAudioFile.IsEmpty())
+        {
+            if (!m_frameDecoder->openUrls({pathNameA, {CT2A(mappedAudioFile, CP_UTF8)}})) 
+            {
                 return false;
             }
         }
-        else if (!m_frameDecoder->openUrls({ std::string(CT2A(lpszPathName, CP_UTF8)) }))
+        else if (!m_frameDecoder->openUrls({pathNameA}))
             return false;
         m_playList.clear();
 
@@ -838,6 +836,35 @@ void CPlayerDoc::OnCloseDocument()
     m_frameDecoder->close();
     m_subtitles.reset();
     CDocument::OnCloseDocument();
+}
+
+void CPlayerDoc::SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU) 
+{
+    if (_tcslen(lpszPathName) < _MAX_PATH)
+    {
+        __super::SetPathName(lpszPathName, bAddToMRU);
+        return;
+    }
+
+    m_strPathName = lpszPathName;
+
+    ASSERT(!m_strPathName.IsEmpty());  // must be set to something
+    m_bEmbedded = FALSE;
+
+    // set the document title based on path name
+    TCHAR szTitle[_MAX_FNAME];
+    if (::GetFileTitle(lpszPathName, szTitle, _countof(szTitle)) == 0)
+    {
+        SetTitle(szTitle);
+    }
+    else 
+    {
+        SetTitle(::PathFindFileName(lpszPathName));
+    }
+
+    // add it to the file MRU list
+    //if (bAddToMRU)
+    //    AfxGetApp()->AddToRecentFileList(m_strPathName);
 }
 
 
