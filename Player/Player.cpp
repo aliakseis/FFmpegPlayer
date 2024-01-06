@@ -385,7 +385,7 @@ bool CPlayerApp::GetMappedAudioFiles(CMapStringToString& map)
 
     delete[] pData;
 
-    CMemFile mf(unpacked.data(), size);
+    CMemFile mf(unpacked.data(), nLen);
     {
         CArchive ar(&mf, CArchive::load);
 

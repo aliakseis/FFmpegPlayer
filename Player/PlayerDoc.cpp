@@ -740,7 +740,8 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
         std::string pathNameA(CT2A(lpszPathName, CP_UTF8));
         if (!mappedAudioFile.IsEmpty())
         {
-            if (!m_frameDecoder->openUrls({pathNameA, {CT2A(mappedAudioFile, CP_UTF8)}})) 
+            if (!m_frameDecoder->openUrls(
+                    {pathNameA, std::string(CT2A(mappedAudioFile, CP_UTF8))})) 
             {
                 return false;
             }
@@ -875,7 +876,8 @@ void CPlayerDoc::changedFramePosition(long long start, long long frame, long lon
     m_currentTime = currentTime;
     currentTimeUpdated(currentTime);
 
-    if (m_looping && !m_autoPlay && !isFullFrameRange() && m_currentTime >= m_rangeEndTime)
+    if (m_looping && !m_autoPlay && !isFullFrameRange() && m_currentTime >= m_rangeEndTime &&
+        m_endTime > m_startTime)
     {
         const double percent = (m_rangeStartTime - m_startTime) / (m_endTime - m_startTime);
         m_frameDecoder->seekByPercent(percent);
@@ -909,7 +911,7 @@ void CPlayerDoc::onEndOfStream(int idx, bool error)
     if (idx != 0)
         return;
 
-    if (!error && m_looping && !m_autoPlay && !isFullFrameRange())
+    if (!error && m_looping && !m_autoPlay && !isFullFrameRange() && m_endTime > m_startTime)
     {
         const double percent = (m_rangeStartTime - m_startTime) / (m_endTime - m_startTime);
         if (m_frameDecoder->seekByPercent(percent))
