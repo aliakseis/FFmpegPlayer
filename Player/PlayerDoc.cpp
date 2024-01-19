@@ -646,6 +646,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         strParams += _T(" -y \"");
         strParams += lpszPathName;
         strParams += _T('"');
+        TRACE(_T("FFmpeg parameters generated: %s\n"), strParams);
     }
     TCHAR pszPath[MAX_PATH] = { 0 };
     GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
@@ -800,7 +801,7 @@ void CPlayerDoc::OnIdle()
 void CPlayerDoc::OnFileSaveCopyAs()
 {
     if (!DoSave(NULL, FALSE))
-        TRACE(traceAppMsg, 0, "Warning: File save-as failed.\n");
+        TRACE("Warning: File save-as failed.\n");
 }
 
 void CPlayerDoc::MoveToNextFile()
