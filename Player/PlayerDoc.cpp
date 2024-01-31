@@ -41,6 +41,7 @@
 
 #include <atomic>
 #include <filesystem>
+#include <regex>
 
 #include <VersionHelpers.h>
 
@@ -984,22 +985,38 @@ double CPlayerDoc::soundVolume() const
 
 std::wstring CPlayerDoc::getSubtitle() const
 {
-    CSingleLock lock(&s_csSubtitles, TRUE);
-    if (m_subtitles)
+    std::wstring result;
     {
-        auto it = m_subtitles->find(m_currentTime); 
-        if (it != m_subtitles->end())
+        CSingleLock lock(&s_csSubtitles, TRUE);
+        if (m_subtitles)
         {
-            if (m_subtitles->m_unicodeSubtitles && m_bFixEncoding)
+            auto it = m_subtitles->find(m_currentTime);
+            if (it != m_subtitles->end())
             {
-                CA2W bufW(it->second.c_str(), CP_UTF8);
-                CW2A bufA(bufW, CP_ACP);
-                return std::wstring(CA2W(bufA, CP_UTF8));
+                if (m_subtitles->m_unicodeSubtitles && m_bFixEncoding)
+                {
+                    CA2W bufW(it->second.c_str(), CP_UTF8);
+                    CW2A bufA(bufW, CP_ACP);
+                    result = CA2W(bufA, CP_UTF8);
+                }
+                else
+                {
+                    result = CA2W(it->second.c_str(),
+                                  m_subtitles->m_unicodeSubtitles ? CP_UTF8 : CP_ACP);
+                }
             }
-            return std::wstring(CA2W(it->second.c_str(), m_subtitles->m_unicodeSubtitles ? CP_UTF8 : CP_ACP));
         }
     }
-    return {};
+
+    if (!result.empty())
+    {
+        std::wregex dotsRegex(L"(^|[^.])\\.{3}([^.]|$)");
+        result = std::regex_replace(result, dotsRegex, L"$1\u2026$2");
+
+        result = std::regex_replace(result, std::wregex(L"\\s+(?=\\n)"), L"");
+    }
+
+    return result;
 }
 
 
