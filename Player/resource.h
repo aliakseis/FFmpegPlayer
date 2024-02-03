@@ -67,13 +67,14 @@
 #define ID_ORIENTATION_RORATE_180       32797
 #define ID_ORIENTATION_RORATE_270       32798
 #define ID_FIX_ENCODING                 32799
+#define ID_FILE_COPYSCRIPTTOCLIPBOARD   32800
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
-#define _APS_NEXT_COMMAND_VALUE         32800
+#define _APS_NEXT_COMMAND_VALUE         32801
 #define _APS_NEXT_CONTROL_VALUE         1021
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

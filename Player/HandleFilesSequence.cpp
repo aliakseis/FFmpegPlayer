@@ -52,7 +52,8 @@ bool CompareConsideringNumbers(CString left, CString right)
 
 bool HandleFilesSequence(const CString& pathName,
     bool looping,
-    std::function<bool(const CString&)> tryToOpen)
+    std::function<bool(const CString&)> tryToOpen, 
+    bool invert /*= false*/)
 {
     const auto extension = PathFindExtension(pathName);
     const auto fileName = PathFindFileName(pathName);
@@ -91,7 +92,7 @@ bool HandleFilesSequence(const CString& pathName,
 
     for (int i = 0; i <= looping; ++i)
     {
-        std::vector<CString>& files = filesArr[i];
+        std::vector<CString>& files = filesArr[i ^ invert];
         std::make_heap(files.begin(), files.end(), CompareConsideringNumbers);
 
         while (!files.empty())

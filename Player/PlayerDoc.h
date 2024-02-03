@@ -201,4 +201,5 @@ public:
     afx_msg void OnOrientationRotate270();
     afx_msg void OnFixEncoding();
     afx_msg void OnUpdateFixEncoding(CCmdUI* pCmdUI);
+    afx_msg void OnCopyScriptToClipboard();
 };

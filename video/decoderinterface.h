@@ -133,6 +133,8 @@ struct IFrameDecoder
 
     virtual std::vector<std::string> getProperties() const = 0;
 
+    virtual bool isVideoCompatible() const = 0;
+
     virtual std::vector<std::string> listSubtitles() const = 0;
     virtual bool getSubtitles(int idx, std::function<bool(double, double, const std::string&)> addIntervalCallback) = 0;
 

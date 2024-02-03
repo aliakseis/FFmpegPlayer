@@ -4,4 +4,5 @@
 
 bool HandleFilesSequence(const CString& pathName,
     bool looping,
-    std::function<bool(const CString&)> tryToOpen);
+    std::function<bool(const CString&)> tryToOpen,
+    bool invert = false);

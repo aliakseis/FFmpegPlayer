@@ -1169,6 +1169,16 @@ std::vector<std::string> FFmpegDecoder::getProperties() const
     return result;
 }
 
+bool FFmpegDecoder::isVideoCompatible() const 
+{
+    if (m_videoCodec)
+    {
+        return m_videoCodec->id == AV_CODEC_ID_H264 ||
+               m_videoCodec->id == AV_CODEC_ID_MPEG2VIDEO || m_videoCodec->id == AV_CODEC_ID_MPEG4;
+    }
+    return false; 
+}
+
 
 void FFmpegDecoder::handleDirect3dData(AVFrame* videoFrame, bool forceConversion)
 {

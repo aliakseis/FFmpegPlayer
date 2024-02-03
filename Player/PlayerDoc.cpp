@@ -132,6 +132,33 @@ bool PumpMessages()
     return true;
 }
 
+void CopyTextToClipboard(const CString& strText)
+{
+#ifdef _UNICODE
+    enum { AFX_TCF_TEXT = CF_UNICODETEXT };
+#else
+    enum { AFX_TCF_TEXT = CF_TEXT };
+#endif
+
+    if (!strText.IsEmpty() && AfxGetMainWnd()->OpenClipboard())
+    {
+        EmptyClipboard();
+
+        const auto textSize = (strText.GetLength() + 1) * sizeof(TCHAR);
+        if (HGLOBAL hClipbuffer = ::GlobalAlloc(GMEM_MOVEABLE, textSize))
+        {
+            if (LPTSTR lpszBuffer = (LPTSTR)GlobalLock(hClipbuffer))
+            {
+                memcpy(lpszBuffer, (LPCTSTR)strText, textSize);
+                ::GlobalUnlock(hClipbuffer);
+            }
+            ::SetClipboardData(AFX_TCF_TEXT, hClipbuffer);
+        }
+        CloseClipboard();
+    }
+}
+
+
 std::unique_ptr<IAudioPlayer> GetAudioPlayer()
 {
     if (IsWindowsVistaOrGreater())
@@ -250,6 +277,7 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND(ID_ORIENTATION_RORATE_270, &CPlayerDoc::OnOrientationRotate270)
     ON_COMMAND(ID_FIX_ENCODING, &CPlayerDoc::OnFixEncoding)
     ON_UPDATE_COMMAND_UI(ID_FIX_ENCODING, &CPlayerDoc::OnUpdateFixEncoding)
+    ON_COMMAND(ID_FILE_COPYSCRIPTTOCLIPBOARD, &CPlayerDoc::OnCopyScriptToClipboard)
     END_MESSAGE_MAP()
 
 
@@ -1194,12 +1222,6 @@ void CPlayerDoc::OnUpdateOpensubtitlesfile(CCmdUI *pCmdUI)
     pCmdUI->Enable(isPlaying() && m_url.empty());
 }
 
-#ifdef _UNICODE
-#define AFX_TCF_TEXT CF_UNICODETEXT
-#else
-#define AFX_TCF_TEXT CF_TEXT
-#endif
-
 void CPlayerDoc::OnCopyUrlToClipboard()
 {
     const bool shiftAndControlPressed = GetKeyState(VK_SHIFT) < 0
@@ -1209,22 +1231,7 @@ void CPlayerDoc::OnCopyUrlToClipboard()
 
     CString strText(url.empty() ? m_strPathName : CString(url.data(), url.length()));
 
-    if (!strText.IsEmpty() && AfxGetMainWnd()->OpenClipboard())
-    {
-        EmptyClipboard();
-
-        const auto textSize = (strText.GetLength() + 1) * sizeof(TCHAR);
-        if (HGLOBAL hClipbuffer = ::GlobalAlloc(GMEM_MOVEABLE, textSize))
-        {
-            if (LPTSTR lpszBuffer = (LPTSTR)GlobalLock(hClipbuffer))
-            {
-                memcpy(lpszBuffer, (LPCTSTR)strText, textSize);
-                ::GlobalUnlock(hClipbuffer);
-            }
-            ::SetClipboardData(AFX_TCF_TEXT, hClipbuffer);
-        }
-        CloseClipboard();
-    }
+    CopyTextToClipboard(strText);
 }
 
 
@@ -1384,3 +1391,75 @@ void CPlayerDoc::OnUpdateFixEncoding(CCmdUI* pCmdUI)
 {
    pCmdUI->SetCheck(m_bFixEncoding); 
 }
+
+void CPlayerDoc::OnCopyScriptToClipboard()
+{
+    std::vector<CString> videoFiles;
+    if (m_autoPlay)
+    {
+        HandleFilesSequence(
+            GetPathName(), 
+            true,
+            [&videoFiles](const CString& path)
+            {
+                videoFiles.push_back(path);
+                return false;
+            },
+            true);
+    }
+    else
+    {
+        videoFiles.push_back(GetPathName());
+    }
+
+    const bool isVideoCompatible = m_frameDecoder->isVideoCompatible();
+
+    CString strText;
+
+    for (const auto& source : videoFiles)
+    {
+        CString command = _T("ffmpeg.exe -i \"") + source + _T('"');
+
+        if (m_separateFileDiff)
+        {
+            const auto s = m_separateFileDiff->patch(
+                {source.GetString(), source.GetString() + source.GetLength()});
+            if (!s.empty())
+            {
+                command += _T(" -i \"");
+                command += s.c_str();
+                command += _T("\" -map 0:v:0 -map 1:a:0");
+            }
+        }
+
+        command += isVideoCompatible ? _T(" -c:v copy") : _T(" -c:v libx264 -crf 25");
+        command += _T(" -c:a aac -preset superfast \"");
+        command += ::PathFindFileName(source);
+        command += _T("\"\n");
+
+        strText += command;
+    }
+
+    if (m_subtitlesFileDiff)
+    {
+        for (const auto& source : videoFiles)
+        {
+            const auto s = m_subtitlesFileDiff->patch(
+                {source.GetString(), source.GetString() + source.GetLength()});
+            if (s.empty())
+                continue;
+
+            const auto audioExt = ::PathFindExtension(s.c_str());
+
+            const auto fileNameWithExt = ::PathFindFileName(source);
+            std::basic_string<TCHAR> fileName{fileNameWithExt,
+                                              ::PathFindExtension(fileNameWithExt)};
+
+            auto command = _T("copy \"") + s + _T("\" \"") + fileName + audioExt + _T("\"\n");
+            strText += command.c_str();
+        }
+    }
+
+    CopyTextToClipboard(strText);
+}
+
