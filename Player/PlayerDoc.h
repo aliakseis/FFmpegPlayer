@@ -202,4 +202,5 @@ public:
     afx_msg void OnFixEncoding();
     afx_msg void OnUpdateFixEncoding(CCmdUI* pCmdUI);
     afx_msg void OnCopyScriptToClipboard();
+    afx_msg void OnUpdateCopyScriptToClipboard(CCmdUI* pCmdUI);
 };

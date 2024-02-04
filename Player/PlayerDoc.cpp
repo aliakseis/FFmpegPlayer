@@ -278,6 +278,7 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND(ID_FIX_ENCODING, &CPlayerDoc::OnFixEncoding)
     ON_UPDATE_COMMAND_UI(ID_FIX_ENCODING, &CPlayerDoc::OnUpdateFixEncoding)
     ON_COMMAND(ID_FILE_COPYSCRIPTTOCLIPBOARD, &CPlayerDoc::OnCopyScriptToClipboard)
+    ON_UPDATE_COMMAND_UI(ID_FILE_COPYSCRIPTTOCLIPBOARD, &CPlayerDoc::OnUpdateCopyScriptToClipboard)
     END_MESSAGE_MAP()
 
 
@@ -1463,3 +1464,9 @@ void CPlayerDoc::OnCopyScriptToClipboard()
     CopyTextToClipboard(strText);
 }
 
+
+
+void CPlayerDoc::OnUpdateCopyScriptToClipboard(CCmdUI* pCmdUI)
+{
+    pCmdUI->Enable(!GetPathName().IsEmpty()); 
+}
