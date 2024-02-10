@@ -1421,20 +1421,30 @@ void CPlayerDoc::OnCopyScriptToClipboard()
     {
         CString command = _T("ffmpeg.exe -i \"") + source + _T('"');
 
+        std::basic_string<TCHAR> separateFilePart;
         if (m_separateFileDiff)
         {
-            const auto s = m_separateFileDiff->patch(
+            auto s = m_separateFileDiff->patch(
                 {source.GetString(), source.GetString() + source.GetLength()});
             if (!s.empty())
             {
-                command += _T(" -i \"");
-                command += s.c_str();
-                command += _T("\" -map 0:v:0 -map 1:a:0");
+                separateFilePart = _T(" -i \"") + std::move(s) + _T("\" -map 0:v:0 -map 1:a:0");
             }
         }
 
+        if (separateFilePart.empty())
+        {
+            command += _T(" -map 0:v? -map 0:a?");
+        }
+        else
+        {
+            command += separateFilePart.c_str();
+        }
+
+        command += _T(" -map 0:s?");
+
         command += isVideoCompatible ? _T(" -c:v copy") : _T(" -c:v libx264 -crf 25");
-        command += _T(" -c:a aac -preset superfast \"");
+        command += _T(" -c:a aac -c:s copy -preset superfast \"");
         command += ::PathFindFileName(source);
         command += _T("\"\n");
 
