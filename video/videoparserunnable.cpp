@@ -511,7 +511,6 @@ bool FFmpegDecoder::handleVideoFrame(
             }
             if (inNextFrame && m_prevTime != AV_NOPTS_VALUE)
             {
-                const int64_t duration_stamp = videoFrame->best_effort_timestamp;
                 if (duration_stamp != AV_NOPTS_VALUE && duration_stamp < m_prevTime)
                 {
                     continueHandlingPrevTime = true;
