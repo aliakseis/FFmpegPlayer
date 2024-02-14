@@ -231,3 +231,5 @@ CMakeLists.txt.user*
 Player/version.h
 
 build-*/
+
+Directory.Build.props
