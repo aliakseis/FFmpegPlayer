@@ -404,6 +404,7 @@ bool FFmpegDecoder::handleVideoFrame(
 
     boost::posix_time::time_duration td(boost::posix_time::pos_infin);
     bool inNextFrame = false;
+    bool continueHandlingPrevTime = false;
 
     {
         boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
@@ -420,6 +421,18 @@ bool FFmpegDecoder::handleVideoFrame(
             m_videoStartClock = val;
             CHANNEL_LOG(ffmpeg_sync) << "isPaused = " << isPaused
                 << " m_videoStartClock = " << val << " pts = " << pts;
+        }
+
+        if (inNextFrame && m_prevTime != AV_NOPTS_VALUE)
+        {
+            if (duration_stamp != AV_NOPTS_VALUE && duration_stamp < m_prevTime)
+            {
+                continueHandlingPrevTime = true;
+            }
+            else
+            {
+                m_prevTime = AV_NOPTS_VALUE;
+            }
         }
 
         // Skipping frames
@@ -461,6 +474,12 @@ bool FFmpegDecoder::handleVideoFrame(
 
     context.initialized = true;
 
+    if (continueHandlingPrevTime)
+    {
+        m_isPausedCV.notify_all();
+        return true;
+    }
+
     boost::shared_ptr<ImageConversionFunc> imageConversionFunc = m_imageConversionFunc;
     const bool useAsyncConversion = imageConversionFunc != nullptr && (*imageConversionFunc);
 
@@ -499,39 +518,19 @@ bool FFmpegDecoder::handleVideoFrame(
         }
     }
 
-    bool continueHandlingPrevTime = false;
-
     {
         boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
-        if (m_isPaused)
+        if (m_isPaused && !m_isVideoSeekingWhilePaused)
         {
-            if (!m_isVideoSeekingWhilePaused)
-            {
-                return false;
-            }
-            if (inNextFrame && m_prevTime != AV_NOPTS_VALUE)
-            {
-                if (duration_stamp != AV_NOPTS_VALUE && duration_stamp < m_prevTime)
-                {
-                    continueHandlingPrevTime = true;
-                }
-                else
-                {
-                    m_prevTime = AV_NOPTS_VALUE;
-                }
-            }
+            return false;
         }
 
-        m_isVideoSeekingWhilePaused = continueHandlingPrevTime;
+        m_isVideoSeekingWhilePaused = false;
     }
 
     if (inNextFrame)
     {
         m_isPausedCV.notify_all();
-        if (continueHandlingPrevTime)
-        {
-            return true;
-        }
     }
 
     VideoFrame& current_frame = m_videoFramesQueue.back();
