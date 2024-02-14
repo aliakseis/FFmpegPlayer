@@ -1398,15 +1398,20 @@ void CPlayerDoc::OnCopyScriptToClipboard()
     std::vector<CString> videoFiles;
     if (m_autoPlay)
     {
+        if (!m_looping)
+        {
+            videoFiles.push_back(GetPathName());
+        }
+
         HandleFilesSequence(
             GetPathName(), 
-            true,
+            m_looping,
             [&videoFiles](const CString& path)
             {
                 videoFiles.push_back(path);
                 return false;
             },
-            true);
+            m_looping);
     }
     else
     {
@@ -1443,8 +1448,8 @@ void CPlayerDoc::OnCopyScriptToClipboard()
 
         command += _T(" -map 0:s?");
 
-        command += isVideoCompatible ? _T(" -c:v copy") : _T(" -c:v libx264 -crf 25");
-        command += _T(" -c:a aac -c:s copy -preset superfast \"");
+        command += isVideoCompatible ? _T(" -c:v copy") : _T(" -c:v libx264 -crf 25 -pix_fmt yuv420p");
+        command += _T(" -c:a aac -ac 2 -c:s copy -preset superfast \"");
         command += ::PathFindFileName(source);
         command += _T("\"\n");
 

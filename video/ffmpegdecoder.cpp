@@ -1171,12 +1171,31 @@ std::vector<std::string> FFmpegDecoder::getProperties() const
 
 bool FFmpegDecoder::isVideoCompatible() const 
 {
-    if (m_videoCodec)
+    if (!m_videoCodec || !m_videoCodecContext)
     {
-        return m_videoCodec->id == AV_CODEC_ID_H264 ||
-               m_videoCodec->id == AV_CODEC_ID_MPEG2VIDEO || m_videoCodec->id == AV_CODEC_ID_MPEG4;
+        return false;
     }
-    return false; 
+
+    if (m_videoCodec->id != AV_CODEC_ID_H264 &&
+            m_videoCodec->id != AV_CODEC_ID_MPEG2VIDEO && m_videoCodec->id != AV_CODEC_ID_MPEG4)
+    {
+        return false;
+    }
+
+    if (auto d = av_pix_fmt_desc_get((m_videoCodecContext->sw_pix_fmt == AV_PIX_FMT_NONE)
+                                ? m_videoCodecContext->pix_fmt
+                                : m_videoCodecContext->sw_pix_fmt))
+    {
+        for (int i = 0; i < d->nb_components; ++i)
+            if (d->comp[i].depth > 8)
+                return false;
+    }
+    else
+    {
+        return false;
+    }
+
+    return true; 
 }
 
 
