@@ -1039,10 +1039,15 @@ std::wstring CPlayerDoc::getSubtitle() const
 
     if (!result.empty())
     {
-        std::wregex dotsRegex(L"(^|[^.])\\.{3}([^.]|$)");
-        result = std::regex_replace(result, dotsRegex, L"$1\u2026$2");
-
-        result = std::regex_replace(result, std::wregex(L"\\s+(?=\\n)"), L"");
+        using std::wregex;
+        // Replace any whitespace followed by a newline with an empty string
+        result = regex_replace(result, wregex(L"\\s+(?=\\n)"), L"");
+        // Replace punctuation followed by whitespace with the punctuation followed by a Unicode
+        // thin space character
+        result = regex_replace(result, wregex(L"([,.?!;:])\\s"), L"$1\u2009");
+        // Replace an ellipsis occurring after a non-period character or at the start of the string
+        // with a Unicode ellipsis character
+        result = regex_replace(result, wregex(L"(^|[^.])\\.{3}([^.]|$)"), L"$1\u2026$2");
     }
 
     return result;
