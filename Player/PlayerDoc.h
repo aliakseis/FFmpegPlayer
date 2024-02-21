@@ -141,6 +141,8 @@ private:
 
     float getVideoSpeed() const;
 
+    CString generateConversionScript(CString outputFolder) const;
+
 private:
     std::unique_ptr<IFrameDecoder> m_frameDecoder;
 

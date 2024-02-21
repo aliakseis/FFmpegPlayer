@@ -1285,6 +1285,107 @@ float CPlayerDoc::getVideoSpeed() const
     return static_cast<float>(speedRational.denominator) / speedRational.numerator;
 }
 
+CString CPlayerDoc::generateConversionScript(CString outputFolder) const
+{ 
+
+    ensureSeparator(outputFolder);
+
+    std::vector<CString> videoFiles;
+    if (m_autoPlay)
+    {
+        if (!m_looping)
+        {
+            videoFiles.push_back(GetPathName());
+        }
+
+        HandleFilesSequence(
+            GetPathName(), m_looping,
+            [&videoFiles](const CString& path)
+            {
+                videoFiles.push_back(path);
+                return false;
+            },
+            m_looping);
+    }
+    else
+    {
+        videoFiles.push_back(GetPathName());
+    }
+
+    const bool isVideoCompatible = m_frameDecoder->isVideoCompatible();
+
+    CString ffmpegPath;
+    {
+        TCHAR pszPath[MAX_PATH] = {0};
+        GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
+        PathRemoveFileSpec(pszPath);
+        const TCHAR ffmpegExeName[] = _T("ffmpeg.exe");
+        PathAppend(pszPath, ffmpegExeName);
+        ffmpegPath =
+            (_taccess(pszPath, 04) == 0) ? (_T('"') + CString(pszPath) + _T('"')) : ffmpegExeName;
+    }
+
+    CString strText(_T("chcp 65001\r\n"));
+
+    for (const auto& source : videoFiles)
+    {
+        CString command = ffmpegPath + _T(" -i \"") + source + _T('"');
+
+        std::basic_string<TCHAR> separateFilePart;
+        if (m_separateFileDiff)
+        {
+            auto s = m_separateFileDiff->patch(
+                {source.GetString(), source.GetString() + source.GetLength()});
+            if (!s.empty())
+            {
+                separateFilePart = _T(" -i \"") + std::move(s) + _T("\" -map 0:v:0 -map 1:a:0");
+            }
+        }
+
+        if (separateFilePart.empty())
+        {
+            command += _T(" -map 0:v? -map 0:a?");
+        }
+        else
+        {
+            command += separateFilePart.c_str();
+        }
+
+        command += _T(" -map 0:s?");
+
+        command +=
+            isVideoCompatible ? _T(" -c:v copy") : _T(" -c:v libx264 -crf 25 -pix_fmt yuv420p");
+        command += _T(" -c:a aac -ac 2 -c:s copy -preset superfast \"");
+        command += outputFolder;
+        command += ::PathFindFileName(source);
+        command += _T("\"\r\n");
+
+        strText += command;
+    }
+
+    if (m_subtitlesFileDiff)
+    {
+        for (const auto& source : videoFiles)
+        {
+            const auto s = m_subtitlesFileDiff->patch(
+                {source.GetString(), source.GetString() + source.GetLength()});
+            if (s.empty())
+                continue;
+
+            const auto audioExt = ::PathFindExtension(s.c_str());
+
+            const auto fileNameWithExt = ::PathFindFileName(source);
+            std::basic_string<TCHAR> fileName{fileNameWithExt,
+                                              ::PathFindExtension(fileNameWithExt)};
+
+            auto command = _T("copy \"") + s + _T("\" \"") + fileName + audioExt + _T("\"\r\n");
+            strText += command.c_str();
+        }
+    }
+
+    return strText;
+}
+
 
 void CPlayerDoc::OnOpensubtitlesfile()
 {
@@ -1497,126 +1598,25 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
         {
             return;
         }
-
-        std::unique_ptr<std::remove_pointer_t<HANDLE>, decltype(&::CloseHandle)> scriptFileGuard(
-            scriptFileHandle, ::CloseHandle);
-
         // choose output folder using CFolderPickerDialog
-        CString outputFolder;
-        {
-            CFolderPickerDialog dlg;
-            if (dlg.DoModal() != IDOK)
-            {
-                return;
-            }
 
-            outputFolder = dlg.GetPathName();
+        CFolderPickerDialog dlg;
+        if (dlg.DoModal() == IDOK)
+        {
+            auto script = generateConversionScript(dlg.GetPathName());
+            CW2A bufA(script, CP_UTF8);
+            writeFile(scriptFileHandle, bufA, strlen(bufA));
         }
 
-        ensureSeparator(outputFolder);
-
-        std::vector<CString> videoFiles;
-        if (m_autoPlay)
-        {
-            if (!m_looping)
-            {
-                videoFiles.push_back(GetPathName());
-            }
-
-            HandleFilesSequence(
-                GetPathName(), m_looping,
-                [&videoFiles](const CString& path)
-                {
-                    videoFiles.push_back(path);
-                    return false;
-                },
-                m_looping);
-        }
-        else
-        {
-            videoFiles.push_back(GetPathName());
-        }
-
-        const bool isVideoCompatible = m_frameDecoder->isVideoCompatible();
-
-        CString ffmpegPath;
-        {
-            TCHAR pszPath[MAX_PATH] = {0};
-            GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
-            PathRemoveFileSpec(pszPath);
-            const TCHAR ffmpegExeName[] = _T("ffmpeg.exe");
-            PathAppend(pszPath, ffmpegExeName);
-            ffmpegPath = (_taccess(pszPath, 04) == 0) 
-                ? (_T('"') + CString(pszPath) + _T('"')) : ffmpegExeName;
-        }
-
-        CString strText(_T("chcp 65001\r\n"));
-
-        for (const auto& source : videoFiles)
-        {
-            CString command = ffmpegPath + _T(" -i \"") + source + _T('"');
-
-            std::basic_string<TCHAR> separateFilePart;
-            if (m_separateFileDiff)
-            {
-                auto s = m_separateFileDiff->patch(
-                    {source.GetString(), source.GetString() + source.GetLength()});
-                if (!s.empty())
-                {
-                    separateFilePart =
-                        _T(" -i \"") + std::move(s) + _T("\" -map 0:v:0 -map 1:a:0");
-                }
-            }
-
-            if (separateFilePart.empty())
-            {
-                command += _T(" -map 0:v? -map 0:a?");
-            }
-            else
-            {
-                command += separateFilePart.c_str();
-            }
-
-            command += _T(" -map 0:s?");
-
-            command += isVideoCompatible ? _T(" -c:v copy")
-                                         : _T(" -c:v libx264 -crf 25 -pix_fmt yuv420p");
-            command += _T(" -c:a aac -ac 2 -c:s copy -preset superfast \"");
-            command += outputFolder;
-            command += ::PathFindFileName(source);
-            command += _T("\"\r\n");
-
-            strText += command;
-        }
-
-        if (m_subtitlesFileDiff)
-        {
-            for (const auto& source : videoFiles)
-            {
-                const auto s = m_subtitlesFileDiff->patch(
-                    {source.GetString(), source.GetString() + source.GetLength()});
-                if (s.empty())
-                    continue;
-
-                const auto audioExt = ::PathFindExtension(s.c_str());
-
-                const auto fileNameWithExt = ::PathFindFileName(source);
-                std::basic_string<TCHAR> fileName{fileNameWithExt,
-                                                  ::PathFindExtension(fileNameWithExt)};
-
-                auto command =
-                    _T("copy \"") + s + _T("\" \"") + fileName + audioExt + _T("\"\r\n");
-                strText += command.c_str();
-            }
-        }
-
-        CW2A bufA(strText, CP_UTF8);
-        writeFile(scriptFileHandle, bufA, strlen(bufA));
+        CloseHandle(scriptFileHandle);
     }
 
     // Try to execute the file with the "open" verb
-    HINSTANCE hResult =
-        ShellExecute(NULL, _T("open"), scriptTempPath, NULL, NULL, SW_MINIMIZE);
+    auto result = (int)ShellExecute(NULL, _T("open"), scriptTempPath, NULL, NULL, SW_MINIMIZE);
+    if (result <= 32)
+    {
+        TRACE("ShellExecute failed with error code %d.\n", result);
+    }
 }
 
 
