@@ -1605,7 +1605,7 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
         if (dlg.DoModal() == IDOK)
         {
             auto script = generateConversionScript(dlg.GetPathName());
-            CW2A bufA(script, CP_UTF8);
+            CT2A bufA(script, CP_UTF8);
             writeFile(scriptFileHandle, bufA, strlen(bufA));
         }
 
@@ -1624,5 +1624,13 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
 
 void CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat(CCmdUI* pCmdUI)
 {
-    pCmdUI->Enable(!GetPathName().IsEmpty()); 
+    if (GetPathName().IsEmpty())
+    {
+        pCmdUI->Enable(false);
+    }
+    else
+    {
+        const auto scriptTempPath = getScriptTempPath();
+        pCmdUI->Enable(_taccess(scriptTempPath, 0) != 0 || _taccess(scriptTempPath, 6) == 0);
+    }
 }
