@@ -139,7 +139,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     std::vector<std::string> getProperties() const override;
 
-    bool isVideoCompatible() const override;
+    std::pair<bool, bool> isVideoAudioCompatible() const override;
 
     std::vector<std::string> listSubtitles() const override;
     bool getSubtitles(int idx, std::function<bool(double, double, const std::string&)> addIntervalCallback) override;

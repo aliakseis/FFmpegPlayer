@@ -1312,7 +1312,7 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
         videoFiles.push_back(GetPathName());
     }
 
-    const bool isVideoCompatible = m_frameDecoder->isVideoCompatible();
+    const auto [isVideoCompatible, isAudioCompatible] = m_frameDecoder->isVideoAudioCompatible();
 
     CString ffmpegPath;
     {
@@ -1355,7 +1355,8 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
 
         command +=
             isVideoCompatible ? _T(" -c:v copy") : _T(" -c:v libx264 -crf 25 -pix_fmt yuv420p");
-        command += _T(" -c:a aac -ac 2 -c:s copy -preset superfast \"");
+        command += isAudioCompatible ? _T(" -c:a copy") : _T(" -c:a aac -ac 2");
+        command += _T(" -c:s copy -preset superfast \"");
         command += outputFolder;
         command += ::PathFindFileName(source);
         command += _T("\"\r\n");

@@ -1169,33 +1169,39 @@ std::vector<std::string> FFmpegDecoder::getProperties() const
     return result;
 }
 
-bool FFmpegDecoder::isVideoCompatible() const 
+std::pair<bool, bool> FFmpegDecoder::isVideoAudioCompatible() const
 {
-    if (!m_videoCodec || !m_videoCodecContext)
+    auto videoLam = [this]
     {
-        return false;
-    }
+        if (!m_videoCodec || !m_videoCodecContext)
+        {
+            return false;
+        }
 
-    if (m_videoCodec->id != AV_CODEC_ID_H264 &&
-            m_videoCodec->id != AV_CODEC_ID_MPEG2VIDEO && m_videoCodec->id != AV_CODEC_ID_MPEG4)
-    {
-        return false;
-    }
+        if (m_videoCodec->id != AV_CODEC_ID_H264 && m_videoCodec->id != AV_CODEC_ID_MPEG2VIDEO &&
+            m_videoCodec->id != AV_CODEC_ID_MPEG4)
+        {
+            return false;
+        }
 
-    if (auto d = av_pix_fmt_desc_get((m_videoCodecContext->sw_pix_fmt == AV_PIX_FMT_NONE)
-                                ? m_videoCodecContext->pix_fmt
-                                : m_videoCodecContext->sw_pix_fmt))
-    {
-        for (int i = 0; i < d->nb_components; ++i)
-            if (d->comp[i].depth > 8)
-                return false;
-    }
-    else
-    {
-        return false;
-    }
+        if (auto d = av_pix_fmt_desc_get((m_videoCodecContext->sw_pix_fmt == AV_PIX_FMT_NONE)
+                                             ? m_videoCodecContext->pix_fmt
+                                             : m_videoCodecContext->sw_pix_fmt))
+        {
+            for (int i = 0; i < d->nb_components; ++i)
+                if (d->comp[i].depth > 8)
+                    return false;
+        }
+        else
+        {
+            return false;
+        }
 
-    return true; 
+        return true;
+    };
+
+    return {videoLam(), 
+        m_audioCodec && m_audioCodec->id == AV_CODEC_ID_AAC && m_audioCurrentPref.channels == 2};
 }
 
 
