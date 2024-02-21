@@ -159,6 +159,93 @@ void CopyTextToClipboard(const CString& strText)
 }
 
 
+CString getScriptTempPath()
+{
+    TCHAR szTempPath[MAX_PATH];
+    GetTempPath(MAX_PATH, szTempPath);
+    PathAppend(szTempPath, _T("ffmpeg-video-conversion-script.cmd"));
+    return szTempPath;
+}
+
+
+// A function that locks a file for writing but leaves it unmodified
+HANDLE lockFile(LPCTSTR fileName)
+{
+    // Try to open the file with exclusive access
+    HANDLE hFile = CreateFile(fileName, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    DWORD dwError = GetLastError();
+
+    // If the file does not exist, create a new one
+    if (dwError == ERROR_FILE_NOT_FOUND)
+    {
+        hFile = CreateFile(fileName, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+        dwError = GetLastError();
+    }
+
+    // If the file is locked by another process, report an error
+    if (dwError == ERROR_SHARING_VIOLATION)
+    {
+        TRACE("The file is locked by another process.\n");
+        return NULL;
+    }
+
+    // If any other error occurs, report an error
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        TRACE("Unable to lock the file. Error code: %d.\n", dwError);
+        return NULL;
+    }
+
+    // Return the handle to the file
+    return hFile;
+}
+
+// A function that overwrites the file with some stuff
+void writeFile(HANDLE hFile, const char* stuff, DWORD size)
+{
+    // Move the file pointer to the beginning of the file
+    SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+
+    // Write the stuff to the file
+    DWORD dwWritten = 0;
+    WriteFile(hFile, stuff, size, &dwWritten, NULL);
+
+    // Check if the write operation was successful
+    if (dwWritten != size)
+    {
+        TRACE("Unable to write to the file.\n");
+    }
+
+    // Truncate the file to the current position of the file pointer
+    SetEndOfFile(hFile);
+}
+
+
+// A function that ensures that a CString based file path ends with a file path separator
+void ensureSeparator(CString& filePath)
+{
+    // Remove any trailing whitespace from the file path
+    filePath.TrimRight();
+
+    // Get the length of the file path
+    int length = filePath.GetLength();
+
+    // If the file path is not empty
+    if (length > 0)
+    {
+        // Get the last character of the file path
+        const char lastChar = filePath.GetAt(length - 1);
+
+        // If the last character is not the separator character
+        if (lastChar != '\\' && lastChar != '/')
+        {
+            // Append the separator character to the file path
+            filePath.Append(_T("\\"));
+        }
+    }
+}
+
+
 std::unique_ptr<IAudioPlayer> GetAudioPlayer()
 {
     if (IsWindowsVistaOrGreater())
@@ -277,8 +364,10 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND(ID_ORIENTATION_RORATE_270, &CPlayerDoc::OnOrientationRotate270)
     ON_COMMAND(ID_FIX_ENCODING, &CPlayerDoc::OnFixEncoding)
     ON_UPDATE_COMMAND_UI(ID_FIX_ENCODING, &CPlayerDoc::OnUpdateFixEncoding)
-    ON_COMMAND(ID_FILE_COPYSCRIPTTOCLIPBOARD, &CPlayerDoc::OnCopyScriptToClipboard)
-    ON_UPDATE_COMMAND_UI(ID_FILE_COPYSCRIPTTOCLIPBOARD, &CPlayerDoc::OnUpdateCopyScriptToClipboard)
+    ON_COMMAND(ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT,
+               &CPlayerDoc::OnConvertVideosIntoCompatibleFormat)
+    ON_UPDATE_COMMAND_UI(ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT,
+                         &CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat)
     END_MESSAGE_MAP()
 
 
@@ -1398,95 +1487,141 @@ void CPlayerDoc::OnUpdateFixEncoding(CCmdUI* pCmdUI)
    pCmdUI->SetCheck(m_bFixEncoding); 
 }
 
-void CPlayerDoc::OnCopyScriptToClipboard()
+void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
 {
-    std::vector<CString> videoFiles;
-    if (m_autoPlay)
+    const auto scriptTempPath = getScriptTempPath();
+
     {
-        if (!m_looping)
+        const auto scriptFileHandle = lockFile(scriptTempPath);
+        if (!scriptFileHandle)
+        {
+            return;
+        }
+
+        std::unique_ptr<std::remove_pointer_t<HANDLE>, decltype(&::CloseHandle)> scriptFileGuard(
+            scriptFileHandle, ::CloseHandle);
+
+        // choose output folder using CFolderPickerDialog
+        CString outputFolder;
+        {
+            CFolderPickerDialog dlg;
+            if (dlg.DoModal() != IDOK)
+            {
+                return;
+            }
+
+            outputFolder = dlg.GetPathName();
+        }
+
+        ensureSeparator(outputFolder);
+
+        std::vector<CString> videoFiles;
+        if (m_autoPlay)
+        {
+            if (!m_looping)
+            {
+                videoFiles.push_back(GetPathName());
+            }
+
+            HandleFilesSequence(
+                GetPathName(), m_looping,
+                [&videoFiles](const CString& path)
+                {
+                    videoFiles.push_back(path);
+                    return false;
+                },
+                m_looping);
+        }
+        else
         {
             videoFiles.push_back(GetPathName());
         }
 
-        HandleFilesSequence(
-            GetPathName(), 
-            m_looping,
-            [&videoFiles](const CString& path)
-            {
-                videoFiles.push_back(path);
-                return false;
-            },
-            m_looping);
-    }
-    else
-    {
-        videoFiles.push_back(GetPathName());
-    }
+        const bool isVideoCompatible = m_frameDecoder->isVideoCompatible();
 
-    const bool isVideoCompatible = m_frameDecoder->isVideoCompatible();
-
-    CString strText;
-
-    for (const auto& source : videoFiles)
-    {
-        CString command = _T("ffmpeg.exe -i \"") + source + _T('"');
-
-        std::basic_string<TCHAR> separateFilePart;
-        if (m_separateFileDiff)
+        CString ffmpegPath;
         {
-            auto s = m_separateFileDiff->patch(
-                {source.GetString(), source.GetString() + source.GetLength()});
-            if (!s.empty())
+            TCHAR pszPath[MAX_PATH] = {0};
+            GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
+            PathRemoveFileSpec(pszPath);
+            const TCHAR ffmpegExeName[] = _T("ffmpeg.exe");
+            PathAppend(pszPath, ffmpegExeName);
+            ffmpegPath = (_taccess(pszPath, 04) == 0) 
+                ? (_T('"') + CString(pszPath) + _T('"')) : ffmpegExeName;
+        }
+
+        CString strText(_T("chcp 65001\r\n"));
+
+        for (const auto& source : videoFiles)
+        {
+            CString command = ffmpegPath + _T(" -i \"") + source + _T('"');
+
+            std::basic_string<TCHAR> separateFilePart;
+            if (m_separateFileDiff)
             {
-                separateFilePart = _T(" -i \"") + std::move(s) + _T("\" -map 0:v:0 -map 1:a:0");
+                auto s = m_separateFileDiff->patch(
+                    {source.GetString(), source.GetString() + source.GetLength()});
+                if (!s.empty())
+                {
+                    separateFilePart =
+                        _T(" -i \"") + std::move(s) + _T("\" -map 0:v:0 -map 1:a:0");
+                }
+            }
+
+            if (separateFilePart.empty())
+            {
+                command += _T(" -map 0:v? -map 0:a?");
+            }
+            else
+            {
+                command += separateFilePart.c_str();
+            }
+
+            command += _T(" -map 0:s?");
+
+            command += isVideoCompatible ? _T(" -c:v copy")
+                                         : _T(" -c:v libx264 -crf 25 -pix_fmt yuv420p");
+            command += _T(" -c:a aac -ac 2 -c:s copy -preset superfast \"");
+            command += outputFolder;
+            command += ::PathFindFileName(source);
+            command += _T("\"\r\n");
+
+            strText += command;
+        }
+
+        if (m_subtitlesFileDiff)
+        {
+            for (const auto& source : videoFiles)
+            {
+                const auto s = m_subtitlesFileDiff->patch(
+                    {source.GetString(), source.GetString() + source.GetLength()});
+                if (s.empty())
+                    continue;
+
+                const auto audioExt = ::PathFindExtension(s.c_str());
+
+                const auto fileNameWithExt = ::PathFindFileName(source);
+                std::basic_string<TCHAR> fileName{fileNameWithExt,
+                                                  ::PathFindExtension(fileNameWithExt)};
+
+                auto command =
+                    _T("copy \"") + s + _T("\" \"") + fileName + audioExt + _T("\"\r\n");
+                strText += command.c_str();
             }
         }
 
-        if (separateFilePart.empty())
-        {
-            command += _T(" -map 0:v? -map 0:a?");
-        }
-        else
-        {
-            command += separateFilePart.c_str();
-        }
-
-        command += _T(" -map 0:s?");
-
-        command += isVideoCompatible ? _T(" -c:v copy") : _T(" -c:v libx264 -crf 25 -pix_fmt yuv420p");
-        command += _T(" -c:a aac -ac 2 -c:s copy -preset superfast \"");
-        command += ::PathFindFileName(source);
-        command += _T("\"\n");
-
-        strText += command;
+        CW2A bufA(strText, CP_UTF8);
+        writeFile(scriptFileHandle, bufA, strlen(bufA));
     }
 
-    if (m_subtitlesFileDiff)
-    {
-        for (const auto& source : videoFiles)
-        {
-            const auto s = m_subtitlesFileDiff->patch(
-                {source.GetString(), source.GetString() + source.GetLength()});
-            if (s.empty())
-                continue;
-
-            const auto audioExt = ::PathFindExtension(s.c_str());
-
-            const auto fileNameWithExt = ::PathFindFileName(source);
-            std::basic_string<TCHAR> fileName{fileNameWithExt,
-                                              ::PathFindExtension(fileNameWithExt)};
-
-            auto command = _T("copy \"") + s + _T("\" \"") + fileName + audioExt + _T("\"\n");
-            strText += command.c_str();
-        }
-    }
-
-    CopyTextToClipboard(strText);
+    // Try to execute the file with the "open" verb
+    HINSTANCE hResult =
+        ShellExecute(NULL, _T("open"), scriptTempPath, NULL, NULL, SW_MINIMIZE);
 }
 
 
 
-void CPlayerDoc::OnUpdateCopyScriptToClipboard(CCmdUI* pCmdUI)
+void CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(!GetPathName().IsEmpty()); 
 }

@@ -67,7 +67,7 @@
 #define ID_ORIENTATION_RORATE_180       32797
 #define ID_ORIENTATION_RORATE_270       32798
 #define ID_FIX_ENCODING                 32799
-#define ID_FILE_COPYSCRIPTTOCLIPBOARD   32800
+#define ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT  32800
 
 // Next default values for new objects
 // 

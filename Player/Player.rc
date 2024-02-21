@@ -143,7 +143,7 @@ BEGIN
         MENUITEM "Save Copy &As...",            ID_FILE_SAVE_COPY_AS
         MENUITEM SEPARATOR
         MENUITEM "Copy URL To Clipboard",       ID_COPY_URL_TO_CLIPBOARD
-        MENUITEM "Copy Script To Clipboard",    ID_FILE_COPYSCRIPTTOCLIPBOARD
+        MENUITEM "Convert Videos Into Compatible Format",    ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT
         MENUITEM SEPARATOR
         MENUITEM "Autoplay",                    ID_AUTOPLAY
         MENUITEM "Looping",                     ID_LOOPING
