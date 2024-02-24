@@ -94,7 +94,7 @@
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;ENABLE_OPENCL;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.11;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -126,7 +126,7 @@
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;ENABLE_OPENCL;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.11;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -159,7 +159,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;ENABLE_OPENCL;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.11;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -196,7 +196,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_HAS_AUTO_PTR_ETC=1;_HAS_FUNCTION_ASSIGN=1;_HAS_OLD_IOSTREAMS_MEMBERS=1;ENABLE_OPENCL;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\audio;..\video;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.9;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.10;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\python3.11;..\networking;..\Anime4KCPP\core\include;..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
