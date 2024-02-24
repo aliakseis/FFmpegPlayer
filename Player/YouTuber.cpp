@@ -411,7 +411,27 @@ YouTubeDealer::YouTubeDealer()
     using namespace boost::python;
 
     Py_Initialize();
+
     try {
+        PyObject* sysPath = PySys_GetObject("path");
+        object path(borrowed(sysPath));
+        const auto length = len(path);
+        std::vector<std::string> sysPathList;
+        for (int i = 0; i < length; ++i)
+        {
+            std::string v{extract<std::string>(path[i])};
+            v += "/site-packages";
+            if (_taccess(CA2T(v.c_str(), CP_UTF8), 0) == 0)
+            {
+                sysPathList.push_back(std::move(v));
+            }
+        }
+
+        for (const auto& v : sysPathList)
+        {
+            PyList_Insert(sysPath, 0, PyUnicode_FromString(v.c_str()));
+        }
+
         char script[4096];
         sprintf_s(script, SCRIPT_TEMPLATE, packagePath.c_str());
 
