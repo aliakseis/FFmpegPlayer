@@ -1627,10 +1627,16 @@ void CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat(CCmdUI* pCmdUI)
     if (GetPathName().IsEmpty())
     {
         pCmdUI->Enable(false);
+        return;
     }
-    else
+
+    const auto extension = PathFindExtension(GetPathName());
+    if (!_tcsicmp(extension, _T(".lst")) || !_tcsicmp(extension, _T(".url")))
     {
-        const auto scriptTempPath = getScriptTempPath();
-        pCmdUI->Enable(_taccess(scriptTempPath, 0) != 0 || _taccess(scriptTempPath, 6) == 0);
+        pCmdUI->Enable(false);
+        return;
     }
+
+    const auto scriptTempPath = getScriptTempPath();
+    pCmdUI->Enable(_taccess(scriptTempPath, 0) != 0 || _taccess(scriptTempPath, 6) == 0);
 }
