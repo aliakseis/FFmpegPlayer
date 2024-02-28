@@ -1593,24 +1593,24 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
 {
     const auto scriptTempPath = getScriptTempPath();
 
+    const auto scriptFileHandle = lockFile(scriptTempPath);
+    if (!scriptFileHandle)
     {
-        const auto scriptFileHandle = lockFile(scriptTempPath);
-        if (!scriptFileHandle)
-        {
-            return;
-        }
-        // choose output folder using CFolderPickerDialog
-
-        CFolderPickerDialog dlg;
-        if (dlg.DoModal() == IDOK)
-        {
-            auto script = generateConversionScript(dlg.GetPathName());
-            CT2A bufA(script, CP_UTF8);
-            writeFile(scriptFileHandle, bufA, strlen(bufA));
-        }
-
-        CloseHandle(scriptFileHandle);
+        return;
     }
+
+    CFolderPickerDialog dlg;
+    if (dlg.DoModal() != IDOK)
+    {
+        CloseHandle(scriptFileHandle);
+        return;
+    }
+
+    auto script = generateConversionScript(dlg.GetPathName());
+    CT2A bufA(script, CP_UTF8);
+    writeFile(scriptFileHandle, bufA, strlen(bufA));
+
+    CloseHandle(scriptFileHandle);
 
     // Try to execute the file with the "open" verb
     auto result = (int)ShellExecute(NULL, _T("open"), scriptTempPath, NULL, NULL, SW_MINIMIZE);
