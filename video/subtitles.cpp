@@ -139,7 +139,7 @@ AVCodecContext* MakeSubtitlesCodecContext(AVCodecParameters* codecpar)
     return codecContext;
 }
 
-std::string GetSubtitle(AVCodecContext* ctx, AVPacket& packet)
+std::string GetSubtitle(AVCodecContext* ctx, const AVPacket& packet)
 {
     AVSubtitle sub{};
 

@@ -215,43 +215,49 @@ bool FFmpegDecoder::dispatchPacket(int idx, AVPacket& packet)
     }
     else if (m_formatContexts[idx]->streams[packet.stream_index]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE)
     {
-        std::function<bool(double, double, const std::string&)> addIntervalCallback;
+        handleSubtitlePacket(idx, packet);
+    }
+
+    return false;
+}
+
+void FFmpegDecoder::handleSubtitlePacket(int idx, const AVPacket& packet)
+{
+    std::function<bool(double, double, const std::string&)> addIntervalCallback;
+    {
+        boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+        if (m_subtitleIdx == -1 || !m_addIntervalCallback)
+            return;
+
+        const auto& subtitleItem = m_subtitleItems.at(m_subtitleIdx);
+        if (subtitleItem.contextIdx != idx || subtitleItem.streamIdx != packet.stream_index)
+            return;
+
+        addIntervalCallback = m_addIntervalCallback;
+
+        if (m_subtitlesCodecContext == nullptr)
         {
-            boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
-            if (m_subtitleIdx == -1 || !m_addIntervalCallback)
-                return false;
-
-            const auto& subtitleItem = m_subtitleItems.at(m_subtitleIdx);
-            if (subtitleItem.contextIdx != idx || subtitleItem.streamIdx != packet.stream_index)
-                return false;
-
-            addIntervalCallback = m_addIntervalCallback;
-
+            m_subtitlesCodecContext = MakeSubtitlesCodecContext(
+                m_formatContexts[idx]->streams[packet.stream_index]->codecpar);
             if (m_subtitlesCodecContext == nullptr)
             {
-                m_subtitlesCodecContext = MakeSubtitlesCodecContext(m_formatContexts[idx]->streams[packet.stream_index]->codecpar);
-                if (m_subtitlesCodecContext == nullptr)
-                {
-                    return false;
-                }
-            }
-        }
-
-        std::string text = GetSubtitle(m_subtitlesCodecContext, packet);
-        if (!text.empty())
-        {
-            if (!addIntervalCallback(packet.pts / 1000., (packet.pts + packet.duration) / 1000., text))
-            {
-                boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
-
-                m_subtitleIdx = -1;
-                m_addIntervalCallback = {};
-                avcodec_free_context(&m_subtitlesCodecContext);
+                return;
             }
         }
     }
 
-    return false;
+    std::string text = GetSubtitle(m_subtitlesCodecContext, packet);
+    if (!text.empty())
+    {
+        if (!addIntervalCallback(packet.pts / 1000., (packet.pts + packet.duration) / 1000., text))
+        {
+            boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+
+            m_subtitleIdx = -1;
+            m_addIntervalCallback = {};
+            avcodec_free_context(&m_subtitlesCodecContext);
+        }
+    }
 }
 
 void FFmpegDecoder::flush(int idx)

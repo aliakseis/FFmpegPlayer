@@ -7,4 +7,4 @@ extern "C" {
 #include <string>
 
 AVCodecContext* MakeSubtitlesCodecContext(AVCodecParameters* codecpar);
-std::string GetSubtitle(AVCodecContext* ctx, AVPacket& packet);
+std::string GetSubtitle(AVCodecContext* ctx, const AVPacket& packet);
