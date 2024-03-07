@@ -547,7 +547,7 @@ void DrawSubtitleText(LPDIRECT3DDEVICE9 pd3dDevice, int width, int height, const
 
     for (int pass = 0; pass < 2; ++pass)
     {
-        const FLOAT sx = (width - boundingBox.Width) / 2 + !pass;
+        const FLOAT sx = (width - boundingBox.Width + 1) / 2 + !pass;
         const FLOAT sy = height - boundingBox.Height - fontSize / 3 + !pass;
 
         const DWORD dwColor = pass? D3DCOLOR_XRGB(255, 255, 255) : D3DCOLOR_XRGB(0, 0, 0);
