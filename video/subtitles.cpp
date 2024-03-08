@@ -146,7 +146,7 @@ std::string GetSubtitle(AVCodecContext* ctx, const AVPacket& packet)
     auto subtitleGuard = MakeGuard(&sub, avsubtitle_free);
 
     int got_subtitle = 0;
-    int ret = avcodec_decode_subtitle2(ctx, &sub, &got_subtitle, &packet);
+    int ret = avcodec_decode_subtitle2(ctx, &sub, &got_subtitle, const_cast<AVPacket*>(&packet));
     if (ret >= 0 && got_subtitle)
     {
         std::string text;
