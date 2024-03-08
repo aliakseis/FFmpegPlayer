@@ -94,7 +94,7 @@ std::string fromAss(const char* ass) {
         }
     }
     ret++;
-    int p = strcspn(b.c_str(), "\r\n");
+    const auto p = strcspn(b.c_str(), "\r\n");
     if (p == b.size()) //not found
         return ret;
 
