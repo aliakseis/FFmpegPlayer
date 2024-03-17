@@ -316,11 +316,11 @@ public:
         {
             Sequence s = m_reversedDiff.patch(SafePathString(reversed(seq)));
             std::reverse(s.begin(), s.begin() + _tcslen(s.c_str()));
-            if (!s.empty() && s[0] != 0 && 0 == _taccess(s.c_str(), 04)) {
-                return s;
+            if (s.empty() || s[0] == 0 || 0 != _taccess(s.c_str(), 04)) {
+                s = m_diff.patch(SafePathString(seq));
             }
-
-            return m_diff.patch(SafePathString(seq));
+            s.resize(_tcslen(s.c_str()));
+            return s;
         }
 
         return (m_parent_path / std::filesystem::path(seq).stem()) += m_extension;
@@ -1638,5 +1638,13 @@ void CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat(CCmdUI* pCmdUI)
     }
 
     const auto scriptTempPath = getScriptTempPath();
-    pCmdUI->Enable(_taccess(scriptTempPath, 0) != 0 || _taccess(scriptTempPath, 6) == 0);
+    if (const auto scriptFileHandle = lockFile(scriptTempPath))
+    {
+        CloseHandle(scriptFileHandle);
+        pCmdUI->Enable(true);
+    }
+    else
+    {
+        pCmdUI->Enable(false);
+    }
 }
