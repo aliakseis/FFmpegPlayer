@@ -96,6 +96,9 @@
     <ClInclude Include="ByteStreamBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="StringDifference.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Player.cpp">
@@ -150,6 +153,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ImageUpscale.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StringDifference.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

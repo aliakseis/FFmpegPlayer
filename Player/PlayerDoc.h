@@ -16,6 +16,8 @@
 
 #include "decoderinterface.h"
 
+class StringDifference;
+
 enum { UPDATE_HINT_CLOSING = 1 };
 
 class CPlayerDoc : public CDocument, public FrameDecoderListener
@@ -164,7 +166,6 @@ private:
     std::string m_originalUrl;
     std::string m_url;
 
-    class StringDifference;
     std::unique_ptr<StringDifference> m_separateFileDiff;
     std::unique_ptr<StringDifference> m_subtitlesFileDiff;
 

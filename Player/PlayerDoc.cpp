@@ -15,6 +15,7 @@
 #include "HandleFilesSequence.h"
 #include "AudioPitchDecorator.h"
 #include "OpenSubtitlesFile.h"
+#include "StringDifference.h"
 
 #include "DialogOpenURL.h"
 
@@ -29,9 +30,6 @@
 
 #include <boost/icl/interval_map.hpp>
 #include <boost/algorithm/string.hpp>
-
-// vcpkg install dtl
-#include <dtl/dtl.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -261,11 +259,6 @@ auto GetAddToSubtitlesMapLambda(T& map)
     };
 }
 
-template <typename T> T reversed(const T& s)
-{
-    return { s.rbegin(), s.rend() };
-}
-
 CCriticalSection s_csSubtitles;
 
 } // namespace
@@ -277,55 +270,6 @@ public:
     bool m_unicodeSubtitles = false;
 };
 
-class CPlayerDoc::StringDifference
-{
-    typedef std::basic_string<TCHAR> Sequence;
-
-    dtl::Diff<TCHAR, std::basic_string<TCHAR>> m_diff, m_reversedDiff;
-    std::filesystem::path m_parent_path;
-    std::filesystem::path m_extension;
-
-    static auto SafePathString(std::basic_string<TCHAR> path)
-    {
-        enum { MAX_DIFF_SIZE = 2048 };
-        path.append(MAX_DIFF_SIZE, _T('\0'));
-        return path;
-    }
-
-public:
-    StringDifference(const Sequence& a, const Sequence& b)
-        : m_diff(a, b)
-        , m_reversedDiff(reversed(a), reversed(b))
-    {
-        std::filesystem::path path_b(b);
-        if (path_b.has_parent_path() && path_b.has_stem() && path_b.stem() == std::filesystem::path(a).stem())
-        {
-            m_parent_path = path_b.parent_path();
-            m_extension = path_b.extension();
-        }
-        else
-        {
-            m_diff.compose();
-            m_reversedDiff.compose();
-        }
-    }
-
-    Sequence patch(const Sequence& seq) const
-    {
-        if (m_parent_path.empty())
-        {
-            Sequence s = m_reversedDiff.patch(SafePathString(reversed(seq)));
-            std::reverse(s.begin(), s.begin() + _tcslen(s.c_str()));
-            if (s.empty() || s[0] == 0 || 0 != _taccess(s.c_str(), 04)) {
-                s = m_diff.patch(SafePathString(seq));
-            }
-            s.resize(_tcslen(s.c_str()));
-            return s;
-        }
-
-        return (m_parent_path / std::filesystem::path(seq).stem()) += m_extension;
-    }
-};
 
 // CPlayerDoc
 
