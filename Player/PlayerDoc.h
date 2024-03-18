@@ -185,6 +185,8 @@ private:
 
     bool m_bFixEncoding = false;
 
+    HANDLE m_hConversionProcess = NULL;
+
 public:
     afx_msg void OnMaximalresolution();
     afx_msg void OnUpdateMaximalresolution(CCmdUI *pCmdUI);

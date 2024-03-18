@@ -337,6 +337,11 @@ CPlayerDoc::~CPlayerDoc()
 
     ASSERT(rangeStartTimeChanged.empty());
     ASSERT(rangeEndTimeChanged.empty());
+
+    if (m_hConversionProcess != NULL)
+    {
+        CloseHandle(m_hConversionProcess);
+    }
 }
 
 BOOL CPlayerDoc::OnNewDocument()
@@ -858,6 +863,12 @@ void CPlayerDoc::OnIdle()
     {
         m_onEndOfStream = false;
         MoveToNextFile();
+    }
+
+    if (m_hConversionProcess != NULL && WaitForSingleObject(m_hConversionProcess, 0) == WAIT_OBJECT_0)
+    {
+        CloseHandle(m_hConversionProcess);
+        m_hConversionProcess = NULL;
     }
 }
 
@@ -1535,6 +1546,19 @@ void CPlayerDoc::OnUpdateFixEncoding(CCmdUI* pCmdUI)
 
 void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
 {
+    if (m_hConversionProcess != NULL)
+    {
+        if (WaitForSingleObject(m_hConversionProcess, 0) == WAIT_OBJECT_0)
+        {
+            CloseHandle(m_hConversionProcess);
+            m_hConversionProcess = NULL;
+        }
+        else
+        {
+            return;
+        }
+    }
+
     const auto scriptTempPath = getScriptTempPath();
 
     const auto scriptFileHandle = lockFile(scriptTempPath);
@@ -1557,10 +1581,23 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
     CloseHandle(scriptFileHandle);
 
     // Try to execute the file with the "open" verb
-    auto result = (int)ShellExecute(NULL, _T("open"), scriptTempPath, NULL, NULL, SW_MINIMIZE);
-    if (result <= 32)
+    SHELLEXECUTEINFO ShExecInfo {};
+    ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+    ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+    ShExecInfo.hwnd = NULL;
+    ShExecInfo.lpVerb = _T("open");
+    ShExecInfo.lpFile = scriptTempPath;
+    ShExecInfo.lpParameters = NULL;
+    ShExecInfo.lpDirectory = NULL;
+    ShExecInfo.nShow = SW_MINIMIZE;
+    ShExecInfo.hInstApp = NULL;
+    if (!ShellExecuteEx(&ShExecInfo))
     {
-        TRACE("ShellExecute failed with error code %d.\n", result);
+        TRACE("ShellExecuteEx failed with error code %d.\n", GetLastError());
+    }
+    else
+    {
+        m_hConversionProcess = ShExecInfo.hProcess;
     }
 }
 
@@ -1579,6 +1616,20 @@ void CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat(CCmdUI* pCmdUI)
     {
         pCmdUI->Enable(false);
         return;
+    }
+
+    if (m_hConversionProcess != NULL)
+    {
+        if (WaitForSingleObject(m_hConversionProcess, 0) == WAIT_OBJECT_0)
+        {
+            CloseHandle(m_hConversionProcess);
+            m_hConversionProcess = NULL;
+        }
+        else
+        {
+            pCmdUI->Enable(false);
+            return;
+        }
     }
 
     const auto scriptTempPath = getScriptTempPath();
