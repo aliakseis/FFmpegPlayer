@@ -78,7 +78,9 @@ StringDifference::Sequence StringDifference::patch(const Sequence& seq) const
         s = m_diff.patch(SafePathString(seq));
         if (s.empty() || s[0] == 0 || 0 != _taccess(s.c_str(), 04))
         {
-            return LastResort(seq);
+            auto closest = LastResort(seq);
+            if (!closest.empty())
+                return closest;
         }
     }
     s.resize(_tcslen(s.c_str()));
