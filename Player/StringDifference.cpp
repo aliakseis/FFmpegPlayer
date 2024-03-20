@@ -90,35 +90,43 @@ StringDifference::Sequence StringDifference::patch(const Sequence& seq) const
 StringDifference::Sequence StringDifference::LastResort(
     const StringDifference::Sequence& seq) const
 {
-    const auto extension = m_path_b.extension();
-    const Sequence name = std::filesystem::path(seq).stem();
-    int minDistance = INT_MAX;
-    std::filesystem::path result_name;
-    for (auto const& dir_entry : std::filesystem::directory_iterator{m_path_b.parent_path()})
+    try
     {
-        if (dir_entry.is_directory())
-            continue;
-        auto path = dir_entry.path();
-        if (_tcsicmp(path.extension().c_str(), extension.c_str()) != 0)
-            continue;
-        const auto stem = path.stem();
-        const int dist = levenshteinDistance(name, static_cast<const Sequence&>(stem));
-        if (dist < minDistance)
+        const auto extension = m_path_b.extension();
+        const Sequence name = std::filesystem::path(seq).stem();
+        int minDistance = INT_MAX;
+        std::filesystem::path result_name;
+        for (auto const& dir_entry : std::filesystem::directory_iterator{m_path_b.parent_path()})
         {
-            minDistance = dist;
-            result_name = stem;
+            if (dir_entry.is_directory())
+                continue;
+            auto path = dir_entry.path();
+            if (_tcsicmp(path.extension().c_str(), extension.c_str()) != 0)
+                continue;
+            const auto stem = path.stem();
+            const int dist = levenshteinDistance(name, static_cast<const Sequence&>(stem));
+            if (dist < minDistance)
+            {
+                minDistance = dist;
+                result_name = stem;
+            }
+            else if (dist == minDistance)
+            {
+                result_name.clear();
+            }
         }
-        else if (dist == minDistance)
+        if (!result_name.empty())
         {
-            result_name.clear();
+            auto result = (m_path_b.parent_path() / result_name) += extension;
+            if (equivalent(m_path_b, result))
+                return {};
+            return result;
         }
+        return {};
     }
-    if (!result_name.empty())
+    catch (const std::exception& ex)
     {
-        auto result = (m_path_b.parent_path() / result_name) += extension;
-        if (equivalent(m_path_b, result))
-            return {};
-        return result;
+        TRACE("Exception in StringDifference: %s: %s\n", typeid(ex).name(), ex.what());
+        return {};
     }
-    return {};
 }
