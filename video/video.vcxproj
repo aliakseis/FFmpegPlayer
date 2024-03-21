@@ -136,6 +136,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="audioparserunnable.cpp" />
+    <ClCompile Include="decoderiocontext.cpp" />
     <ClCompile Include="displayrunnable.cpp" />
     <ClCompile Include="ffmpegdecoder.cpp" />
     <ClCompile Include="ffmpeg_dxva2.cpp" />
@@ -145,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audioplayer.h" />
+    <ClInclude Include="decoderiocontext.h" />
     <ClInclude Include="ffmpegdecoder.h" />
     <ClInclude Include="ffmpeg_dxva2.h" />
     <ClInclude Include="fqueue.h" />

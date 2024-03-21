@@ -82,6 +82,9 @@ struct RendezVousData
     boost::condition_variable cond;
 };
 
+class DecoderIOContext;
+
+
 // Inspired by http://dranger.com/ffmpeg/ffmpeg.html
 
 class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
@@ -147,7 +150,6 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     void setImageConversionFunc(ImageConversionFunc func) override;
 
    private:
-    class IOContext;
     struct VideoParseContext;
 
     // Threads
@@ -312,7 +314,7 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
 
     std::vector<int> m_audioIndices;
 
-    std::unique_ptr<IOContext> m_ioCtx;
+    std::unique_ptr<DecoderIOContext> m_ioCtx;
 
     boost::atomic<boost::chrono::high_resolution_clock::duration> m_referenceTime;
 

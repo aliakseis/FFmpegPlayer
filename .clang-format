@@ -5,3 +5,5 @@ BreakBeforeBraces: Allman
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 ColumnLimit: 99
+IndentAccessModifiers: false
+AccessModifierOffset: -4

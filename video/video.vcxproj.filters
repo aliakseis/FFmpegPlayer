@@ -36,6 +36,9 @@
     <ClCompile Include="subtitles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="decoderiocontext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audioplayer.h">
@@ -66,6 +69,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="subtitles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="decoderiocontext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
