@@ -208,4 +208,6 @@ public:
     afx_msg void OnUpdateFixEncoding(CCmdUI* pCmdUI);
     afx_msg void OnConvertVideosIntoCompatibleFormat();
     afx_msg void OnUpdateConvertVideosIntoCompatibleFormat(CCmdUI* pCmdUI);
+    afx_msg void OnOpenAudioFile();
+    afx_msg void OnUpdateOpenAudioFile(CCmdUI* pCmdUI);
 };

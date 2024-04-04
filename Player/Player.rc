@@ -185,6 +185,7 @@ BEGIN
             MENUITEM "Upend",                       ID_ORIENTATION_UPEND
         END
         MENUITEM SEPARATOR
+        MENUITEM "Open Audio File...",      ID_OPEN_AUDIO_FILE
         MENUITEM "Open Subtitles File...",      ID_OPENSUBTITLESFILE
         POPUP "Open Subtitles"
         BEGIN

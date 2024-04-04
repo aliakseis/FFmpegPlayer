@@ -68,13 +68,14 @@
 #define ID_ORIENTATION_RORATE_270       32798
 #define ID_FIX_ENCODING                 32799
 #define ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT  32800
+#define ID_OPEN_AUDIO_FILE              32801
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
-#define _APS_NEXT_COMMAND_VALUE         32801
+#define _APS_NEXT_COMMAND_VALUE         32802
 #define _APS_NEXT_CONTROL_VALUE         1021
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

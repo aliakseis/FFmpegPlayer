@@ -312,6 +312,8 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
                &CPlayerDoc::OnConvertVideosIntoCompatibleFormat)
     ON_UPDATE_COMMAND_UI(ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT,
                          &CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat)
+    ON_COMMAND(ID_OPEN_AUDIO_FILE, &CPlayerDoc::OnOpenAudioFile)
+    ON_UPDATE_COMMAND_UI(ID_OPEN_AUDIO_FILE, &CPlayerDoc::OnUpdateOpenAudioFile)
     END_MESSAGE_MAP()
 
 
@@ -726,7 +728,8 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= false*/)
 {
-    reset();
+    if (!openSeparateFile)
+        reset();
 
     CString currentDirectory;
     if (auto fileName = PathFindFileName(lpszPathName))
@@ -782,6 +785,7 @@ bool CPlayerDoc::openDocument(LPCTSTR lpszPathName, bool openSeparateFile /*= fa
             {
                 return false;
             }
+            reset();
             mappedAudioFile = dlg.GetPathName();
             static_cast<CPlayerApp*>(AfxGetApp())->SetMappedAudioFile(lpszPathName, dlg.GetPathName());
         }
@@ -1605,7 +1609,7 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
 
 void CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat(CCmdUI* pCmdUI)
 {
-    if (GetPathName().IsEmpty())
+    if (GetPathName().IsEmpty() || !m_url.empty())
     {
         pCmdUI->Enable(false);
         return;
@@ -1642,4 +1646,27 @@ void CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat(CCmdUI* pCmdUI)
     {
         pCmdUI->Enable(false);
     }
+}
+
+void CPlayerDoc::OnOpenAudioFile()
+{
+    openDocument(GetPathName(), true);
+}
+
+void CPlayerDoc::OnUpdateOpenAudioFile(CCmdUI* pCmdUI)
+{
+    if (GetPathName().IsEmpty() || !m_url.empty())
+    {
+        pCmdUI->Enable(false);
+        return;
+    }
+
+    const auto extension = PathFindExtension(GetPathName());
+    if (!_tcsicmp(extension, _T(".lst")) || !_tcsicmp(extension, _T(".url")))
+    {
+        pCmdUI->Enable(false);
+        return;
+    }
+
+    pCmdUI->Enable(true);
 }
