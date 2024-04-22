@@ -1338,7 +1338,8 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
             std::basic_string<TCHAR> fileName{fileNameWithExt,
                                               ::PathFindExtension(fileNameWithExt)};
 
-            auto command = _T("copy \"") + s + _T("\" \"") + fileName + audioExt + _T("\"\r\n");
+            auto command =
+                _T("copy \"") + s + _T("\" \"") + static_cast<LPCTSTR>(outputFolder) + fileName + audioExt + _T("\"\r\n");
             strText += command.c_str();
         }
     }
