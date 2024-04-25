@@ -243,6 +243,28 @@ void ensureSeparator(CString& filePath)
     }
 }
 
+CString StrikeThrough(const CString& str, bool doIt)
+{
+    if (!doIt)
+        return str;
+
+    CString result;
+    // Iterate over each character in the original string
+    for (int i = 0; i < str.GetLength(); ++i)
+    {
+        // Append the current character
+        result += str[i];
+        // Append the Combining Long Stroke Overlay character
+        result += L'\u0336';
+    }
+    return result;
+}
+
+CString NoBreak(CString s)
+{
+    s.Replace(L' ', L'\u00A0');
+    return s;
+}
 
 std::unique_ptr<IAudioPlayer> GetAudioPlayer()
 {
@@ -716,7 +738,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         strParams += _T(" -y \"");
         strParams += lpszPathName;
         strParams += _T('"');
-        TRACE(_T("FFmpeg parameters generated: %s\n"), strParams);
+        TRACE(_T("FFmpeg parameters generated: %s\n"), static_cast<LPCTSTR>(strParams));
     }
     TCHAR pszPath[MAX_PATH] = { 0 };
     GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
@@ -1245,8 +1267,7 @@ float CPlayerDoc::getVideoSpeed() const
 }
 
 CString CPlayerDoc::generateConversionScript(CString outputFolder) const
-{ 
-
+{
     ensureSeparator(outputFolder);
 
     std::vector<CString> videoFiles;
@@ -1573,7 +1594,14 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
     }
 
     CFolderPickerDialog dlg;
-    if (dlg.DoModal() != IDOK)
+    if (IDOK != dlg.DoModal()
+        || IDOK != AfxMessageBox(_T("Destination: ") +
+            NoBreak(dlg.GetPathName()) + _T("\nOptions:") + 
+            StrikeThrough(_T(" Multiple,"), !m_autoPlay) +
+            (m_autoPlay ? StrikeThrough(_T(" Preceding,"), !m_looping) : _T("")) +
+            StrikeThrough(_T(" Separate Audio Files,"), !m_separateFileDiff) +
+            StrikeThrough(_T(" Separate Subtitles"), !m_subtitlesFileDiff) + _T("\n\nConvert files?"),
+                  MB_OKCANCEL | MB_ICONQUESTION))
     {
         CloseHandle(scriptFileHandle);
         return;
