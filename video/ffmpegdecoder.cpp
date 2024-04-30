@@ -1069,6 +1069,11 @@ std::pair<bool, bool> FFmpegDecoder::isVideoAudioCompatible() const
             return false;
         }
 
+        if (m_videoCodecContext->color_trc == AVCOL_TRC_BT709)
+        {
+            return false;
+        }
+
         if (m_videoCodec->id != AV_CODEC_ID_H264 && m_videoCodec->id != AV_CODEC_ID_MPEG2VIDEO &&
             m_videoCodec->id != AV_CODEC_ID_MPEG4)
         {
@@ -1091,9 +1096,11 @@ std::pair<bool, bool> FFmpegDecoder::isVideoAudioCompatible() const
         return true;
     };
 
-    return {videoLam(), 
-        m_audioCodec &&
-                (m_audioCodec->id == AV_CODEC_ID_MP3 || m_audioCodec->id == AV_CODEC_ID_AAC) &&
+    return {videoLam(), m_audioCodec && m_audioCodecContext &&
+                            (m_audioCodec->id == AV_CODEC_ID_MP3 ||
+                             m_audioCodec->id == AV_CODEC_ID_AAC &&
+                                 (m_audioCodecContext->profile == FF_PROFILE_AAC_LOW ||
+                                  m_audioCodecContext->profile == FF_PROFILE_AAC_HE)) &&
                             m_audioCurrentPref.channels == 2};
 }
 
