@@ -14,6 +14,15 @@ namespace {
 
 #ifdef _MSC_VER
 
+#define SUBSAMPLE(v, a, s) (v < 0) ? (-((-v + a) >> s)) : ((v + a) >> s)
+
+inline uint8_t clamp255(uint32_t v) {
+    const uint8_t noOverflowCandidate = v;
+    return (noOverflowCandidate == v) ? noOverflowCandidate : 255;
+}
+
+#define C16TO8(v, scale) clamp255(((v) * (scale)) >> 16)
+
 // Use scale to convert lsb formats to msb, depending how many bits there are:
 // 32768 = 9 bits
 // 16384 = 10 bits
@@ -64,6 +73,26 @@ void Convert16To8Row_SSSE3(const __m128i* src_y,
         a0 = _mm_packus_epi16(a0, a1);
 
         *dst_y++ = a0;
+    }
+}
+
+void ScaleRowDown2_16To8_C(const uint16_t* src_ptr,
+    ptrdiff_t src_stride,
+    uint8_t* dst,
+    int dst_width,
+    int scale) {
+    int x;
+    (void)src_stride;
+    assert(scale >= 256);
+    assert(scale <= 32768);
+    for (x = 0; x < dst_width - 1; x += 2) {
+        dst[0] = C16TO8(src_ptr[1], scale);
+        dst[1] = C16TO8(src_ptr[3], scale);
+        dst += 2;
+        src_ptr += 4;
+    }
+    if (dst_width & 1) {
+        dst[0] = C16TO8(src_ptr[1], scale);
     }
 }
 
@@ -119,6 +148,26 @@ void Convert16To8Plane(const uint16_t* src_y,
   }
 }
 
+void ScalePlaneDown2_16To8(int dst_width,
+                        int dst_height,
+                        int src_stride,
+                        int dst_stride,
+                        const uint16_t* src_ptr,
+                        uint8_t* dst_ptr,
+                        int scale) {
+    int row_stride = src_stride * 2;
+    //if (!filtering) {
+        src_ptr += src_stride;  // Point to odd rows.
+        src_stride = 0;
+    //}
+
+    for (int y = 0; y < dst_height; ++y) {
+        ScaleRowDown2_16To8_C(src_ptr, src_stride, dst_ptr, dst_width, scale);
+        src_ptr += row_stride;
+        dst_ptr += dst_stride;
+    }
+}
+
 int I010ToI420(const uint16_t* src_y,
                int src_stride_y,
                const uint16_t* src_u,
@@ -162,6 +211,51 @@ int I010ToI420(const uint16_t* src_y,
   return 0;
 }
 
+int I410ToI420(const uint16_t* src_y,
+            int src_stride_y,
+            const uint16_t* src_u,
+            int src_stride_u,
+            const uint16_t* src_v,
+            int src_stride_v,
+            uint8_t* dst_y,
+            int dst_stride_y,
+            uint8_t* dst_u,
+            int dst_stride_u,
+            uint8_t* dst_v,
+            int dst_stride_v,
+            int width,
+            int height) {
+    const int depth = 10;
+    const int scale = 1 << (24 - depth);
+
+    if (width <= 0 || height == 0) {
+        return -1;
+    }
+    // Negative height means invert the image.
+    if (height < 0) {
+        height = -height;
+        src_y = src_y + (height - 1) * src_stride_y;
+        src_u = src_u + (height - 1) * src_stride_u;
+        src_v = src_v + (height - 1) * src_stride_v;
+        src_stride_y = -src_stride_y;
+        src_stride_u = -src_stride_u;
+        src_stride_v = -src_stride_v;
+    }
+
+    {
+        const int uv_width = SUBSAMPLE(width, 1, 1);
+        const int uv_height = SUBSAMPLE(height, 1, 1);
+
+        Convert16To8Plane(src_y, src_stride_y, dst_y, dst_stride_y, scale, width,
+            height);
+        ScalePlaneDown2_16To8(uv_width, uv_height, src_stride_u,
+            dst_stride_u, src_u, dst_u, scale);
+        ScalePlaneDown2_16To8(uv_width, uv_height, src_stride_v,
+            dst_stride_v, src_v, dst_v, scale);
+    }
+    return 0;
+}
+
 #endif
 
 bool frameToImage(
@@ -183,26 +277,47 @@ bool frameToImage(
         videoFrameData.realloc(m_pixelFormat, width, height);
 
 #ifdef _MSC_VER
-        if (m_videoFrame->format == AV_PIX_FMT_YUV420P10LE && m_pixelFormat == AV_PIX_FMT_YUV420P
+        if ((m_videoFrame->format == AV_PIX_FMT_YUV420P10LE || m_videoFrame->format == AV_PIX_FMT_YUV444P10LE) && m_pixelFormat == AV_PIX_FMT_YUV420P
             && !((intptr_t(m_videoFrame->data[0]) & 15) || (m_videoFrame->linesize[0] & 15)
             || (intptr_t(m_videoFrame->data[1]) & 15) || (m_videoFrame->linesize[1] & 15)
             || (intptr_t(m_videoFrame->data[2]) & 15) || (m_videoFrame->linesize[2] & 15)))
         {
-            I010ToI420(
-                (const uint16_t*)m_videoFrame->data[0],
-                m_videoFrame->linesize[0] / 2,
-                (const uint16_t*)m_videoFrame->data[1],
-                m_videoFrame->linesize[1] / 2,
-                (const uint16_t*)m_videoFrame->data[2],
-                m_videoFrame->linesize[2] / 2,
-                videoFrameData.m_image->data[0],
-                videoFrameData.m_image->linesize[0],
-                videoFrameData.m_image->data[1],
-                videoFrameData.m_image->linesize[1],
-                videoFrameData.m_image->data[2],
-                videoFrameData.m_image->linesize[2],
-                width, height
+            if (m_videoFrame->format == AV_PIX_FMT_YUV420P10LE)
+            {
+                I010ToI420(
+                    (const uint16_t*)m_videoFrame->data[0],
+                    m_videoFrame->linesize[0] / 2,
+                    (const uint16_t*)m_videoFrame->data[1],
+                    m_videoFrame->linesize[1] / 2,
+                    (const uint16_t*)m_videoFrame->data[2],
+                    m_videoFrame->linesize[2] / 2,
+                    videoFrameData.m_image->data[0],
+                    videoFrameData.m_image->linesize[0],
+                    videoFrameData.m_image->data[1],
+                    videoFrameData.m_image->linesize[1],
+                    videoFrameData.m_image->data[2],
+                    videoFrameData.m_image->linesize[2],
+                    width, height
                 );
+            }
+            else
+            {
+                I410ToI420(
+                    (const uint16_t*)m_videoFrame->data[0],
+                    m_videoFrame->linesize[0] / 2,
+                    (const uint16_t*)m_videoFrame->data[1],
+                    m_videoFrame->linesize[1] / 2,
+                    (const uint16_t*)m_videoFrame->data[2],
+                    m_videoFrame->linesize[2] / 2,
+                    videoFrameData.m_image->data[0],
+                    videoFrameData.m_image->linesize[0],
+                    videoFrameData.m_image->data[1],
+                    videoFrameData.m_image->linesize[1],
+                    videoFrameData.m_image->data[2],
+                    videoFrameData.m_image->linesize[2],
+                    width, height
+                );
+            }
         }
         else
 #endif
