@@ -260,37 +260,37 @@ int I410ToI420(const uint16_t* src_y,
 
 bool frameToImage(
     VideoFrame& videoFrameData,
-    AVFramePtr& m_videoFrame,
-    SwsContext*& m_imageCovertContext,
-    AVPixelFormat m_pixelFormat)
+    AVFramePtr& videoFrame,
+    SwsContext*& imageCovertContext,
+    AVPixelFormat pixelFormat)
 {
-    if (m_videoFrame->format == m_pixelFormat
-        || m_videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
+    if (videoFrame->format == pixelFormat
+        || videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
     {
-        std::swap(m_videoFrame, videoFrameData.m_image);
+        std::swap(videoFrame, videoFrameData.m_image);
     }
     else
     {
-        const int width = m_videoFrame->width;
-        const int height = m_videoFrame->height;
+        const int width = videoFrame->width;
+        const int height = videoFrame->height;
 
-        videoFrameData.realloc(m_pixelFormat, width, height);
+        videoFrameData.realloc(pixelFormat, width, height);
 
 #ifdef _MSC_VER
-        if ((m_videoFrame->format == AV_PIX_FMT_YUV420P10LE || m_videoFrame->format == AV_PIX_FMT_YUV444P10LE) && m_pixelFormat == AV_PIX_FMT_YUV420P
-            && !((intptr_t(m_videoFrame->data[0]) & 15) || (m_videoFrame->linesize[0] & 15)
-            || (intptr_t(m_videoFrame->data[1]) & 15) || (m_videoFrame->linesize[1] & 15)
-            || (intptr_t(m_videoFrame->data[2]) & 15) || (m_videoFrame->linesize[2] & 15)))
+        if ((videoFrame->format == AV_PIX_FMT_YUV420P10LE || videoFrame->format == AV_PIX_FMT_YUV444P10LE) && pixelFormat == AV_PIX_FMT_YUV420P
+            && !((intptr_t(videoFrame->data[0]) & 15) || (videoFrame->linesize[0] & 15)
+            || (intptr_t(videoFrame->data[1]) & 15) || (videoFrame->linesize[1] & 15)
+            || (intptr_t(videoFrame->data[2]) & 15) || (videoFrame->linesize[2] & 15)))
         {
-            if (m_videoFrame->format == AV_PIX_FMT_YUV420P10LE)
+            if (videoFrame->format == AV_PIX_FMT_YUV420P10LE)
             {
                 I010ToI420(
-                    (const uint16_t*)m_videoFrame->data[0],
-                    m_videoFrame->linesize[0] / 2,
-                    (const uint16_t*)m_videoFrame->data[1],
-                    m_videoFrame->linesize[1] / 2,
-                    (const uint16_t*)m_videoFrame->data[2],
-                    m_videoFrame->linesize[2] / 2,
+                    (const uint16_t*)videoFrame->data[0],
+                    videoFrame->linesize[0] / 2,
+                    (const uint16_t*)videoFrame->data[1],
+                    videoFrame->linesize[1] / 2,
+                    (const uint16_t*)videoFrame->data[2],
+                    videoFrame->linesize[2] / 2,
                     videoFrameData.m_image->data[0],
                     videoFrameData.m_image->linesize[0],
                     videoFrameData.m_image->data[1],
@@ -303,12 +303,12 @@ bool frameToImage(
             else
             {
                 I410ToI420(
-                    (const uint16_t*)m_videoFrame->data[0],
-                    m_videoFrame->linesize[0] / 2,
-                    (const uint16_t*)m_videoFrame->data[1],
-                    m_videoFrame->linesize[1] / 2,
-                    (const uint16_t*)m_videoFrame->data[2],
-                    m_videoFrame->linesize[2] / 2,
+                    (const uint16_t*)videoFrame->data[0],
+                    videoFrame->linesize[0] / 2,
+                    (const uint16_t*)videoFrame->data[1],
+                    videoFrame->linesize[1] / 2,
+                    (const uint16_t*)videoFrame->data[2],
+                    videoFrame->linesize[2] / 2,
                     videoFrameData.m_image->data[0],
                     videoFrameData.m_image->linesize[0],
                     videoFrameData.m_image->data[1],
@@ -323,21 +323,21 @@ bool frameToImage(
 #endif
         {
             // Prepare image conversion
-            m_imageCovertContext =
-                sws_getCachedContext(m_imageCovertContext, m_videoFrame->width, m_videoFrame->height,
-                    static_cast<AVPixelFormat>(m_videoFrame->format), width, height, m_pixelFormat,
+            imageCovertContext =
+                sws_getCachedContext(imageCovertContext, videoFrame->width, videoFrame->height,
+                    static_cast<AVPixelFormat>(videoFrame->format), width, height, pixelFormat,
                     0, nullptr, nullptr, nullptr);
 
-            assert(m_imageCovertContext != nullptr);
+            assert(imageCovertContext != nullptr);
 
-            if (m_imageCovertContext == nullptr)
+            if (imageCovertContext == nullptr)
             {
                 return false;
             }
 
             // Doing conversion
-            if (sws_scale(m_imageCovertContext, m_videoFrame->data, m_videoFrame->linesize, 0,
-                m_videoFrame->height, videoFrameData.m_image->data, videoFrameData.m_image->linesize) <= 0)
+            if (sws_scale(imageCovertContext, videoFrame->data, videoFrame->linesize, 0,
+                videoFrame->height, videoFrameData.m_image->data, videoFrameData.m_image->linesize) <= 0)
             {
                 assert(false && "sws_scale failed");
                 BOOST_LOG_TRIVIAL(error) << "sws_scale failed";
@@ -345,7 +345,7 @@ bool frameToImage(
             }
         }
 
-        videoFrameData.m_image->sample_aspect_ratio = m_videoFrame->sample_aspect_ratio;
+        videoFrameData.m_image->sample_aspect_ratio = videoFrame->sample_aspect_ratio;
     }
 
     return true;
