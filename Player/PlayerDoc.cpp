@@ -1595,13 +1595,13 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
 
     CFolderPickerDialog dlg;
     if (IDOK != dlg.DoModal()
-        || IDOK != AfxMessageBox(_T("Destination: ") +
+        || IDYES != AfxMessageBox(_T("Destination: ") +
             NoBreak(dlg.GetPathName()) + _T("\nOptions:") + 
             StrikeThrough(_T(" Multiple,"), !m_autoPlay) +
             (m_autoPlay ? StrikeThrough(_T(" Preceding,"), !m_looping) : _T("")) +
             StrikeThrough(_T(" Separate Audio Files,"), !m_separateFileDiff) +
             StrikeThrough(_T(" Separate Subtitles"), !m_subtitlesFileDiff) + _T("\n\nConvert files?"),
-                  MB_OKCANCEL | MB_ICONQUESTION))
+            MB_YESNO | MB_ICONQUESTION))
     {
         CloseHandle(scriptFileHandle);
         return;
