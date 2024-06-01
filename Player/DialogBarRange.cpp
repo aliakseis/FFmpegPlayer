@@ -99,7 +99,6 @@ void CDialogBarRange::onTotalTimeUpdated(double)
 // CDialogBarRange message handlers
 
 
-
 void CDialogBarRange::OnStart()
 {
     const double currentTime = m_pDoc->getCurrentTime();
@@ -161,18 +160,14 @@ void CDialogBarRange::OnUpdateSave(CCmdUI *pCmdUI)
 
 void CDialogBarRange::OnChangeStart()
 {
-    if (!m_startTime.IsEmpty())
-    {
-        m_pDoc->setRangeStartTime(m_startTime.GetValue());
-    }
+    m_pDoc->setRangeStartTime(
+        m_startTime.IsEmpty()? m_pDoc->getStartTime() : m_startTime.GetValue());
 }
 
 void CDialogBarRange::OnChangeEnd()
 {
-    if (!m_endTime.IsEmpty())
-    {
-        m_pDoc->setRangeEndTime(m_endTime.GetValue());
-    }
+    m_pDoc->setRangeEndTime(
+        m_endTime.IsEmpty()? m_pDoc->getEndTime() : m_endTime.GetValue());
 }
 
 
