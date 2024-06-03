@@ -1,6 +1,17 @@
 # FFmpegPlayer
 
-A simple FFmpeg based player. The player core is generic and made with multiplatformity in mind. UI / video / audio layer is MFC/Win32 specific. It turns out that there is no need to use multimedia libraries. There is also a Qt based demo example included.
+A simple FFmpeg based player. The player core is generic and made with multiplatformity in mind. UI / video / audio layer is MFC/Win32 specific. It turns out that there is no need to use multimedia libraries. There is also a Qt based demo example included. It offers: 
+- Basic Playback Controls: Play/Pause, Stop.
+- Next/Previous Frame: Step through the video one frame at a time during pause.
+- Speed Change: Increase or decrease the playback speed without altering the pitch of the audio.
+- Separate Video and Audio Inputs: Ability to load and play video and audio from separate sources.
+- Audio Track Selection: Choose between different audio tracks if available.
+- Fragment Selection for Export: Mark in and out points to select a part of the video for exporting.
+- Repeated Playing: Loop the entire video/playlist or selected fragment continuously.
+- Subtitles: Load and display subtitle files in various formats.
+- Super Resolution: Enhance the resolution of the video using upscaling techniques.
+- Codec Support: Compatibility with a wide range of video and audio codecs.
+- Streaming Support: Ability to stream video from online sources.
 
 [Semi transparent, click through full screen mode introduced.](https://bit.ly/2JLTbQn) It is invokable by holding ctrl+shift while pressing full screen button.
 
