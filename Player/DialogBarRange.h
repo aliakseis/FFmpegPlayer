@@ -37,6 +37,7 @@ protected:
     afx_msg LRESULT HandleInitDialog(WPARAM wParam, LPARAM lParam);
 private:
     CPlayerDoc* m_pDoc;
+    CFont m_font;
 public:
     CEditTime m_startTime;
     CEditTime m_endTime;

@@ -10,6 +10,8 @@
 #include "MakeDelegate.h"
 
 
+const WCHAR szwReset[] = { 0x29BB, 0 };
+
 // CDialogBarRange
 
 IMPLEMENT_DYNAMIC(CDialogBarRange, CPaneDialog)
@@ -84,6 +86,35 @@ LRESULT CDialogBarRange::HandleInitDialog(WPARAM wParam, LPARAM lParam)
     if (auto control = static_cast<CButton*>(GetDlgItem(IDC_LOSSLESS_CUT)))
     {
         control->SetCheck(BST_CHECKED);
+    }
+
+    CRect rect(0, 0, 12, 12);
+    MapDialogRect(*this, &rect);
+
+    // Create the font with the calculated size
+    m_font.CreateFont(
+        rect.Height(),                     // Height
+        0,                          // Width
+        0,                          // Escapement
+        0,                          // Orientation
+        FW_MEDIUM,                    // Weight
+        FALSE,                      // Italic
+        FALSE,                      // Underline
+        0,                          // StrikeOut
+        ANSI_CHARSET,               // CharSet
+        OUT_DEFAULT_PRECIS,         // OutPrecision
+        CLIP_DEFAULT_PRECIS,        // ClipPrecision
+        DEFAULT_QUALITY,            // Quality
+        DEFAULT_PITCH | FF_SWISS,   // PitchAndFamily
+        _T("Arial"));               // Facename
+
+    for (auto id : {IDC_START_RESET, IDC_END_RESET})
+    {
+        if (auto control = static_cast<CButton*>(GetDlgItem(id)))
+        {
+            control->SetFont(&m_font);
+            control->SetWindowText(szwReset);
+        }
     }
 
     return TRUE;
