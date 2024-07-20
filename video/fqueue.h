@@ -19,9 +19,8 @@ public:
         const auto pos = packet.pos;
         const auto dts = packet.dts;
         auto& prev = m_positions[packet.stream_index];
-        if (pos != -1 && pos < prev.m_pos
-            || !(pos != -1 && pos > prev.m_pos)
-            && dts != AV_NOPTS_VALUE && dts < prev.m_dts)
+        if ((dts != AV_NOPTS_VALUE) ? dts < prev.m_dts
+            : (pos != -1 && pos < prev.m_pos))
         {
             return false;
         }

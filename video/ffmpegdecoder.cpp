@@ -325,6 +325,7 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
         {
             av_dict_set(&streamOpts, "protocol_whitelist", "file,http,https,tls,rtp,tcp,udp,crypto,httpproxy,data", 0);
         }
+        av_dict_set(&streamOpts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
         const int error = avformat_open_input(&formatContext, url.c_str(), iformat, &streamOpts);
         if (error != 0)
         {
@@ -400,10 +401,11 @@ bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
         const auto formatContext = m_formatContexts[contextIdx];
         for (int i = formatContext->nb_streams; --i >= 0;)
         {
-            switch (formatContext->streams[i]->codecpar->codec_type)
+            auto stream = formatContext->streams[i];
+            switch (stream->codecpar->codec_type)
             {
             case AVMEDIA_TYPE_VIDEO:
-                m_videoStream = formatContext->streams[i];
+                stream->discard = AVDISCARD_ALL;
                 m_videoContextIndex = contextIdx;
                 m_videoStreamNumber = i;
                 break;
@@ -411,7 +413,7 @@ bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
                 if (m_audioContextIndex == -1 || m_audioContextIndex == contextIdx)
                 {
                     m_audioIndices.push_back(i);
-                    m_audioStream = formatContext->streams[i];
+                    m_audioStream = stream;
                     m_audioContextIndex = contextIdx;
                     m_audioStreamNumber = i;
                 }
@@ -430,6 +432,17 @@ bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
     }
 
     m_formatContexts.resize(firstUnused);
+
+    if (m_videoStreamNumber != -1)
+    {
+        m_videoStreamNumber = av_find_best_stream(
+            m_formatContexts[m_videoContextIndex], AVMEDIA_TYPE_VIDEO, 
+            m_videoStreamNumber, 
+            -1, nullptr, 0);
+
+        m_videoStream = m_formatContexts[m_videoContextIndex]->streams[m_videoStreamNumber];
+        m_videoStream->discard = AVDISCARD_DEFAULT;
+    }
 
     std::reverse(m_audioIndices.begin(), m_audioIndices.end());
 
@@ -533,12 +546,16 @@ bool FFmpegDecoder::resetVideoProcessing()
             return false;
         }
 
+        m_videoCodecContext->pkt_timebase = m_videoStream->time_base;
+
         m_videoCodec = avcodec_find_decoder(m_videoCodecContext->codec_id);
         if (m_videoCodec == nullptr)
         {
             assert(false && "No such codec found");
             return false;  // Codec not found
         }
+
+        m_videoCodecContext->codec_id = m_videoCodec->id;
 
 #ifdef USE_HWACCEL
         if (m_hwAccelerated)
