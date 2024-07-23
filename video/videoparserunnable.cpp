@@ -521,6 +521,7 @@ bool FFmpegDecoder::handleVideoFrame(
     bool inNextFrame = false;
     bool continueHandlingPrevTime = false;
 
+    for (;;)
     {
         boost::unique_lock<boost::mutex> locker(m_isPausedMutex);
         while (m_isPaused && !m_isVideoSeekingWhilePaused)
@@ -579,12 +580,21 @@ bool FFmpegDecoder::handleVideoFrame(
             }
             else
             {
+                if (deltaTime > 0.3 && m_formatContexts.size() == 1)
+                {
+                    locker.unlock();
+                    boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+                    continue;
+                }
+
                 const auto speed = getSpeedRational();
                 context.numSkipped = 0;
                 td = boost::posix_time::milliseconds(
                     int(deltaTime * 1000.  * speed.denominator / speed.numerator) + 1);
             }
         }
+
+        break;
     }
 
     context.initialized = true;

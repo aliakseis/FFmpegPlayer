@@ -304,7 +304,6 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
         AVDictionary *streamOpts = nullptr;
         auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
 
-        av_dict_set(&streamOpts, "stimeout", "5000000", 0); // 5 seconds rtsp timeout.
         av_dict_set(&streamOpts, "rw_timeout", "5000000", 0); // 5 seconds I/O timeout.
         if (boost::starts_with(url, "https://") || boost::starts_with(url, "http://")) // seems to be a bug
         {
