@@ -41,7 +41,7 @@ Install Boost, FFmpeg, OpenCV etc... :
 
 ```
 vcpkg install boost
-vcpkg install ffmpeg[ffmpeg,x264,nonfree,gpl,vpx,webp,zlib]
+vcpkg install ffmpeg[ffmpeg,x264,nonfree,gpl,vpx,webp,zlib,xml2]
 ...
 
 ```
