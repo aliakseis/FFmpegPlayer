@@ -174,11 +174,13 @@ def getYoutubeUrl(url, adaptive):
     socket.setdefaulttimeout(10)
     s=YouTube(url).streams
     if(adaptive):
-        return [s.get_audio_only().url] \
-            + [x.url for x in s.filter(only_video=True).order_by('resolution').desc() \
-            if not x.video_codec.startswith("av01")] 
-    else:
-        return s.get_highest_resolution().url)";
+        try:
+            return [s.get_audio_only().url] \
+                + [x.url for x in s.filter(only_video=True).order_by('resolution').desc() \
+                if not x.video_codec.startswith("av01")]
+        except:
+            pass
+    return s.get_highest_resolution().url)";
 
 
 const char TRANSCRIPT_TEMPLATE[] = R"(import sys
@@ -714,7 +716,7 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
                     BOOST_LOG_TRIVIAL(trace) << "Resource status: " << status;
                     if (status == 200)
                     {
-                        if (adaptive)
+                        if (urls.size() > 1)
                         {
                             for (int i = 1; i < urls.size(); ++i)
                             {
