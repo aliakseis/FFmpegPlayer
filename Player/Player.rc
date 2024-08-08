@@ -169,10 +169,6 @@ BEGIN
             MENUITEM "2x",                          ID_VIDEO_SPEED7
             MENUITEM "Nightcore",                   ID_NIGHTCORE
         END
-        MENUITEM SEPARATOR
-        MENUITEM "Maximal Resolution",          ID_MAXIMALRESOLUTION
-        MENUITEM "Hardware Acceleration",       ID_HW_ACCELERATION
-        MENUITEM "Super Resolution",            ID_SUPER_RESOLUTION
         POPUP "Orientation"
         BEGIN
             MENUITEM "Do Nothing",                  ID_ORIENTATION_DO_NOTHING
@@ -184,6 +180,11 @@ BEGIN
             MENUITEM "Vertical Mirror",             ID_ORIENTATION_MIRRORY
             MENUITEM "Upend",                       ID_ORIENTATION_UPEND
         END
+        MENUITEM SEPARATOR
+        MENUITEM "Maximal Resolution",          ID_MAXIMALRESOLUTION
+        MENUITEM "Hardware Acceleration",       ID_HW_ACCELERATION
+        MENUITEM "Super Resolution",            ID_SUPER_RESOLUTION
+        MENUITEM "Using a SAN certificate",            ID_USING_SAN_CERTIFICATE
         MENUITEM SEPARATOR
         MENUITEM "Open Audio File...",          ID_OPEN_AUDIO_FILE
         MENUITEM "Open Subtitles File...",      ID_OPENSUBTITLESFILE

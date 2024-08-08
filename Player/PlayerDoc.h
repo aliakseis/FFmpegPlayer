@@ -185,6 +185,8 @@ private:
 
     bool m_bFixEncoding = false;
 
+    bool m_bUsingSAN = true;
+
     HANDLE m_hConversionProcess = NULL;
 
 public:
@@ -210,4 +212,6 @@ public:
     afx_msg void OnUpdateConvertVideosIntoCompatibleFormat(CCmdUI* pCmdUI);
     afx_msg void OnOpenAudioFile();
     afx_msg void OnUpdateOpenAudioFile(CCmdUI* pCmdUI);
+    afx_msg void OnUsingSanCertificate();
+    afx_msg void OnUpdateUsingSanCertificate(CCmdUI* pCmdUI);
 };

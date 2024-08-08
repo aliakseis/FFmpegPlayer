@@ -336,7 +336,9 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
                          &CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat)
     ON_COMMAND(ID_OPEN_AUDIO_FILE, &CPlayerDoc::OnOpenAudioFile)
     ON_UPDATE_COMMAND_UI(ID_OPEN_AUDIO_FILE, &CPlayerDoc::OnUpdateOpenAudioFile)
-    END_MESSAGE_MAP()
+    ON_COMMAND(ID_USING_SAN_CERTIFICATE, &CPlayerDoc::OnUsingSanCertificate)
+    ON_UPDATE_COMMAND_UI(ID_USING_SAN_CERTIFICATE, &CPlayerDoc::OnUpdateUsingSanCertificate)
+END_MESSAGE_MAP()
 
 
 // CPlayerDoc construction/destruction
@@ -448,8 +450,8 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl, const std::string& inpu
     {
         urls = getYoutubeUrl(originalUrl, m_maximalResolution);
         if (urls.first.empty() || !((m_maximalResolution && !urls.second.empty())
-            ? m_frameDecoder->openUrls({ urls.first, urls.second }, {}, true)
-            : m_frameDecoder->openUrls({ urls.first }, {}, true)))
+            ? m_frameDecoder->openUrls({ urls.first, urls.second }, {}, m_bUsingSAN)
+            : m_frameDecoder->openUrls({ urls.first }, {}, m_bUsingSAN)))
         {
             return false;
         }
@@ -1698,4 +1700,16 @@ void CPlayerDoc::OnUpdateOpenAudioFile(CCmdUI* pCmdUI)
     }
 
     pCmdUI->Enable(true);
+}
+
+
+void CPlayerDoc::OnUsingSanCertificate()
+{
+    m_bUsingSAN = !m_bUsingSAN;
+}
+
+
+void CPlayerDoc::OnUpdateUsingSanCertificate(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(m_bUsingSAN);
 }
