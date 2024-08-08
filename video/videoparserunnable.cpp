@@ -559,7 +559,7 @@ bool FFmpegDecoder::handleVideoFrame(
             {
                 if (deltaTime < -MAX_DELAY)
                 {
-                    InterlockedAdd(m_videoStartClock, MAX_DELAY);
+                    InterLockedAdd(m_videoStartClock, MAX_DELAY);
                 }
 
                 ++context.numSkipped;

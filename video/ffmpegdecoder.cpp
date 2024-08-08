@@ -26,7 +26,11 @@ extern "C"
 }
 
 #ifdef _WIN32
+#include <ws2tcpip.h>
 #define USE_HWACCEL
+#else
+#include <arpa/inet.h>
+#include <netdb.h>
 #endif
 
 // http://stackoverflow.com/questions/34602561
@@ -36,6 +40,30 @@ extern "C"
 
 namespace
 {
+
+std::string resolveHostnameToIP(const std::string& hostname) {
+    //WSADATA wsaData;
+    //WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+    addrinfo hints = { 0 }, * res = nullptr;
+    hints.ai_family = AF_INET; // IPv4
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    if (getaddrinfo(hostname.c_str(), nullptr, &hints, &res) != 0) {
+        //WSACleanup();
+        return {};
+    }
+
+    sockaddr_in* sockaddr_ipv4 = reinterpret_cast<sockaddr_in*>(res->ai_addr);
+    char ipStr[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(sockaddr_ipv4->sin_addr), ipStr, INET_ADDRSTRLEN);
+
+    freeaddrinfo(res);
+    //WSACleanup();
+
+    return std::string(ipStr);
+}
 
 void FreeVideoCodecContext(AVCodecContext*& videoCodecContext)
 {
@@ -293,11 +321,11 @@ void FFmpegDecoder::closeProcessing()
 }
 
 
-bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat)
+bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat, bool useSAN)
 {
     close();
 
-    for (const auto& url : urls)
+    for (auto url : urls)
     {
         auto formatContext = avformat_alloc_context();
 
@@ -305,9 +333,23 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
         auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
 
         av_dict_set(&streamOpts, "rw_timeout", "5000000", 0); // 5 seconds I/O timeout.
-        if (boost::starts_with(url, "https://") || boost::starts_with(url, "http://")) // seems to be a bug
+        const bool isHttps = boost::starts_with(url, "https://");
+        if (isHttps || boost::starts_with(url, "http://")) // seems to be a bug
         {
             av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
+        }
+        if (isHttps && useSAN)
+        {
+            const auto pos = 8; // Move past "://"
+            size_t endPos = url.find('/', pos);
+            std::string hostname = url.substr(pos, endPos - pos);
+
+            std::string ip = resolveHostnameToIP(hostname);
+            if (!ip.empty()) {
+                url = url.substr(0, pos) + ip + url.substr(endPos);
+                CHANNEL_LOG(ffmpeg_opening) << "Opening using a SAN certificate Host: " << hostname << " URL: " << url;
+                av_dict_set(&streamOpts, "headers", ("Host: " + hostname).c_str(), 0);
+            }
         }
 
         formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
@@ -708,7 +750,7 @@ void FFmpegDecoder::AppendFrameClock(double frame_clock)
     }
 
     const auto speed = getSpeedRational();
-    InterlockedAdd(m_audioPTS, frame_clock * speed.numerator / speed.denominator);
+    InterLockedAdd(m_audioPTS, frame_clock * speed.numerator / speed.denominator);
 }
 
 void FFmpegDecoder::setVolume(double volume)
@@ -802,7 +844,7 @@ void FFmpegDecoder::seekWhilePaused()
     if (paused)
     {
         if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED) {
-            InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
+            InterLockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
         }
         m_pauseTimer = GetHiResTime();
     }
@@ -899,7 +941,7 @@ bool FFmpegDecoder::pauseResume()
     {
         boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
         if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED) {
-            InterlockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
+            InterLockedAdd(m_videoStartClock, GetHiResTime() - m_pauseTimer);
         }
         m_isVideoSeekingWhilePaused = false;
         m_isPaused = false;
@@ -938,7 +980,7 @@ bool FFmpegDecoder::nextFrame()
  
         const auto currentTime = GetHiResTime();
         if (m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED) {
-            InterlockedAdd(m_videoStartClock, currentTime - m_pauseTimer);
+            InterLockedAdd(m_videoStartClock, currentTime - m_pauseTimer);
         }
         m_pauseTimer = currentTime;
 

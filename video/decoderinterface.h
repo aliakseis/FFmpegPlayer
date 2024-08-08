@@ -92,7 +92,7 @@ struct IFrameDecoder
 
     virtual void SetFrameFormat(FrameFormat format, bool allowDirect3dData) = 0;
 
-    virtual bool openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat = {}) = 0;
+    virtual bool openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat = {}, bool useSAN = false) = 0;
     virtual bool openStream(std::unique_ptr<std::streambuf> stream) = 0;
 
     virtual void play(bool isPaused = false) = 0;

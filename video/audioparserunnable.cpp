@@ -159,8 +159,8 @@ void FFmpegDecoder::audioParseRunnable()
                 CHANNEL_LOG(ffmpeg_sync) << "Patching audio frame diff: " << diff;
                 if (m_formatContexts.size() == 1 && m_videoStartClock != VIDEO_START_CLOCK_NOT_INITIALIZED)
                 {
-                    InterlockedAdd(m_videoStartClock, -diff);
-                    InterlockedAdd(m_audioPTS, diff);
+                    InterLockedAdd(m_videoStartClock, -diff);
+                    InterLockedAdd(m_audioPTS, diff);
                 }
                 else
                 {
@@ -399,7 +399,7 @@ bool FFmpegDecoder::handleAudioFrame(
     if (!failed && !skipAll && fabs(delta) > 0.1)
     {
         CHANNEL_LOG(ffmpeg_sync) << "Audio sync delta = " << delta;
-        InterlockedAdd(m_videoStartClock, delta / 2);
+        InterLockedAdd(m_videoStartClock, delta / 2);
     }
 
     if (m_audioPaused && !skipAll)
@@ -412,7 +412,7 @@ bool FFmpegDecoder::handleAudioFrame(
 
     if (skipAll)
     {
-        InterlockedAdd(m_audioPTS, frame_clock);
+        InterLockedAdd(m_audioPTS, frame_clock);
     }
     else if (!(m_audioPlayer->WriteAudio(write_data, write_size)
         || initAudioOutput() && m_audioPlayer->WriteAudio(write_data, write_size)))
