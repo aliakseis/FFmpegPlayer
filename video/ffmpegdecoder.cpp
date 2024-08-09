@@ -110,6 +110,8 @@ int ThisThreadInterruptionRequested(void* /*unused*/)
     return static_cast<int>(boost::this_thread::interruption_requested());
 }
 
+int g_lastHttpCode = 0;
+std::string g_lastLocationHttpHeader;
 void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 {
     if (level <= AV_LOG_ERROR)
@@ -123,6 +125,19 @@ void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
             }
             buffer[length] = '\0';
             CHANNEL_LOG(ffmpeg_internal) << buffer;
+        }
+    }
+    else if (strcmp(fmt, "http_code=%d\n") == 0)
+    {
+        g_lastHttpCode = va_arg(vargs, int);
+    }
+    else if (g_lastHttpCode == 302 && g_lastLocationHttpHeader.empty() 
+        && strcmp(fmt, "header='%s'\n") == 0)
+    {
+        auto header = va_arg(vargs, const char*);
+        if (header != nullptr && strncmp("Location: ", header, 10) == 0)
+        {
+            g_lastLocationHttpHeader = header + 10;
         }
     }
 }
@@ -328,50 +343,65 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
     for (auto url : urls)
     {
         auto formatContext = avformat_alloc_context();
-
-        AVDictionary *streamOpts = nullptr;
-        auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
-
-        av_dict_set(&streamOpts, "rw_timeout", "5000000", 0); // 5 seconds I/O timeout.
-        const bool isHttps = boost::starts_with(url, "https://");
-        if (isHttps || boost::starts_with(url, "http://")) // seems to be a bug
-        {
-            av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
-        }
-        if (isHttps && useSAN)
-        {
-            const auto pos = 8; // Move past "://"
-            size_t endPos = url.find('/', pos);
-            std::string hostname = url.substr(pos, endPos - pos);
-
-            std::string ip = resolveHostnameToIP(hostname);
-            if (!ip.empty()) {
-                url = url.substr(0, pos) + ip + url.substr(endPos);
-                CHANNEL_LOG(ffmpeg_opening) << "Opening using a SAN certificate Host: " << hostname << " URL: " << url;
-                av_dict_set(&streamOpts, "headers", ("Host: " + hostname).c_str(), 0);
-            }
-        }
-
         formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
-
         auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
 
-        // Open video file
         auto iformat = inputFormat.empty() ? nullptr : av_find_input_format(inputFormat.c_str());
-        if (iformat)
+
+        int redirectsLeft = 10;
+
+        for (;;)
         {
-            av_dict_set(&streamOpts, "rtbufsize", "15000000", 0); // https://superuser.com/questions/1158820/ffmpeg-real-time-buffer-issue-rtbufsize-parameter
-        }
-        if (iformat? (iformat->name != nullptr && strcmp(iformat->name, "sdp") == 0) : boost::iends_with(url, ".sdp"))
-        {
-            av_dict_set(&streamOpts, "protocol_whitelist", "file,http,https,tls,rtp,tcp,udp,crypto,httpproxy,data", 0);
-        }
-        av_dict_set(&streamOpts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
-        const int error = avformat_open_input(&formatContext, url.c_str(), iformat, &streamOpts);
-        if (error != 0)
-        {
-            BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error: " << error;
-            return false;
+            AVDictionary* streamOpts = nullptr;
+            auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
+
+            av_dict_set(&streamOpts, "rw_timeout", "5000000", 0); // 5 seconds I/O timeout.
+            const bool isHttps = boost::starts_with(url, "https://");
+            if (isHttps || boost::starts_with(url, "http://")) // seems to be a bug
+            {
+                av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
+            }
+            if (isHttps && useSAN)
+            {
+                const auto pos = 8; // Move past "://"
+                size_t endPos = url.find('/', pos);
+                std::string hostname = url.substr(pos, endPos - pos);
+
+                std::string ip = resolveHostnameToIP(hostname);
+                if (!ip.empty()) {
+                    url = url.substr(0, pos) + ip + url.substr(endPos);
+                    CHANNEL_LOG(ffmpeg_opening) << "Opening using a SAN certificate Host: " << hostname << " URL: " << url;
+                    av_dict_set(&streamOpts, "headers", ("Host: " + hostname).c_str(), 0);
+                }
+            }
+
+            // Open video file
+            if (iformat)
+            {
+                av_dict_set(&streamOpts, "rtbufsize", "15000000", 0); // https://superuser.com/questions/1158820/ffmpeg-real-time-buffer-issue-rtbufsize-parameter
+            }
+            if (iformat ? (iformat->name != nullptr && strcmp(iformat->name, "sdp") == 0) : boost::iends_with(url, ".sdp"))
+            {
+                av_dict_set(&streamOpts, "protocol_whitelist", "file,http,https,tls,rtp,tcp,udp,crypto,httpproxy,data", 0);
+            }
+            av_dict_set(&streamOpts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
+
+            g_lastLocationHttpHeader.clear();
+            g_lastHttpCode = 0;
+
+            const int error = avformat_open_input(&formatContext, url.c_str(), iformat, &streamOpts);
+            if (error == 0)
+            {
+                break;
+            }
+            if (!isHttps || !useSAN || g_lastLocationHttpHeader.empty() || --redirectsLeft < 0)
+            {
+                BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error: " << error;
+                return false;
+            }
+
+            url = g_lastLocationHttpHeader;
+            CHANNEL_LOG(ffmpeg_opening) << "Redirecting to URL: " << url;
         }
         CHANNEL_LOG(ffmpeg_opening) << "Opening video/audio file...";
 
