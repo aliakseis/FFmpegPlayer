@@ -1526,6 +1526,20 @@
             "Icon" = "8:"
             "Feature" = "8:"
             }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_7927A90BD084447D927AF769176382C4"
+            {
+            "Name" = "8:Shortcut to edit_git_subst_cfg.cmd"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_1BB4844D47E14A15B89CF19C542161BB"
+            "Folder" = "8:_9B328E46D8A9465692C2C0A26ECD0EB4"
+            "WorkingFolder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
+            "Icon" = "8:"
+            "Feature" = "8:"
+            }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_868418E8894F4D2F9641A497BCEE6D47"
             {
             "Name" = "8:FFmpeg Player"
