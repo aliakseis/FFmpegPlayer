@@ -40,6 +40,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_1BB4844D47E14A15B89CF19C542161BB"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_1E65B5DFF0DC498E88CA9D3A7C275D76"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -374,6 +380,26 @@
             {
             "SourcePath" = "8:C:\\python-embed-win32\\_uuid.pyd"
             "TargetName" = "8:_uuid.pyd"
+            "Tag" = "8:"
+            "Folder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_1BB4844D47E14A15B89CF19C542161BB"
+            {
+            "SourcePath" = "8:..\\edit_git_subst_cfg.cmd"
+            "TargetName" = "8:edit_git_subst_cfg.cmd"
             "Tag" = "8:"
             "Folder" = "8:_B8C7CD6341EA4A8BAFE1F90F54D378CA"
             "Condition" = "8:"
@@ -1345,7 +1371,7 @@
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.1.53"
+        "ProductVersion" = "8:0.1.54"
         "Manufacturer" = "8:aliakseis"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
