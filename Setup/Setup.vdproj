@@ -1486,10 +1486,10 @@
         {
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_0279D2BC938B460AB0B3840652A35B5E"
             {
-            "Name" = "8:Shortcut to remove_pytube.cmd"
+            "Name" = "8:Remove pytube"
             "Arguments" = "8:"
             "Description" = "8:"
-            "ShowCmd" = "3:1"
+            "ShowCmd" = "3:7"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
             "Target" = "8:_A4B43CDF9CA54C19AF7D23DB37A100AC"
@@ -1514,10 +1514,10 @@
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_39657F46CF514780A9D5D8B756C09F30"
             {
-            "Name" = "8:Shortcut to remove_youtube_transcript_api.cmd"
+            "Name" = "8:Remove youtube_transcript_api"
             "Arguments" = "8:"
             "Description" = "8:"
-            "ShowCmd" = "3:1"
+            "ShowCmd" = "3:7"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
             "Target" = "8:_432363CD76D0480AA7084E8FF9F2BE71"
@@ -1528,10 +1528,10 @@
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_7927A90BD084447D927AF769176382C4"
             {
-            "Name" = "8:Shortcut to edit_git_subst_cfg.cmd"
+            "Name" = "8:Modify git_subst.cfg"
             "Arguments" = "8:"
             "Description" = "8:"
-            "ShowCmd" = "3:1"
+            "ShowCmd" = "3:7"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
             "Target" = "8:_1BB4844D47E14A15B89CF19C542161BB"
