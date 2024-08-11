@@ -2,6 +2,10 @@
 
 #include "httprequest_h.h"
 
+#include <ws2tcpip.h>
+
+#include <algorithm>
+
 namespace {
 
 const wchar_t USER_AGENT[]
@@ -22,13 +26,83 @@ public:
     }
 };
 
+std::string resolveHostnameToIP(const std::string& hostname) {
+    addrinfo hints = { 0 }, * res = nullptr;
+    hints.ai_family = AF_UNSPEC; // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    if (getaddrinfo(hostname.c_str(), nullptr, &hints, &res) != 0) {
+        return {};
+    }
+
+    char ipStr[INET6_ADDRSTRLEN];
+    void* addr;
+
+    if (res->ai_family == AF_INET) { // IPv4
+        sockaddr_in* sockaddr_ipv4 = reinterpret_cast<sockaddr_in*>(res->ai_addr);
+        addr = &(sockaddr_ipv4->sin_addr);
+    }
+    else if (res->ai_family == AF_INET6) { // IPv6
+        sockaddr_in6* sockaddr_ipv6 = reinterpret_cast<sockaddr_in6*>(res->ai_addr);
+        addr = &(sockaddr_ipv6->sin6_addr);
+    }
+    else {
+        freeaddrinfo(res);
+        return {};
+    }
+
+    inet_ntop(res->ai_family, addr, ipStr, sizeof(ipStr));
+    freeaddrinfo(res);
+
+    return std::string(ipStr);
+}
+
 } // namespace
 
 
-long HttpGetStatus(std::string& url)
+long HttpGetStatus(std::string& url, bool useSAN)
 {
+    if (useSAN)
+    {
+        auto matchEnd = std::mismatch(url.begin(), url.end(), "https://", 
+            [](char c1, char c2) { return tolower(c1) == tolower(c2); });
+        if (matchEnd.first == url.end() || *matchEnd.second != '\0')
+        {
+            useSAN = false;
+        }
+    }
+
+    CComBSTR bstrUrl;
+    CComBSTR bstrHostname;
+
+    if (useSAN)
+    {
+        const auto pos = 8; // Move past "://"
+        size_t endPos = url.find('/', pos);
+        std::string hostname = url.substr(pos, endPos - pos);
+
+        std::string ip = resolveHostnameToIP(hostname);
+        if (!ip.empty()) {
+            bstrUrl = (url.substr(0, pos) + ip + url.substr(endPos)).c_str();
+            bstrHostname = hostname.c_str();
+        }
+        else
+        {
+            useSAN = false;
+        }
+    }
+
+    if (!useSAN)
+    {
+        bstrUrl = url.c_str();
+    }
+
+
     VARIANT varFalse{ VT_BOOL };
     VARIANT varEmpty{ VT_ERROR };
+    VARIANT varOption{ VT_I4 };
+    varOption.intVal = 0x1000;
 
     HRESULT result = 0;
 
@@ -36,10 +110,25 @@ long HttpGetStatus(std::string& url)
 
     CComUsageScope scope;
 
-    if (SUCCEEDED(result = pIWinHttpRequest.CoCreateInstance(L"WinHttp.WinHttpRequest.5.1", NULL, CLSCTX_INPROC_SERVER))
-        && SUCCEEDED(result = pIWinHttpRequest->Open(CComBSTR(L"HEAD"), CComBSTR(static_cast<const char*>(url.c_str())), varFalse))
-        && SUCCEEDED(result = pIWinHttpRequest->SetRequestHeader(CComBSTR(L"User-Agent"), CComBSTR(USER_AGENT)))
-        && SUCCEEDED(result = pIWinHttpRequest->Send(varEmpty)))
+    if (FAILED(result = pIWinHttpRequest.CoCreateInstance(L"WinHttp.WinHttpRequest.5.1", NULL, CLSCTX_INPROC_SERVER)))
+        return result;
+
+    if (FAILED(result = pIWinHttpRequest->Open(CComBSTR(L"HEAD"), bstrUrl, varFalse)))
+        return result;
+
+    if (useSAN && FAILED(result = pIWinHttpRequest->SetRequestHeader(CComBSTR(L"Host"), bstrHostname)))
+        return result;
+
+    if (FAILED(result = pIWinHttpRequest->SetRequestHeader(CComBSTR(L"User-Agent"), CComBSTR(USER_AGENT))))
+        return result;
+
+    if (useSAN && FAILED(result = pIWinHttpRequest->put_Option(WinHttpRequestOption_SslErrorIgnoreFlags, varOption))) // Ignore SSL errors
+        return result;
+
+    if (FAILED(result = pIWinHttpRequest->put_Option(WinHttpRequestOption_EnableRedirects, varFalse)))
+        return result;
+
+    if (SUCCEEDED(result = pIWinHttpRequest->Send(varEmpty)))
     {
         pIWinHttpRequest->get_Status(&result);
         if (result == 302)
