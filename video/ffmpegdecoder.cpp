@@ -42,25 +42,33 @@ namespace
 {
 
 std::string resolveHostnameToIP(const std::string& hostname) {
-    //WSADATA wsaData;
-    //WSAStartup(MAKEWORD(2, 2), &wsaData);
-
     addrinfo hints = { 0 }, * res = nullptr;
-    hints.ai_family = AF_INET; // IPv4
+    hints.ai_family = AF_UNSPEC; // Allow IPv4 or IPv6
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
     if (getaddrinfo(hostname.c_str(), nullptr, &hints, &res) != 0) {
-        //WSACleanup();
         return {};
     }
 
-    sockaddr_in* sockaddr_ipv4 = reinterpret_cast<sockaddr_in*>(res->ai_addr);
-    char ipStr[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(sockaddr_ipv4->sin_addr), ipStr, INET_ADDRSTRLEN);
+    char ipStr[INET6_ADDRSTRLEN];
+    void* addr;
 
+    if (res->ai_family == AF_INET) { // IPv4
+        sockaddr_in* sockaddr_ipv4 = reinterpret_cast<sockaddr_in*>(res->ai_addr);
+        addr = &(sockaddr_ipv4->sin_addr);
+    }
+    else if (res->ai_family == AF_INET6) { // IPv6
+        sockaddr_in6* sockaddr_ipv6 = reinterpret_cast<sockaddr_in6*>(res->ai_addr);
+        addr = &(sockaddr_ipv6->sin6_addr);
+    }
+    else {
+        freeaddrinfo(res);
+        return {};
+    }
+
+    inet_ntop(res->ai_family, addr, ipStr, sizeof(ipStr));
     freeaddrinfo(res);
-    //WSACleanup();
 
     return std::string(ipStr);
 }

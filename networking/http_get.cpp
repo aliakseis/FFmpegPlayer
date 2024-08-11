@@ -25,7 +25,7 @@ public:
 } // namespace
 
 
-long HttpGetStatus(const char * url)
+long HttpGetStatus(std::string& url)
 {
     VARIANT varFalse{ VT_BOOL };
     VARIANT varEmpty{ VT_ERROR };
@@ -37,11 +37,19 @@ long HttpGetStatus(const char * url)
     CComUsageScope scope;
 
     if (SUCCEEDED(result = pIWinHttpRequest.CoCreateInstance(L"WinHttp.WinHttpRequest.5.1", NULL, CLSCTX_INPROC_SERVER))
-        && SUCCEEDED(result = pIWinHttpRequest->Open(CComBSTR(L"HEAD"), CComBSTR(static_cast<const char*>(url)), varFalse))
+        && SUCCEEDED(result = pIWinHttpRequest->Open(CComBSTR(L"HEAD"), CComBSTR(static_cast<const char*>(url.c_str())), varFalse))
         && SUCCEEDED(result = pIWinHttpRequest->SetRequestHeader(CComBSTR(L"User-Agent"), CComBSTR(USER_AGENT)))
         && SUCCEEDED(result = pIWinHttpRequest->Send(varEmpty)))
     {
         pIWinHttpRequest->get_Status(&result);
+        if (result == 302)
+        {
+            CComBSTR locationHeader;
+            if (SUCCEEDED(pIWinHttpRequest->GetResponseHeader(CComBSTR(L"Location"), &locationHeader)))
+            {
+                url = CW2A(locationHeader);
+            }
+        }
     }
 
     return result;

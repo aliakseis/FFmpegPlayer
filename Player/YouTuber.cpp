@@ -686,6 +686,11 @@ std::vector<std::string> ParsePlaylistText(const std::string& text)
     return DoParsePlaylist(pData, pData + text.size());
 }
 
+inline bool isHttpStatusOk(int status)
+{
+    return status == 200 || status == 302;
+}
+
 std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive)
 {
     enum { ATTEMPTS_NUMBER = 2 };
@@ -696,8 +701,8 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
         auto it = mapToDownloadLinks[adaptive].find(url);
         if (it != mapToDownloadLinks[adaptive].end())
         {
-            if (HttpGetStatus(it->second.first.c_str()) == 200
-                    && (it->second.second.empty() || HttpGetStatus(it->second.second.c_str()) == 200))
+            if (isHttpStatusOk(HttpGetStatus(it->second.first))
+                    && (it->second.second.empty() || isHttpStatusOk(HttpGetStatus(it->second.second))))
                 return it->second;
             else
                 mapToDownloadLinks[adaptive].erase(it);
@@ -707,22 +712,22 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
         static YouTubeDealer buddy;
         if (buddy.isValid())
         {
-            for (int i = 0; i < ATTEMPTS_NUMBER; ++i)
+            for (int j = 0; j < ATTEMPTS_NUMBER; ++j)
             {
                 auto urls = buddy.getYoutubeUrl(url, adaptive);
                 if (!urls.empty())
                 {
-                    const auto status = HttpGetStatus(urls[0].c_str());
+                    const auto status = HttpGetStatus(urls[0]);
                     BOOST_LOG_TRIVIAL(trace) << "Resource status: " << status;
-                    if (status == 200)
+                    if (isHttpStatusOk(status))
                     {
                         if (urls.size() > 1)
                         {
                             for (int i = 1; i < urls.size(); ++i)
                             {
-                                const auto status = HttpGetStatus(urls[i].c_str());
+                                const auto status = HttpGetStatus(urls[i]);
                                 BOOST_LOG_TRIVIAL(trace) << "Resource status: " << status;
-                                if (status == 200)
+                                if (isHttpStatusOk(status))
                                 {
                                     return mapToDownloadLinks[adaptive][url] = { urls[i], urls[0] };
                                 }
