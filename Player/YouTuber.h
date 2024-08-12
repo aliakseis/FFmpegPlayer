@@ -10,7 +10,7 @@ std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName);
 
 std::vector<std::string> ParsePlaylistText(const std::string& text);
 
-std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive);
+std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive, bool useSAN);
 
 // start, duration, text
 typedef std::function<void(double, double, const std::string&)> AddYoutubeTranscriptCallback;

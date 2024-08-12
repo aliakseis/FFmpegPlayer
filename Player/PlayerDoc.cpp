@@ -448,7 +448,7 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl, const std::string& inpu
     }
     else
     {
-        urls = getYoutubeUrl(originalUrl, m_maximalResolution);
+        urls = getYoutubeUrl(originalUrl, m_maximalResolution, m_bUsingSAN);
         if (urls.first.empty() || !((m_maximalResolution && !urls.second.empty())
             ? m_frameDecoder->openUrls({ urls.first, urls.second }, {}, m_bUsingSAN)
             : m_frameDecoder->openUrls({ urls.first }, {}, m_bUsingSAN)))

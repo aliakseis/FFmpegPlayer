@@ -691,7 +691,7 @@ inline bool isHttpStatusOk(int status)
     return status == 200 || status == 302;
 }
 
-std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive)
+std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive, bool useSAN)
 {
     enum { ATTEMPTS_NUMBER = 2 };
 
@@ -701,8 +701,8 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
         auto it = mapToDownloadLinks[adaptive].find(url);
         if (it != mapToDownloadLinks[adaptive].end())
         {
-            if (isHttpStatusOk(HttpGetStatus(it->second.first))
-                    && (it->second.second.empty() || isHttpStatusOk(HttpGetStatus(it->second.second))))
+            if (isHttpStatusOk(HttpGetStatus(it->second.first, useSAN))
+                    && (it->second.second.empty() || isHttpStatusOk(HttpGetStatus(it->second.second, useSAN))))
                 return it->second;
             else
                 mapToDownloadLinks[adaptive].erase(it);
@@ -717,7 +717,7 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
                 auto urls = buddy.getYoutubeUrl(url, adaptive);
                 if (!urls.empty())
                 {
-                    const auto status = HttpGetStatus(urls[0]);
+                    const auto status = HttpGetStatus(urls[0], useSAN);
                     BOOST_LOG_TRIVIAL(trace) << "Resource status: " << status;
                     if (isHttpStatusOk(status))
                     {
@@ -725,7 +725,7 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
                         {
                             for (int i = 1; i < urls.size(); ++i)
                             {
-                                const auto status = HttpGetStatus(urls[i]);
+                                const auto status = HttpGetStatus(urls[i], useSAN);
                                 BOOST_LOG_TRIVIAL(trace) << "Resource status: " << status;
                                 if (isHttpStatusOk(status))
                                 {
@@ -779,7 +779,7 @@ std::vector<std::string> ParsePlaylistText(const std::string&)
     return{};
 }
 
-std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool /*adaptive*/)
+std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool /*adaptive*/, bool /*useSAN*/)
 {
     return{ url, {} };
 }
