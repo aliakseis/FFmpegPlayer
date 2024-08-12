@@ -113,13 +113,15 @@ inline void Shutdown(const std::unique_ptr<boost::thread>& th)
     }
 }
 
-int ThisThreadInterruptionRequested(void* /*unused*/)
+int ThisThreadInterruptionRequested(void* ptr)
 {
-    return static_cast<int>(boost::this_thread::interruption_requested());
+    boost::atomic_bool* flag = static_cast<boost::atomic_bool*>(ptr);
+    return static_cast<int>(*flag || boost::this_thread::interruption_requested());
 }
 
 int g_lastHttpCode = 0;
 std::string g_lastLocationHttpHeader;
+boost::atomic_bool* g_interruptionRequestedFlag = nullptr;
 void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 {
     if (level <= AV_LOG_ERROR)
@@ -135,17 +137,21 @@ void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
             CHANNEL_LOG(ffmpeg_internal) << buffer;
         }
     }
-    else if (strcmp(fmt, "http_code=%d\n") == 0)
+    else if (const auto interruptionRequestedFlag = g_interruptionRequestedFlag)
     {
-        g_lastHttpCode = va_arg(vargs, int);
-    }
-    else if (g_lastHttpCode == 302 && g_lastLocationHttpHeader.empty() 
-        && strcmp(fmt, "header='%s'\n") == 0)
-    {
-        auto header = va_arg(vargs, const char*);
-        if (header != nullptr && strncmp("Location: ", header, 10) == 0)
+        if (strcmp(fmt, "http_code=%d\n") == 0)
         {
-            g_lastLocationHttpHeader = header + 10;
+            g_lastHttpCode = va_arg(vargs, int);
+        }
+        else if (g_lastHttpCode == 302 && g_lastLocationHttpHeader.empty()
+            && strcmp(fmt, "header='%s'\n") == 0)
+        {
+            auto header = va_arg(vargs, const char*);
+            if (header != nullptr && strncmp("Location: ", header, 10) == 0)
+            {
+                g_lastLocationHttpHeader = header + 10;
+                *interruptionRequestedFlag = true;
+            }
         }
     }
 }
@@ -209,6 +215,7 @@ void FFmpegDecoder::resetVariables()
 {
     m_videoCodec = nullptr;
     m_formatContexts.clear();
+    m_formatContextInterrupts.clear();
     m_videoCodecContext = nullptr;
     m_audioCodecContext = nullptr;
     m_audioSwrContext = nullptr;
@@ -348,11 +355,14 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
 {
     close();
 
+    m_formatContextInterrupts = std::vector<boost::atomic_bool>(urls.size());
+    for (auto& elem : m_formatContextInterrupts) {
+        elem.store(false);
+    }
+
     for (auto url : urls)
     {
-        auto formatContext = avformat_alloc_context();
-        formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
-        auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
+        const auto interruptionRequestedFlag = &m_formatContextInterrupts.at(m_formatContexts.size());
 
         auto iformat = inputFormat.empty() ? nullptr : av_find_input_format(inputFormat.c_str());
 
@@ -360,6 +370,11 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
 
         for (;;)
         {
+            auto formatContext = avformat_alloc_context();
+            formatContext->interrupt_callback.opaque = interruptionRequestedFlag;
+            formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
+            auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
+
             AVDictionary* streamOpts = nullptr;
             auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
 
@@ -396,10 +411,24 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
 
             g_lastLocationHttpHeader.clear();
             g_lastHttpCode = 0;
-
+            g_interruptionRequestedFlag = interruptionRequestedFlag;
             const int error = avformat_open_input(&formatContext, url.c_str(), iformat, &streamOpts);
+            g_interruptionRequestedFlag = nullptr;
+            *interruptionRequestedFlag = false;
             if (error == 0)
             {
+                CHANNEL_LOG(ffmpeg_opening) << "Opening video/audio file...";
+
+                // Retrieve stream information
+                if (avformat_find_stream_info(formatContext, nullptr) < 0)
+                {
+                    CHANNEL_LOG(ffmpeg_opening) << "Couldn't find stream information";
+                    return false;
+                }
+
+                m_formatContexts.push_back(formatContext);
+                formatContextGuard.release();
+
                 break;
             }
             if (!isHttps || !useSAN || g_lastLocationHttpHeader.empty() || --redirectsLeft < 0)
@@ -411,17 +440,6 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
             url = g_lastLocationHttpHeader;
             CHANNEL_LOG(ffmpeg_opening) << "Redirecting to URL: " << url;
         }
-        CHANNEL_LOG(ffmpeg_opening) << "Opening video/audio file...";
-
-        // Retrieve stream information
-        if (avformat_find_stream_info(formatContext, nullptr) < 0)
-        {
-            CHANNEL_LOG(ffmpeg_opening) << "Couldn't find stream information";
-            return false;
-        }
-
-        m_formatContexts.push_back(formatContext);
-        formatContextGuard.release();
     }
 
     return doOpen(urls);

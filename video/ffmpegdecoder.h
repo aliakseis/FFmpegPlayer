@@ -231,6 +231,8 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     // Basic stuff
     std::vector<AVFormatContext*> m_formatContexts;
 
+    std::vector<boost::atomic_bool> m_formatContextInterrupts;
+
     boost::atomic_int64_t m_seekDuration;
     boost::atomic_int64_t m_videoResetDuration;
 
