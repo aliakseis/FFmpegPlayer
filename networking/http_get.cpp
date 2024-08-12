@@ -79,13 +79,19 @@ long HttpGetStatus(std::string& url, bool useSAN)
     if (useSAN)
     {
         const auto pos = 8; // Move past "://"
-        size_t endPos = url.find('/', pos);
-        std::string hostname = url.substr(pos, endPos - pos);
-
-        std::string ip = resolveHostnameToIP(hostname);
-        if (!ip.empty()) {
-            bstrUrl = (url.substr(0, pos) + ip + url.substr(endPos)).c_str();
-            bstrHostname = hostname.c_str();
+        size_t endPos = url.find_first_of(":/", pos);
+        if (endPos != std::string::npos)
+        {
+            std::string hostname = url.substr(pos, endPos - pos);
+            std::string ip = resolveHostnameToIP(hostname);
+            if (!ip.empty()) {
+                bstrUrl = (url.substr(0, pos) + ip + url.substr(endPos)).c_str();
+                bstrHostname = hostname.c_str();
+            }
+            else
+            {
+                useSAN = false;
+            }
         }
         else
         {

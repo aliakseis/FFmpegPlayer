@@ -387,14 +387,15 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
             if (isHttps && useSAN)
             {
                 const auto pos = 8; // Move past "://"
-                size_t endPos = url.find('/', pos);
-                std::string hostname = url.substr(pos, endPos - pos);
-
-                std::string ip = resolveHostnameToIP(hostname);
-                if (!ip.empty()) {
-                    url = url.substr(0, pos) + ip + url.substr(endPos);
-                    CHANNEL_LOG(ffmpeg_opening) << "Opening using a SAN certificate Host: " << hostname << " URL: " << url;
-                    av_dict_set(&streamOpts, "headers", ("Host: " + hostname).c_str(), 0);
+                size_t endPos = url.find_first_of(":/", pos);
+                if (endPos != std::string::npos) {
+                    std::string hostname = url.substr(pos, endPos - pos);
+                    std::string ip = resolveHostnameToIP(hostname);
+                    if (!ip.empty()) {
+                        url = url.substr(0, pos) + ip + url.substr(endPos);
+                        CHANNEL_LOG(ffmpeg_opening) << "Opening using a SAN certificate Host: " << hostname << " URL: " << url;
+                        av_dict_set(&streamOpts, "headers", ("Host: " + hostname).c_str(), 0);
+                    }
                 }
             }
 
