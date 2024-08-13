@@ -70,6 +70,12 @@ You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mappi
 https://github.com/pytube/pytube/archive/master.zip = https://github.com/aliakseis/pytube/archive/refs/heads/master.zip
 ```
 
+Resource for SAN / <b>non-SNI</b> experiments:
+
+```
+https://github.com/pytube/pytube/archive/master.zip = https://github.com/aliakseis/pytube/archive/refs/heads/SAN.zip
+```
+
 Sometimes it is needed to visit pytube issues list and apply fixes, for example 
 - https://github.com/pytube/pytube/issues/1498
 
