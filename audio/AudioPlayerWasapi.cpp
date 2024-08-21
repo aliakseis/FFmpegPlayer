@@ -313,6 +313,11 @@ bool AudioPlayerWasapi::Open(int bytesPerSample, int channels, int* samplesPerSe
 
 bool AudioPlayerWasapi::WriteAudio(uint8_t* write_data, int64_t write_size)
 {
+    if (!m_AudioClient || !m_RenderClient)
+    {
+        return false;
+    }
+
     while (write_size > 0)
     {
         //  We need to provide the next buffer of samples to the audio renderer.
@@ -460,10 +465,16 @@ double AudioPlayerWasapi::GetVolume() const
 
 void AudioPlayerWasapi::WaveOutPause()
 {
-    m_AudioClient->Stop();
+    if (m_AudioClient)
+    {
+        m_AudioClient->Stop();
+    }
 }
 
 void AudioPlayerWasapi::WaveOutRestart()
 {
-    m_AudioClient->Start();
+    if (m_AudioClient)
+    {
+        m_AudioClient->Start();
+    }
 }

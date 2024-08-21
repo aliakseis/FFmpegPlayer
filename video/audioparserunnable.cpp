@@ -302,7 +302,7 @@ void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
     const auto speed = getSpeedRational();
 
     // Check if the new swr context required
-    if (audioFrameFormat != m_audioCurrentPref.format ||
+    if (m_audioSwrContext == nullptr || audioFrameFormat != m_audioCurrentPref.format ||
         dec_channel_layout != m_audioCurrentPref.channel_layout ||
         (audioFrame->sample_rate * speed.numerator) / speed.denominator != m_audioCurrentPref.frequency)
     {
@@ -413,12 +413,10 @@ bool FFmpegDecoder::handleAudioFrame(
     if (skipAll)
     {
         InterLockedAdd(m_audioPTS, frame_clock);
-    }
-    else if (!(m_audioPlayer->WriteAudio(write_data, write_size)
-        || initAudioOutput() && m_audioPlayer->WriteAudio(write_data, write_size)))
-    {
-        return false;
+        return true;
     }
 
-    return true;
+    return m_audioPlayer->WriteAudio(write_data, write_size)
+        || (m_audioPlayer->Close(), initAudioOutput())
+        && (swr_free(&m_audioSwrContext), m_audioPlayer->WriteAudio(write_data, write_size));
 }
