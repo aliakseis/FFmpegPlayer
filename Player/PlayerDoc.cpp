@@ -341,6 +341,10 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
 END_MESSAGE_MAP()
 
 
+const TCHAR szPlayerInitFlags[] = _T("PlayerInitFlags");
+const TCHAR szMaximalResolution[] = _T("MaximalResolution");
+const TCHAR szUsingSAN[] = _T("UsingSAN");
+
 // CPlayerDoc construction/destruction
 
 CPlayerDoc::CPlayerDoc()
@@ -350,10 +354,22 @@ CPlayerDoc::CPlayerDoc()
             std::bind(&CPlayerDoc::getVideoSpeed, this))))
 {
     m_frameDecoder->setDecoderListener(this);
+
+    if (auto pApp = AfxGetApp())
+    {
+        m_maximalResolution = !!pApp->GetProfileInt(szPlayerInitFlags, szMaximalResolution, false);
+        m_bUsingSAN = !!pApp->GetProfileInt(szPlayerInitFlags, szUsingSAN, true);
+    }
 }
 
 CPlayerDoc::~CPlayerDoc()
 {
+    if (auto pApp = AfxGetApp())
+    {
+        pApp->WriteProfileInt(szPlayerInitFlags, szMaximalResolution, m_maximalResolution);
+        pApp->WriteProfileInt(szPlayerInitFlags, szUsingSAN, m_bUsingSAN);
+    }
+
     onDestructing();
 
     ASSERT(framePositionChanged.empty());
