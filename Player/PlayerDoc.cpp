@@ -246,14 +246,17 @@ void ensureSeparator(CString& filePath)
 CString StrikeThrough(const CString& str, bool doIt)
 {
     if (!doIt)
-        return str;
+        return L"\u00A0\u2714" + str;
 
-    CString result;
+    CString result(L"\u00A0\u2718");
     // Iterate over each character in the original string
     for (int i = 0; i < str.GetLength(); ++i)
     {
+        auto ch = str[i];
+        if (ch == L' ')
+            ch = L'\u00A0';
         // Append the current character
-        result += str[i];
+        result += ch;
         // Append the Combining Long Stroke Overlay character
         result += L'\u0336';
     }
@@ -696,15 +699,15 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
     const bool transform = m_bOrientationMirrorx || m_bOrientationMirrory || m_bOrientationUpend;
 
-    if (isLocalFile && isFullFrameRange() && !transform)
-    {
-        return CopyFile(source, lpszPathName, FALSE); // overwrites the existing file
-    }
-
     CString strFile;
     CString strParams;
     if (isFullFrameRange() && !m_separateFileDiff && !transform)
     {
+        if (isLocalFile)
+        {
+            return CopyFile(source, lpszPathName, FALSE); // overwrites the existing file
+        }
+
         strFile = _T("HttpDownload.exe");
         strParams = source + _T(" \"") + lpszPathName + _T('"');
     }
@@ -753,6 +756,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         }
         if (!streamcopy)
             strParams += _T(" -q:v 4");
+
         strParams += _T(" -y \"");
         strParams += lpszPathName;
         strParams += _T('"');
@@ -1354,7 +1358,14 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
         command +=
             isVideoCompatible ? _T(" -c:v copy") : _T(" -c:v libx264 -crf 25 -pix_fmt yuv420p");
         command += isAudioCompatible ? _T(" -c:a copy") : _T(" -c:a aac -ac 2");
-        command += _T(" -c:s copy -preset superfast \"");
+        command += _T(" -c:s copy -preset superfast");
+
+        if (m_separateFileDiff)
+        {
+            command += _T(" -max_interleave_delta 0");
+        }
+
+        command += _T(" \"");
         command += outputFolder;
         command += ::PathFindFileName(source);
         command += _T("\"\r\n");
@@ -1614,11 +1625,11 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
     CFolderPickerDialog dlg;
     if (IDOK != dlg.DoModal()
         || IDYES != AfxMessageBox(_T("Destination: ") +
-            NoBreak(dlg.GetPathName()) + _T("\nOptions:") + 
-            StrikeThrough(_T(" Multiple,"), !m_autoPlay) +
-            (m_autoPlay ? StrikeThrough(_T(" Preceding,"), !m_looping) : _T("")) +
-            StrikeThrough(_T(" Separate Audio Files,"), !m_separateFileDiff) +
-            StrikeThrough(_T(" Separate Subtitles"), !m_subtitlesFileDiff) + _T("\n\nConvert files?"),
+            NoBreak(dlg.GetPathName()) + _T("\nOptions:\n") + 
+            StrikeThrough(_T("Multiple,"), !m_autoPlay) +
+            (m_autoPlay ? StrikeThrough(_T("Preceding,"), !m_looping) : _T("")) +
+            StrikeThrough(_T("Separate Audio,"), !m_separateFileDiff) +
+            StrikeThrough(_T("Separate Subtitles"), !m_subtitlesFileDiff) + _T("\n\nConvert files?"),
             MB_YESNO | MB_ICONQUESTION))
     {
         CloseHandle(scriptFileHandle);
