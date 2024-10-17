@@ -5,6 +5,19 @@
 #include <algorithm>
 #include <memory>
 
+#ifdef _WIN32
+#include <winerror.h>
+#else
+#include <errno.h>
+#endif
+
+const int AVERROR_ECONNRESET = 
+#ifdef _WIN32
+    AVERROR(WSAECONNRESET);
+#else
+    AVERROR(ECONNRESET);
+#endif
+
 namespace {
 
 bool isSeekable(AVFormatContext* formatContext)
@@ -131,7 +144,7 @@ void FFmpegDecoder::parseRunnable(int idx)
                 recovering = RECOVERED;
             }
         }
-        else if ((readStatus == AVERROR(10054) || readStatus == AVERROR_INVALIDDATA) && recovering == RECOVERED) // WSAECONNRESET TODO generic
+        else if ((readStatus == AVERROR_ECONNRESET || readStatus == AVERROR_INVALIDDATA) && recovering == RECOVERED)
         {
             recovering = TO_RECOVER;
             lastTime = m_currentTime;
