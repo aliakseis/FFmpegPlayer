@@ -362,6 +362,9 @@ auto GetAsyncConversionFunction(AVFramePtr input,
         pixelFormat]() mutable
     {
         try {
+            if (input->format == AV_PIX_FMT_NONE)
+                return false;
+
             const int stride = (input->width + 1) & ~1;
 
             std::vector<uint8_t> img(stride * (input->height + (input->height + 1) / 2));
