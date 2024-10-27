@@ -10,13 +10,21 @@ extern "C"
 int DecoderIOContext::IOReadFunc(void *data, uint8_t *buf, int buf_size)
 {
     auto *hctx = static_cast<DecoderIOContext*>(data);
-    auto len = hctx->stream->sgetn((char *)buf, buf_size);
-    if (len <= 0)
+    try
     {
-        // Let FFmpeg know that we have reached EOF, or do something else
-        return AVERROR_EOF;
+        auto len = hctx->stream->sgetn((char*)buf, buf_size);
+        if (len <= 0)
+        {
+            // Let FFmpeg know that we have reached EOF, or do something else
+            return AVERROR_EOF;
+        }
+        return static_cast<int>(len);
     }
-    return static_cast<int>(len);
+    catch (const std::exception&)
+    {
+        // Handle any exceptions that may occur during sgetn
+        return AVERROR(EIO);
+    }
 }
 
 // whence: SEEK_SET, SEEK_CUR, SEEK_END (like fseek) and AVSEEK_SIZE
