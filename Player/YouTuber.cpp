@@ -188,8 +188,10 @@ def getYoutubeUrl(url, adaptive):
 const char SCRIPT_TEMPLATE[] = R"(import sys, socket
 sys.stderr = LoggerStream()
 
-def install_and_import(package, url):
+def install_and_import(package, url=None):
     import importlib
+    if url is None:
+        url = package
     try:
         importlib.import_module(package)
     except ImportError:
