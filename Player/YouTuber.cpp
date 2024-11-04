@@ -214,7 +214,7 @@ def getYoutubeUrl(url, adaptive):
         }
 
         formats = yt_dlp.YoutubeDL(ydl_opts).extract_info(url, download=False)['formats']
-        best_video_format = max(formats, key=lambda f: f.get('height', 0) if f['vcodec'] != 'none' and f['protocol'] != 'm3u8_native' else 0)
+        best_video_format = max(formats, key=lambda f: f.get('height', 0) if f['vcodec'] != 'none' and not f['vcodec'].startswith('av01') and f['protocol'] != 'm3u8_native' else 0)
         video_url = best_video_format['url']
 
         #ydl_opts = {
@@ -235,7 +235,7 @@ def getYoutubeUrl(url, adaptive):
     }
 
     formats = yt_dlp.YoutubeDL(ydl_opts).extract_info(url, download=False)['formats']
-    best_video_format = max(formats, key=lambda f: f.get('height', 0) if f['vcodec'] != 'none' and 'audio_channels' in f and f['audio_channels'] is not None and f['protocol'] != 'm3u8_native' else 0)
+    best_video_format = max(formats, key=lambda f: f.get('height', 0) if f['vcodec'] != 'none' and not f['vcodec'].startswith('av01') and 'audio_channels' in f and f['audio_channels'] is not None and f['protocol'] != 'm3u8_native' else 0)
     return best_video_format['url'])";
 
 //*/
