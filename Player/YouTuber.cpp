@@ -154,6 +154,8 @@ public:
 const char PYTUBE_URL[] = "https://github.com/pytube/pytube/archive/master.zip";
 const char YOUTUBE_TRANSCRIPT_API_URL[] = "https://github.com/jdepoix/youtube-transcript-api/archive/master.zip";
 
+/*
+
 const char SCRIPT_TEMPLATE[] = R"(import sys, socket
 sys.stderr = LoggerStream()
 
@@ -173,19 +175,68 @@ from pytube import YouTube
 def getYoutubeUrl(url, adaptive):
     socket.setdefaulttimeout(10)
     s=YouTube(url).streams
-    if not adaptive:
-        try:
-            return s.get_highest_resolution().url 
-        except:
-            pass
-    try:
+    if adaptive:
         return [s.get_audio_only().url] \
             + [x.url for x in s.filter(only_video=True).order_by('resolution').desc() \
             if not x.video_codec.startswith("av01")]
-    except:
-        pass
     return s.get_highest_resolution().url)";
 
+//*/
+
+//*
+
+const char SCRIPT_TEMPLATE[] = R"(import sys, socket
+sys.stderr = LoggerStream()
+
+def install_and_import(package, url):
+    import importlib
+    try:
+        importlib.import_module(package)
+    except ImportError:
+        import subprocess
+        subprocess.run(["pip3", "install", url])
+    finally:
+        globals()[package] = importlib.import_module(package)
+
+
+install_and_import("yt_dlp", "yt-dlp")
+
+def getYoutubeUrl(url, adaptive):
+    socket.setdefaulttimeout(10)
+    if adaptive:
+
+        ydl_opts = {
+            'format': 'bestvideo+bestaudio',
+            'noplaylist': True,
+            'quiet': True,
+        }
+
+        formats = yt_dlp.YoutubeDL(ydl_opts).extract_info(url, download=False)['formats']
+        best_video_format = max(formats, key=lambda f: f.get('height', 0) if f['vcodec'] != 'none' and f['protocol'] != 'm3u8_native' else 0)
+        video_url = best_video_format['url']
+
+        #ydl_opts = {
+        #    'format': 'bestaudio',
+        #    'noplaylist': True,
+        #    'quiet': True,
+        #}
+
+        #formats = yt_dlp.YoutubeDL(ydl_opts).extract_info(url, download=False)['formats']
+        best_audio = next(f['url'] for f in formats if 'audio_channels' in f and f['audio_channels'] is not None and f['vcodec'] == 'none' and f['protocol'] != 'm3u8_native')
+
+        return [video_url, best_audio]
+
+    ydl_opts = {
+        'format': 'best',
+        'noplaylist': True,
+        'quiet': True,
+    }
+
+    formats = yt_dlp.YoutubeDL(ydl_opts).extract_info(url, download=False)['formats']
+    best_video_format = max(formats, key=lambda f: f.get('height', 0) if f['vcodec'] != 'none' and 'audio_channels' in f and f['audio_channels'] is not None and f['protocol'] != 'm3u8_native' else 0)
+    return best_video_format['url'])";
+
+//*/
 
 const char TRANSCRIPT_TEMPLATE[] = R"(import sys
 sys.stderr = LoggerStream()
