@@ -520,7 +520,7 @@ bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
         }
     }
 
-    const auto firstUnused = std::max(m_videoContextIndex, m_audioContextIndex) + 1;
+    const auto firstUnused = (std::max)(m_videoContextIndex, m_audioContextIndex) + 1;
     if (firstUnused == 0)
         return false;
 
