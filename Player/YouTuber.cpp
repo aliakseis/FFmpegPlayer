@@ -196,12 +196,13 @@ def install_and_import(package, url=None):
         importlib.import_module(package)
     except ImportError:
         import subprocess
-        subprocess.run(["pip3", "install", url])
+        import os
+        library_dir = os.path.dirname(os.path.abspath(socket.__file__))
+        subprocess.run([library_dir + "/../scripts/pip3", "install", url])
     finally:
         globals()[package] = importlib.import_module(package)
 
-
-install_and_import("yt_dlp", "yt-dlp")
+install_and_import("yt_dlp", "https://github.com/yt-dlp/yt-dlp/archive/refs/heads/master.zip")
 
 def getYoutubeUrl(url, adaptive):
     socket.setdefaulttimeout(10)
