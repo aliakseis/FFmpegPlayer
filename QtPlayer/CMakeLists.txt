@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
-  add_definitions(-D_WIN32_WINNT=0x600)
+  add_definitions(-D_WIN32_WINNT=0x0602)
 endif()
 
 if(DEVELOPER_OPENGL)
@@ -173,3 +173,6 @@ endif()
 
 
 target_link_libraries(QtPlayer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets video portaudio)
+if(WIN32)
+  target_link_libraries(QtPlayer PRIVATE ws2_32)
+endif()
