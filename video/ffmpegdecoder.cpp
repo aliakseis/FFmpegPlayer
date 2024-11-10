@@ -434,7 +434,9 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
             }
             if (!isHttps || !useSAN || g_lastLocationHttpHeader.empty() || --redirectsLeft < 0)
             {
-                BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error: " << error;
+                char err_buf[AV_ERROR_MAX_STRING_SIZE + 2] = ": ";
+                BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error " << error 
+                    << (av_strerror(error, err_buf + 2, sizeof(err_buf) - 2) == 0 ? err_buf : "");
                 return false;
             }
 
@@ -466,7 +468,9 @@ bool FFmpegDecoder::openStream(std::unique_ptr<std::streambuf> stream)
     const int error = avformat_open_input(&formatContext, nullptr, nullptr, &streamOpts);
     if (error != 0)
     {
-        BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error: " << error;
+        char err_buf[AV_ERROR_MAX_STRING_SIZE + 2] = ": ";
+        BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio stream error " << error
+            << (av_strerror(error, err_buf + 2, sizeof(err_buf) - 2) == 0 ? err_buf : "");
         return false;
     }
     CHANNEL_LOG(ffmpeg_opening) << "Opening video/audio file...";

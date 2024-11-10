@@ -3,6 +3,7 @@
 #include "subtitles.h"
 
 #include <algorithm>
+#include <chrono>
 #include <memory>
 
 #ifdef _WIN32
@@ -103,6 +104,7 @@ void FFmpegDecoder::parseRunnable(int idx)
     }
 
     int64_t lastTime = m_currentTime;
+    auto lastSeekTime = std::chrono::steady_clock::now();
     enum { TO_RECOVER, RECOVERING, RECOVERED } recovering = RECOVERED;
 
     for (;;)
@@ -136,18 +138,23 @@ void FFmpegDecoder::parseRunnable(int idx)
 
             if (recovering == TO_RECOVER && m_currentTime > lastTime)
             {
-                lastTime = m_currentTime;
+                //lastTime = m_currentTime;
                 recovering = RECOVERING;
             }
-            else if (dispatched && recovering == RECOVERING && m_currentTime > lastTime)
+            else if (dispatched && recovering == RECOVERING)// && m_currentTime > lastTime)
             {
                 recovering = RECOVERED;
             }
         }
-        else if ((readStatus == AVERROR_ECONNRESET || readStatus == AVERROR_INVALIDDATA) && recovering == RECOVERED)
+        else if ((readStatus == AVERROR_ECONNRESET || readStatus == AVERROR_INVALIDDATA) &&
+                 (recovering == RECOVERED ||
+                  eof != REPORTED && std::chrono::duration_cast<std::chrono::seconds>(
+                                         std::chrono::steady_clock::now() - lastSeekTime)
+                                             .count() >= 5))
         {
             recovering = TO_RECOVER;
             lastTime = m_currentTime;
+            lastSeekTime = std::chrono::steady_clock::now();
             //seekDuration(lastTime);
             if (doSeekFrame(idx, lastTime, nullptr))
             {
