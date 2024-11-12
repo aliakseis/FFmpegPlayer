@@ -129,8 +129,13 @@ set(SOURCES
     widgetdisplay.cpp
     widgetdisplay.h)
 
-
+if(WIN32)
+add_executable(QtPlayer WIN32 ${SOURCES} ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
+elseif(APPLE)
+add_executable(QtPlayer MACOSX_BUNDLE ${SOURCES} ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
+else()
 add_executable(QtPlayer ${SOURCES} ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
+endif()
 
 
 file(GLOB VIDEO_SRCS ../video/*.cpp)
