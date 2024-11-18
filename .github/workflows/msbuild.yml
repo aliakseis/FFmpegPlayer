@@ -1,0 +1,83 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: MSBuild
+
+on:
+  workflow_dispatch:
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_FILE_PATH: ./Player.sln
+
+  # Configuration type to build.
+  # You can convert this to a build matrix if you need coverage of multiple configuration types.
+  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  BUILD_CONFIGURATION: Release
+  # https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache?source=recommendations
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        platform: [x86, x64]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true  # Ensure submodules are checked out
+
+    - name: Add MSBuild to PATH
+      id: setup-msbuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Export GitHub Actions cache environment variables
+      uses: actions/github-script@v7
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+    - name: Install vcpkg
+      run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.bat
+          ./vcpkg/vcpkg integrate install
+
+    - name: Install dependencies
+      run: ./vcpkg/vcpkg install boost boost-log dtl ffmpeg[ffmpeg,x264,nonfree,gpl,vpx,webp,zlib,xml2] opencv4 python3 boost-python opencl --triplet=${{matrix.platform}}-windows-release 
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      # Add additional options to the MSBuild command line here (like platform or verbosity level).
+      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{matrix.platform}} /t:Player:Rebuild ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Complete build artifacts
+      run: |
+        $CRT_path = Get-ChildItem -Path "${{ steps.setup-msbuild.outputs.msbuildPath }}/../../../VC/Redist/MSVC/*/${{matrix.platform}}/Microsoft.VC143.CRT" | Select-Object -First 1 -ExpandProperty FullName
+        $MFC_path = Get-ChildItem -Path "${{ steps.setup-msbuild.outputs.msbuildPath }}/../../../VC/Redist/MSVC/*/${{matrix.platform}}/Microsoft.VC143.MFC" | Select-Object -First 1 -ExpandProperty FullName
+        Write-Output "CRT PATH=$CRT_path"
+        Write-Output "MFC PATH=$MFC_path"
+        ./vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary "./${{matrix.platform}}/Release/Player.exe" -installedDir "$CRT_path" -OutVariable out
+        ./vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary "./${{matrix.platform}}/Release/Player.exe" -installedDir "$MFC_path" -OutVariable out
+
+    - name: Delete .pdb files
+      run: Remove-Item -Path "./${{matrix.platform}}/Release/*.pdb" -Force
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+          name: build-artifacts-${{matrix.platform}}
+          path: ./${{matrix.platform}}/Release
+
