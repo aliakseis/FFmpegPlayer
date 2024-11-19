@@ -84,15 +84,14 @@ jobs:
         $MFC_path = Get-ChildItem -Path "${{ steps.setup-msbuild.outputs.msbuildPath }}/../../../VC/Redist/MSVC/*/${{matrix.platform}}/Microsoft.VC143.MFC" | Select-Object -First 1 -ExpandProperty FullName
         Write-Output "CRT PATH=$CRT_path"
         Write-Output "MFC PATH=$MFC_path"
-        ./vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary "./${{matrix.platform}}/Release/Player.exe" -installedDir "$CRT_path" -OutVariable out
-        ./vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary "./${{matrix.platform}}/Release/Player.exe" -installedDir "$MFC_path" -OutVariable out
+        ./vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary "./${{matrix.platform == 'x64' && matrix.platform}}/Release/Player.exe" -installedDir "$CRT_path" -OutVariable out
+        ./vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary "./${{matrix.platform == 'x64' && matrix.platform}}/Release/Player.exe" -installedDir "$MFC_path" -OutVariable out
 
     - name: Delete .pdb files
-      run: Remove-Item -Path "./${{matrix.platform}}/Release/*.pdb" -Force
+      run: Remove-Item -Path "./${{matrix.platform == 'x64' && matrix.platform}}/Release/*.pdb" -Force
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
           name: build-artifacts-${{matrix.platform}}
-          path: ./${{matrix.platform}}/Release
-
+          path: ./${{matrix.platform == 'x64' && matrix.platform}}/Release
