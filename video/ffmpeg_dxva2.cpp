@@ -322,9 +322,9 @@ typedef struct DXVA2SurfaceWrapper {
     IDirectXVideoDecoder *decoder;
 } DXVA2SurfaceWrapper;
 
-static void dxva2_destroy_decoder(AVCodecContext *s)
+static void dxva2_destroy_decoder(InputStream* ist)
 {
-    InputStream  *ist = (InputStream *)s->opaque;
+    //InputStream  *ist = (InputStream *)s->opaque;
     DXVA2Context *ctx = (DXVA2Context *)ist->hwaccel_ctx;
 
     if (ctx->surfaces) {
@@ -344,17 +344,17 @@ static void dxva2_destroy_decoder(AVCodecContext *s)
     }
 }
 
-static void dxva2_uninit(AVCodecContext *s)
+void dxva2_uninit(InputStream* ist)
 {
-    InputStream  *ist = (InputStream  *)s->opaque;
+    //InputStream  *ist = (InputStream  *)s->opaque;
     DXVA2Context *ctx = (DXVA2Context *)ist->hwaccel_ctx;
 
-    ist->hwaccel_uninit = NULL;
+    //ist->hwaccel_uninit = NULL;
     ist->hwaccel_get_buffer = NULL;
     ist->hwaccel_retrieve_data = NULL;
 
     if (ctx->decoder)
-        dxva2_destroy_decoder(s);
+        dxva2_destroy_decoder(ist);
 
     if (ctx->decoder_service)
         ctx->decoder_service->Release();
@@ -380,7 +380,7 @@ static void dxva2_uninit(AVCodecContext *s)
     av_frame_free(&ctx->tmp_frame);
 
     av_freep(&ist->hwaccel_ctx);
-    av_freep(&s->hwaccel_context);
+    av_freep(&ist->hwaccel_context);
 }
 
 static void dxva2_release_buffer(void *opaque, uint8_t *data)
@@ -580,7 +580,7 @@ static int dxva2_alloc(AVCodecContext *s)
     ctx->deviceHandle = INVALID_HANDLE_VALUE;
 
     ist->hwaccel_ctx = ctx;
-    ist->hwaccel_uninit = dxva2_uninit;
+    //ist->hwaccel_uninit = dxva2_uninit;
     ist->hwaccel_get_buffer = dxva2_get_buffer;
     ist->hwaccel_retrieve_data = dxva2_retrieve_data;
 
@@ -674,9 +674,11 @@ static int dxva2_alloc(AVCodecContext *s)
     if (!s->hwaccel_context)
         goto fail;
 
+    ist->hwaccel_context = s->hwaccel_context;
+
     return 0;
 fail:
-    dxva2_uninit(s);
+    dxva2_uninit(ist);
     return AVERROR(EINVAL);
 }
 
@@ -881,7 +883,7 @@ static int dxva2_create_decoder(AVCodecContext *s)
 
     return 0;
 fail:
-    dxva2_destroy_decoder(s);
+    dxva2_destroy_decoder(ist);
     return AVERROR(EINVAL);
 }
 
@@ -928,12 +930,12 @@ int dxva2_init(AVCodecContext *s)
     DXVA2Context *ctx = (DXVA2Context *)ist->hwaccel_ctx;
 
     if (ctx->decoder)
-        dxva2_destroy_decoder(s);
+        dxva2_destroy_decoder(ist);
 
     ret = dxva2_create_decoder(s);
     if (ret < 0) {
         av_log(NULL, loglevel, "Error creating the DXVA2 decoder\n");
-        dxva2_uninit(s);
+        dxva2_uninit(ist);
         return ret;
     }
 

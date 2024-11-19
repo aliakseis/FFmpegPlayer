@@ -122,8 +122,9 @@ typedef struct InputStream {
 
     /* hwaccel context */
     enum HWAccelID active_hwaccel_id;
-    void  *hwaccel_ctx;
-    void(*hwaccel_uninit)(AVCodecContext *s);
+    void* hwaccel_ctx;
+    void* hwaccel_context; // for DXVA2
+    //void(*hwaccel_uninit)(AVCodecContext *s);
     int(*hwaccel_get_buffer)(AVCodecContext *s, AVFrame *frame, int flags);
     int(*hwaccel_retrieve_data)(AVCodecContext *s, AVFrame *frame);
     enum AVPixelFormat hwaccel_pix_fmt;
@@ -142,6 +143,7 @@ typedef struct InputStream {
 
 
 int dxva2_init(AVCodecContext *s);
+void dxva2_uninit(InputStream* ist);
 int dxva2_convert_data(IDirect3DSurface9* surface, AVFrame *tmp_frame, int width, int height);
 int dxva2_retrieve_data(AVCodecContext *s, AVFrame *frame);
 
