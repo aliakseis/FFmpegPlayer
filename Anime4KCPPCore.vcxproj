@@ -67,7 +67,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\opencv4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -100,7 +100,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\opencv4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -137,7 +137,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\opencv4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -169,7 +169,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;core;ThirdParty\include\opencl;$(INTELOCLSDKROOT)\include;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include\opencv4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
