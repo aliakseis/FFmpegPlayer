@@ -87,10 +87,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY=\"PPL\";ANIME4KCPP_CORE_COMPILER=\"MSVC\";ANIME4KCPP_CORE_BUILD_DATE=\"2021-10-01\";ANIME4KCPP_CORE_VERSION=\"2.6.0\";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS=\"dev\";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -120,10 +120,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY=\"PPL\";ANIME4KCPP_CORE_COMPILER=\"MSVC\";ANIME4KCPP_CORE_BUILD_DATE=\"2021-10-01\";ANIME4KCPP_CORE_VERSION=\"2.6.0\";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS=\"dev\";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -156,10 +156,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY=\"PPL\";ANIME4KCPP_CORE_COMPILER=\"MSVC\";ANIME4KCPP_CORE_BUILD_DATE=\"2021-10-01\";ANIME4KCPP_CORE_VERSION=\"2.6.0\";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS=\"dev\";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -188,10 +188,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ENABLE_OPENCL;ENABLE_VIDEO;ENABLE_PREVIEW_GUI;ENABLE_IMAGE_IO;ANIME4KCPP_CORE_PARALLEL_LIBRARY=\"PPL\";ANIME4KCPP_CORE_COMPILER=\"MSVC\";ANIME4KCPP_CORE_BUILD_DATE=\"2021-10-01\";ANIME4KCPP_CORE_VERSION=\"2.6.0\";ANIME4KCPP_CORE_VERSION_MAJOR=2;ANIME4KCPP_CORE_VERSION_MINOR=6;ANIME4KCPP_CORE_VERSION_PATCH=0;ANIME4KCPP_CORE_VERSION_STATUS=\"dev\";BUILT_IN_KERNEL;USE_PPL;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;C:\vcpkg\installed\x86-windows\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Anime4KCPP\core\include;Anime4KCPP\build\core;Anime4KCPP\ThirdParty\include\opencl;$(VcpkgRoot)\installed\$(VcpkgTriplet)\include;$(INTELOCLSDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
