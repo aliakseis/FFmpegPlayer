@@ -90,6 +90,9 @@ jobs:
     - name: Delete .pdb files
       run: Remove-Item -Path "./${{matrix.platform == 'x64' && matrix.platform || ''}}/Release/*.pdb" -Force
 
+    - name: Delete .lib files
+      run: Remove-Item -Path "./${{matrix.platform == 'x64' && matrix.platform || ''}}/Release/*.lib" -Force
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
