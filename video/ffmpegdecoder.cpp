@@ -80,13 +80,12 @@ void FreeVideoCodecContext(AVCodecContext*& videoCodecContext)
     {
         if (auto stream = static_cast<InputStream*>(videoCodecContext->opaque))
         {
-            avcodec_close(videoCodecContext);
+            videoCodecContext->opaque = nullptr;
             if (stream->hwaccel_uninit != nullptr) {
                 stream->hwaccel_uninit(videoCodecContext);
             }
             delete stream;
         }
-        videoCodecContext->opaque = nullptr;
     }
 #endif
 

@@ -874,8 +874,10 @@ static int dxva2_create_decoder(AVCodecContext *s)
     dxva_ctx->surface = ctx->surfaces;
     dxva_ctx->surface_count = ctx->num_surfaces;
 
+#ifdef FF_DXVA2_WORKAROUND_INTEL_CLEARVIDEO
     if (IsEqualGUID(ctx->decoder_guid, DXVADDI_Intel_ModeH264_E))
         dxva_ctx->workaround |= FF_DXVA2_WORKAROUND_INTEL_CLEARVIDEO;
+#endif
 
     return 0;
 fail:

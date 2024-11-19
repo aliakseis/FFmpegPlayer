@@ -196,14 +196,21 @@ bool FFmpegDecoder::handleAudioPacket(
 {
     if (packet.stream_index != m_audioStream->index)
     {
-        avcodec_close(m_audioCodecContext);
+        avcodec_free_context(&m_audioCodecContext);
         m_audioStream = m_formatContexts[m_audioContextIndex]->streams[packet.stream_index];
+        m_audioCodecContext = avcodec_alloc_context3(nullptr);
+        if (m_audioCodecContext == nullptr) {
+            return false;
+        }
         if (!setupAudioCodec())
         {
             return false;
         }
     }
 
+    if (m_audioCodecContext == nullptr) {
+        return false;
+    }
     const int ret = avcodec_send_packet(m_audioCodecContext, &packet);
     if (ret < 0) {
         return ret == AVERROR(EAGAIN) || ret == AVERROR_EOF;
