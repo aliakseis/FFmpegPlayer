@@ -23,17 +23,14 @@ namespace {
 
 bool isSeekable(AVFormatContext* formatContext)
 {
-    return
 #ifdef AVFMTCTX_UNSEEKABLE
-        ((formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE) == 0) &&
-#endif
-        (formatContext->pb == nullptr || (formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL) != 0) &&
+    return ((formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE) == 0);
+#else
+    return (formatContext->pb == nullptr || (formatContext->pb->seekable & AVIO_SEEKABLE_NORMAL) != 0) &&
         (formatContext->iformat->name == nullptr || strcmp(formatContext->iformat->name, "sdp") != 0
-#if LIBAVFORMAT_VERSION_MAJOR <= 60
             || formatContext->iformat->read_packet == nullptr ||
-            formatContext->iformat->read_seek != nullptr || formatContext->iformat->read_seek2 != nullptr
+            formatContext->iformat->read_seek != nullptr || formatContext->iformat->read_seek2 != nullptr);
 #endif
-        );
 }
 
 template<typename T>
