@@ -63,6 +63,15 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
+    - name: Find OpenCV Header
+      run: |
+        $opencvHeader = Get-ChildItem -Path "./vcpkg/" -Recurse -Filter "opencv.hpp" | Where-Object { $_.FullName -match "opencv2\\opencv.hpp" }
+        if ($opencvHeader) {
+        Write-Output "Found OpenCV header at: $($opencvHeader.FullName)"
+        } else {
+        Write-Error "OpenCV header not found"
+        }
+
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
