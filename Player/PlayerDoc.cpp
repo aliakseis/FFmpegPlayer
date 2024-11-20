@@ -243,6 +243,14 @@ void ensureSeparator(CString& filePath)
     }
 }
 
+bool FileExists(LPCTSTR pszPath, LPCTSTR pszFile) 
+{
+    TCHAR szFullPath[MAX_PATH];
+    _tcscpy_s(szFullPath, pszPath);
+    PathAppend(szFullPath, pszFile);
+    return !!PathFileExists(szFullPath);
+}
+
 CString StrikeThrough(const CString& str, bool doIt)
 {
     if (!doIt)
@@ -699,6 +707,9 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
     const bool transform = m_bOrientationMirrorx || m_bOrientationMirrory || m_bOrientationUpend;
 
+    TCHAR pszPath[MAX_PATH] = { 0 };
+    GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
+    PathRemoveFileSpec(pszPath);
     CString strFile;
     CString strParams;
     if (isFullFrameRange() && !m_separateFileDiff && !transform)
@@ -709,7 +720,13 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         }
 
         strFile = _T("HttpDownload.exe");
-        strParams = source + _T(" \"") + lpszPathName + _T('"');
+        if (FileExists(pszPath, strFile)) {
+            strParams = source + _T(" \"") + lpszPathName + _T('"');
+        }
+        else {
+            strFile = _T("curl");
+            strParams = CString(_T("-o \"")) + lpszPathName + _T("\" ") + source;
+        }
     }
     else
     {
@@ -762,9 +779,6 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         strParams += _T('"');
         TRACE(_T("FFmpeg parameters generated: %s\n"), static_cast<LPCTSTR>(strParams));
     }
-    TCHAR pszPath[MAX_PATH] = { 0 };
-    GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
-    PathRemoveFileSpec(pszPath);
     const  auto result = ShellExecute(NULL, NULL, strFile, strParams, pszPath, SW_MINIMIZE);
     return int(result) > 32;
 }
