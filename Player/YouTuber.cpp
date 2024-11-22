@@ -610,6 +610,11 @@ YouTubeTranscriptDealer::YouTubeTranscriptDealer()
         return;
     }
 
+    if (!Py_IsInitialized())
+    {
+        return;
+    }
+
     using namespace boost::python;
 
     //Py_Initialize();
