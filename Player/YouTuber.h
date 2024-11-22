@@ -4,6 +4,8 @@
 #include <functional>
 #include <vector>
 
+void CheckPython();
+
 std::vector<std::string> ParsePlaylist(std::string url, bool force);
 
 std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName);

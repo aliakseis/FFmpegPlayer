@@ -445,6 +445,32 @@ auto getLoggerStream()
         .def("flush", &LoggerStream::flush);
 }
 
+// Execute second application instance with -check_python flag
+// and return true if exit code is 0
+bool isPythonInstalled()
+{
+    STARTUPINFO si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
+    TCHAR szCmdline[MAX_PATH + 20] = _T("\"");  // Ensure enough space for the path and arguments
+    auto len = GetModuleFileName(NULL, szCmdline + 1, ARRAYSIZE(szCmdline) - 1);
+    _tcscpy_s(szCmdline + len + 1, ARRAYSIZE(szCmdline) - len - 1, _T("\" -check_python"));
+    if (!CreateProcess(NULL, szCmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    {
+        return false;
+    }
+
+    DWORD exitCode;
+
+    bool ok = WaitForSingleObject(pi.hProcess, 5000) == WAIT_OBJECT_0
+        && GetExitCodeProcess(pi.hProcess, &exitCode)
+        && exitCode == 0;
+
+    // Close process and thread handles.
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    return ok;
+}
 
 class YouTubeDealer 
 {
@@ -465,6 +491,12 @@ YouTubeDealer::YouTubeDealer()
     const auto packagePath = getPathWithPackage(PYTUBE_URL, _T("pytube-master"));
     if (packagePath.empty())
     {
+        return;
+    }
+
+    if (!isPythonInstalled())
+    {
+        AfxMessageBox(_T("Matching Python is not installed."));
         return;
     }
 
@@ -670,9 +702,43 @@ std::vector<std::string> DoParsePlaylist(
     return result;
 }
 
-
 } // namespace
 
+void CheckPython()
+{
+    Py_Initialize();
+
+    if (!Py_IsInitialized())
+    {
+        exit(1);
+    }
+
+    atexit(Py_Finalize);
+
+    if (!_PyThreadState_UncheckedGet())
+    {
+        exit(1);
+    }
+
+    PyObject* sysPath = PySys_GetObject("path");
+    if (!sysPath)
+    {
+        exit(1);
+    }
+
+    boost::python::object path(boost::python::borrowed(sysPath));
+    const auto length = len(path);
+    if (length < 1)
+    {
+        exit(1);
+    }
+
+    std::string v{ boost::python::extract<std::string>(path[0]) };
+    if (v.empty())
+    {
+        exit(1);
+    }
+}
 
 std::vector<std::string> ParsePlaylist(std::string url, bool force)
 {
@@ -821,6 +887,8 @@ bool getYoutubeTranscripts(std::string url, AddYoutubeTranscriptCallback cb)
 }
 
 #else // YOUTUBE_EXPERIMENT
+
+void CheckPython() {}
 
 std::vector<std::string> ParsePlaylist(std::string, bool)
 {

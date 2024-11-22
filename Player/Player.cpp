@@ -16,6 +16,8 @@
 
 #include "AsyncGetUrlUnderMouseCursor.h"
 
+#include "YouTuber.h"
+
 #include "version.h"
 
 #include <boost/log/sinks/debug_output_backend.hpp>
@@ -116,6 +118,22 @@ void init_logging()
     core->add_sink(sink);
 }
 
+class PlayerCommandLineInfo : public CCommandLineInfo
+{
+public:
+    bool m_bCheckPython = false;
+private:
+    void ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL bLast) override
+    {
+        if (bFlag && _tcsicmp(pszParam, _T("check_python")) == 0) {
+            m_bCheckPython = true;
+            return;
+        }
+        CCommandLineInfo::ParseParam(pszParam, bFlag, bLast);
+    }
+
+};
+
 } // namespace
 
 
@@ -179,8 +197,13 @@ BOOL CPlayerApp::InitInstance()
     AfxOleInit();
 
     // Parse command line for standard shell commands, DDE, file open
-    CCommandLineInfo cmdInfo;
+    PlayerCommandLineInfo cmdInfo;
     ParseCommandLine(cmdInfo);
+    if (cmdInfo.m_bCheckPython)
+    {
+        CheckPython();
+        return FALSE;
+    }
     if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)
     {
         AsyncGetUrlUnderMouseCursor();
