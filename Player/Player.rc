@@ -246,7 +246,7 @@ BEGIN
     LTEXT           "github.com/aliakseis/FFmpegPlayer",IDC_STATIC,178,22,114,8
     LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,178,36,114,8
     LTEXT           "www.iconfinder.com/Rudityas",IDC_STATIC,178,44,97,8
-    LTEXT           "YouTube: github.com/pytube/pytube",IDC_STATIC,178,58,122,8
+    LTEXT           "YouTube: github.com/JuanBindez/pytubefix",IDC_STATIC,178,58,122,8
     LTEXT           "github.com/jdepoix/youtube-transcript-api",IDC_STATIC,178,66,141,8
     LTEXT           "Pitch shifting by Stephan M. Bernsee",IDC_STATIC,178,80,141,8
     LTEXT           "",IDC_VIDEO_PROPERTIES,178,109,156,48
