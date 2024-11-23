@@ -160,13 +160,17 @@ const char YOUTUBE_TRANSCRIPT_API_URL[] = "https://github.com/jdepoix/youtube-tr
 const char SCRIPT_TEMPLATE[] = R"(import sys, socket
 sys.stderr = LoggerStream()
 
-def install_and_import(package):
+def install_and_import(package, url=None):
     import importlib
+    if url is None:
+        url = package
     try:
         importlib.import_module(package)
     except ImportError:
         import subprocess
-        subprocess.call(["pip3", "install", package])
+        import os
+        library_dir = os.path.dirname(os.path.abspath(socket.__file__))
+        subprocess.run([library_dir + "/../scripts/pip3", "install", url])
     finally:
         globals()[package] = importlib.import_module(package)
 
