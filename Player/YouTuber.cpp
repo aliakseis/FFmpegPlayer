@@ -151,10 +151,11 @@ public:
 };
 
 
-const char PYTUBE_URL[] = "https://github.com/pytube/pytube/archive/master.zip";
+//const char PYTUBE_URL[] = "https://github.com/pytube/pytube/archive/master.zip";
+const char PYTUBE_URL[] = "https://github.com/JuanBindez/pytubefix/archive/refs/heads/main.zip";
 const char YOUTUBE_TRANSCRIPT_API_URL[] = "https://github.com/jdepoix/youtube-transcript-api/archive/master.zip";
 
-/*
+//*
 
 const char SCRIPT_TEMPLATE[] = R"(import sys, socket
 sys.stderr = LoggerStream()
@@ -171,7 +172,7 @@ def install_and_import(package):
 
 install_and_import('typing_extensions')
 sys.path.append("%s")
-from pytube import YouTube
+from pytubefix import YouTube
 def getYoutubeUrl(url, adaptive):
     socket.setdefaulttimeout(10)
     s=YouTube(url).streams
@@ -183,7 +184,7 @@ def getYoutubeUrl(url, adaptive):
 
 //*/
 
-//*
+/*
 
 const char SCRIPT_TEMPLATE[] = R"(import sys, socket
 sys.stderr = LoggerStream()
