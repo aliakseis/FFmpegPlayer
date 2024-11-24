@@ -736,16 +736,21 @@ void CheckPython()
         exit(1);
     }
 
-    boost::python::object path(boost::python::borrowed(sysPath));
-    const auto length = len(path);
-    if (length < 1)
-    {
-        exit(1);
-    }
+    try {
+        boost::python::object path(boost::python::borrowed(sysPath));
+        const auto length = len(path);
+        if (length < 1)
+        {
+            exit(1);
+        }
 
-    std::string v{ boost::python::extract<std::string>(path[0]) };
-    if (v.empty())
-    {
+        std::string v{ boost::python::extract<std::string>(path[0]) };
+        if (v.empty())
+        {
+            exit(1);
+        }
+    }
+    catch (...) {
         exit(1);
     }
 }

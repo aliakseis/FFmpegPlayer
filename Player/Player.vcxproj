@@ -99,8 +99,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;$(VcpkgRoot)\installed\$(VcpkgTriplet)\lib\Python*.lib;%(AdditionalDependencies);$(INTELOCLSDKROOT)\lib\x86\OpenCL.lib</AdditionalDependencies>
+      <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;$(VcpkgRoot)\installed\$(VcpkgTriplet)\lib\Python*.lib;%(AdditionalDependencies);OpenCL.lib</AdditionalDependencies>
       <DelayLoadDLLs>opencl.dll</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>$(INTELOCLSDKROOT)\lib\x86\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -130,8 +131,9 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;$(INTELOCLSDKROOT)\lib\x64\OpenCL.lib;$(VcpkgRoot)\installed\$(VcpkgTriplet)\lib\Python*.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Winmm.lib;dxva2.lib;d3d9.lib;Oleacc.lib;OpenCL.lib;$(VcpkgRoot)\installed\$(VcpkgTriplet)\lib\Python*.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>opencl.dll</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>$(INTELOCLSDKROOT)\lib\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
