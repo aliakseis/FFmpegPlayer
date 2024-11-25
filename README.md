@@ -32,12 +32,22 @@ Be sure to download git submodules.
 To get a development env running:
 
 Install vcpkg from https://github.com/Microsoft/vcpkg.
-
 ```
 .\vcpkg integrate install
 ```
 
 Install Boost, FFmpeg, OpenCV etc. Details can be found in .github/workflows/msbuild.yml.
+
+Create ./Directory.Build.props file in the project folder. It contents depend on you environment, for example:
+```
+<Project>
+  <PropertyGroup>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+</Project>
+```
 
 YouTube view support is turned on by default. It can be turned off by commenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. 
 
