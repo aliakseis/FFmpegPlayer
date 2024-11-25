@@ -23,7 +23,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 
 - Visual Studio 2017 or higher.
-- Intel SDK For OpenCL Applications installation is required for the super resolution functionality intergated.
+- vcpkg.
 
 ### Installing
 
@@ -37,49 +37,15 @@ Install vcpkg from https://github.com/Microsoft/vcpkg.
 .\vcpkg integrate install
 ```
 
-Install Boost, FFmpeg, OpenCV etc... :
+Install Boost, FFmpeg, OpenCV etc. Details can be found in .github/workflows/msbuild.yml.
 
-```
-vcpkg install boost
-vcpkg install ffmpeg[ffmpeg,x264,nonfree,gpl,vpx,webp,zlib,xml2]
-...
+YouTube view support is turned on by default. It can be turned off by commenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. 
 
-```
-
-YouTube view support using https://github.com/pytube/pytube.git is turned on by default. It can be turned off by commenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. 
-Python is also needed otherwise:
-
-```
-vcpkg install python3
-
-```
-
-The matching Python version has to be installed and added to the PATH environment variable for the accessory DLLs to be accessible.
-
-It is also possible that Boost::Python stuff will have to be enabled:
-```
-vcpkg install --featurepackages --recurse boost[python]
-
-```
+The matching Python version has to be installed for the accessory DLLs to be accessible.
 
 You may need to remove pytube stuff from your profile folder for the player application to set up the latest version, for example, by invoking remove_pytube.cmd.
 
-You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mapping file that contains, for example,
-
-```
-https://github.com/pytube/pytube/archive/master.zip = https://github.com/aliakseis/pytube/archive/refs/heads/master.zip
-```
-
-Resource for SAN / <b>non-SNI</b> experiments:
-
-```
-https://github.com/pytube/pytube/archive/master.zip = https://github.com/aliakseis/pytube/archive/refs/heads/SAN.zip
-```
-
-Sometimes it is needed to visit pytube issues list and apply fixes, for example 
-- https://github.com/pytube/pytube/issues/1498
-
-Take into account https://www.psiphon3.com if you encounter HTTP Error 429.
+You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mapping file.
 
 Just in case: "In fact in boost-python, the default behavior is that even when debug boost libraries are created, these libraries are linked to the release pythonX.dll/lib - by intention, according to the docs." https://github.com/pybind/pybind11/issues/1295
 
