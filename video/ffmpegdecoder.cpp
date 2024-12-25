@@ -547,35 +547,7 @@ bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
 
     std::reverse(m_audioIndices.begin(), m_audioIndices.end());
 
-    int lastSubtitleNr = 0;
-    for (int contextIdx = 0; contextIdx < m_formatContexts.size(); ++contextIdx)
-    {
-        const auto formatContext = m_formatContexts[contextIdx];
-        for (int i = 0; i < formatContext->nb_streams; ++i)
-        {
-            if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE)
-            {
-                std::string description;
-                if (auto title = av_dict_get(formatContext->streams[i]->metadata, "title", nullptr, 0))
-                {
-                    description = title->value;
-                }
-                else
-                {
-                    description = "Track " + std::to_string(++lastSubtitleNr);
-                    if (auto lang = av_dict_get(formatContext->streams[i]->metadata, "language", nullptr, 0))
-                    {
-                        description += " (";
-                        description += lang->value;
-                        description += ')';
-                    }
-                }
-                boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
-                m_subtitleItems.push_back({ contextIdx, i, std::move(description),
-                    (urls.size() == 0) ? std::string() : *(urls.begin() + contextIdx) });
-            }
-        }
-    }
+    LoadSubtitleItems(urls);
 
     AVStream* timeStream = nullptr;
 
@@ -624,8 +596,40 @@ bool FFmpegDecoder::doOpen(const std::initializer_list<std::string>& urls)
         return false;
     }
 
-
     return true;
+}
+
+void FFmpegDecoder::LoadSubtitleItems(const std::initializer_list<std::string>& urls)
+{
+    int lastSubtitleNr = 0;
+    for (int contextIdx = 0; contextIdx < m_formatContexts.size(); ++contextIdx)
+    {
+        const auto formatContext = m_formatContexts[contextIdx];
+        for (int i = 0; i < formatContext->nb_streams; ++i)
+        {
+            if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE)
+            {
+                std::string description;
+                if (auto title = av_dict_get(formatContext->streams[i]->metadata, "title", nullptr, 0))
+                {
+                    description = title->value;
+                }
+                else
+                {
+                    description = "Track " + std::to_string(++lastSubtitleNr);
+                    if (auto lang = av_dict_get(formatContext->streams[i]->metadata, "language", nullptr, 0))
+                    {
+                        description += " (";
+                        description += lang->value;
+                        description += ')';
+                    }
+                }
+                boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+                m_subtitleItems.push_back({ contextIdx, i, std::move(description),
+                    (urls.size() == 0) ? std::string() : *(urls.begin() + contextIdx) });
+            }
+        }
+    }
 }
 
 bool FFmpegDecoder::resetVideoProcessing()
