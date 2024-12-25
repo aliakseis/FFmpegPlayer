@@ -179,6 +179,12 @@ void FFmpegDecoder::parseRunnable(int idx)
                     {
                         flush(idx);
                     }
+                    if (readStatus != AVERROR_EOF && readStatus != AVERROR_ECONNRESET)
+                    {
+                        char err_buf[AV_ERROR_MAX_STRING_SIZE + 2] = ": ";
+                        CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " End of stream caused by " << readStatus 
+                            << (av_strerror(readStatus, err_buf + 2, sizeof(err_buf) - 2) == 0 ? err_buf : "") << "; index: " << idx;
+                    }
                     m_decoderListener->onEndOfStream(idx, eof == SET_INVALID);
                     eof = REPORTED;
                 }
