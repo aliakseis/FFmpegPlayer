@@ -49,7 +49,7 @@ Create ./Directory.Build.props file in the project folder. It contents depend on
 </Project>
 ```
 
-YouTube view support is turned on by default. It can be turned off by commenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. 
+YouTube view support is turned on by default. It can be turned off by commenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. A special mode has been implemented: Google can use SAN certificates that include multiple domains and subdomains. This allows one certificate to protect multiple services, such as youtube.com, www.youtube.com, and other subdomains. If you have one certificate with multiple SANs, and all domains are served by one certificate, you can do without SNI by using the IP address in the URL and the Host header to identify the content.
 
 The matching Python version has to be installed for the accessory DLLs to be accessible.
 
