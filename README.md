@@ -1,4 +1,4 @@
-# FFmpegPlayer
+# ℉ℲmpegPlayer
 
 A simple FFmpeg based player. The player core is generic and made with multiplatformity in mind. UI / video / audio layer is MFC/Win32 specific. It turns out that there is no need to use multimedia libraries. There is also a Qt based demo example included. It offers: 
 - Basic Playback Controls: Play/Pause, Stop.
