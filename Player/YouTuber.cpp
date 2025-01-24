@@ -177,6 +177,27 @@ def install_and_import(package, url=None):
 install_and_import('typing_extensions')
 sys.path.append("%s")
 from pytubefix import YouTube
+
+import subprocess
+from pytubefix.botGuard.bot_guard import NODE_PATH, VM_PATH
+
+def generate_po_token_substitute(visitor_data: str) -> str:
+    """
+    Run nodejs to generate poToken through botGuard.
+    Requires nodejs installed.
+    """
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = 6 # SW_MINIMIZE
+    result = subprocess.check_output(
+        [NODE_PATH, VM_PATH, visitor_data],
+        startupinfo=startupinfo
+    ).decode()
+    return result.replace("\n", "")
+
+import pytubefix
+pytubefix.botGuard.bot_guard.generate_po_token = generate_po_token_substitute
+
 def getYoutubeUrl(url, adaptive):
     socket.setdefaulttimeout(10)
     s=YouTube(url, 'WEB').streams
