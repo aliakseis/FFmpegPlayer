@@ -43,7 +43,7 @@ namespace
 
 std::string resolveHostnameToIP(const std::string& hostname) {
     addrinfo hints = { 0 }, * res = nullptr;
-    hints.ai_family = AF_UNSPEC; // Allow IPv4 or IPv6
+    hints.ai_family = AF_INET; // Allow IPv4
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
