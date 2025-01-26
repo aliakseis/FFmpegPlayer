@@ -178,25 +178,28 @@ install_and_import('typing_extensions')
 sys.path.append("%s")
 from pytubefix import YouTube
 
-import subprocess
-from pytubefix.botGuard.bot_guard import NODE_PATH, VM_PATH
+try:
+    import subprocess
+    from pytubefix.botGuard.bot_guard import NODE_PATH, VM_PATH
 
-def generate_po_token_substitute(visitor_data: str) -> str:
-    """
-    Run nodejs to generate poToken through botGuard.
-    Requires nodejs installed.
-    """
-    startupinfo = subprocess.STARTUPINFO()
-    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    startupinfo.wShowWindow = 6 # SW_MINIMIZE
-    result = subprocess.check_output(
-        [NODE_PATH, VM_PATH, visitor_data],
-        startupinfo=startupinfo
-    ).decode()
-    return result.replace("\n", "")
+    def generate_po_token_substitute(visitor_data: str) -> str:
+        """
+        Run nodejs to generate poToken through botGuard.
+        Requires nodejs installed.
+        """
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = 6 # SW_MINIMIZE
+        result = subprocess.check_output(
+            [NODE_PATH, VM_PATH, visitor_data],
+            startupinfo=startupinfo
+        ).decode()
+        return result.replace("\n", "")
 
-import pytubefix
-pytubefix.botGuard.bot_guard.generate_po_token = generate_po_token_substitute
+    import pytubefix
+    pytubefix.botGuard.bot_guard.generate_po_token = generate_po_token_substitute
+except BaseException as e:
+    print(f"Failed to substitute generate_po_token: {e}")
 
 def getYoutubeUrl(url, adaptive):
     socket.setdefaulttimeout(10)
