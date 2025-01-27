@@ -1307,7 +1307,7 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
     ensureSeparator(outputFolder);
 
     std::vector<CString> videoFiles;
-    if (m_autoPlay)
+    if (m_autoPlay || m_looping)
     {
         if (!m_looping)
         {
@@ -1315,7 +1315,7 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
         }
 
         HandleFilesSequence(
-            GetPathName(), m_looping,
+            GetPathName(), m_autoPlay && m_looping,
             [&videoFiles](const CString& path)
             {
                 videoFiles.push_back(path);
@@ -1640,7 +1640,7 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
     if (IDOK != dlg.DoModal()
         || IDYES != AfxMessageBox(_T("Destination: ") +
             NoBreak(dlg.GetPathName()) + _T("\nOptions:\n") + 
-            StrikeThrough(_T("Multiple,"), !m_autoPlay) +
+            StrikeThrough(_T("Following,"), !m_autoPlay) +
             (m_autoPlay ? StrikeThrough(_T("Preceding,"), !m_looping) : _T("")) +
             StrikeThrough(_T("Separate Audio,"), !m_separateFileDiff) +
             StrikeThrough(_T("Separate Subtitles"), !m_subtitlesFileDiff) + _T("\n\nConvert files?"),
