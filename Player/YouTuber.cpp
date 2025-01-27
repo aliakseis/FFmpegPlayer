@@ -851,7 +851,10 @@ std::vector<std::string> ParsePlaylistText(const std::string& text)
 
 inline bool isHttpStatusOk(int status)
 {
-    return status == 200 || status == 302;
+    const bool result = status == 200 || status == 302;
+    if (!result)
+        BOOST_LOG_TRIVIAL(trace) << "HTTP error status: " << status;
+    return result;
 }
 
 std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive, bool useSAN)
