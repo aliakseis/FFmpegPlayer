@@ -1641,7 +1641,7 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
         || IDYES != AfxMessageBox(_T("Destination: ") +
             NoBreak(dlg.GetPathName()) + _T("\nOptions:\n") + 
             StrikeThrough(_T("Following,"), !m_autoPlay) +
-            (m_autoPlay ? StrikeThrough(_T("Preceding,"), !m_looping) : _T("")) +
+            StrikeThrough(_T("Preceding,"), !m_looping) +
             StrikeThrough(_T("Separate Audio,"), !m_separateFileDiff) +
             StrikeThrough(_T("Separate Subtitles"), !m_subtitlesFileDiff) + _T("\n\nConvert files?"),
             MB_YESNO | MB_ICONQUESTION))
