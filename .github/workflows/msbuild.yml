@@ -87,6 +87,9 @@ jobs:
         ./vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary "./${{matrix.platform == 'x64' && matrix.platform || ''}}/Release/Player.exe" -installedDir "$CRT_path" -OutVariable out
         ./vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary "./${{matrix.platform == 'x64' && matrix.platform || ''}}/Release/Player.exe" -installedDir "$MFC_path" -OutVariable out
 
+    - name: Copy FFmpeg tools
+      run: Copy-Item -Path "./vcpkg/installed/${{matrix.platform}}-windows/tools/ffmpeg/*" -Destination "./${{matrix.platform == 'x64' && matrix.platform || ''}}/Release/" -Recurse -Force -ErrorAction SilentlyContinue
+
     - name: Delete .pdb files
       run: Remove-Item -Path "./${{matrix.platform == 'x64' && matrix.platform || ''}}/Release/*.pdb" -Force
 
