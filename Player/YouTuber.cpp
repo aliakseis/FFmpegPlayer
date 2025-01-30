@@ -525,7 +525,7 @@ YouTubeDealer::YouTubeDealer()
 
     if (!isPythonInstalled())
     {
-        AfxMessageBox(_T("Matching Python is not installed."));
+        AfxMessageBox(_T("Matching Python is not installed: ") _T(PY_VERSION));
         return;
     }
 
