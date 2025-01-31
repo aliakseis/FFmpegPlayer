@@ -51,7 +51,7 @@ Create ./Directory.Build.props file in the project folder. It contents depend on
 
 YouTube view support is turned on by default. It can be turned off by commenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. A special mode has been implemented: Google can use SAN certificates that include multiple domains and subdomains. This allows one certificate to protect multiple services, such as youtube.com, www.youtube.com, and other subdomains. If you have one certificate with multiple SANs, and all domains are served by one certificate, you can do without SNI by using the IP address in the URL and the Host header to identify the content.
 
-The matching Python version has to be installed for the accessory DLLs to be accessible.
+The matching Python version has to be installed for the accessory DLLs to be accessible, except for embedded Python coming with installation. In any case Pytubefix now requires Node.js installed.
 
 You may need to remove pytube stuff from your profile folder for the player application to set up the latest version, for example, by invoking remove_pytube.cmd.
 
