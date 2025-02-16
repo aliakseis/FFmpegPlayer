@@ -177,7 +177,7 @@ endif()
 #target_link_libraries(audio)
 
 
-target_link_libraries(QtPlayer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets video portaudio)
+target_link_libraries(QtPlayer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets video ${PORTAUDIO_LIBRARIES})
 if(WIN32)
   target_link_libraries(QtPlayer PRIVATE ws2_32)
 endif()
