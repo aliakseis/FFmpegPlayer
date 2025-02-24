@@ -776,7 +776,7 @@ bool FFmpegDecoder::setupAudioCodec()
 bool FFmpegDecoder::initAudioOutput()
 {
     return m_audioPlayer->Open(av_get_bytes_per_sample(m_audioSettings.format),
-        m_audioSettings.channels, &m_audioSettings.frequency);
+        m_audioSettings.num_channels(), &m_audioSettings.frequency);
 }
 
 void FFmpegDecoder::play(bool isPaused)
@@ -1223,7 +1223,7 @@ std::pair<bool, bool> FFmpegDecoder::isVideoAudioCompatible() const
                              m_audioCodec->id == AV_CODEC_ID_AAC &&
                                  (m_audioCodecContext->profile == FF_PROFILE_AAC_LOW ||
                                   m_audioCodecContext->profile == FF_PROFILE_AAC_HE)) &&
-                            m_audioCurrentPref.channels == 2};
+                            m_audioCurrentPref.num_channels() == 2};
 }
 
 

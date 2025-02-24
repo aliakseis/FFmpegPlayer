@@ -263,11 +263,13 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     struct AudioParams
     {
         int frequency;
-        int channels;
 #if LIBAVUTIL_VERSION_MAJOR < 57
+        int channels;
         int64_t channel_layout;
+        auto num_channels() const { return channels; }
 #else
         AVChannelLayout channel_layout;
+        auto num_channels() const { return channel_layout.nb_channels; }
 #endif
         AVSampleFormat format;
 

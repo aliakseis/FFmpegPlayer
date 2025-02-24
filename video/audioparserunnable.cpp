@@ -53,9 +53,10 @@ bool operator != (const AVChannelLayout& left, const AVChannelLayout& right)
 
 
 FFmpegDecoder::AudioParams::AudioParams(int freq, int chans, AVSampleFormat fmt) 
-    : frequency(freq), channels(chans), format(fmt)
+    : frequency(freq), format(fmt)
 {
 #if LIBAVUTIL_VERSION_MAJOR < 57
+    channels = chans;
     channel_layout = av_get_default_channel_layout(chans);
 #else
     av_channel_layout_default(&channel_layout, chans);
@@ -73,9 +74,9 @@ FFmpegDecoder::AudioParams&
 FFmpegDecoder::AudioParams::operator =(const FFmpegDecoder::AudioParams& other)
 {
     frequency = other.frequency;
-    channels = other.channels;
     format = other.format;
 #if LIBAVUTIL_VERSION_MAJOR < 57
+    channels = other.channels;
     channel_layout = other.channel_layout;
 #else
     av_channel_layout_uninit(&channel_layout);
@@ -164,7 +165,7 @@ void FFmpegDecoder::audioParseRunnable()
                 }
                 else
                 {
-                    const int size_multiplier = m_audioSettings.channels *
+                    const int size_multiplier = m_audioSettings.num_channels() *
                         av_get_bytes_per_sample(m_audioSettings.format);
 
                     const int numSteps = (diff + 0.1) / 0.1;
@@ -249,7 +250,7 @@ bool FFmpegDecoder::handleAudioPacket(
                 m_audioSettings.frequency /
                 m_audioCurrentPref.frequency + EXTRA_SPACE;
 
-            const int size_multiplier = m_audioSettings.channels *
+            const int size_multiplier = m_audioSettings.num_channels() *
                 av_get_bytes_per_sample(m_audioSettings.format);
 
             const size_t buffer_size = out_count * size_multiplier;
@@ -345,7 +346,6 @@ void FFmpegDecoder::setupAudioSwrContext(AVFrame* audioFrame)
         m_audioCurrentPref.channels = audioFrame->channels;
         m_audioCurrentPref.channel_layout = dec_channel_layout;
 #else
-        m_audioCurrentPref.channels = dec_channel_layout.nb_channels;
         av_channel_layout_uninit(&m_audioCurrentPref.channel_layout);
         av_channel_layout_copy(&m_audioCurrentPref.channel_layout, &dec_channel_layout);
 #endif
