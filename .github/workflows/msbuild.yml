@@ -50,11 +50,14 @@ jobs:
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
+    # see https://github.com/microsoft/vcpkg/issues/43802
     - name: Install vcpkg
       run: |
           git clone https://github.com/microsoft/vcpkg.git
-          ./vcpkg/bootstrap-vcpkg.bat
-          ./vcpkg/vcpkg integrate install
+          cd vcpkg
+          git checkout 62aa44929954469878eb8fc562af706a8f5615a5
+          ./bootstrap-vcpkg.bat
+          ./vcpkg integrate install
 
     - name: Install dependencies
       run: ./vcpkg/vcpkg install boost boost-log dtl ffmpeg[ffmpeg,x264,nonfree,gpl,vpx,webp,zlib,xml2] opencv4 python3 boost-python opencl --triplet=${{matrix.platform}}-windows
