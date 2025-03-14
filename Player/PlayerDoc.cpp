@@ -1354,19 +1354,16 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
                 {source.GetString(), source.GetString() + source.GetLength()});
             if (!s.empty())
             {
-                separateFilePart = _T(" -i \"") + std::move(s) + _T("\" -map 0:v:0 -map 1:a:0");
+                separateFilePart = _T(" -i \"") + std::move(s) + _T('"');
             }
         }
+        command += separateFilePart.c_str();
 
-        if (separateFilePart.empty())
-        {
-            command += _T(" -map 0:v? -map 0:a?");
-        }
-        else
-        {
-            command += separateFilePart.c_str();
-        }
+        if (!isVideoCompatible)
+            command += _T(" -vf pad=ceil(iw/2)*2:ceil(ih/2)*2");
 
+        command += separateFilePart.empty() 
+            ? _T(" -map 0:v? -map 0:a?") : _T(" -map 0:v:0 -map 1:a:0");
         command += _T(" -map 0:s?");
 
         command +=
