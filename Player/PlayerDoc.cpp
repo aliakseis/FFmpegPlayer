@@ -232,10 +232,10 @@ void ensureSeparator(CString& filePath)
     if (length > 0)
     {
         // Get the last character of the file path
-        const char lastChar = filePath.GetAt(length - 1);
+        const auto lastChar = filePath.GetAt(length - 1);
 
         // If the last character is not the separator character
-        if (lastChar != '\\' && lastChar != '/')
+        if (lastChar != _T('\\') && lastChar != _T('/'))
         {
             // Append the separator character to the file path
             filePath.Append(_T("\\"));
@@ -1330,15 +1330,18 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
 
     const auto [isVideoCompatible, isAudioCompatible] = m_frameDecoder->isVideoAudioCompatible();
 
+    TCHAR pszAppFolderPath[MAX_PATH] = { 0 };
+    GetModuleFileName(NULL, pszAppFolderPath, ARRAYSIZE(pszAppFolderPath));
+    const auto pszAppFolderPathEnd = PathFindFileName(pszAppFolderPath);
+    *pszAppFolderPathEnd = 0;
+
     CString ffmpegPath;
     {
-        TCHAR pszPath[MAX_PATH] = {0};
-        GetModuleFileName(NULL, pszPath, ARRAYSIZE(pszPath));
-        PathRemoveFileSpec(pszPath);
         const TCHAR ffmpegExeName[] = _T("ffmpeg.exe");
-        PathAppend(pszPath, ffmpegExeName);
-        ffmpegPath =
-            (_taccess(pszPath, 04) == 0) ? (_T('"') + CString(pszPath) + _T('"')) : ffmpegExeName;
+        PathAppend(pszAppFolderPath, ffmpegExeName);
+        ffmpegPath = (_taccess(pszAppFolderPath, 04) == 0) 
+            ? (_T('"') + CString(pszAppFolderPath) + _T('"')) : ffmpegExeName;
+        *pszAppFolderPathEnd = 0;
     }
 
     CString strText(_T("chcp 65001\r\n"));
@@ -1386,6 +1389,11 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
 
     if (m_subtitlesFileDiff)
     {
+        PathAppend(pszAppFolderPath, _T("ToUTF8.exe"));
+        CString subtitlesUtilPath = (_taccess(pszAppFolderPath, 04) == 0)
+            ? (_T('"') + CString(pszAppFolderPath) + _T('"')) : _T("copy");
+        *pszAppFolderPathEnd = 0;
+
         for (const auto& source : videoFiles)
         {
             const auto s = m_subtitlesFileDiff->patch(
@@ -1400,7 +1408,8 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
                                               ::PathFindExtension(fileNameWithExt)};
 
             auto command =
-                _T("copy \"") + s + _T("\" \"") + static_cast<LPCTSTR>(outputFolder) + fileName + audioExt + _T("\"\r\n");
+                static_cast<LPCTSTR>(subtitlesUtilPath) + (_T(" \"") + s) + _T("\" \"") 
+                + static_cast<LPCTSTR>(outputFolder) + fileName + audioExt + _T("\"\r\n");
             strText += command.c_str();
         }
     }

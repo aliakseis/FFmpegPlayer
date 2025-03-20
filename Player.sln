@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.1622
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35913.81 d17.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Player", "Player\Player.vcxproj", "{C90196CD-7354-4ED4-BFC0-E51A7E1CBE3C}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -24,6 +24,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio", "audio\audio.vcxproj", "{8B955995-B5EC-41F0-940A-48A6F17BCBB8}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Anime4KCPPCore", "Anime4KCPPCore.vcxproj", "{632353E4-4856-38F9-9E74-ED41BD99D7E5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ToUTF8", "ToUTF8\ToUTF8.vcxproj", "{F082EF32-A1D0-48B9-9AF1-DC56178EDE92}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -93,6 +95,14 @@ Global
 		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Release|Win32.Build.0 = Release|Win32
 		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Release|x64.ActiveCfg = Release|x64
 		{632353E4-4856-38F9-9E74-ED41BD99D7E5}.Release|x64.Build.0 = Release|x64
+		{F082EF32-A1D0-48B9-9AF1-DC56178EDE92}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F082EF32-A1D0-48B9-9AF1-DC56178EDE92}.Debug|Win32.Build.0 = Debug|Win32
+		{F082EF32-A1D0-48B9-9AF1-DC56178EDE92}.Debug|x64.ActiveCfg = Debug|x64
+		{F082EF32-A1D0-48B9-9AF1-DC56178EDE92}.Debug|x64.Build.0 = Debug|x64
+		{F082EF32-A1D0-48B9-9AF1-DC56178EDE92}.Release|Win32.ActiveCfg = Release|Win32
+		{F082EF32-A1D0-48B9-9AF1-DC56178EDE92}.Release|Win32.Build.0 = Release|Win32
+		{F082EF32-A1D0-48B9-9AF1-DC56178EDE92}.Release|x64.ActiveCfg = Release|x64
+		{F082EF32-A1D0-48B9-9AF1-DC56178EDE92}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
