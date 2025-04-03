@@ -78,12 +78,11 @@ void FreeVideoCodecContext(AVCodecContext*& videoCodecContext)
 #ifdef USE_HWACCEL
     if (videoCodecContext != nullptr)
     {
-        if (auto stream = static_cast<InputStream*>(videoCodecContext->opaque))
+        if (auto stream = videoCodecContext->opaque)
         {
             videoCodecContext->opaque = nullptr;
             avcodec_free_context(&videoCodecContext);
             dxva2_uninit(stream);
-            delete stream;
             return;
         }
     }
@@ -93,15 +92,6 @@ void FreeVideoCodecContext(AVCodecContext*& videoCodecContext)
     avcodec_free_context(&videoCodecContext);
 }
 
-#ifdef USE_HWACCEL
-AVPixelFormat GetHwFormat(AVCodecContext *s, const AVPixelFormat *pix_fmts)
-{
-    auto* ist = static_cast<InputStream*>(s->opaque);
-    ist->active_hwaccel_id = HWACCEL_DXVA2;
-    ist->hwaccel_pix_fmt = AV_PIX_FMT_DXVA2_VLD;
-    return ist->hwaccel_pix_fmt;
-}
-#endif
 
 inline void Shutdown(const std::unique_ptr<boost::thread>& th)
 {
@@ -669,25 +659,15 @@ bool FFmpegDecoder::resetVideoProcessing()
             m_videoCodecContext->coded_height = m_videoCodecContext->height;
 
             m_videoCodecContext->thread_count = 1;  // Multithreading is apparently not compatible with hardware decoding
-            auto *ist = new InputStream();
-            ist->hwaccel_id = HWACCEL_AUTO;
-            ist->dec = m_videoCodec;
-            ist->dec_ctx = m_videoCodecContext;
 
-            m_videoCodecContext->opaque = ist;
             if (dxva2_init(m_videoCodecContext) >= 0)
             {
-                m_videoCodecContext->get_buffer2 = ist->hwaccel_get_buffer;
-                m_videoCodecContext->get_format = GetHwFormat;
 #if LIBAVCODEC_VERSION_MAJOR < 59
                 m_videoCodecContext->thread_safe_callbacks = 1;
 #endif
             }
             else
             {
-                delete ist;
-                m_videoCodecContext->opaque = nullptr;
-
                 m_videoCodecContext->thread_count = 2;
                 m_videoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
             }
