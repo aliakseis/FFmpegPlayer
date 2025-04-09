@@ -23,55 +23,71 @@ inline uint8_t clamp255(uint32_t v) {
 
 #define C16TO8(v, scale) clamp255(((v) * (scale)) >> 16)
 
+/*
+asm volatile (
+  "movd      %3,%%xmm2                      \n"
+  "punpcklwd %%xmm2,%%xmm2                  \n"
+  "pshufd    $0x0,%%xmm2,%%xmm2             \n"
+
+  // 32 pixels per loop.
+  LABELALIGN
+  "1:                                       \n"
+  "movdqu    (%0),%%xmm0                    \n"
+  "movdqu    0x10(%0),%%xmm1                \n"
+  "add       $0x20,%0                       \n"
+  "pmulhuw   %%xmm2,%%xmm0                  \n"
+  "pmulhuw   %%xmm2,%%xmm1                  \n"
+  "packuswb  %%xmm1,%%xmm0                  \n"
+  "movdqu    %%xmm0,(%1)                    \n"
+  "add       $0x10,%1                       \n"
+  "sub       $0x10,%2                       \n"
+  "jg        1b                             \n"
+: "+r"(src_y),   // %0
+  "+r"(dst_y),   // %1
+  "+r"(width)    // %2
+: "r"(scale)     // %3
+: "memory", "cc", "xmm0", "xmm1", "xmm2");
+*/
+
+const auto DITHER_SCALE = 16352;
+
 // Use scale to convert lsb formats to msb, depending how many bits there are:
 // 32768 = 9 bits
-// 16384 = 10 bits
+// 16384 = 10 bits (dither - 16352)
 // 4096 = 12 bits
 // 256 = 16 bits
 void Convert16To8Row_SSSE3(const __m128i* src_y,
-                           __m128i* dst_y,
-                           int scale,
-                           int width) {
-    /*
-  asm volatile (
-    "movd      %3,%%xmm2                      \n"
-    "punpcklwd %%xmm2,%%xmm2                  \n"
-    "pshufd    $0x0,%%xmm2,%%xmm2             \n"
+    __m128i* dst_y,
+    int scale,
+    int width,
+    int32_t odd_even_add /*either 0x00000002 or 0x00030001*/) {
 
-    // 32 pixels per loop.
-    LABELALIGN
-    "1:                                       \n"
-    "movdqu    (%0),%%xmm0                    \n"
-    "movdqu    0x10(%0),%%xmm1                \n"
-    "add       $0x20,%0                       \n"
-    "pmulhuw   %%xmm2,%%xmm0                  \n"
-    "pmulhuw   %%xmm2,%%xmm1                  \n"
-    "packuswb  %%xmm1,%%xmm0                  \n"
-    "movdqu    %%xmm0,(%1)                    \n"
-    "add       $0x10,%1                       \n"
-    "sub       $0x10,%2                       \n"
-    "jg        1b                             \n"
-  : "+r"(src_y),   // %0
-    "+r"(dst_y),   // %1
-    "+r"(width)    // %2
-  : "r"(scale)     // %3
-  : "memory", "cc", "xmm0", "xmm1", "xmm2");
-  */
-
+    // Load scale factor into SIMD register
     __m128i s = _mm_cvtsi32_si128(scale);
     s = _mm_unpacklo_epi16(s, s);
     s = _mm_shuffle_epi32(s, 0);
 
+    // Broadcast 32-bit odd/even offset across the 128-bit register (four times)
+    __m128i odd_even_offset = _mm_set1_epi32(odd_even_add);
+
     for (; width > 0; width -= 16)
     {
+        // Load 16-bit grayscale values from the source buffer
         __m128i a0 = *src_y++;
         __m128i a1 = *src_y++;
 
+        // Apply alternating Bayer mask values using the fully populated 128-bit register
+        a0 = _mm_add_epi16(a0, odd_even_offset);
+        a1 = _mm_add_epi16(a1, odd_even_offset);
+
+        // Scale down from 16-bit to 8-bit using multiply-high
         a0 = _mm_mulhi_epu16(a0, s);
         a1 = _mm_mulhi_epu16(a1, s);
 
+        // Pack two 16-bit sets into one 8-bit register
         a0 = _mm_packus_epi16(a0, a1);
 
+        // Store the final 8-bit pixels into the destination buffer
         *dst_y++ = a0;
     }
 }
@@ -96,7 +112,7 @@ void ScaleRowDown2_16To8_C(const uint16_t* src_ptr,
     }
 }
 
-void Convert16To8Row_Any_SSSE3(const uint16_t* src_ptr, uint8_t* dst_ptr, int scale, int width) 
+void Convert16To8Row_Any_SSSE3(const uint16_t* src_ptr, uint8_t* dst_ptr, int scale, int width, int y) 
 {
     enum {
           SBPP = 2, 
@@ -106,15 +122,16 @@ void Convert16To8Row_Any_SSSE3(const uint16_t* src_ptr, uint8_t* dst_ptr, int sc
 
     const int r = width & MASK;                            
     const int n = width & ~MASK;
+    const int32_t add = (scale != DITHER_SCALE) ? 0 : ((y & 1) ? 0x00000002 : 0x00030001);
     if (n > 0) {                                     
-        Convert16To8Row_SSSE3((const __m128i*)src_ptr, (__m128i*)dst_ptr, scale, n);
+        Convert16To8Row_SSSE3((const __m128i*)src_ptr, (__m128i*)dst_ptr, scale, n, add);
     }     
     if (r > 0) {
         __declspec(align(16)) uint16_t temp[32];
         __declspec(align(16)) uint8_t out[32];
         memset(temp, 0, 32 * SBPP); /* for msan */
         memcpy(temp, src_ptr + n, r * SBPP);
-        Convert16To8Row_SSSE3((const __m128i*)temp, (__m128i*)out, scale, MASK + 1);
+        Convert16To8Row_SSSE3((const __m128i*)temp, (__m128i*)out, scale, MASK + 1, add);
         memcpy(dst_ptr + n, out, r * BPP);
     }
 }
@@ -142,7 +159,7 @@ void Convert16To8Plane(const uint16_t* src_y,
 
   // Convert plane
   for (int y = 0; y < height; ++y) {
-      Convert16To8Row_Any_SSSE3(src_y, dst_y, scale, width);
+      Convert16To8Row_Any_SSSE3(src_y, dst_y, scale, width, y);
     src_y += src_stride_y;
     dst_y += dst_stride_y;
   }
@@ -201,7 +218,7 @@ int I010ToI420(const uint16_t* src_y,
   }
 
   // Convert Y plane.
-  Convert16To8Plane(src_y, src_stride_y, dst_y, dst_stride_y, 16384, width,
+  Convert16To8Plane(src_y, src_stride_y, dst_y, dst_stride_y, DITHER_SCALE, width,
                     height);
   // Convert UV planes.
   Convert16To8Plane(src_u, src_stride_u, dst_u, dst_stride_u, 16384, halfwidth,
@@ -246,7 +263,7 @@ int I410ToI420(const uint16_t* src_y,
         const int uv_width = SUBSAMPLE(width, 1, 1);
         const int uv_height = SUBSAMPLE(height, 1, 1);
 
-        Convert16To8Plane(src_y, src_stride_y, dst_y, dst_stride_y, scale, width,
+        Convert16To8Plane(src_y, src_stride_y, dst_y, dst_stride_y, DITHER_SCALE, width,
             height);
         ScalePlaneDown2_16To8(uv_width, uv_height, src_stride_u,
             dst_stride_u, src_u, dst_u, scale);
