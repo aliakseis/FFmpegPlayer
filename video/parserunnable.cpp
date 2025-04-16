@@ -104,8 +104,11 @@ void FFmpegDecoder::parseRunnable(int idx)
     }
 
     int64_t lastTime = m_currentTime;
+    int64_t timeLeft = 0;  // effective frame time left from packet (adjusted by start_time)
     auto lastSeekTime = std::chrono::steady_clock::now();
     enum { TO_RECOVER, RECOVERING, RECOVERED } recovering = RECOVERED;
+
+    const bool seekable = isSeekable(m_formatContexts[idx]);
 
     for (;;)
     {
@@ -115,12 +118,11 @@ void FFmpegDecoder::parseRunnable(int idx)
         }
 
         bool restarted = false;
-
         RendezVous(m_seekDuration, m_seekRendezVous, m_formatContexts.size(), restarted,
             std::bind(&FFmpegDecoder::resetDecoding, this, std::placeholders::_1, false));
 
         if (!RendezVous(m_videoResetDuration, m_videoResetRendezVous, m_formatContexts.size(), restarted,
-                std::bind(&FFmpegDecoder::resetDecoding, this, std::placeholders::_1, true))) {
+            std::bind(&FFmpegDecoder::resetDecoding, this, std::placeholders::_1, true))) {
             return;
         }
 
@@ -136,26 +138,38 @@ void FFmpegDecoder::parseRunnable(int idx)
             const bool dispatched = dispatchPacket(idx, packet);
             eof = UNSET;
 
+            // Compute effective frame timestamp from packet using its pts.
+            if (seekable && packet.pts != AV_NOPTS_VALUE) {
+                int64_t effectiveTimestamp = packet.pts + packet.duration;
+                // Adjust effective timestamp by subtracting the stream's start_time if available.
+                AVStream* stream = m_formatContexts[idx]->streams[packet.stream_index];
+                if (stream && stream->start_time != AV_NOPTS_VALUE) {
+                    effectiveTimestamp -= stream->start_time;
+                }
+                // Update lastFrameTime using the effective timestamp.
+                if (stream && stream->duration != AV_NOPTS_VALUE && effectiveTimestamp > 0) {
+                    timeLeft = stream->duration - effectiveTimestamp;
+                }
+            }
+
             if (recovering == TO_RECOVER && m_currentTime > lastTime)
             {
-                //lastTime = m_currentTime;
                 recovering = RECOVERING;
             }
-            else if (dispatched && recovering == RECOVERING)// && m_currentTime > lastTime)
+            else if (dispatched && recovering == RECOVERING)
             {
                 recovering = RECOVERED;
             }
         }
-        else if ((readStatus == AVERROR_ECONNRESET || readStatus == AVERROR_INVALIDDATA) &&
-                 (recovering == RECOVERED ||
-                  eof != REPORTED && std::chrono::duration_cast<std::chrono::seconds>(
-                                         std::chrono::steady_clock::now() - lastSeekTime)
-                                             .count() >= 5))
+        else if ((readStatus == AVERROR_ECONNRESET || readStatus == AVERROR_INVALIDDATA || timeLeft > 0) &&
+            (recovering == RECOVERED ||
+                eof != REPORTED && std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::steady_clock::now() - lastSeekTime).count() >= 5))
         {
             recovering = TO_RECOVER;
             lastTime = m_currentTime;
+            timeLeft = 0;
             lastSeekTime = std::chrono::steady_clock::now();
-            //seekDuration(lastTime);
             if (doSeekFrame(idx, lastTime, nullptr))
             {
                 CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " Trying to recover from " << readStatus << "; index: " << idx;
@@ -182,7 +196,7 @@ void FFmpegDecoder::parseRunnable(int idx)
                     if (readStatus != AVERROR_EOF && readStatus != AVERROR_ECONNRESET)
                     {
                         char err_buf[AV_ERROR_MAX_STRING_SIZE + 2] = ": ";
-                        CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " End of stream caused by " << readStatus 
+                        CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " End of stream caused by " << readStatus
                             << (av_strerror(readStatus, err_buf + 2, sizeof(err_buf) - 2) == 0 ? err_buf : "") << "; index: " << idx;
                     }
                     m_decoderListener->onEndOfStream(idx, eof == SET_INVALID);
@@ -190,13 +204,13 @@ void FFmpegDecoder::parseRunnable(int idx)
                 }
             }
             if (eof == UNSET) {
-                eof = (readStatus == AVERROR_EOF)? SET_EOF : SET_INVALID;
+                eof = (readStatus == AVERROR_EOF) ? SET_EOF : SET_INVALID;
             }
 
             this_thread::sleep_for(chrono::milliseconds(1));
         }
 
-        // Continue packet reading
+        // Continue packet reading loop...
     }
 
     CHANNEL_LOG(ffmpeg_threads) << "Decoding ended";
