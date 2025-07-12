@@ -466,6 +466,30 @@ std::string getPathWithPackage(const char* url, const TCHAR* name)
     return pszConvert;
 }
 
+std::string loadScriptText(const TCHAR* name)
+{
+    // String buffer for holding the path.
+    TCHAR strPath[MAX_PATH]{};
+
+    // Get the special folder path (e.g., %LOCALAPPDATA%)
+    SHGetSpecialFolderPath(
+        nullptr,       // Hwnd
+        strPath,       // String buffer
+        CSIDL_LOCAL_APPDATA, // Folder ID
+        FALSE);         // Create if doesn't exist
+
+    // Append the script file name
+    PathAppend(strPath, name);
+
+    std::ifstream file(strPath, std::ios::in | std::ios::binary);
+
+    if (!file)
+        return {};
+
+    std::ostringstream contents;
+    contents << file.rdbuf();
+    return contents.str();
+}
 
 auto getLoggerStream()
 {
