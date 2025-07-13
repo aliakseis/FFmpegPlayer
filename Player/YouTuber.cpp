@@ -581,7 +581,9 @@ YouTubeDealer::YouTubeDealer()
             PyList_Insert(sysPath, 0, PyUnicode_FromString(v.c_str()));
         }
 
-        m_obj = LoadScriptAndGetFunction(SCRIPT_TEMPLATE, "getYoutubeUrl",
+        const auto scriptText = loadScriptText(_T("getYoutubeUrl.py"));
+        m_obj = LoadScriptAndGetFunction(scriptText.empty()? SCRIPT_TEMPLATE : scriptText.c_str(),
+            "getYoutubeUrl",
             { 
                 { "LoggerStream", getLoggerStream() }, 
                 { "getPytubePathWithPackage", boost::python::make_function(getPytubePathWithPackage) }
@@ -673,7 +675,9 @@ YouTubeTranscriptDealer::YouTubeTranscriptDealer()
 
     //Py_Initialize();
     try {
-        m_obj = LoadScriptAndGetFunction(TRANSCRIPT_TEMPLATE, "getYoutubeTranscript",
+        const auto scriptText = loadScriptText(_T("getYoutubeTranscript.py"));
+        m_obj = LoadScriptAndGetFunction(scriptText.empty() ? TRANSCRIPT_TEMPLATE : scriptText.c_str(),
+            "getYoutubeTranscript",
             {
                 { "getTranscriptPathWithPackage", boost::python::make_function(getTranscriptPathWithPackage) }
             });
