@@ -1371,8 +1371,7 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
 
         command +=
             isVideoCompatible ? _T(" -c:v copy") : _T(" -c:v libx264 -crf 25 -pix_fmt yuv420p");
-        //command += isAudioCompatible ? _T(" -c:a copy") : _T(" -c:a aac -ac 2");
-        command += _T(" -c:a aac -ac 2");
+        command += (isAudioCompatible && !m_autoPlay && !m_looping) ? _T(" -c:a copy") : _T(" -c:a aac -ac 2");
         command += _T(" -c:s copy -preset superfast");
 
         if (m_separateFileDiff)
