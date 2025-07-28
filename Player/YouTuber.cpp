@@ -175,7 +175,7 @@ def install_and_import(package, url=None):
         globals()[package] = importlib.import_module(package)
 
 install_and_import('typing_extensions')
-sys.path.append("%s")
+sys.path.append(getPytubePathWithPackage())
 from pytubefix import YouTube
 
 try:
@@ -274,7 +274,7 @@ const char TRANSCRIPT_TEMPLATE[] = R"(import sys
 sys.stderr = LoggerStream()
 
 install_and_import('requests')
-sys.path.append("%s")
+sys.path.append(getTranscriptPathWithPackage())
 from youtube_transcript_api import YouTubeTranscriptApi
 def getYoutubeTranscript(video_id):
 	return YouTubeTranscriptApi.get_transcript(video_id))";
@@ -466,6 +466,30 @@ std::string getPathWithPackage(const char* url, const TCHAR* name)
     return pszConvert;
 }
 
+std::string loadScriptText(const TCHAR* name)
+{
+    // String buffer for holding the path.
+    TCHAR strPath[MAX_PATH]{};
+
+    // Get the special folder path (e.g., %LOCALAPPDATA%)
+    SHGetSpecialFolderPath(
+        nullptr,       // Hwnd
+        strPath,       // String buffer
+        CSIDL_LOCAL_APPDATA, // Folder ID
+        FALSE);         // Create if doesn't exist
+
+    // Append the script file name
+    PathAppend(strPath, name);
+
+    std::ifstream file(strPath, std::ios::in | std::ios::binary);
+
+    if (!file)
+        return {};
+
+    std::ostringstream contents;
+    contents << file.rdbuf();
+    return contents.str();
+}
 
 auto getLoggerStream()
 {
@@ -514,15 +538,13 @@ private:
     boost::python::object m_obj;
 };
 
+auto getPytubePathWithPackage()
+{
+    return getPathWithPackage(PYTUBE_URL, _T("pytube-master"));
+}
 
 YouTubeDealer::YouTubeDealer()
 {
-    const auto packagePath = getPathWithPackage(PYTUBE_URL, _T("pytube-master"));
-    if (packagePath.empty())
-    {
-        return;
-    }
-
     if (!isPythonInstalled())
     {
         AfxMessageBox(_T("Matching Python is not installed: ") _T(PY_VERSION)
@@ -559,11 +581,13 @@ YouTubeDealer::YouTubeDealer()
             PyList_Insert(sysPath, 0, PyUnicode_FromString(v.c_str()));
         }
 
-        char script[4096];
-        sprintf_s(script, SCRIPT_TEMPLATE, packagePath.c_str());
-
-        m_obj = LoadScriptAndGetFunction(script, "getYoutubeUrl",
-            { { "LoggerStream", getLoggerStream() } });
+        const auto scriptText = loadScriptText(_T("getYoutubeUrl.py"));
+        m_obj = LoadScriptAndGetFunction(scriptText.empty()? SCRIPT_TEMPLATE : scriptText.c_str(),
+            "getYoutubeUrl",
+            { 
+                { "LoggerStream", getLoggerStream() }, 
+                { "getPytubePathWithPackage", boost::python::make_function(getPytubePathWithPackage) }
+            });
 
         if (!m_obj)
             Py_Finalize();
@@ -635,16 +659,13 @@ private:
     boost::python::object m_obj;
 };
 
+auto getTranscriptPathWithPackage()
+{
+    return getPathWithPackage(YOUTUBE_TRANSCRIPT_API_URL, _T("youtube-transcript-api-master"));
+}
 
 YouTubeTranscriptDealer::YouTubeTranscriptDealer()
 {
-    const auto packagePath = getPathWithPackage(
-        YOUTUBE_TRANSCRIPT_API_URL, _T("youtube-transcript-api-master"));
-    if (packagePath.empty())
-    {
-        return;
-    }
-
     if (!Py_IsInitialized())
     {
         return;
@@ -654,10 +675,12 @@ YouTubeTranscriptDealer::YouTubeTranscriptDealer()
 
     //Py_Initialize();
     try {
-        char script[4096];
-        sprintf_s(script, TRANSCRIPT_TEMPLATE, packagePath.c_str());
-
-        m_obj = LoadScriptAndGetFunction(script, "getYoutubeTranscript", {});
+        const auto scriptText = loadScriptText(_T("getYoutubeTranscript.py"));
+        m_obj = LoadScriptAndGetFunction(scriptText.empty() ? TRANSCRIPT_TEMPLATE : scriptText.c_str(),
+            "getYoutubeTranscript",
+            {
+                { "getTranscriptPathWithPackage", boost::python::make_function(getTranscriptPathWithPackage) }
+            });
         //if (!m_obj)
         //    Py_Finalize();
     }

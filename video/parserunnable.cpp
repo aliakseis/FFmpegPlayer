@@ -375,8 +375,8 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
     if (handlingPrevFrame)
     {
         const auto threshold
-            = 3LL * m_videoStream->r_frame_rate.den * m_videoStream->time_base.den
-            / (2LL * m_videoStream->r_frame_rate.num * m_videoStream->time_base.num);
+            = 3LL * m_videoStream->avg_frame_rate.den * m_videoStream->time_base.den
+            / (2LL * m_videoStream->avg_frame_rate.num * m_videoStream->time_base.num);
         seekDuration -= threshold;
     }
 
@@ -387,8 +387,6 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
                                  : m_audioStreamNumber.load();
 
     auto convertedSeekDuration = seekDuration;
-    if (handlingPrevFrame)
-        --convertedSeekDuration;
     if (idx != m_videoContextIndex && m_videoContextIndex != -1)
     {
         convertedSeekDuration = seekDuration * av_q2d(m_videoStream->time_base) / av_q2d(m_audioStream->time_base);
@@ -396,6 +394,8 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
 
     if (handlingPrevFrame)
     {
+        convertedSeekDuration = (std::max)(m_startTime, convertedSeekDuration - m_videoStream->time_base.den / m_videoStream->time_base.num);
+
         if (av_seek_frame(formatContext, streamNumber, convertedSeekDuration, AVSEEK_FLAG_BACKWARD) < 0)
         {
             CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
@@ -427,8 +427,11 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
                     const auto& time_base = formatContext->streams[packet->stream_index]->time_base;
                     pts = (time_base.den && time_base.num)
                         ? pts * av_q2d(time_base) / av_q2d(m_videoStream->time_base) : 0;
+                    if (handlingPrevFrame)
+                        pts += m_videoStream->avg_frame_rate.den * m_videoStream->time_base.den
+                        / (2LL * m_videoStream->avg_frame_rate.num * m_videoStream->time_base.num);
                 }
-                if (pts > currentTime)
+                if (pts >= currentTime)
                 {
                     const int flags = handlingPrevFrame ? AVSEEK_FLAG_BACKWARD : 0;
                     av_packet_unref(packet);
