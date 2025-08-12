@@ -76,11 +76,11 @@ This feature generates and runs a batch script that converts selected video file
 #### 🔧 Controlled via Menu Options:
 File → Convert Videos into Compatible Format Triggers the generation and running of a conversion script using FFmpeg. The script includes commands to re-encode or copy video, audio, and subtitle streams based on compatibility and user preferences.
 
-File → Autoplay When enabled, the script processes a full sequence of video files for automatic conversion. If combined with Looping, the entire sequence is included. If disabled, only the current and following files are processed.
+File → Autoplay When enabled, the script processes a sequence of video files for automatic conversion. If combined with Looping, the entire sequence is included. If Looping is disabled, only the current and following files are processed.
 
 File → Looping When Autoplay is disabled, this option includes both the current file and its predecessors in the conversion script. When Autoplay is enabled, it loops through the entire detected sequence of files.
 
-Audio / Video → Open Audio File... Allows users to specify a separate audio file to be merged with the video during conversion. If provided, the script maps video from the original file and audio from the separate file.
+Audio / Video → Open Audio File... Allows users to specify a separate audio file to be merged with the video during conversion. If provided, the script maps video from the original files and audio from the separate files.
 
 Audio / Video → Open Subtitles File... Enables users to attach external subtitle files. These are converted to UTF-8 encoding using ToUTF8.exe and saved alongside the converted videos.
 
