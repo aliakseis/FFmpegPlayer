@@ -69,6 +69,34 @@ Note that the FFmpeg patch speeds up HEVC decoding without GPU support by ~10%:
 
 ![image](https://user-images.githubusercontent.com/11851670/171165625-3a111046-672c-4a75-8184-c91fde994e00.png)
 
+
+### 🎬 Video Conversion Script Generation
+This feature generates and runs a batch script that converts selected video files into a format compatible with basic players. The script adapts dynamically based on playback settings and optional media inputs.
+
+#### 🔧 Controlled via Menu Options:
+File → Convert Videos into Compatible Format Triggers the generation and running of a conversion script using FFmpeg. The script includes commands to re-encode or copy video, audio, and subtitle streams based on compatibility and user preferences.
+
+File → Autoplay When enabled, the script processes a full sequence of video files for automatic conversion. If combined with Looping, the entire sequence is included. If disabled, only the current and following files are processed.
+
+File → Looping When Autoplay is disabled, this option includes both the current file and its predecessors in the conversion script. When Autoplay is enabled, it loops through the entire detected sequence of files.
+
+Audio / Video → Open Audio File... Allows users to specify a separate audio file to be merged with the video during conversion. If provided, the script maps video from the original file and audio from the separate file.
+
+Audio / Video → Open Subtitles File... Enables users to attach external subtitle files. These are converted to UTF-8 encoding using ToUTF8.exe and saved alongside the converted videos.
+
+#### 🛠️ Conversion Details:
+Uses FFmpeg for media processing.
+
+Selects codecs based on compatibility:
+
+libx264 for video re-encoding if needed
+
+aac for audio if separate or incompatible
+
+Copies subtitle streams when available
+
+Outputs converted files to the specified folder, preserving original filenames.
+
 ### Bonus tip
 
 Playing YouTube videos in browsers may result in poor performance on slow hardware. Assign a keyboard shortcut to the FFmpeg player by editing its shortcut. Hover your mouse over the YouTube link in Firefox and bring up the shortcut. A player pop-up window will appear, starting the video playback. The same can be achieved in Chrome with some tweaking. [Start Chrome with this flag: --force-renderer-accessibility](https://www.chromium.org/developers/design-documents/accessibility/) and / or [set up IAccessible2 COM proxy stub DLL](https://github.com/aliakseis/IAccessible2Proxy).
