@@ -488,6 +488,9 @@ std::string loadScriptText(const TCHAR* name)
 
     std::ostringstream contents;
     contents << file.rdbuf();
+
+    BOOST_LOG_TRIVIAL(trace) << "loadScriptText() script loaded: \"" << name << "\"";
+
     return contents.str();
 }
 
@@ -617,32 +620,47 @@ std::vector<std::string> YouTubeDealer::getYoutubeUrl(const std::string& url, bo
 {
     BOOST_LOG_TRIVIAL(trace) << "getYoutubeUrl() url = \"" << url << "\"";
     using namespace boost::python;
+
     try
     {
-        if (adaptive)
+        object py_result = m_obj(url, adaptive);
+
+        if (py_result.is_none())
+            return {};
+
+        // If it's a plain string, return it as a single-element vector
+        extract<std::string> as_str(py_result);
+        if (as_str.check())
+            return { as_str() };
+
+        // Otherwise try to iterate it as a sequence and convert each element to string.
+        std::vector<std::string> result;
+        for (stl_input_iterator<object> it(py_result), end; it != end; ++it)
         {
-            std::vector<std::string> result;
-            const auto v = m_obj(url, true);
-            const auto length = len(v);
-            for (int i = 0; i < length; ++i)
+            extract<std::string> elem_str(*it);
+            if (elem_str.check())
             {
-                result.push_back(extract<std::string>(v[i]));
+                result.push_back(elem_str());
             }
-            return result;
+            else
+            {
+                // Fallback: call Python's str() on the element and extract C++ string
+                result.push_back(extract<std::string>(str(*it))());
+            }
         }
-        else
-            return{ extract<std::string>(m_obj(url, false)) };
+        return result;
+    }
+    catch (const error_already_set&)
+    {
+        BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() python error \"" << parse_python_exception() << "\"";
+        PyErr_Clear();
     }
     catch (const std::exception& ex)
     {
         BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() exception \"" << ex.what() << "\"";
     }
-    catch (const error_already_set&)
-    {
-        BOOST_LOG_TRIVIAL(error) << "getYoutubeUrl() error \"" << parse_python_exception() << "\"";
-    }
 
-    return{ };
+    return {};
 }
 
 
