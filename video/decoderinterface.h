@@ -78,11 +78,23 @@ struct IFrameDecoder
         PIX_FMT_BGR24,     ///< Packed BGR format (8 bits per channel)
     };
 
-    // Possible modes after displaying a frame
+    // Possible modes after displaying a frame. Controls how the decoder handles
+    // frame memory and display state once a frame is no longer needed.
     enum FinishedDisplayingMode {
-        RELEASE_FRAME,       // Frame memory release
-        FINALIZE_DISPLAY,    // Finalize display without explicit notification
-        RELEASE_AND_FINALIZE // Release frame and finalize display
+        RELEASE_FRAME,       ///< Release memory associated with the frame only.
+        ///< Use when frame data is not required anymore,
+        ///< but no explicit "end of display" notification
+        ///< is desired.
+
+        FINALIZE_DISPLAY,    ///< Mark display of this frame as complete without
+        ///< releasing its memory. Typically used if another
+        ///< subsystem (e.g. GPU renderer) still needs access
+        ///< to the frame buffers until it decides to release.
+
+        RELEASE_AND_FINALIZE ///< (Default) Both release frame memory and finalize
+                             ///< display. This is the safest option in most cases
+                             ///< and should be used unless special handling is
+                             ///< required.
     };
 
     // Function type for performing image conversion
@@ -119,7 +131,19 @@ struct IFrameDecoder
 
     virtual void doOnFinishedDisplayingFrame(unsigned int generation, FinishedDisplayingMode mode) = 0;
 
-    // Notifies that a frame has finished displaying
+    // Notifies the decoder that a frame has finished displaying.
+    //
+    // Must be called exactly once for each frame that was passed to
+    // IFrameListener::drawFrame(). This function may be called from
+    // any thread, including UI/rendering threads, but the caller must
+    // ensure correct synchronization.
+    //
+    // Parameters:
+    //   generation - Frame generation number received with drawFrame()
+    //   mode       - Frame release mode (defaults to RELEASE_AND_FINALIZE)
+    //
+    // Calling this function incorrectly (e.g., missing calls or wrong
+    // mode) may result in memory leaks, excessive buffering, or playback stalls.
     void finishedDisplayingFrame(unsigned int generation, FinishedDisplayingMode mode = RELEASE_AND_FINALIZE)
     {
         doOnFinishedDisplayingFrame(generation, mode);
