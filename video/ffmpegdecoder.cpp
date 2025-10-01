@@ -339,6 +339,7 @@ void FFmpegDecoder::closeProcessing()
     }
 }
 
+const char szUserAgent[] = "User-Agent: Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
 bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat, bool useSAN)
 {
@@ -373,18 +374,25 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
             {
                 av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
             }
-            if (isHttps && useSAN)
+            if (isHttps)
             {
-                const auto pos = 8; // Move past "://"
-                size_t endPos = url.find_first_of(":/", pos);
-                if (endPos != std::string::npos) {
-                    std::string hostname = url.substr(pos, endPos - pos);
-                    std::string ip = resolveHostnameToIP(hostname);
-                    if (!ip.empty()) {
-                        url = url.substr(0, pos) + ip + url.substr(endPos);
-                        CHANNEL_LOG(ffmpeg_opening) << "Opening using a SAN certificate Host: " << hostname << " URL: " << url;
-                        av_dict_set(&streamOpts, "headers", ("Host: " + hostname).c_str(), 0);
+                if (useSAN)
+                {
+                    const auto pos = 8; // Move past "://"
+                    size_t endPos = url.find_first_of(":/", pos);
+                    if (endPos != std::string::npos) {
+                        std::string hostname = url.substr(pos, endPos - pos);
+                        std::string ip = resolveHostnameToIP(hostname);
+                        if (!ip.empty()) {
+                            url = url.substr(0, pos) + ip + url.substr(endPos);
+                            CHANNEL_LOG(ffmpeg_opening) << "Opening using a SAN certificate Host: " << hostname << " URL: " << url;
+                            av_dict_set(&streamOpts, "headers", ("Host: " + hostname + "\r\n" + szUserAgent).c_str(), 0);
+                        }
                     }
+                }
+                else
+                {
+                    av_dict_set(&streamOpts, "headers", szUserAgent, 0);
                 }
             }
 

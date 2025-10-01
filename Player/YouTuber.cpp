@@ -908,7 +908,9 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
 {
     enum { ATTEMPTS_NUMBER = 2 };
 
-    if (extractYoutubeUrl(url))
+    //if (extractYoutubeUrl(url))
+    boost::algorithm::trim(url);
+    if (!url.empty())
     {
         static std::map<std::string, std::pair<std::string, std::string>> mapToDownloadLinks[2];
         auto it = mapToDownloadLinks[adaptive].find(url);
