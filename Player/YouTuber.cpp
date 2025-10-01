@@ -271,13 +271,39 @@ def getYoutubeUrl(url, adaptive):
 //*/
 
 const char TRANSCRIPT_TEMPLATE[] = R"(import sys
+import re
 sys.stderr = LoggerStream()
 
 install_and_import('requests')
 sys.path.append(getTranscriptPathWithPackage())
 from youtube_transcript_api import YouTubeTranscriptApi
-def getYoutubeTranscript(video_id):
-	return YouTubeTranscriptApi.get_transcript(video_id))";
+
+_YT_ID_RE = re.compile(
+    r'(?:v=|\/v\/|youtu\.be\/|\/embed\/|\/shorts\/|watch\?.*v=)([A-Za-z0-9_-]{11})'
+)
+
+def extract_youtube_id(url_or_id: str) -> str:
+    """
+    Accepts either a full YouTube URL (many common forms) or a raw 11-char id.
+    Returns the 11-character video id or raises ValueError if none found.
+    """
+    if not isinstance(url_or_id, str):
+        raise ValueError("video id or url must be a string")
+    url_or_id = url_or_id.strip()
+    if len(url_or_id) == 11 and re.fullmatch(r'[A-Za-z0-9_-]{11}', url_or_id):
+        return url_or_id
+    m = _YT_ID_RE.search(url_or_id)
+    if m:
+        return m.group(1)
+    # fallback: try to parse v= query param explicitly
+    q = re.search(r'[?&]v=([A-Za-z0-9_-]{11})', url_or_id)
+    if q:
+        return q.group(1)
+    raise ValueError("Could not extract YouTube video id from input")
+
+def getYoutubeTranscript(url_or_id: str):
+    video_id = extract_youtube_id(url_or_id)
+    return YouTubeTranscriptApi().fetch(video_id).to_raw_data())";
 
 
 int from_hex(char ch)
@@ -338,7 +364,7 @@ std::string urlencode(const std::string& s)
     return v;
 }
 
-
+/*
 bool extractYoutubeUrl(std::string& s)
 {
     std::regex txt_regex(R"((http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+)");
@@ -374,6 +400,7 @@ bool extractYoutubeId(std::string& s)
 
     return false;
 }
+*/
 
 bool DownloadAndExtractZip(const char* zipfile, const TCHAR* root, const TCHAR* name)
 {
@@ -734,9 +761,14 @@ bool YouTubeTranscriptDealer::getYoutubeTranscripts(const std::string& id, AddYo
         for (int i = 0; i < length; ++i)
         {
             const auto& el = v[i];
-            cb(extract<double>(el["start"]),
-               extract<double>(el["duration"]),
-               extract<std::string>(el["text"]));
+            std::string text = extract<std::string>(el["text"]);
+            boost::algorithm::trim_right(text);
+            if (!text.empty())
+            {
+                cb(extract<double>(el["start"]),
+                    extract<double>(el["duration"]),
+                    text);
+            }
         }
         return true;
     }
@@ -966,7 +998,9 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
 
 bool getYoutubeTranscripts(std::string url, AddYoutubeTranscriptCallback cb)
 {
-    if (extractYoutubeId(url))
+    //if (extractYoutubeId(url))
+    boost::algorithm::trim(url);
+    if (!url.empty())
     {
         CWaitCursor wait;
         static YouTubeTranscriptDealer buddy;
