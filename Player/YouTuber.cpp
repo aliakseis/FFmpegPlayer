@@ -402,6 +402,46 @@ bool extractYoutubeId(std::string& s)
 }
 */
 
+// Extracts a single URL from s. Accepts URLs with http or https schemes,
+// or scheme-less URLs that start with a valid host (e.g., "example.com" or "www.example.com").
+// Rejects inputs that include a non-http(s) scheme (e.g., "ftp://", "htp://").
+// On success sets s to the matched URL (including path, query and fragment) and returns true.
+// The match is conservative: it stops at whitespace and common delimiters < > " ' ( ).
+// If the input may be percent-escaped, keep UrlUnescapeString available; we try both raw and unescaped.
+bool extractHttpOrHostUrl(std::string& s)
+{
+    // scheme: optional, but if present must be http or https
+    // host: domain (labels + tld), localhost or IPv4
+    // port: optional
+    // path+query+fragment: optional, but must preserve ? and # if present
+    static const std::regex url_regex(
+        R"((?:https?:\/\/)?(?:(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}|localhost|\d{1,3}(?:\.\d{1,3}){3})(?::\d{1,5})?(?:\/[^\s\"\'<>()]*)?)",
+        std::regex::icase
+    );
+
+    std::string copy = s;
+    for (int unescaped = 0; unescaped < 2; ++unescaped)
+    {
+        std::smatch m;
+        if (std::regex_search(copy, m, url_regex))
+        {
+            // keep the full matched length so query params and fragments remain
+            s = copy.substr(m.position(), m.length());
+            // If caller expects the URL to start at the match position and include the rest
+            // of the original string, change to: s = copy.substr(m.position());
+            return true;
+        }
+        if (!unescaped)
+        {
+            // If you have a UrlUnescapeString implementation, use it here to try unescaped input.
+            // If not needed, remove this block or leave it as a no-op.
+            copy = UrlUnescapeString(copy);
+        }
+    }
+
+    return false;
+}
+
 bool DownloadAndExtractZip(const char* zipfile, const TCHAR* root, const TCHAR* name)
 {
     std::string urlSubst;
@@ -940,9 +980,7 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
 {
     enum { ATTEMPTS_NUMBER = 2 };
 
-    //if (extractYoutubeUrl(url))
-    boost::algorithm::trim(url);
-    if (!url.empty())
+    if (extractHttpOrHostUrl(url))
     {
         static std::map<std::string, std::pair<std::string, std::string>> mapToDownloadLinks[2];
         auto it = mapToDownloadLinks[adaptive].find(url);
@@ -998,9 +1036,7 @@ std::pair<std::string, std::string> getYoutubeUrl(std::string url, bool adaptive
 
 bool getYoutubeTranscripts(std::string url, AddYoutubeTranscriptCallback cb)
 {
-    //if (extractYoutubeId(url))
-    boost::algorithm::trim(url);
-    if (!url.empty())
+    if (extractHttpOrHostUrl(url))
     {
         CWaitCursor wait;
         static YouTubeTranscriptDealer buddy;
