@@ -57,6 +57,8 @@ You may need to remove pytube stuff from your profile folder for the player appl
 
 You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mapping file.
 
+Your getYoutubeUrl.py and getYoutubeTranscript.py scripts can be put to the %LOCALAPPDATA% folder for custom handling of various, not just YouTube web sources' videos. See Player/YouTuber.cpp file for details.
+
 Just in case: "In fact in boost-python, the default behavior is that even when debug boost libraries are created, these libraries are linked to the release pythonX.dll/lib - by intention, according to the docs." https://github.com/pybind/pybind11/issues/1295
 
 Tiny demos here: https://www.youtube.com/watch?v=dySA4yEGdEc https://www.youtube.com/watch?v=t5iW2ZsEzrA
