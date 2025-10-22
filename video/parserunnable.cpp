@@ -138,17 +138,18 @@ void FFmpegDecoder::parseRunnable(int idx)
             const bool dispatched = dispatchPacket(idx, packet);
             eof = UNSET;
 
-            // Compute effective frame timestamp from packet using its pts.
+            // Compute effective frame timestamp from packet using its pts (work in stream PTS units).
             if (seekable && packet.pts != AV_NOPTS_VALUE) {
-                int64_t effectiveTimestamp = packet.pts + packet.duration;
-                // Adjust effective timestamp by subtracting the stream's start_time if available.
-                AVStream* stream = m_formatContexts[idx]->streams[packet.stream_index];
-                if (stream && stream->start_time != AV_NOPTS_VALUE) {
-                    effectiveTimestamp -= stream->start_time;
-                }
-                // Update lastFrameTime using the effective timestamp.
-                if (stream && stream->duration != AV_NOPTS_VALUE && effectiveTimestamp > 0) {
-                    timeLeft = stream->duration - effectiveTimestamp;
+                const AVFormatContext* fmt = m_formatContexts[idx];
+                if (fmt && packet.stream_index >= 0 && packet.stream_index < fmt->nb_streams) {
+                    const AVStream* stream = fmt->streams[packet.stream_index];
+                    const int64_t pts = packet.pts;
+                    const int64_t dur = (packet.duration != AV_NOPTS_VALUE) ? packet.duration : 0;
+                    const int64_t start_time = (stream && stream->start_time != AV_NOPTS_VALUE) ? stream->start_time : 0;
+                    const int64_t effectiveStreamTs = pts + dur - start_time;
+                    if (stream && stream->duration != AV_NOPTS_VALUE && effectiveStreamTs > 0) {
+                        timeLeft = stream->duration - effectiveStreamTs;
+                    }
                 }
             }
 
@@ -289,13 +290,27 @@ void FFmpegDecoder::handleSubtitlePacket(int idx, const AVPacket& packet)
     std::string text = GetSubtitle(m_subtitlesCodecContext, packet);
     if (!text.empty())
     {
-        if (!addIntervalCallback(packet.pts / 1000., (packet.pts + packet.duration) / 1000., text))
+        // Convert subtitle pts/duration to seconds using the subtitle stream time_base.
+        const AVFormatContext* fmt = m_formatContexts[idx];
+        if (fmt && packet.stream_index >= 0 && packet.stream_index < fmt->nb_streams)
         {
-            boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+            const AVStream* s = fmt->streams[packet.stream_index];
+            if (s && packet.pts != AV_NOPTS_VALUE)
+            {
+                double startSec = av_q2d(s->time_base) * static_cast<double>(packet.pts);
+                double endSec = (packet.duration != AV_NOPTS_VALUE)
+                    ? av_q2d(s->time_base) * static_cast<double>(packet.pts + packet.duration)
+                    : startSec;
 
-            m_subtitleIdx = -1;
-            m_addIntervalCallback = {};
-            avcodec_free_context(&m_subtitlesCodecContext);
+                if (!addIntervalCallback(startSec, endSec, text))
+                {
+                    boost::lock_guard<boost::mutex> locker(m_addIntervalMutex);
+
+                    m_subtitleIdx = -1;
+                    m_addIntervalCallback = {};
+                    avcodec_free_context(&m_subtitlesCodecContext);
+                }
+            }
         }
     }
 }
