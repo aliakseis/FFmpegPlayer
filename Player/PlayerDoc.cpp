@@ -1302,7 +1302,7 @@ float CPlayerDoc::getVideoSpeed() const
     return static_cast<float>(speedRational.denominator) / speedRational.numerator;
 }
 
-CString CPlayerDoc::generateConversionScript(CString outputFolder) const
+CString CPlayerDoc::generateConversionScript(CString outputFolder, bool forceVideoConversion) const
 {
     ensureSeparator(outputFolder);
 
@@ -1328,7 +1328,10 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder) const
         videoFiles.push_back(GetPathName());
     }
 
-    const auto [isVideoCompatible, isAudioCompatible] = m_frameDecoder->isVideoAudioCompatible();
+    auto [isVideoCompatible, isAudioCompatible] = m_frameDecoder->isVideoAudioCompatible();
+
+    if (forceVideoConversion)
+        isVideoCompatible = false;
 
     TCHAR pszAppFolderPath[MAX_PATH] = { 0 };
     GetModuleFileName(NULL, pszAppFolderPath, ARRAYSIZE(pszAppFolderPath));
@@ -1656,7 +1659,7 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
         return;
     }
 
-    auto script = generateConversionScript(dlg.GetPathName());
+    auto script = generateConversionScript(dlg.GetPathName(), GetKeyState(VK_SHIFT) < 0 && GetKeyState(VK_CONTROL) < 0);
     CT2A bufA(script, CP_UTF8);
     writeFile(scriptFileHandle, bufA, strlen(bufA));
 
