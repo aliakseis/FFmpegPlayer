@@ -698,9 +698,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         return false;
     }
 
-    CString source(isLocalFile
-        ? m_strPathName
-        : CString(m_url.data(), m_url.length()));
+    CString source(isLocalFile? m_strPathName : CString(m_url.data(), m_url.length()));
 
     if (source.IsEmpty())
         return false;
@@ -742,12 +740,37 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         strFile = _T("ffmpeg.exe");
         strParams = timeClause + _T("-i \"") + source + _T('"');
 
+        CString mapClause; // will hold -map ... parts
+        const int audioIndex = m_frameDecoder->getAudioTrack();
+        if (audioIndex == 0)
+        {
+            mapClause = _T(" -map 0:v:0 -map 0:a");
+        }
+        else
+        {
+            mapClause.Format(_T(" -map 0:v:0 -map 0:a:%d"), audioIndex);
+        }
+
         if (m_separateFileDiff)
         {
             const auto s = m_separateFileDiff->patch({ source.GetString(), source.GetString() + source.GetLength() });
             if (!s.empty()) {
-                strParams += _T(" ") + timeClause + _T("-i \"") + s.c_str() 
-                    + _T("\" -map 0:v:0 -map 1:a:0");
+                // second input (patched audio/video) added
+                strParams += _T(" ") + timeClause + _T("-i \"") + s.c_str() + _T("\"");
+
+                // Determine mapping based on preferred audio track index
+                // We assume GetPreferredAudioTrack() returns 0 to mean "copy all audio tracks",
+                // non-zero (1-based) to mean "copy that audio track index" from the second input
+                if (audioIndex == 0)
+                {
+                    // copy all audio tracks from second input and the first video from first input
+                    mapClause = _T(" -map 0:v:0 -map 1:a");
+                }
+                else
+                {
+                    // copy the specified audio track (convert 1-based to 0-based index used by ffmpeg)
+                    mapClause.Format(_T(" -map 0:v:0 -map 1:a:%d"), audioIndex);
+                }
             }
         }
 
@@ -760,7 +783,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         if (m_bOrientationUpend)
             if (m_bOrientationMirrory)
                 strParams += m_bOrientationMirrorx ? _T(" -vf transpose=3") : _T(" -vf transpose=1");
-            else 
+            else
                 strParams += m_bOrientationMirrorx ? _T(" -vf transpose=2") : _T(" -vf transpose=0");
         else if (m_bOrientationMirrory)
             strParams += m_bOrientationMirrorx ? _T(" -vf hflip,vflip") : _T(" -vf vflip");
@@ -771,6 +794,11 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         {
             strParams += _T(" -avoid_negative_ts 1 -map_chapters -1");
         }
+
+        // Append the mapClause after -avoid_negative_ts / -map_chapters but before re-encode options.
+        if (!mapClause.IsEmpty())
+            strParams += mapClause;
+
         if (!streamcopy)
             strParams += _T(" -q:v 4");
 
