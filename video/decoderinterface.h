@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ordered_scoped_token.hpp"
+#include "ordered_scoped_token.h"
 
 #include <cstdint>
 #include <memory>
