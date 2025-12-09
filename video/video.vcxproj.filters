@@ -74,6 +74,9 @@
     <ClInclude Include="decoderiocontext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ordered_scoped_token.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

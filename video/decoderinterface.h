@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ordered_scoped_token.hpp"
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -98,7 +100,7 @@ struct IFrameDecoder
     };
 
     // Function type for performing image conversion
-    typedef std::function<void(
+    typedef std::function<void(OrderedScopedTokenGenerator::Token,
         uint8_t* /*input*/, int /*input stride*/, int /*input width*/, int /*input height*/,
         std::vector<uint8_t>& /*output*/, int& /*output width*/, int& /*output height*/
         )> ImageConversionFunc;

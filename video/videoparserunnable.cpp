@@ -368,12 +368,13 @@ bool frameToImage(
     return true;
 }
 
-auto GetAsyncConversionFunction(AVFramePtr input,
+auto GetAsyncConversionFunction(OrderedScopedTokenGenerator::Token t,
+    AVFramePtr input,
     std::promise<VideoFrame *> &videoFramePromise,
     boost::shared_ptr<IFrameDecoder::ImageConversionFunc> imageConversionFunc,
     AVPixelFormat pixelFormat)
 {
-    return [input = std::move(input),
+    return [t = std::move(t), input = std::move(input),
         outputFut = videoFramePromise.get_future(),
         imageConversionFunc = std::move(imageConversionFunc),
         pixelFormat]() mutable
@@ -418,7 +419,8 @@ auto GetAsyncConversionFunction(AVFramePtr input,
             int outputHeight{};
             int outputWidth{};
 
-            (*imageConversionFunc)(data, stride, input->width, input->height, outputImg, outputWidth, outputHeight);
+            (*imageConversionFunc)(std::move(t), data, stride, input->width, input->height, 
+                outputImg, outputWidth, outputHeight);
 
             const int outputStride = outputWidth;
 
@@ -465,6 +467,7 @@ struct FFmpegDecoder::VideoParseContext
 {
     bool initialized = false;
     int numSkipped = 0;
+    OrderedScopedTokenGenerator tokenGenerator;
 };
 
 void FFmpegDecoder::videoParseRunnable()
@@ -641,7 +644,9 @@ bool FFmpegDecoder::handleVideoFrame(
 
         std::swap(input, videoFrame);
 
-        auto asyncConversion = GetAsyncConversionFunction(std::move(input),
+        auto asyncConversion = GetAsyncConversionFunction(
+            context.tokenGenerator.generate(),
+            std::move(input),
             videoFramePromise,
             std::move(imageConversionFunc),
             m_pixelFormat);

@@ -153,6 +153,7 @@
     <ClInclude Include="decoderinterface.h" />
     <ClInclude Include="interlockedadd.h" />
     <ClInclude Include="makeguard.h" />
+    <ClInclude Include="ordered_scoped_token.hpp" />
     <ClInclude Include="subtitles.h" />
     <ClInclude Include="videoframe.h" />
     <ClInclude Include="vqueue.h" />

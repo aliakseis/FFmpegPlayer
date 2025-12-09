@@ -39,7 +39,8 @@ bool EnableImageUpscale()
     return ok;
 }
 
-void ImageUpscale(uint8_t* input, int inputStride, int inputWidth, int inputHeight, std::vector<uint8_t>& output, int& outputWidth, int& outputHeight)
+void ImageUpscale(OrderedScopedTokenGenerator::Token, uint8_t* input, int inputStride, int inputWidth, int inputHeight,
+    std::vector<uint8_t>& output, int& outputWidth, int& outputHeight)
 {
     Anime4KCPP::Parameters param{};
     auto ac = Anime4KCPP::ACCreator::createUP(param, Anime4KCPP::Processor::Type::OpenCL_ACNet);
@@ -80,7 +81,7 @@ bool EnableImageUpscale()
     return false;
 }
 
-void ImageUpscale(uint8_t*, int, int, int, std::vector<uint8_t>&, int&, int&)
+void ImageUpscale(OrderedScopedTokenGenerator::Token, uint8_t*, int, int, int, std::vector<uint8_t>&, int&, int&)
 {
 }
 
