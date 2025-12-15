@@ -1170,6 +1170,13 @@ std::vector<std::string> FFmpegDecoder::getProperties() const
     return result;
 }
 
+std::pair<int, int> FFmpegDecoder::getVideoSize() const
+{
+    return m_videoCodecContext
+        ? std::pair<int, int>(m_videoCodecContext->width, m_videoCodecContext->height)
+        : std::pair<int, int>();
+}
+
 std::pair<bool, bool> FFmpegDecoder::isVideoAudioCompatible() const
 {
     auto videoLam = [this]

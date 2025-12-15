@@ -99,7 +99,7 @@ struct IFrameDecoder
                              ///< required.
     };
 
-    // Function type for performing image conversion
+    // Function type for performing image conversion; NV12 format
     typedef std::function<void(OrderedScopedTokenGenerator::Token,
         uint8_t* /*input*/, int /*input stride*/, int /*input width*/, int /*input height*/,
         std::vector<uint8_t>& /*output*/, int& /*output width*/, int& /*output height*/
@@ -174,6 +174,9 @@ struct IFrameDecoder
 
     // Retrieve properties of the content
     virtual std::vector<std::string> getProperties() const = 0;
+
+    // Retrieve video size
+    virtual std::pair<int, int> getVideoSize() const = 0;
 
     // Check compatibility of video and audio streams
     virtual std::pair<bool, bool> isVideoAudioCompatible() const = 0;
