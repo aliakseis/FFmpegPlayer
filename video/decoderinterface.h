@@ -100,9 +100,9 @@ struct IFrameDecoder
     };
 
     // Function type for performing image conversion; NV12 format
-    typedef std::function<void(OrderedScopedTokenGenerator::Token,
+    typedef std::function<bool(OrderedScopedTokenGenerator::Token,
         uint8_t* /*input*/, int /*input stride*/, int /*input width*/, int /*input height*/,
-        std::vector<uint8_t>& /*output*/, int& /*output width*/, int& /*output height*/
+        int64_t /*pts*/, std::vector<uint8_t>& /*output*/, int& /*output width*/, int& /*output height*/
         )> ImageConversionFunc;
 
     virtual ~IFrameDecoder() = default;

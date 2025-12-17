@@ -419,8 +419,11 @@ auto GetAsyncConversionFunction(OrderedScopedTokenGenerator::Token t,
             int outputHeight{};
             int outputWidth{};
 
-            (*imageConversionFunc)(std::move(t), data, stride, input->width, input->height, 
-                outputImg, outputWidth, outputHeight);
+            if (!(*imageConversionFunc)(std::move(t), data, stride, input->width, input->height,
+                input->pts, outputImg, outputWidth, outputHeight))
+            {
+                return false;
+            }
 
             const int outputStride = outputWidth;
 
