@@ -48,6 +48,8 @@ private:
     AVFilterContext* buffersink_ctx_ = nullptr;
     bool initialized_ = false;
     AVRational time_base_ = {1,25};
+    int w_ = 0;
+    int h_ = 0;
 
     int create_graph(int in_w, int in_h, AVPixelFormat in_pix_fmt);
     void free_graph();

@@ -74,6 +74,8 @@ int FrameTransformer::create_graph(int in_w, int in_h, AVPixelFormat in_pix_fmt)
     ret = avfilter_graph_config(graph_.get(), nullptr);
     if (ret < 0) goto fail;
 
+    w_ = in_w;
+    h_ = in_h;
     initialized_ = true;
     return 0;
 
@@ -83,7 +85,11 @@ fail:
 }
 
 bool FrameTransformer::operator()(OrderedScopedTokenGenerator::Token t, uint8_t* input, int in_stride, int in_w, int in_h, int64_t pts,
-                              std::vector<uint8_t>& output, int& out_w, int& out_h){
+                              std::vector<uint8_t>& output, int& out_w, int& out_h)
+{
+    if (w_ != in_w || h_ != in_h)
+        free_graph();
+
     if (!initialized_) {
         int r = init(in_w, in_h, time_base_); // assume input pixfmt; caller can init explicitly
         if (r < 0)
@@ -135,9 +141,12 @@ bool FrameTransformer::operator()(OrderedScopedTokenGenerator::Token t, uint8_t*
     return true;// 0;
 }
 
-void FrameTransformer::free_graph(){
-    //if (graph_) avfilter_graph_free(&graph_);
+void FrameTransformer::free_graph()
+{
+    graph_.reset();
     buffersrc_ctx_ = nullptr;
     buffersink_ctx_ = nullptr;
     initialized_ = false;
+    w_ = 0;
+    h_ = 0;
 }
