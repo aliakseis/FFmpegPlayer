@@ -24,16 +24,13 @@ Usage:
 
 class FrameTransformer {
 public:
-    // filter_desc: e.g. "scale=1280:720,format=nv12" or "format=nv12"
-    FrameTransformer(const std::string& filter_desc);
-    //FrameTransformer(FrameTransformer&& other) = default;
-    ~FrameTransformer();
+    FrameTransformer(std::string filter_desc);
 
     // Initialize with input properties (called automatically on first process if not called)
     int init(int in_w, int in_h, AVRational time_base = {1, 25});
 
     // Process one frame. pts is optional (pass AV_NOPTS_VALUE if unknown).
-    // Returns 0 on success, negative AVERROR on failure.
+    // Returns success.
     bool operator()(OrderedScopedTokenGenerator::Token t, 
                 uint8_t* input, int in_stride, int in_w, int in_h, int64_t pts,
                 std::vector<uint8_t>& output, int& out_w, int& out_h);
@@ -42,7 +39,6 @@ public:
 
 private:
     std::string filter_desc_;
-    //AVFilterGraph* graph_ = nullptr;
     std::shared_ptr<AVFilterGraph> graph_;
     AVFilterContext* buffersrc_ctx_ = nullptr;
     AVFilterContext* buffersink_ctx_ = nullptr;

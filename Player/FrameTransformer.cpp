@@ -12,10 +12,8 @@ extern "C" {
 
 const auto PIX_FMT = AV_PIX_FMT_NV12;
 
-FrameTransformer::FrameTransformer(const std::string& filter_desc)
-  : filter_desc_(filter_desc) {}
-
-FrameTransformer::~FrameTransformer(){ free_graph(); }
+FrameTransformer::FrameTransformer(std::string filter_desc)
+  : filter_desc_(std::move(filter_desc)) {}
 
 int FrameTransformer::init(int in_w, int in_h, AVRational time_base){
     time_base_ = time_base;
