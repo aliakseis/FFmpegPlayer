@@ -141,6 +141,7 @@ BEGIN
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save Copy &As...",            ID_FILE_SAVE_COPY_AS
+        MENUITEM "Using a SAN certificate",     ID_USING_SAN_CERTIFICATE
         MENUITEM SEPARATOR
         MENUITEM "Copy URL To Clipboard",       ID_COPY_URL_TO_CLIPBOARD
         MENUITEM "Convert Videos Into Compatible Format", ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT
@@ -185,7 +186,6 @@ BEGIN
         MENUITEM "Maximal Resolution",          ID_MAXIMALRESOLUTION
         MENUITEM "Hardware Acceleration",       ID_HW_ACCELERATION
         MENUITEM "Super Resolution",            ID_SUPER_RESOLUTION
-        MENUITEM "Using a SAN certificate",     ID_USING_SAN_CERTIFICATE
         MENUITEM SEPARATOR
         MENUITEM "Open Audio File...",          ID_OPEN_AUDIO_FILE
         MENUITEM "Open Subtitles File...",      ID_OPENSUBTITLESFILE
