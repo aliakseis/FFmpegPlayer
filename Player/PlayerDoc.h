@@ -189,6 +189,8 @@ private:
 
     HANDLE m_hConversionProcess = NULL;
 
+    CString m_videoFilter;
+
 public:
     afx_msg void OnMaximalresolution();
     afx_msg void OnUpdateMaximalresolution(CCmdUI *pCmdUI);
@@ -214,4 +216,5 @@ public:
     afx_msg void OnUpdateOpenAudioFile(CCmdUI* pCmdUI);
     afx_msg void OnUsingSanCertificate();
     afx_msg void OnUpdateUsingSanCertificate(CCmdUI* pCmdUI);
+    afx_msg void OnVideoFilter();
 };

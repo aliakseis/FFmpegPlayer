@@ -180,6 +180,7 @@ BEGIN
             MENUITEM "Vertical Mirror",             ID_ORIENTATION_MIRRORY
             MENUITEM "Upend",                       ID_ORIENTATION_UPEND
         END
+        MENUITEM "Video Filter...",             ID_VIDEO_FILTER
         MENUITEM SEPARATOR
         MENUITEM "Maximal Resolution",          ID_MAXIMALRESOLUTION
         MENUITEM "Hardware Acceleration",       ID_HW_ACCELERATION
@@ -295,6 +296,16 @@ BEGIN
     PUSHBUTTON      "Save as…",ID_FILE_SAVE_COPY_AS,293,1,40,14
 END
 
+IDD_DIALOG_VIDEO_FILTER DIALOGEX 0, 0, 310, 122
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Enter Video Filter:"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,199,101,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,253,101,50,14
+    EDITTEXT        IDC_VIDEO_FILTER,7,7,296,86,ES_MULTILINE
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -377,6 +388,14 @@ BEGIN
     BEGIN
         RIGHTMARGIN, 333
     END
+
+    IDD_DIALOG_VIDEO_FILTER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 303
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 115
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -418,6 +437,11 @@ BEGIN
 END
 
 IDD_ABOUTBOX AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_DIALOG_VIDEO_FILTER AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

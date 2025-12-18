@@ -233,8 +233,10 @@
     <ClInclude Include="DialogBarPlayerControl.h" />
     <ClInclude Include="DialogBarRange.h" />
     <ClInclude Include="DialogOpenURL.h" />
+    <ClInclude Include="DialogVideoFilter.h" />
     <ClInclude Include="EditTime.h" />
     <ClInclude Include="FrameToHglobal.h" />
+    <ClInclude Include="FrameTransformer.h" />
     <ClInclude Include="GetClipboardText.h" />
     <ClInclude Include="HandleFilesSequence.h" />
     <ClInclude Include="I420Effect.h" />
@@ -262,8 +264,10 @@
     <ClCompile Include="DialogBarPlayerControl.cpp" />
     <ClCompile Include="DialogBarRange.cpp" />
     <ClCompile Include="DialogOpenURL.cpp" />
+    <ClCompile Include="DialogVideoFilter.cpp" />
     <ClCompile Include="EditTime.cpp" />
     <ClCompile Include="FrameToHglobal.cpp" />
+    <ClCompile Include="FrameTransformer.cpp" />
     <ClCompile Include="HandleFilesSequence.cpp" />
     <ClCompile Include="I420Effect.cpp" />
     <ClCompile Include="ImageUpscale.cpp" />

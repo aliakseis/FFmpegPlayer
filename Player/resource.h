@@ -21,6 +21,7 @@
 #define IDD_DIALOG_OPEN_URL             317
 #define IDD_DIALOGBAR_RANGE             319
 #define IDR_LAUNCH                      320
+#define IDD_DIALOG_VIDEO_FILTER         321
 #define IDC_PROGRESS_SLIDER             1000
 #define IDC_PLAY_PAUSE                  1001
 #define IDC_AUDIO_ON_OFF                1002
@@ -41,6 +42,7 @@
 #define IDC_APP_NAME_VERSION            1018
 #define IDC_EDIT_INPUT_FORMAT           1019
 #define IDC_LOSSLESS_CUT                1020
+#define IDC_VIDEO_FILTER                1021
 #define ID_TRACK1_DUMMY                 32771
 #define ID_AUTOPLAY                     32775
 #define ID_LOOPING                      32776
@@ -67,17 +69,18 @@
 #define ID_ORIENTATION_RORATE_180       32797
 #define ID_ORIENTATION_RORATE_270       32798
 #define ID_FIX_ENCODING                 32799
-#define ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT  32800
+#define ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT 32800
 #define ID_OPEN_AUDIO_FILE              32801
 #define ID_USING_SAN_CERTIFICATE        32802
+#define ID_VIDEO_FILTER                 32803
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        321
-#define _APS_NEXT_COMMAND_VALUE         32803
-#define _APS_NEXT_CONTROL_VALUE         1021
-#define _APS_NEXT_SYMED_VALUE           310
+#define _APS_NEXT_RESOURCE_VALUE        323
+#define _APS_NEXT_COMMAND_VALUE         32804
+#define _APS_NEXT_CONTROL_VALUE         1022
+#define _APS_NEXT_SYMED_VALUE           317
 #endif
 #endif

@@ -25,6 +25,9 @@
 
 #include "ByteStreamBuffer.h"
 
+#include "DialogVideoFilter.h"
+#include "FrameTransformer.h"
+
 #include <propkey.h>
 #include <memory>
 
@@ -349,6 +352,7 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_UPDATE_COMMAND_UI(ID_OPEN_AUDIO_FILE, &CPlayerDoc::OnUpdateOpenAudioFile)
     ON_COMMAND(ID_USING_SAN_CERTIFICATE, &CPlayerDoc::OnUsingSanCertificate)
     ON_UPDATE_COMMAND_UI(ID_USING_SAN_CERTIFICATE, &CPlayerDoc::OnUpdateUsingSanCertificate)
+    ON_COMMAND(ID_VIDEO_FILTER, &CPlayerDoc::OnVideoFilter)
 END_MESSAGE_MAP()
 
 
@@ -1790,4 +1794,37 @@ void CPlayerDoc::OnUsingSanCertificate()
 void CPlayerDoc::OnUpdateUsingSanCertificate(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(m_bUsingSAN);
+}
+
+void CPlayerDoc::OnVideoFilter()
+{
+    CDialogVideoFilter dlg;
+    dlg.m_videoFilter = m_videoFilter;
+    if (dlg.DoModal() != IDOK)
+        return;
+
+    m_videoFilter = dlg.m_videoFilter.Trim();
+
+    if (m_videoFilter.IsEmpty())
+    {
+        if (m_superResolution)
+            m_frameDecoder->setImageConversionFunc(ImageUpscale);
+        else
+            m_frameDecoder->setImageConversionFunc({});
+    }
+    else
+    {
+        CW2A videoFilter(m_videoFilter, CP_UTF8);
+        FrameTransformer frameTransformer(static_cast<const char*>(videoFilter));
+        auto [width, height] = m_frameDecoder->getVideoSize();
+        auto ret = frameTransformer.init(width, height);
+        if (ret >= 0)
+            m_frameDecoder->setImageConversionFunc(frameTransformer);
+        else
+        {
+            CString msg;
+            msg.Format(_T("Video filter setting failed. Error code: %d."), ret);
+            AfxMessageBox(msg);
+        }
+    }
 }
