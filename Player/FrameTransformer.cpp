@@ -114,10 +114,6 @@ bool FrameTransformer::operator()(OrderedScopedTokenGenerator::Token t, uint8_t*
         // pull filtered frames
         filt = av_frame_alloc();
         ret = av_buffersink_get_frame(buffersink_ctx_, filt);
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-            av_frame_free(&filt);
-            return false;// 0;
-        }
         if (ret < 0) {
             av_frame_free(&filt);
             return false;// ret;
