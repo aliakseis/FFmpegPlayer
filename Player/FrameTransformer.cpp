@@ -98,6 +98,7 @@ bool FrameTransformer::operator()(OrderedScopedTokenGenerator::Token t, uint8_t*
     frame->format = PIX_FMT; // adjust if needed
     frame->width  = in_w;
     frame->height = in_h;
+    frame->linesize[0] = in_stride;
     frame->pts    = pts;
     av_image_fill_arrays(frame->data, frame->linesize, input, (AVPixelFormat)frame->format, in_w, in_h, 1);
     
