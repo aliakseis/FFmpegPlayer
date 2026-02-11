@@ -1334,8 +1334,72 @@ float CPlayerDoc::getVideoSpeed() const
     return static_cast<float>(speedRational.denominator) / speedRational.numerator;
 }
 
-CString CPlayerDoc::generateConversionScript(CString outputFolder, bool forceVideoConversion) const
+CString CPlayerDoc::generateConversionScript() const
 {
+    const auto scriptTempPath = getScriptTempPath();
+
+    CHandle scriptFileHandle{ lockFile(scriptTempPath) };
+    if (!scriptFileHandle)
+    {
+        return {};
+    }
+
+    CFolderPickerDialog dlg;
+    if (IDOK != dlg.DoModal())
+    {
+        return {};
+    }
+
+    auto [isVideoCompatible, isAudioCompatible] = m_frameDecoder->isVideoAudioCompatible();
+
+    // Build base message
+    CString msg = _T("Destination: ") + NoBreak(dlg.GetPathName()) +
+        _T("\nOptions:\n") +
+        StrikeThrough(_T("Following,"), !m_autoPlay) +
+        StrikeThrough(_T("Preceding,"), !m_looping) +
+        StrikeThrough(_T("Separate Audio,"), !m_separateFileDiff) +
+        StrikeThrough(_T("Separate Subtitles"), !m_subtitlesFileDiff);
+
+    if (!isVideoCompatible)
+    {
+        // Mandatory conversion
+        msg += _T("\n\nThe video format is NOT compatible.");
+        msg += _T("\nConversion is required to proceed.");
+        msg += _T("\n\nOK = Convert\nCANCEL = Abort");
+
+        UINT buttons = MB_OKCANCEL | MB_ICONWARNING;
+        auto r = AfxMessageBox(msg, buttons);
+
+        if (r != IDOK)
+        {
+            return {};
+        }
+
+        isVideoCompatible = false; // enforce conversion
+    }
+    else
+    {
+        // Optional conversion
+        msg += _T("\n\nThe video is compatible.");
+        msg += _T("\nYou may still convert it (e.g., to reduce size or ensure consistent encoding).");
+        msg += _T("\n\nConvert the video?");
+        msg += _T("\nYES = Convert\nNO = Keep original\nCANCEL = Abort");
+
+        UINT buttons = MB_YESNOCANCEL | MB_ICONQUESTION;
+        auto r = AfxMessageBox(msg, buttons);
+
+        if (r == IDCANCEL)
+        {
+            return {};
+        }
+
+        if (r == IDYES)
+            isVideoCompatible = false; // force conversion
+        else
+            isVideoCompatible = true;  // keep original
+    }
+
+    auto outputFolder = dlg.GetPathName();
     ensureSeparator(outputFolder);
 
     std::vector<CString> videoFiles;
@@ -1360,10 +1424,6 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder, bool forceVid
         videoFiles.push_back(GetPathName());
     }
 
-    auto [isVideoCompatible, isAudioCompatible] = m_frameDecoder->isVideoAudioCompatible();
-
-    if (forceVideoConversion)
-        isVideoCompatible = false;
 
     TCHAR pszAppFolderPath[MAX_PATH] = { 0 };
     GetModuleFileName(NULL, pszAppFolderPath, ARRAYSIZE(pszAppFolderPath));
@@ -1449,7 +1509,10 @@ CString CPlayerDoc::generateConversionScript(CString outputFolder, bool forceVid
         }
     }
 
-    return strText;
+    CT2A bufA(strText, CP_UTF8);
+    writeFile(scriptFileHandle, bufA, strlen(bufA));
+
+    return scriptTempPath;
 }
 
 
@@ -1669,33 +1732,10 @@ void CPlayerDoc::OnConvertVideosIntoCompatibleFormat()
         }
     }
 
-    const auto scriptTempPath = getScriptTempPath();
 
-    const auto scriptFileHandle = lockFile(scriptTempPath);
-    if (!scriptFileHandle)
-    {
+    auto scriptTempPath = generateConversionScript();
+    if (scriptTempPath.IsEmpty())
         return;
-    }
-
-    CFolderPickerDialog dlg;
-    if (IDOK != dlg.DoModal()
-        || IDYES != AfxMessageBox(_T("Destination: ") +
-            NoBreak(dlg.GetPathName()) + _T("\nOptions:\n") + 
-            StrikeThrough(_T("Following,"), !m_autoPlay) +
-            StrikeThrough(_T("Preceding,"), !m_looping) +
-            StrikeThrough(_T("Separate Audio,"), !m_separateFileDiff) +
-            StrikeThrough(_T("Separate Subtitles"), !m_subtitlesFileDiff) + _T("\n\nConvert files?"),
-            MB_YESNO | MB_ICONQUESTION))
-    {
-        CloseHandle(scriptFileHandle);
-        return;
-    }
-
-    auto script = generateConversionScript(dlg.GetPathName(), GetKeyState(VK_SHIFT) < 0 && GetKeyState(VK_CONTROL) < 0);
-    CT2A bufA(script, CP_UTF8);
-    writeFile(scriptFileHandle, bufA, strlen(bufA));
-
-    CloseHandle(scriptFileHandle);
 
     // Try to execute the file with the "open" verb
     SHELLEXECUTEINFO ShExecInfo {};
