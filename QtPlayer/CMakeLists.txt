@@ -176,6 +176,7 @@ endif()
 #target_include_directories(audio PRIVATE ../audio)
 #target_link_libraries(audio)
 
+target_include_directories(QtPlayer PRIVATE ${Boost_INCLUDE_DIRS} ${PORTAUDIO_INCLUDE_DIRS})
 
 target_link_libraries(QtPlayer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets video ${PORTAUDIO_LIBRARIES})
 if(WIN32)
