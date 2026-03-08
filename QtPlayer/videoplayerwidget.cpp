@@ -72,11 +72,7 @@ void VideoPlayerWidget::playFile(const QString& fileName)
         setState(Playing);
         m_controls->showPlaybutton(false);
 
-		if (m_videoWidget->isFullScreen())
-		{
-            m_videoWidget->setPreferredSize(m_videoWidget->width(), m_videoWidget->height());
-		}
-		else
+		if (!m_videoWidget->isFullScreen())
 		{
             updateLayout();
 		}
@@ -232,28 +228,11 @@ void VideoPlayerWidget::updateLayout()
 		if (m_videoWidget->isFullScreen())
 		{
 			m_videoWidget->setGeometry(0, 0, currWidth, currHeight);
-//#ifndef DEVELOPER_OPENGL
-            m_videoWidget->setPreferredSize(currWidth, currHeight);
-//#endif
 		}
 		else
 		{
 			m_videoWidget->setGeometry(0, yPos, playerWidth, playerHeight - PROGRESSBAR_VISIBLE_HEIGHT);
-//#ifndef DEVELOPER_OPENGL
-            m_videoWidget->setPreferredSize(playerWidth, playerHeight);
-//#endif
 		}
-		// Not required by opengl
-#ifndef DEVELOPER_OPENGL
-		if (state() == Playing)
-		{
-			m_videoWidget->setPixmap(m_videoWidget->pixmap()->scaledToHeight(m_videoWidget->height(), Qt::SmoothTransformation));
-		}
-        else if (state() == Paused)
-		{
-			m_videoWidget->showPicture(m_videoWidget->originalFrame().scaled(playerWidth, playerHeight, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-		}
-#endif
 		yPos += playerHeight;
 	}
 

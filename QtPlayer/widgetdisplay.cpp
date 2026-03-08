@@ -6,6 +6,7 @@
 
 WidgetDisplay::WidgetDisplay(QWidget* parent) : QLabel(parent)
 {
+    setScaledContents(true);
     connect(this, &WidgetDisplay::display, this, &WidgetDisplay::currentDisplay);
 }
 
@@ -39,12 +40,7 @@ void WidgetDisplay::updateFrame(IFrameDecoder* decoder, unsigned int generation)
 
     m_aspectRatio = float(data.height) / data.width;
 
-    auto image = QImage(data.image[0], data.width, data.height, data.pitch[0], QImage::Format_RGB888);
-    if (m_scrWidth > 0 && m_scrHeight > 0) {
-        m_image = image.scaled(m_scrWidth, m_scrHeight);
-    } else {
-        m_image = std::move(image);
-    }
+    m_image = QImage(data.image[0], data.width, data.height, data.pitch[0], QImage::Format_RGB888);
 }
 
 void WidgetDisplay::drawFrame(IFrameDecoder* decoder, unsigned int generation)
