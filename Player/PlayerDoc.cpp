@@ -714,7 +714,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
     PathRemoveFileSpec(pszPath);
     CString strFile;
     CString strParams;
-    if (isFullFrameRange() && !m_separateFileDiff && !transform)
+    if (isFullFrameRange() && !m_separateFileDiff && !transform && m_videoFilter.IsEmpty())
     {
         if (isLocalFile)
         {
@@ -784,15 +784,46 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
             strParams += _T(" -c copy");
 
         // rotation https://webcache.googleusercontent.com/search?q=cache:IiCyGV1Tp7oJ:https://annimon.com/article/3997+
+        CString filterChain;
+
+        if (!m_videoFilter.IsEmpty())
+        {
+            filterChain = m_videoFilter;   // start with user filter
+        }
+
+        // Orientation / rotation filters
+        CString orientationFilter;
+
         if (m_bOrientationUpend)
+        {
             if (m_bOrientationMirrory)
-                strParams += m_bOrientationMirrorx ? _T(" -vf transpose=3") : _T(" -vf transpose=1");
+                orientationFilter = m_bOrientationMirrorx ? _T("transpose=3") : _T("transpose=1");
             else
-                strParams += m_bOrientationMirrorx ? _T(" -vf transpose=2") : _T(" -vf transpose=0");
+                orientationFilter = m_bOrientationMirrorx ? _T("transpose=2") : _T("transpose=0");
+        }
         else if (m_bOrientationMirrory)
-            strParams += m_bOrientationMirrorx ? _T(" -vf hflip,vflip") : _T(" -vf vflip");
+        {
+            orientationFilter = m_bOrientationMirrorx ? _T("hflip,vflip") : _T("vflip");
+        }
         else if (m_bOrientationMirrorx)
-            strParams += _T(" -vf hflip");
+        {
+            orientationFilter = _T("hflip");
+        }
+
+        // Combine filters if needed
+        if (!orientationFilter.IsEmpty())
+        {
+            if (!filterChain.IsEmpty())
+                filterChain += _T(",") + orientationFilter;
+            else
+                filterChain = orientationFilter;
+        }
+
+        // Add final -vf parameter if any filter exists
+        if (!filterChain.IsEmpty())
+        {
+            strParams += _T(" -vf ") + filterChain;
+        }
 
         if (!isFullFrameRange())
         {
