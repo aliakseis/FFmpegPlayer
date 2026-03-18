@@ -36,25 +36,6 @@
 
 namespace {
 
-bool getValueFromPropertiesFile(const TCHAR* configPath, const char* key, std::string& value)
-{
-    std::ifstream istr(configPath);
-    std::string buffer;
-    while (std::getline(istr, buffer))
-    {
-        std::istringstream ss(buffer);
-        std::getline(ss, buffer, '=');
-        boost::algorithm::trim(buffer);
-        if (buffer == key)
-        {
-            std::getline(ss, value);
-            boost::algorithm::trim(value);
-            return true;
-        }
-    }
-    return false;
-}
-
 // Parses the value of the active python exception
 std::string parse_python_exception()
 {
@@ -100,22 +81,6 @@ std::string parse_python_exception()
             ret += ": Unparseable Python traceback";
     }
     return ret;
-}
-
-
-boost::python::object LoadScriptAndGetFunction(const char* script, const char* funcName,
-    std::initializer_list<std::pair<const char*, boost::python::object>> globals)
-{
-    using namespace boost::python;
-    object main = import("__main__");
-    object global(main.attr("__dict__"));
-
-    for (auto& v : globals)
-        global[v.first] = v.second;
-
-    object exec_result = exec(script, global, global);
-
-    return global[funcName];
 }
 
 
