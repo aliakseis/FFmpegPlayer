@@ -30,7 +30,7 @@
 
 #include <tchar.h>
 
-#include "unzip.h"
+//#include "unzip.h"
 #include "http_get.h"
 
 #include "MemoryMappedFile.h"
@@ -151,11 +151,10 @@ public:
 };
 
 
-//const char PYTUBE_URL[] = "https://github.com/pytube/pytube/archive/master.zip";
-const char PYTUBE_URL[] = "https://github.com/JuanBindez/pytubefix/archive/refs/heads/main.zip";
-const char YOUTUBE_TRANSCRIPT_API_URL[] = "https://github.com/jdepoix/youtube-transcript-api/archive/master.zip";
+//const char PYTUBE_URL[] = "https://github.com/JuanBindez/pytubefix/archive/refs/heads/main.zip";
+//const char YOUTUBE_TRANSCRIPT_API_URL[] = "https://github.com/jdepoix/youtube-transcript-api/archive/master.zip";
 
-//*
+/*
 
 const char SCRIPT_TEMPLATE[] = R"(import sys, socket
 sys.stderr = LoggerStream()
@@ -212,7 +211,7 @@ def getYoutubeUrl(url, adaptive):
 
 //*/
 
-/*
+//*
 
 const char SCRIPT_TEMPLATE[] = R"(import sys, socket
 sys.stderr = LoggerStream()
@@ -247,13 +246,6 @@ def getYoutubeUrl(url, adaptive):
         best_video_format = max(formats, key=lambda f: f.get('height', 0) if f['vcodec'] != 'none' and not f['vcodec'].startswith('av01') and f['protocol'] != 'm3u8_native' else 0)
         video_url = best_video_format['url']
 
-        #ydl_opts = {
-        #    'format': 'bestaudio',
-        #    'noplaylist': True,
-        #    'quiet': True,
-        #}
-
-        #formats = yt_dlp.YoutubeDL(ydl_opts).extract_info(url, download=False)['formats']
         best_audio = next(f['url'] for f in formats if 'audio_channels' in f and f['audio_channels'] is not None and f['vcodec'] == 'none' and f['protocol'] != 'm3u8_native')
 
         return [video_url, best_audio]
@@ -442,6 +434,7 @@ bool extractHttpOrHostUrl(std::string& s)
     return false;
 }
 
+/*
 bool DownloadAndExtractZip(const char* zipfile, const TCHAR* root, const TCHAR* name)
 {
     std::string urlSubst;
@@ -532,6 +525,7 @@ std::string getPathWithPackage(const char* url, const TCHAR* name)
 
     return pszConvert;
 }
+*/
 
 std::string loadScriptText(const TCHAR* name)
 {
@@ -608,10 +602,10 @@ private:
     boost::python::object m_obj;
 };
 
-auto getPytubePathWithPackage()
-{
-    return getPathWithPackage(PYTUBE_URL, _T("pytube-master"));
-}
+//auto getPytubePathWithPackage()
+//{
+//    return getPathWithPackage(PYTUBE_URL, _T("pytube-master"));
+//}
 
 YouTubeDealer::YouTubeDealer()
 {
@@ -655,8 +649,8 @@ YouTubeDealer::YouTubeDealer()
         m_obj = LoadScriptAndGetFunction(scriptText.empty()? SCRIPT_TEMPLATE : scriptText.c_str(),
             "getYoutubeUrl",
             { 
-                { "LoggerStream", getLoggerStream() }, 
-                { "getPytubePathWithPackage", boost::python::make_function(getPytubePathWithPackage) }
+                { "LoggerStream", getLoggerStream() } 
+                //{ "getPytubePathWithPackage", boost::python::make_function(getPytubePathWithPackage) }
             });
 
         if (!m_obj)
@@ -744,10 +738,10 @@ private:
     boost::python::object m_obj;
 };
 
-auto getTranscriptPathWithPackage()
-{
-    return getPathWithPackage(YOUTUBE_TRANSCRIPT_API_URL, _T("youtube-transcript-api-master"));
-}
+//auto getTranscriptPathWithPackage()
+//{
+//    return getPathWithPackage(YOUTUBE_TRANSCRIPT_API_URL, _T("youtube-transcript-api-master"));
+//}
 
 YouTubeTranscriptDealer::YouTubeTranscriptDealer()
 {
@@ -764,7 +758,7 @@ YouTubeTranscriptDealer::YouTubeTranscriptDealer()
         m_obj = LoadScriptAndGetFunction(scriptText.empty() ? TRANSCRIPT_TEMPLATE : scriptText.c_str(),
             "getYoutubeTranscript",
             {
-                { "getTranscriptPathWithPackage", boost::python::make_function(getTranscriptPathWithPackage) }
+                //{ "getTranscriptPathWithPackage", boost::python::make_function(getTranscriptPathWithPackage) }
             });
         //if (!m_obj)
         //    Py_Finalize();
