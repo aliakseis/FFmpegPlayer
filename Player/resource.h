@@ -71,7 +71,7 @@
 #define ID_FIX_ENCODING                 32799
 #define ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT 32800
 #define ID_OPEN_AUDIO_FILE              32801
-#define ID_USING_SAN_CERTIFICATE        32802
+#define ID_USING_HHO                    32802
 #define ID_VIDEO_FILTER                 32803
 
 // Next default values for new objects

@@ -350,15 +350,15 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
                          &CPlayerDoc::OnUpdateConvertVideosIntoCompatibleFormat)
     ON_COMMAND(ID_OPEN_AUDIO_FILE, &CPlayerDoc::OnOpenAudioFile)
     ON_UPDATE_COMMAND_UI(ID_OPEN_AUDIO_FILE, &CPlayerDoc::OnUpdateOpenAudioFile)
-    ON_COMMAND(ID_USING_SAN_CERTIFICATE, &CPlayerDoc::OnUsingSanCertificate)
-    ON_UPDATE_COMMAND_UI(ID_USING_SAN_CERTIFICATE, &CPlayerDoc::OnUpdateUsingSanCertificate)
+    ON_COMMAND(ID_USING_HHO, &CPlayerDoc::OnUsingHostHeaderOverride)
+    ON_UPDATE_COMMAND_UI(ID_USING_HHO, &CPlayerDoc::OnUpdateUsingHostHeaderOverride)
     ON_COMMAND(ID_VIDEO_FILTER, &CPlayerDoc::OnVideoFilter)
 END_MESSAGE_MAP()
 
 
 const TCHAR szPlayerInitFlags[] = _T("PlayerInitFlags");
 const TCHAR szMaximalResolution[] = _T("MaximalResolution");
-const TCHAR szUsingSAN[] = _T("UsingSAN");
+const TCHAR szUsingHHO[] = _T("UsingHHO");
 
 // CPlayerDoc construction/destruction
 
@@ -373,7 +373,7 @@ CPlayerDoc::CPlayerDoc()
     if (auto pApp = AfxGetApp())
     {
         m_maximalResolution = !!pApp->GetProfileInt(szPlayerInitFlags, szMaximalResolution, false);
-        m_bUsingSAN = !!pApp->GetProfileInt(szPlayerInitFlags, szUsingSAN, true);
+        m_bUsingHHO = !!pApp->GetProfileInt(szPlayerInitFlags, szUsingHHO, false);
     }
 }
 
@@ -382,7 +382,7 @@ CPlayerDoc::~CPlayerDoc()
     if (auto pApp = AfxGetApp())
     {
         pApp->WriteProfileInt(szPlayerInitFlags, szMaximalResolution, m_maximalResolution);
-        pApp->WriteProfileInt(szPlayerInitFlags, szUsingSAN, m_bUsingSAN);
+        pApp->WriteProfileInt(szPlayerInitFlags, szUsingHHO, m_bUsingHHO);
     }
 
     onDestructing();
@@ -479,10 +479,10 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl, const std::string& inpu
     }
     else
     {
-        urls = getYoutubeUrl(originalUrl, m_maximalResolution, m_bUsingSAN);
+        urls = getYoutubeUrl(originalUrl, m_maximalResolution, m_bUsingHHO);
         if (urls.first.empty() || !((m_maximalResolution && !urls.second.empty())
-            ? m_frameDecoder->openUrls({ urls.first, urls.second }, {}, m_bUsingSAN)
-            : m_frameDecoder->openUrls({ urls.first }, {}, m_bUsingSAN)))
+            ? m_frameDecoder->openUrls({ urls.first, urls.second }, {}, m_bUsingHHO)
+            : m_frameDecoder->openUrls({ urls.first }, {}, m_bUsingHHO)))
         {
             return false;
         }
@@ -1856,15 +1856,15 @@ void CPlayerDoc::OnUpdateOpenAudioFile(CCmdUI* pCmdUI)
 }
 
 
-void CPlayerDoc::OnUsingSanCertificate()
+void CPlayerDoc::OnUsingHostHeaderOverride()
 {
-    m_bUsingSAN = !m_bUsingSAN;
+    m_bUsingHHO = !m_bUsingHHO;
 }
 
 
-void CPlayerDoc::OnUpdateUsingSanCertificate(CCmdUI* pCmdUI)
+void CPlayerDoc::OnUpdateUsingHostHeaderOverride(CCmdUI* pCmdUI)
 {
-    pCmdUI->SetCheck(m_bUsingSAN);
+    pCmdUI->SetCheck(m_bUsingHHO);
 }
 
 void CPlayerDoc::OnVideoFilter()

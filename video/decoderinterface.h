@@ -111,7 +111,7 @@ struct IFrameDecoder
     virtual void SetFrameFormat(FrameFormat format, bool allowDirect3dData) = 0;
 
     // Open video streams or URLs
-    virtual bool openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat = {}, bool useSAN = false) = 0;
+    virtual bool openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat = {}, bool useHHO = false) = 0;
     virtual bool openStream(std::unique_ptr<std::streambuf> stream) = 0;
 
     // Playback controls

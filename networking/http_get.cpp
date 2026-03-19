@@ -61,22 +61,22 @@ std::string resolveHostnameToIP(const std::string& hostname) {
 } // namespace
 
 
-long HttpGetStatus(std::string& url, bool useSAN)
+long HttpGetStatus(std::string& url, bool useHHO)
 {
-    if (useSAN)
+    if (useHHO)
     {
         auto matchEnd = std::mismatch(url.begin(), url.end(), "https://", 
             [](char c1, char c2) { return tolower(c1) == tolower(c2); });
         if (matchEnd.first == url.end() || *matchEnd.second != '\0')
         {
-            useSAN = false;
+            useHHO = false;
         }
     }
 
     CComBSTR bstrUrl;
     CComBSTR bstrHostname;
 
-    if (useSAN)
+    if (useHHO)
     {
         const auto pos = 8; // Move past "://"
         size_t endPos = url.find_first_of(":/", pos);
@@ -90,16 +90,16 @@ long HttpGetStatus(std::string& url, bool useSAN)
             }
             else
             {
-                useSAN = false;
+                useHHO = false;
             }
         }
         else
         {
-            useSAN = false;
+            useHHO = false;
         }
     }
 
-    if (!useSAN)
+    if (!useHHO)
     {
         bstrUrl = url.c_str();
     }
@@ -122,13 +122,13 @@ long HttpGetStatus(std::string& url, bool useSAN)
     if (FAILED(result = pIWinHttpRequest->Open(CComBSTR(L"HEAD"), bstrUrl, varFalse)))
         return result;
 
-    if (useSAN && FAILED(result = pIWinHttpRequest->SetRequestHeader(CComBSTR(L"Host"), bstrHostname)))
+    if (useHHO && FAILED(result = pIWinHttpRequest->SetRequestHeader(CComBSTR(L"Host"), bstrHostname)))
         return result;
 
     if (FAILED(result = pIWinHttpRequest->SetRequestHeader(CComBSTR(L"User-Agent"), CComBSTR(USER_AGENT))))
         return result;
 
-    if (useSAN && FAILED(result = pIWinHttpRequest->put_Option(WinHttpRequestOption_SslErrorIgnoreFlags, varOption))) // Ignore SSL errors
+    if (useHHO && FAILED(result = pIWinHttpRequest->put_Option(WinHttpRequestOption_SslErrorIgnoreFlags, varOption))) // Ignore SSL errors
         return result;
 
     if (FAILED(result = pIWinHttpRequest->put_Option(WinHttpRequestOption_EnableRedirects, varFalse)))

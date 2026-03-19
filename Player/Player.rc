@@ -141,7 +141,7 @@ BEGIN
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save Copy &As...",            ID_FILE_SAVE_COPY_AS
-        MENUITEM "Using a SAN certificate",     ID_USING_SAN_CERTIFICATE
+        MENUITEM "Using Host Header Override Mode",     ID_USING_HHO
         MENUITEM SEPARATOR
         MENUITEM "Copy URL To Clipboard",       ID_COPY_URL_TO_CLIPBOARD
         MENUITEM "Convert Videos Into Compatible Format", ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT

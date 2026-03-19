@@ -341,7 +341,7 @@ void FFmpegDecoder::closeProcessing()
 
 const char szUserAgent[] = "User-Agent: Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
-bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat, bool useSAN)
+bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std::string& inputFormat, bool useHHO)
 {
     close();
 
@@ -376,7 +376,7 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
             }
             if (isHttps)
             {
-                if (useSAN)
+                if (useHHO)
                 {
                     const auto pos = 8; // Move past "://"
                     size_t endPos = url.find_first_of(":/", pos);
@@ -385,7 +385,7 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
                         std::string ip = resolveHostnameToIP(hostname);
                         if (!ip.empty()) {
                             url = url.substr(0, pos) + ip + url.substr(endPos);
-                            CHANNEL_LOG(ffmpeg_opening) << "Opening using a SAN certificate Host: " << hostname << " URL: " << url;
+                            CHANNEL_LOG(ffmpeg_opening) << "Opening using a HHO Host: " << hostname << " URL: " << url;
                             av_dict_set(&streamOpts, "headers", ("Host: " + hostname + "\r\n" + szUserAgent).c_str(), 0);
                         }
                     }
@@ -429,7 +429,7 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
 
                 break;
             }
-            if (!isHttps || !useSAN || g_lastLocationHttpHeader.empty() || --redirectsLeft < 0)
+            if (!isHttps || !useHHO || g_lastLocationHttpHeader.empty() || --redirectsLeft < 0)
             {
                 char err_buf[AV_ERROR_MAX_STRING_SIZE + 2] = ": ";
                 BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error " << error 

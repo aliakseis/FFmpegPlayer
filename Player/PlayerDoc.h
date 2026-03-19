@@ -185,7 +185,7 @@ private:
 
     bool m_bFixEncoding = false;
 
-    bool m_bUsingSAN = true;
+    bool m_bUsingHHO = true;
 
     HANDLE m_hConversionProcess = NULL;
 
@@ -214,7 +214,7 @@ public:
     afx_msg void OnUpdateConvertVideosIntoCompatibleFormat(CCmdUI* pCmdUI);
     afx_msg void OnOpenAudioFile();
     afx_msg void OnUpdateOpenAudioFile(CCmdUI* pCmdUI);
-    afx_msg void OnUsingSanCertificate();
-    afx_msg void OnUpdateUsingSanCertificate(CCmdUI* pCmdUI);
+    afx_msg void OnUsingHostHeaderOverride();
+    afx_msg void OnUpdateUsingHostHeaderOverride(CCmdUI* pCmdUI);
     afx_msg void OnVideoFilter();
 };

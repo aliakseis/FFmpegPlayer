@@ -4,6 +4,6 @@
 #include <string>
 
 // modifies url if it is a redirect
-long HttpGetStatus(std::string& url, bool useSAN = true);
+long HttpGetStatus(std::string& url, bool useHHO = true);
 
 CComVariant HttpGet(const char* url);
