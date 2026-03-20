@@ -41,36 +41,45 @@ extern "C"
 namespace
 {
 
-std::string resolveHostnameToIP(const std::string& hostname) {
-    addrinfo hints = { 0 }, * res = nullptr;
-    hints.ai_family = AF_INET; // Allow IPv4
+static std::vector<std::string> resolveHostnameToIPs(const std::string& hostname)
+{
+    std::vector<std::string> result;
+    addrinfo hints = {};
+    hints.ai_family = AF_INET; // return IPv4 only
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
-    if (getaddrinfo(hostname.c_str(), nullptr, &hints, &res) != 0) {
-        return {};
+    addrinfo* res = nullptr;
+    if (getaddrinfo(hostname.c_str(), nullptr, &hints, &res) != 0)
+        return result;
+
+    char ipStr[INET6_ADDRSTRLEN] = {0};
+    for (addrinfo* it = res; it != nullptr; it = it->ai_next)
+    {
+        void* addr = nullptr;
+        if (it->ai_family == AF_INET)
+        {
+            sockaddr_in* sa = reinterpret_cast<sockaddr_in*>(it->ai_addr);
+            addr = &sa->sin_addr;
+        }
+        //else if (it->ai_family == AF_INET6)
+        //{
+        //    sockaddr_in6* sa6 = reinterpret_cast<sockaddr_in6*>(it->ai_addr);
+        //    addr = &sa6->sin6_addr;
+        //}
+        else
+        {
+            continue;
+        }
+
+        if (inet_ntop(it->ai_family, addr, ipStr, sizeof(ipStr)))
+        {
+            result.emplace_back(ipStr);
+        }
     }
 
-    char ipStr[INET6_ADDRSTRLEN];
-    void* addr;
-
-    if (res->ai_family == AF_INET) { // IPv4
-        sockaddr_in* sockaddr_ipv4 = reinterpret_cast<sockaddr_in*>(res->ai_addr);
-        addr = &(sockaddr_ipv4->sin_addr);
-    }
-    else if (res->ai_family == AF_INET6) { // IPv6
-        sockaddr_in6* sockaddr_ipv6 = reinterpret_cast<sockaddr_in6*>(res->ai_addr);
-        addr = &(sockaddr_ipv6->sin6_addr);
-    }
-    else {
-        freeaddrinfo(res);
-        return {};
-    }
-
-    inet_ntop(res->ai_family, addr, ipStr, sizeof(ipStr));
     freeaddrinfo(res);
-
-    return std::string(ipStr);
+    return result;
 }
 
 void FreeVideoCodecContext(AVCodecContext*& videoCodecContext)
@@ -360,20 +369,10 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
 
         for (;;)
         {
-            auto formatContext = avformat_alloc_context();
-            formatContext->interrupt_callback.opaque = interruptionRequestedFlag;
-            formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
-            auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
+            std::vector<std::string> finalUrls{ url };
+            std::string hostname;
 
-            AVDictionary* streamOpts = nullptr;
-            auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
-
-            av_dict_set(&streamOpts, "rw_timeout", "5000000", 0); // 5 seconds I/O timeout.
             const bool isHttps = boost::starts_with(url, "https://");
-            if (isHttps || boost::starts_with(url, "http://")) // seems to be a bug
-            {
-                av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
-            }
             if (isHttps)
             {
                 if (useHHO)
@@ -381,36 +380,67 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
                     const auto pos = 8; // Move past "://"
                     size_t endPos = url.find_first_of(":/", pos);
                     if (endPos != std::string::npos) {
-                        std::string hostname = url.substr(pos, endPos - pos);
-                        std::string ip = resolveHostnameToIP(hostname);
-                        if (!ip.empty()) {
-                            url = url.substr(0, pos) + ip + url.substr(endPos);
-                            CHANNEL_LOG(ffmpeg_opening) << "Opening using a HHO Host: " << hostname << " URL: " << url;
-                            av_dict_set(&streamOpts, "headers", ("Host: " + hostname + "\r\n" + szUserAgent).c_str(), 0);
+                        hostname = url.substr(pos, endPos - pos);
+                        auto ips = resolveHostnameToIPs(hostname);
+                        if (!ips.empty()) {
+                            finalUrls.clear();
+                            for (const auto& ip : ips)
+                            {
+                                std::string urlWithIp = url.substr(0, pos) + ip + url.substr(endPos);
+                                finalUrls.push_back(urlWithIp);
+                            }
                         }
                     }
+                }
+            }
+
+            // Open video file
+
+            g_lastLocationHttpHeader.clear();
+            g_lastHttpCode = 0;
+            g_interruptionRequestedFlag = interruptionRequestedFlag;
+            AVFormatContext* formatContext = nullptr;
+            int error = -1;
+            for (const auto& finalUrl : finalUrls)
+            {
+                AVDictionary* streamOpts = nullptr;
+                auto avOptionsGuard = MakeGuard(&streamOpts, av_dict_free);
+                av_dict_set(&streamOpts, "rw_timeout", "5000000", 0); // 5 seconds I/O timeout.
+                if (isHttps || boost::starts_with(url, "http://")) // seems to be a bug
+                {
+                    av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
+                }
+                if (useHHO && !hostname.empty())
+                {
+                    CHANNEL_LOG(ffmpeg_opening) << "Opening using a HHO Host: " << hostname << " URL: " << url;
+                    av_dict_set(&streamOpts, "headers", ("Host: " + hostname + "\r\n" + szUserAgent).c_str(), 0);
                 }
                 else
                 {
                     av_dict_set(&streamOpts, "headers", szUserAgent, 0);
                 }
-            }
 
-            // Open video file
-            if (iformat)
-            {
-                av_dict_set(&streamOpts, "rtbufsize", "15000000", 0); // https://superuser.com/questions/1158820/ffmpeg-real-time-buffer-issue-rtbufsize-parameter
-            }
-            if (iformat ? (iformat->name != nullptr && strcmp(iformat->name, "sdp") == 0) : boost::iends_with(url, ".sdp"))
-            {
-                av_dict_set(&streamOpts, "protocol_whitelist", "file,http,https,tls,rtp,tcp,udp,crypto,httpproxy,data", 0);
-            }
-            av_dict_set(&streamOpts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
+                if (iformat)
+                {
+                    av_dict_set(&streamOpts, "rtbufsize", "15000000", 0); // https://superuser.com/questions/1158820/ffmpeg-real-time-buffer-issue-rtbufsize-parameter
+                }
+                if (iformat ? (iformat->name != nullptr && strcmp(iformat->name, "sdp") == 0) : boost::iends_with(url, ".sdp"))
+                {
+                    av_dict_set(&streamOpts, "protocol_whitelist", "file,http,https,tls,rtp,tcp,udp,crypto,httpproxy,data", 0);
+                }
+                av_dict_set(&streamOpts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
 
-            g_lastLocationHttpHeader.clear();
-            g_lastHttpCode = 0;
-            g_interruptionRequestedFlag = interruptionRequestedFlag;
-            const int error = avformat_open_input(&formatContext, url.c_str(), iformat, &streamOpts);
+                formatContext = avformat_alloc_context();
+                formatContext->interrupt_callback.opaque = interruptionRequestedFlag;
+                formatContext->interrupt_callback.callback = ThisThreadInterruptionRequested;
+
+                error = avformat_open_input(&formatContext, finalUrl.c_str(), iformat, &streamOpts);
+                if (error == 0)
+                {
+                    break;
+                }
+            }
+            auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
             g_interruptionRequestedFlag = nullptr;
             *interruptionRequestedFlag = false;
             if (error == 0)
