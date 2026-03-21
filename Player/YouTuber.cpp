@@ -178,11 +178,6 @@ def _extract_flat_urls(yt_url: str):
 
 
 def _extract_from_video_page(video_url: str):
-    """Extracts:
-       - the video itself
-       - related videos
-       - playlist URLs (but NOT channel URLs)
-    """
     ydl_opts = {
         "quiet": True,
         "skip_download": True,
@@ -198,18 +193,20 @@ def _extract_from_video_page(video_url: str):
     if "webpage_url" in info:
         urls.append(info["webpage_url"])
 
-    # Related videos
-    for rv in info.get("related_videos", []):
-        if "id" in rv:
-            urls.append(f"https://www.youtube.com/watch?v={rv['id']}")
-
-    # Playlist URLs mentioned on the page
+    # Playlist URLs (if video is inside a playlist)
     for pl in info.get("playlists", []):
         if "id" in pl:
             urls.append(f"https://www.youtube.com/playlist?list={pl['id']}")
 
-    # Filter out channel URLs
-    urls = [u for u in urls if not _is_channel_url(u)]
+    # Try to approximate "related videos" using search
+    title = info.get("title")
+    if title:
+        search_query = f"ytsearch10:{title}"
+        with yt_dlp.YoutubeDL({"quiet": True, "extract_flat": True}) as ydl:
+            s = ydl.extract_info(search_query, download=False)
+            for e in s.get("entries", []):
+                if "url" in e and not _is_channel_url(e["url"]):
+                    urls.append(e["url"])
 
     # Deduplicate
     urls = list(dict.fromkeys(urls))
