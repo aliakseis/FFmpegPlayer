@@ -117,6 +117,106 @@ def install_and_import(package, url=None):
 # ---- yt-dlp based getYoutubeUrl ----
 install_and_import("yt_dlp", "https://github.com/yt-dlp/yt-dlp/archive/refs/heads/master.zip")
 
+from urllib.parse import urlencode, urlparse, parse_qs
+
+def parsePlaylist(url: str, force: bool):
+    # 1. Detect search query (no dots or slashes)
+    if all(ch not in url for ch in "./"):
+        parts = url.split()
+        query = "+".join(urlencode({"q": p})[2:] for p in parts)
+        search_url = f"ytsearch50:{query}"
+        return _extract_flat_urls(search_url)
+
+    # 2. URL case
+    parsed = urlparse(url)
+    qs = parse_qs(parsed.query)
+
+    is_list = "list" in qs
+    is_channel = _is_channel_url(url)
+
+    # Playlist or channel -> treat as list
+    if is_list or is_channel:
+        return _extract_flat_urls(url)
+
+    # 3. Single video page
+    if force:
+        return _extract_from_video_page(url)
+
+    return []
+
+
+def _is_channel_url(url: str):
+    """Detects YouTube channel URLs but does NOT treat them as results."""
+    return any(part in url for part in [
+        "/channel/",
+        "/user/",
+        "/c/",
+        "/@"
+    ])
+
+
+def _extract_flat_urls(yt_url: str):
+    ydl_opts = {
+        "quiet": True,
+        "skip_download": True,
+        "extract_flat": True,
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(yt_url, download=False)
+
+    entries = info.get("entries", [])
+    urls = []
+
+    for e in entries:
+        if "url" in e:
+            # Filter out channel URLs
+            if not _is_channel_url(e["url"]):
+                urls.append(e["url"])
+
+    return urls
+
+
+def _extract_from_video_page(video_url: str):
+    """Extracts:
+       - the video itself
+       - related videos
+       - playlist URLs (but NOT channel URLs)
+    """
+    ydl_opts = {
+        "quiet": True,
+        "skip_download": True,
+        "extract_flat": False,
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(video_url, download=False)
+
+    urls = []
+
+    # The video itself
+    if "webpage_url" in info:
+        urls.append(info["webpage_url"])
+
+    # Related videos
+    for rv in info.get("related_videos", []):
+        if "id" in rv:
+            urls.append(f"https://www.youtube.com/watch?v={rv['id']}")
+
+    # Playlist URLs mentioned on the page
+    for pl in info.get("playlists", []):
+        if "id" in pl:
+            urls.append(f"https://www.youtube.com/playlist?list={pl['id']}")
+
+    # Filter out channel URLs
+    urls = [u for u in urls if not _is_channel_url(u)]
+
+    # Deduplicate
+    urls = list(dict.fromkeys(urls))
+
+    return urls
+
+
 def _iter_formats(info):
     if not info:
         return []
@@ -447,6 +547,96 @@ bool EnsureSharedPythonNamespaceLoaded(boost::python::object& outNamespace)
     }
 }
 
+
+class YouTubePlaylistDealer
+{
+public:
+    YouTubePlaylistDealer();
+    ~YouTubePlaylistDealer() = default;
+
+    bool isValid() const { return !!m_func; }
+    bool getPlaylist(const std::string& url, bool force, std::vector<std::string>& out);
+
+private:
+    boost::python::object m_func;
+};
+
+YouTubePlaylistDealer::YouTubePlaylistDealer()
+{
+    using namespace boost::python;
+    try
+    {
+        object ns;
+        if (!EnsureSharedPythonNamespaceLoaded(ns))
+            return;
+
+        try {
+            m_func = ns["parsePlaylist"];
+        }
+        catch (const error_already_set&) {
+            BOOST_LOG_TRIVIAL(error)
+                << "YouTubePlaylistDealer: parsePlaylist not found in shared python namespace: "
+                << parse_python_exception();
+            PyErr_Clear();
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << "YouTubePlaylistDealer bootstrap exception \"" << ex.what() << "\"";
+    }
+    catch (const boost::python::error_already_set&)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << "YouTubePlaylistDealer bootstrap python error \"" << parse_python_exception() << "\"";
+        PyErr_Clear();
+    }
+}
+
+bool YouTubePlaylistDealer::getPlaylist(const std::string& url, bool force, std::vector<std::string>& out)
+{
+    BOOST_LOG_TRIVIAL(trace)
+        << "YouTubePlaylistDealer::getPlaylist() url = \"" << url << "\" force = " << force;
+
+    using namespace boost::python;
+
+    if (!isValid())
+        return false;
+
+    try
+    {
+        object v = m_func(url, force);
+        if (v.is_none())
+            return false;
+
+        const auto length = len(v);
+        out.reserve(length);
+
+        for (int i = 0; i < length; ++i)
+        {
+            object el = v[i];
+            std::string s = extract<std::string>(el);
+            out.push_back(std::move(s));
+        }
+
+        return true;
+    }
+    catch (const error_already_set&)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << "YouTubePlaylistDealer python error \"" << parse_python_exception() << "\"";
+        PyErr_Clear();
+    }
+    catch (const std::exception& ex)
+    {
+        BOOST_LOG_TRIVIAL(error)
+            << "YouTubePlaylistDealer exception \"" << ex.what() << "\"";
+    }
+
+    return false;
+}
+
+
 class YouTubeDealer
 {
 public:
@@ -694,53 +884,18 @@ void CheckPython()
 
 std::vector<std::string> ParsePlaylist(std::string url, bool force)
 {
-    bool isList = false;
-    if (url.find_first_of("./") == std::string::npos)
+    std::vector<std::string> result;
+
+    if (!url.empty())
     {
-        std::istringstream ss(url);
-        std::string result;
-        ss >> result;
-        result = urlencode(result);
-        std::string buffer;
-        while (ss >> buffer)
-        {
-            if (!buffer.empty())
-                result += '+' + urlencode(buffer);
-        }
-        url = "https://www.youtube.com/results?search_query=" + result;
-    }
-    else
-    {
-        isList = url.find("/playlist?list=") != std::string::npos;
-        if (!force && !isList)
-            return{};
+        CWaitCursor wait;
+        static YouTubePlaylistDealer dealer;
+
+        if (dealer.isValid())
+            dealer.getPlaylist(url, force, result);
     }
 
-    CWaitCursor wait;
-    CComVariant varBody = HttpGet(url.c_str());
-    if ((VT_ARRAY | VT_UI1) != V_VT(&varBody))
-        return{};
-
-    auto psa = V_ARRAY(&varBody);
-    LONG iLBound, iUBound;
-    HRESULT hr = SafeArrayGetLBound(psa, 1, &iLBound);
-    if (FAILED(hr))
-        return{};
-    hr = SafeArrayGetUBound(psa, 1, &iUBound);
-    if (FAILED(hr))
-        return{};
-
-    const char* pData = nullptr;
-
-    hr = SafeArrayAccessData(psa, (void**)&pData);
-    if (FAILED(hr) || !pData)
-        return{};
-
-    const char* const pDataEnd = pData + iUBound - iLBound + 1;
-
-    std::unique_ptr<SAFEARRAY, decltype(&SafeArrayUnaccessData)> guard(
-        psa, SafeArrayUnaccessData);
-    return DoParsePlaylist(pData, pDataEnd, !isList);
+    return result;
 }
 
 std::vector<std::string> ParsePlaylistFile(const TCHAR* fileName)
