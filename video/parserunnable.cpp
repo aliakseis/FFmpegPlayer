@@ -105,7 +105,6 @@ void FFmpegDecoder::parseRunnable(int idx)
 
     int64_t lastTime = m_currentTime;
     int64_t timeLeft = 0;  // effective frame time left from packet (adjusted by start_time)
-    auto lastSeekTime = std::chrono::steady_clock::now();
     enum { TO_RECOVER, RECOVERING, RECOVERED } recovering = RECOVERED;
 
     const bool seekable = isSeekable(m_formatContexts[idx]);
@@ -147,8 +146,29 @@ void FFmpegDecoder::parseRunnable(int idx)
                     const int64_t dur = (packet.duration != AV_NOPTS_VALUE) ? packet.duration : 0;
                     const int64_t start_time = (stream && stream->start_time != AV_NOPTS_VALUE) ? stream->start_time : 0;
                     const int64_t effectiveStreamTs = pts + dur - start_time;
-                    if (stream && stream->duration != AV_NOPTS_VALUE && effectiveStreamTs > 0) {
-                        timeLeft = stream->duration - effectiveStreamTs;
+
+                    if (effectiveStreamTs > 0) {
+                        // Prefer stream duration (stream PTS units)
+                        if (stream && stream->duration != AV_NOPTS_VALUE) {
+                            timeLeft = stream->duration - effectiveStreamTs;
+                        }
+                        // Fallback: use format context duration if available. Convert fmt->duration (AV_TIME_BASE units)
+                        // to the stream's time_base units before computing timeLeft.
+                        else if (fmt->duration != AV_NOPTS_VALUE && stream && stream->time_base.den != 0)
+                        {
+                            // Convert fmt->duration (AV_TIME_BASE units) to the stream's time_base units using integer rescaling.
+                            // Create an AVRational representing AV_TIME_BASE units: {1, AV_TIME_BASE}
+                            AVRational avTimeBase = { 1, AV_TIME_BASE };
+                            const int64_t fmtDurationInStreamUnits = av_rescale_q(fmt->duration, avTimeBase, stream->time_base);
+                            if (fmtDurationInStreamUnits > effectiveStreamTs)
+                            {
+                                timeLeft = fmtDurationInStreamUnits - effectiveStreamTs;
+                            }
+                            else
+                            {
+                                timeLeft = 0;
+                            }
+                        }
                     }
                 }
             }
@@ -162,15 +182,13 @@ void FFmpegDecoder::parseRunnable(int idx)
                 recovering = RECOVERED;
             }
         }
-        else if ((readStatus == AVERROR_ECONNRESET || readStatus == AVERROR_INVALIDDATA || timeLeft > 0) &&
-            (recovering == RECOVERED ||
-                eof != REPORTED && std::chrono::duration_cast<std::chrono::seconds>(
-                    std::chrono::steady_clock::now() - lastSeekTime).count() >= 5))
+        else if ((readStatus == AVERROR_ECONNRESET || readStatus == AVERROR_INVALIDDATA ||
+                  timeLeft > 1) &&
+                 recovering == RECOVERED)
         {
             recovering = TO_RECOVER;
             lastTime = m_currentTime;
             timeLeft = 0;
-            lastSeekTime = std::chrono::steady_clock::now();
             if (doSeekFrame(idx, lastTime, nullptr))
             {
                 CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " Trying to recover from " << readStatus << "; index: " << idx;
