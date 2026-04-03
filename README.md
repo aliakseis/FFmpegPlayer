@@ -49,15 +49,9 @@ Create ./Directory.Build.props file in the project folder. It contents depend on
 </Project>
 ```
 
-YouTube view support is turned on by default. It can be turned off by commenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. A special mode has been implemented: Google can use SAN certificates that include multiple domains and subdomains. This allows one certificate to protect multiple services, such as youtube.com, www.youtube.com, and other subdomains. If you have one certificate with multiple SANs, and all domains are served by one certificate, you can do without SNI by using the IP address in the URL and the Host header to identify the content.
+YouTube view support is turned on by default. It can be turned off by commenting define YOUTUBE_EXPERIMENT in YouTuber.cpp. A special mode has been implemented: Direct‑IP no‑SNI Host‑Override CDN‑Pinning Mode. You can do without SNI by using the IP address in the URL and the Host header to identify the content.
 
 The matching Python version has to be installed for the accessory DLLs to be accessible, except for embedded Python coming with installation. In any case Pytubefix now requires Node.js installed.
-
-You may need to remove pytube stuff from your profile folder for the player application to set up the latest version, for example, by invoking remove_pytube.cmd.
-
-You can also "patch" Python stuff by creating %LOCALAPPDATA%\git-subst.cfg mapping file.
-
-Your getYoutubeUrl.py and getYoutubeTranscript.py scripts can be put to the %LOCALAPPDATA% folder for custom handling of various, not just YouTube web sources' videos. See Player/YouTuber.cpp file for details.
 
 Just in case: "In fact in boost-python, the default behavior is that even when debug boost libraries are created, these libraries are linked to the release pythonX.dll/lib - by intention, according to the docs." https://github.com/pybind/pybind11/issues/1295
 
