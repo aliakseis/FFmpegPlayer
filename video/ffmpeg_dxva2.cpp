@@ -947,13 +947,13 @@ int dxva2_init(AVCodecContext *s)
     }
 
     if (s->codec_id == AV_CODEC_ID_H264 &&
-        (s->profile & ~FF_PROFILE_H264_CONSTRAINED) > FF_PROFILE_H264_HIGH) {
+        (s->profile & ~AV_PROFILE_H264_CONSTRAINED) > AV_PROFILE_H264_HIGH) {
         av_log(NULL, loglevel, "Unsupported H.264 profile for DXVA2 HWAccel: %d\n", s->profile);
         return AVERROR(EINVAL);
     }
 
     if (s->codec_id == AV_CODEC_ID_HEVC &&
-        s->profile != FF_PROFILE_HEVC_MAIN && s->profile != FF_PROFILE_HEVC_MAIN_10) {
+        s->profile != AV_PROFILE_HEVC_MAIN && s->profile != AV_PROFILE_HEVC_MAIN_10) {
         av_log(NULL, loglevel, "Unsupported HEVC profile for DXVA2 HWAccel: %d\n", s->profile);
         return AVERROR(EINVAL);
     }

@@ -1247,8 +1247,8 @@ std::pair<bool, bool> FFmpegDecoder::isVideoAudioCompatible() const
     return {videoLam(), m_audioCodec && m_audioCodecContext &&
                             (m_audioCodec->id == AV_CODEC_ID_MP3 ||
                              m_audioCodec->id == AV_CODEC_ID_AAC &&
-                                 (m_audioCodecContext->profile == FF_PROFILE_AAC_LOW ||
-                                  m_audioCodecContext->profile == FF_PROFILE_AAC_HE)) &&
+                                 (m_audioCodecContext->profile == AV_PROFILE_AAC_LOW ||
+                                  m_audioCodecContext->profile == AV_PROFILE_AAC_HE)) &&
                             m_audioCurrentPref.num_channels() == 2};
 }
 
