@@ -470,7 +470,11 @@ bool EnsureSharedPythonNamespaceLoaded(boost::python::object& outNamespace)
     using namespace boost::python;
 
     static bool s_loaded = false;
+    static bool s_failed = false;
     static object s_namespace;
+
+    if (s_failed)
+        return false;
 
     if (s_loaded)
     {
@@ -478,9 +482,17 @@ bool EnsureSharedPythonNamespaceLoaded(boost::python::object& outNamespace)
         return true;
     }
 
+    s_failed = true;
+
     if (!isPythonInstalled())
     {
-        BOOST_LOG_TRIVIAL(error) << "Python not installed or wrong bitness.";
+        AfxMessageBox(_T("Matching Python is not installed: ") _T(PY_VERSION)
+#ifdef _WIN64
+                          _T(" (64 bits)")
+#else
+                          _T(" (32 bits)")
+#endif
+        );
         return false;
     }
 
@@ -528,6 +540,7 @@ bool EnsureSharedPythonNamespaceLoaded(boost::python::object& outNamespace)
 
         s_namespace = global;
         s_loaded = true;
+        s_failed = false;
         outNamespace = s_namespace;
         return true;
     }
