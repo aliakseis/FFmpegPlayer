@@ -1,4 +1,3 @@
-// FrameTransformer.cpp (implementation - trimmed for clarity)
 #include "stdafx.h"
 
 #include "FrameTransformer.h"
@@ -8,6 +7,7 @@
 extern "C" {
 #include <libavutil/opt.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/pixfmt.h>
 }
 
 const auto PIX_FMT = AV_PIX_FMT_NV12;
@@ -47,8 +47,14 @@ int FrameTransformer::create_graph(int in_w, int in_h, AVPixelFormat in_pix_fmt)
     if (ret < 0) goto fail;
 
     // Set buffersink to accept NV12 output
-    enum AVPixelFormat pix_fmts[] = { AV_PIX_FMT_NV12, AV_PIX_FMT_NONE };
-    ret = av_opt_set_int_list(buffersink_ctx_, "pix_fmts", pix_fmts, AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN);
+    enum AVPixelFormat pix_fmts[] = { AV_PIX_FMT_NV12 };
+    ret = av_opt_set_bin(
+        buffersink_ctx_,
+        "pix_fmts",
+        (const uint8_t*)pix_fmts,
+        sizeof(pix_fmts),
+        AV_OPT_SEARCH_CHILDREN
+    );
     if (ret < 0) goto fail;
 
     // Parse and link the user filter chain between src and sink

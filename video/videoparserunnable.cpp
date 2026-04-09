@@ -281,6 +281,11 @@ bool frameToImage(
     SwsContext*& imageCovertContext,
     AVPixelFormat pixelFormat)
 {
+    if (videoFrame->format == AV_PIX_FMT_NONE)
+    {
+        return false;
+    }
+
     if (videoFrame->format == pixelFormat
         || videoFrame->format == AV_PIX_FMT_DXVA2_VLD)
     {
