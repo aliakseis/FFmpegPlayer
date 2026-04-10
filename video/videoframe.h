@@ -31,7 +31,8 @@ struct VideoFrame
     }
     void realloc(AVPixelFormat pix_fmt, int width, int height)
     {
-        if (pix_fmt != m_image->format || width != m_image->width || height != m_image->height)
+        if (pix_fmt != m_image->format || width != m_image->width || height != m_image->height
+            || !av_frame_is_writable(m_image.get()))
         {
             av_frame_unref(m_image.get());
 

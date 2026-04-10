@@ -419,13 +419,19 @@ auto GetAsyncConversionFunction(OrderedScopedTokenGenerator::Token t,
                 sws_freeContext(img_convert_ctx);
             }
 
+            const auto width = input->width;
+            const auto height = input->height;
+            const auto pts = input->pts;
+
+            input.reset();  // Free input frame as soon as possible since it's not needed anymore
+
             std::vector<uint8_t> outputImg;
 
             int outputHeight{};
             int outputWidth{};
 
-            if (!(*imageConversionFunc)(std::move(t), data, stride, input->width, input->height,
-                input->pts, outputImg, outputWidth, outputHeight))
+            if (!(*imageConversionFunc)(std::move(t), data, stride, width, height,
+                pts, outputImg, outputWidth, outputHeight))
             {
                 return false;
             }
@@ -650,7 +656,14 @@ bool FFmpegDecoder::handleVideoFrame(
     {
         AVFramePtr input(av_frame_alloc());
 
-        std::swap(input, videoFrame);
+        //std::swap(input, videoFrame);
+        const auto res = av_frame_ref(input.get(), videoFrame.get());
+        assert(res == 0);
+        if (res != 0)
+        {
+            CHANNEL_LOG(ffmpeg_sync) << "av_frame_ref failed with error code: " << res;
+            return true;
+        }
 
         auto asyncConversion = GetAsyncConversionFunction(
             context.tokenGenerator.generate(),
