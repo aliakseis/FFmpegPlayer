@@ -167,6 +167,8 @@ static intptr_t getHWAccelDevice(IDirect3D9* pDirect3D9)
 {
     intptr_t result = D3DADAPTER_DEFAULT;
     const auto count = pDirect3D9->GetAdapterCount();
+    if (count < 2)
+        return result;
     UINT height{}, width{};
     for (unsigned int i = 0; i < count; ++i)
     {
@@ -345,8 +347,6 @@ struct InputStream
     enum HWAccelID active_hwaccel_id;
     void* hwaccel_ctx;
     void* hwaccel_context; // for DXVA2
-    int(*hwaccel_get_buffer)(AVCodecContext* s, AVFrame* frame, int flags);
-    int(*hwaccel_retrieve_data)(AVCodecContext* s, AVFrame* frame);
     enum AVPixelFormat hwaccel_pix_fmt;
 };
 
@@ -377,10 +377,6 @@ void dxva2_uninit(void* opaque)
     InputStream* ist = static_cast<InputStream*>(opaque);
 
     DXVA2Context *ctx = (DXVA2Context *)ist->hwaccel_ctx;
-
-    //ist->hwaccel_uninit = NULL;
-    ist->hwaccel_get_buffer = NULL;
-    ist->hwaccel_retrieve_data = NULL;
 
     if (ctx->decoder)
         dxva2_destroy_decoder(ist);
@@ -612,9 +608,6 @@ static int dxva2_alloc(AVCodecContext *s)
     ctx->deviceHandle = INVALID_HANDLE_VALUE;
 
     ist->hwaccel_ctx = ctx;
-    //ist->hwaccel_uninit = dxva2_uninit;
-    ist->hwaccel_get_buffer = dxva2_get_buffer;
-    ist->hwaccel_retrieve_data = dxva2_retrieve_data;
 
     ctx->d3dlib = LoadLibraryW(L"d3d9.dll");
     if (!ctx->d3dlib) {
@@ -987,7 +980,7 @@ int dxva2_init(AVCodecContext *s)
         return ret;
     }
 
-    s->get_buffer2 = ist->hwaccel_get_buffer;
+    s->get_buffer2 = dxva2_get_buffer;
     s->get_format = GetHwFormat;
 
     return 0;
