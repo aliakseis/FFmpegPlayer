@@ -1,19 +1,95 @@
-import sys, socket, re
+import sys, platform, socket, re
+import os, json, requests, subprocess, importlib
+
+sys.stdout = LoggerStream()
 sys.stderr = LoggerStream()
 
+py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
+# 64bit / 32bit
+arch = platform.architecture()[0]
+
+STATE_FILE = f"YoutubeCombined_packages-{py_version}-{arch}.json"
+
+def _load_state():
+    return json.load(open(STATE_FILE)) if os.path.exists(STATE_FILE) else {}
+
+def _save_state(state):
+    json.dump(state, open(STATE_FILE, "w"))
+
 def install_and_import(package, url=None):
-    import importlib
+    importlib.invalidate_caches()
+    state = _load_state()
     if url is None:
         url = package
+
+    prev = state.get(url, {})
+    headers = {}
+    if prev.get("etag"):
+        headers["If-None-Match"] = prev["etag"]
+    if prev.get("last_modified"):
+        headers["If-Modified-Since"] = prev["last_modified"]
+
+    # HEAD
+    try:
+        r = requests.head(url, allow_redirects=True, timeout=10, headers=headers)
+    except Exception as e:
+        print(f"[WARN] HEAD failed for {url}: {e}")
+        r = None
+
+    need_install = False
+    reason = "initial install"
+
+    if r:
+        if r.status_code == 304:
+            need_install = False
+            reason = "304 Not Modified"
+        else:
+            etag = r.headers.get("ETag")
+            last_modified = r.headers.get("Last-Modified")
+            size = r.headers.get("Content-Length")
+
+            if etag and etag == prev.get("etag"):
+                need_install = False
+                reason = "ETag match"
+            elif last_modified and last_modified == prev.get("last_modified"):
+                need_install = False
+                reason = "Last-Modified match"
+            elif size and size == prev.get("size"):
+                need_install = False
+                reason = "Content-Length match"
+            else:
+                need_install = True
+                reason = "metadata changed"
+
     try:
         importlib.import_module(package)
+        if need_install:
+            raise ImportError("force reinstall")
+        print(f"[INFO] {package} already up-to-date ({reason})")
     except ImportError:
-        import subprocess
-        import os
+        print(f"[INFO] Installing {package} from {url} ({reason})...")
         library_dir = os.path.dirname(os.path.abspath(socket.__file__))
-        subprocess.run([library_dir + "/../scripts/pip3", "install", url])
-    finally:
-        globals()[package] = importlib.import_module(package)
+        pip_path = os.path.join(library_dir, "../scripts/pip3")
+
+        cmd = [pip_path, "install", "--force-reinstall", url]
+
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print("[INFO] pip output:\n", result.stdout)
+
+        for line in result.stdout.splitlines():
+            if "Installing collected packages" in line or "Successfully installed" in line:
+                print("[INFO] Dependencies updated:", line)
+
+        if r:
+            state[url] = {
+                "etag": r.headers.get("ETag"),
+                "last_modified": r.headers.get("Last-Modified"),
+                "size": r.headers.get("Content-Length"),
+            }
+            _save_state(state)
+
+    globals()[package] = importlib.import_module(package)
 
 # ---- yt-dlp based getYoutubeUrl ----
 install_and_import("yt_dlp", "https://github.com/yt-dlp/yt-dlp/archive/refs/heads/master.zip")
