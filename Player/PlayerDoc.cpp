@@ -1873,18 +1873,25 @@ void CPlayerDoc::OnUpdateUsingHostHeaderOverride(CCmdUI* pCmdUI)
 
 void CPlayerDoc::OnVideoFilter()
 {
+    BOOL enableVideoFilter = FALSE;
+
     {
         CDialogVideoFilter dlg;
         dlg.m_videoFilter = m_videoFilter;
         dlg.m_enableVideoFilter = m_enableVideoFilter;
         if (dlg.DoModal() != IDOK)
             return;
+        dlg.m_videoFilter.Trim();  // in-place trim
 
-        m_videoFilter = dlg.m_videoFilter.Trim();
-        m_enableVideoFilter = dlg.m_enableVideoFilter;
+        if (m_videoFilter == dlg.m_videoFilter
+                && m_enableVideoFilter == dlg.m_enableVideoFilter)
+            return;
+
+        m_videoFilter = dlg.m_videoFilter;
+        enableVideoFilter = dlg.m_enableVideoFilter;
     }
 
-    if (m_enableVideoFilter && !m_videoFilter.IsEmpty())
+    if (enableVideoFilter && !m_videoFilter.IsEmpty())
     {
         CW2A videoFilter(m_videoFilter, CP_UTF8);
         FrameTransformer frameTransformer(static_cast<const char*>(videoFilter));
@@ -1893,6 +1900,7 @@ void CPlayerDoc::OnVideoFilter()
         if (ret >= 0)
         {
             m_frameDecoder->setImageConversionFunc(frameTransformer);
+            m_enableVideoFilter = TRUE;
             return;  // success
         }
         else
@@ -1904,8 +1912,12 @@ void CPlayerDoc::OnVideoFilter()
     }
 
     // fallback to no filter
-    if (m_superResolution)
-        m_frameDecoder->setImageConversionFunc(ImageUpscale);
-    else
-        m_frameDecoder->setImageConversionFunc({});
+    if (m_enableVideoFilter)
+    {
+        if (m_superResolution)
+            m_frameDecoder->setImageConversionFunc(ImageUpscale);
+        else
+            m_frameDecoder->setImageConversionFunc({});
+        m_enableVideoFilter = FALSE;
+    }
 }
