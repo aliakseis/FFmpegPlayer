@@ -190,6 +190,7 @@ private:
     HANDLE m_hConversionProcess = NULL;
 
     CString m_videoFilter;
+    BOOL m_enableVideoFilter = FALSE;
 
 public:
     afx_msg void OnMaximalresolution();

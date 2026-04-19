@@ -14,6 +14,7 @@ IMPLEMENT_DYNAMIC(CDialogVideoFilter, CDialog)
 CDialogVideoFilter::CDialogVideoFilter(CWnd* pParent /*=nullptr*/)
 	: CDialog(IDD_DIALOG_VIDEO_FILTER, pParent)
     , m_videoFilter(_T(""))
+    , m_enableVideoFilter(FALSE)
 {
 
 }
@@ -26,6 +27,7 @@ void CDialogVideoFilter::DoDataExchange(CDataExchange* pDX)
 {
     CDialog::DoDataExchange(pDX);
     DDX_Text(pDX, IDC_VIDEO_FILTER, m_videoFilter);
+    DDX_Check(pDX, IDC_ENABLE_VIDEO_FILTER, m_enableVideoFilter);
 }
 
 

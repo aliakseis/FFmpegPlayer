@@ -43,6 +43,7 @@
 #define IDC_EDIT_INPUT_FORMAT           1019
 #define IDC_LOSSLESS_CUT                1020
 #define IDC_VIDEO_FILTER                1021
+#define IDC_ENABLE_VIDEO_FILTER         1022
 #define ID_TRACK1_DUMMY                 32771
 #define ID_AUTOPLAY                     32775
 #define ID_LOOPING                      32776
@@ -80,7 +81,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        323
 #define _APS_NEXT_COMMAND_VALUE         32804
-#define _APS_NEXT_CONTROL_VALUE         1022
+#define _APS_NEXT_CONTROL_VALUE         1023
 #define _APS_NEXT_SYMED_VALUE           317
 #endif
 #endif

@@ -23,4 +23,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
     CString m_videoFilter;
+    BOOL m_enableVideoFilter;
 };

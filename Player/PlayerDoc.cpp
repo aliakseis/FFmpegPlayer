@@ -359,6 +359,8 @@ END_MESSAGE_MAP()
 const TCHAR szPlayerInitFlags[] = _T("PlayerInitFlags");
 const TCHAR szMaximalResolution[] = _T("MaximalResolution");
 const TCHAR szUsingHHO[] = _T("UsingHHO");
+const TCHAR szPlayerState[] = _T("PlayerState");
+const TCHAR szVideoFilter[] = _T("VideoFilter");
 
 // CPlayerDoc construction/destruction
 
@@ -374,6 +376,7 @@ CPlayerDoc::CPlayerDoc()
     {
         m_maximalResolution = !!pApp->GetProfileInt(szPlayerInitFlags, szMaximalResolution, false);
         m_bUsingHHO = !!pApp->GetProfileInt(szPlayerInitFlags, szUsingHHO, false);
+        m_videoFilter = pApp->GetProfileString(szPlayerState, szVideoFilter, _T(""));
     }
 }
 
@@ -383,6 +386,7 @@ CPlayerDoc::~CPlayerDoc()
     {
         pApp->WriteProfileInt(szPlayerInitFlags, szMaximalResolution, m_maximalResolution);
         pApp->WriteProfileInt(szPlayerInitFlags, szUsingHHO, m_bUsingHHO);
+        pApp->WriteProfileString(szPlayerState, szVideoFilter, m_videoFilter);
     }
 
     onDestructing();
@@ -1869,28 +1873,28 @@ void CPlayerDoc::OnUpdateUsingHostHeaderOverride(CCmdUI* pCmdUI)
 
 void CPlayerDoc::OnVideoFilter()
 {
-    CDialogVideoFilter dlg;
-    dlg.m_videoFilter = m_videoFilter;
-    if (dlg.DoModal() != IDOK)
-        return;
-
-    m_videoFilter = dlg.m_videoFilter.Trim();
-
-    if (m_videoFilter.IsEmpty())
     {
-        if (m_superResolution)
-            m_frameDecoder->setImageConversionFunc(ImageUpscale);
-        else
-            m_frameDecoder->setImageConversionFunc({});
+        CDialogVideoFilter dlg;
+        dlg.m_videoFilter = m_videoFilter;
+        dlg.m_enableVideoFilter = m_enableVideoFilter;
+        if (dlg.DoModal() != IDOK)
+            return;
+
+        m_videoFilter = dlg.m_videoFilter.Trim();
+        m_enableVideoFilter = dlg.m_enableVideoFilter;
     }
-    else
+
+    if (m_enableVideoFilter && !m_videoFilter.IsEmpty())
     {
         CW2A videoFilter(m_videoFilter, CP_UTF8);
         FrameTransformer frameTransformer(static_cast<const char*>(videoFilter));
         auto [width, height] = m_frameDecoder->getVideoSize();
         auto ret = frameTransformer.init(width, height);
         if (ret >= 0)
+        {
             m_frameDecoder->setImageConversionFunc(frameTransformer);
+            return;  // success
+        }
         else
         {
             CString msg;
@@ -1898,4 +1902,10 @@ void CPlayerDoc::OnVideoFilter()
             AfxMessageBox(msg);
         }
     }
+
+    // fallback to no filter
+    if (m_superResolution)
+        m_frameDecoder->setImageConversionFunc(ImageUpscale);
+    else
+        m_frameDecoder->setImageConversionFunc({});
 }

@@ -141,7 +141,7 @@ BEGIN
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save Copy &As...",            ID_FILE_SAVE_COPY_AS
-        MENUITEM "Using Host Header Override Mode",     ID_USING_HHO
+        MENUITEM "Using Host Header Override Mode", ID_USING_HHO
         MENUITEM SEPARATOR
         MENUITEM "Copy URL To Clipboard",       ID_COPY_URL_TO_CLIPBOARD
         MENUITEM "Convert Videos Into Compatible Format", ID_CONVERT_VIDEOS_INTO_COMPATIBLE_FORMAT
@@ -304,6 +304,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,199,101,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,253,101,50,14
     EDITTEXT        IDC_VIDEO_FILTER,7,7,296,86,ES_MULTILINE
+    CONTROL         "Enable video filter",IDC_ENABLE_VIDEO_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,100,74,10
 END
 
 
