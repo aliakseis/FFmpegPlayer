@@ -13,11 +13,7 @@ class OrderedScopedTokenGenerator {
 public:
     OrderedScopedTokenGenerator() : ctrl_(std::make_shared<Control>()) {}
 
-    struct Token;
     struct LockScope;
-
-    // generate a new movable-only token
-    Token generate();
 
 private:
     struct Control {
@@ -185,19 +181,19 @@ public:
         std::shared_ptr<Token::State> state_;
         bool owns_{ false };
     };
-};
 
-// Implementation of generate
-inline OrderedScopedTokenGenerator::Token OrderedScopedTokenGenerator::generate() {
-    uint64_t idx;
-    {
-        // allocate index under mutex to avoid ABA with consumed set (not strictly necessary but simpler)
-        std::lock_guard<std::mutex> lk(ctrl_->mtx);
-        idx = ctrl_->alloc_index++;
+    // generate a new movable-only token
+    Token generate() {
+        uint64_t idx;
+        {
+            // allocate index under mutex to avoid ABA with consumed set (not strictly necessary but simpler)
+            std::lock_guard<std::mutex> lk(ctrl_->mtx);
+            idx = ctrl_->alloc_index++;
+        }
+        auto s = std::make_shared<Token::State>();
+        s->ctrl = ctrl_;
+        s->index = idx;
+        s->claimed.store(false);
+        return Token(s);
     }
-    auto s = std::make_shared<Token::State>();
-    s->ctrl = ctrl_;
-    s->index = idx;
-    s->claimed.store(false);
-    return Token(s);
-}
+};
