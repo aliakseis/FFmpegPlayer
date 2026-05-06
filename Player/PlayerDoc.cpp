@@ -1386,6 +1386,14 @@ CString CPlayerDoc::generateConversionScript() const
     }
 
     auto [isVideoCompatible, isAudioCompatible] = m_frameDecoder->isVideoAudioCompatible();
+    auto [width, height] =
+        m_frameDecoder->getVideoSize();  // make script decrease resolution if too high (larger than 1080p)
+    // Downscale only if resolution is above 1080p
+    const bool needsDownscale = (height > 1080 || width > 1920);
+    if (needsDownscale)
+    {
+        isVideoCompatible = false; // force conversion if downscaling is needed
+    }
 
     // Build base message
     CString msg = _T("Destination: ") + NoBreak(dlg.GetPathName()) +
@@ -1493,7 +1501,23 @@ CString CPlayerDoc::generateConversionScript() const
         command += separateFilePart.c_str();
 
         if (!isVideoCompatible)
-            command += _T(" -vf pad=ceil(iw/2)*2:ceil(ih/2)*2");
+        {
+            CString vf;
+
+            if (needsDownscale)
+            {
+                // Proportional downscale to fit within 1080p, preserve aspect ratio
+                vf = _T("scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease,")
+                    _T("pad=ceil(iw/2)*2:ceil(ih/2)*2");
+            }
+            else
+            {
+                // Only pad to even dimensions
+                vf = _T("pad=ceil(iw/2)*2:ceil(ih/2)*2");
+            }
+
+            command += _T(" -vf ") + vf;
+        }
 
         command += separateFilePart.empty() 
             ? _T(" -map 0:v? -map 0:a?") : _T(" -map 0:v:0 -map 1:a:0");
