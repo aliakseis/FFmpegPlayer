@@ -268,8 +268,9 @@ CString StrikeThrough(const CString& str, bool doIt)
             ch = L'\u00A0';
         // Append the current character
         result += ch;
-        // Append the Combining Long Stroke Overlay character
-        result += L'\u0336';
+        // Append the Combining Overlay character
+        if (i != str.GetLength() - 1)
+            result += L'\u0338';
     }
     return result;
 }
