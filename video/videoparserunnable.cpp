@@ -483,6 +483,8 @@ struct FFmpegDecoder::VideoParseContext
     int numSkipped = 0;
     OrderedScopedTokenGenerator tokenGenerator;
     AVFramePtr prevVideoFrame;
+    double videoClock = 0; // pts of last decoded frame / predicted pts of next decoded frame
+    double frameDelay = 0;
 };
 
 void FFmpegDecoder::videoParseRunnable()
@@ -524,6 +526,20 @@ bool FFmpegDecoder::handleVideoPacket(
             context.prevVideoFrame.reset();
         }
 
+        // compute the exact PTS for the picture if it is omitted in the stream
+        if (videoFrame->best_effort_timestamp != AV_NOPTS_VALUE)
+        {
+            context.videoClock = videoFrame->best_effort_timestamp * av_q2d(m_videoStream->time_base);
+        }
+        else
+        {
+            context.videoClock += context.frameDelay;
+        }
+        // update video clock for next frame
+        // for MPEG2, the frame can be repeated, so we update the clock accordingly
+        context.frameDelay = av_q2d(m_videoCodecContext->time_base) *
+            (1. + videoFrame->repeat_pict * 0.5);
+
         if (!handleVideoFrame(videoFrame, context, AV_NOPTS_VALUE))
         {
             context.prevVideoFrame = std::move(videoFrame);
@@ -544,7 +560,7 @@ bool FFmpegDecoder::handleVideoFrame(
     const double MAX_DELAY = 0.2;
 
     const auto best_effort_timestamp = videoFrame->best_effort_timestamp;
-    const double pts = best_effort_timestamp * av_q2d(m_videoStream->time_base);
+    const double pts = context.videoClock;
 
 restart:
 
