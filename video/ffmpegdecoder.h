@@ -182,12 +182,11 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
         double frame_clock, uint8_t* write_data, int64_t write_size, bool failed);
     bool handleVideoPacket(
         const AVPacket& packet,
-        double& videoClock,
         VideoParseContext& context);
     bool handleVideoFrame(
         AVFramePtr& frame,
-        double pts,
-        VideoParseContext& context);
+        VideoParseContext& context,
+        int64_t next_timestamp);
 
     // IAudioPlayerCallback
     void AppendFrameClock(double frame_clock) override;

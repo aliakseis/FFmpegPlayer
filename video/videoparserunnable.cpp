@@ -482,13 +482,13 @@ struct FFmpegDecoder::VideoParseContext
     bool initialized = false;
     int numSkipped = 0;
     OrderedScopedTokenGenerator tokenGenerator;
+    AVFramePtr prevVideoFrame;
 };
 
 void FFmpegDecoder::videoParseRunnable()
 {
     CHANNEL_LOG(ffmpeg_threads) << "Video thread started";
     m_videoStartClock = VIDEO_START_CLOCK_NOT_INITIALIZED;
-    double videoClock = 0; // pts of last decoded frame / predicted pts of next decoded frame
 
     VideoParseContext context{};
 
@@ -502,13 +502,12 @@ void FFmpegDecoder::videoParseRunnable()
 
         auto packetGuard = MakeGuard(&packet, av_packet_unref);
 
-        handleVideoPacket(packet, videoClock, context);
+        handleVideoPacket(packet, context);
     }
 }
 
 bool FFmpegDecoder::handleVideoPacket(
     const AVPacket& packet,
-    double& videoClock,
     VideoParseContext& context)
 {
     const int ret = avcodec_send_packet(m_videoCodecContext, &packet);
@@ -519,24 +518,16 @@ bool FFmpegDecoder::handleVideoPacket(
     AVFramePtr videoFrame(av_frame_alloc());
     while (avcodec_receive_frame(m_videoCodecContext, videoFrame.get()) == 0)
     {
-		const int64_t duration_stamp = videoFrame->best_effort_timestamp;
-
-        // compute the exact PTS for the picture if it is omitted in the stream
-        // pts1 is the dts of the pkt / pts of the frame
-        if (duration_stamp != AV_NOPTS_VALUE)
+        if (context.prevVideoFrame)
         {
-            videoClock = duration_stamp * av_q2d(m_videoStream->time_base);
+            handleVideoFrame(context.prevVideoFrame, context, videoFrame->best_effort_timestamp);
+            context.prevVideoFrame.reset();
         }
-        const double pts = videoClock;
 
-        // update video clock for next frame
-        // for MPEG2, the frame can be repeated, so we update the clock accordingly
-        const double frameDelay = av_q2d(m_videoCodecContext->time_base) *
-            (1. + videoFrame->repeat_pict * 0.5);
-        videoClock += frameDelay;
-
-        while (!handleVideoFrame(videoFrame, pts, context))
+        if (!handleVideoFrame(videoFrame, context, AV_NOPTS_VALUE))
         {
+            context.prevVideoFrame = std::move(videoFrame);
+            videoFrame.reset(av_frame_alloc());
         }
     }
 
@@ -545,14 +536,17 @@ bool FFmpegDecoder::handleVideoPacket(
 
 bool FFmpegDecoder::handleVideoFrame(
     AVFramePtr& videoFrame,
-    double pts,
-    VideoParseContext& context)
+    VideoParseContext& context,
+    int64_t next_timestamp)
 {
     enum { MAX_SKIPPED_TILL_REDRAW = 5 };
     enum { SKIP_LOOP_FILTER_THRESHOLD = 50 };
     const double MAX_DELAY = 0.2;
 
-    const int64_t duration_stamp = videoFrame->best_effort_timestamp;
+    const auto best_effort_timestamp = videoFrame->best_effort_timestamp;
+    const double pts = best_effort_timestamp * av_q2d(m_videoStream->time_base);
+
+restart:
 
     boost::posix_time::time_duration td(boost::posix_time::pos_infin);
     bool inNextFrame = false;
@@ -578,7 +572,11 @@ bool FFmpegDecoder::handleVideoFrame(
 
         if (inNextFrame && m_prevTime != AV_NOPTS_VALUE)
         {
-            if (duration_stamp != AV_NOPTS_VALUE && duration_stamp < m_prevTime)
+            if (next_timestamp == AV_NOPTS_VALUE)
+            {
+                return false;
+            }
+            else if (next_timestamp < m_prevTime)
             {
                 continueHandlingPrevTime = true;
             }
@@ -693,7 +691,7 @@ bool FFmpegDecoder::handleVideoFrame(
         boost::lock_guard<boost::mutex> locker(m_isPausedMutex);
         if (m_isPaused && !m_isVideoSeekingWhilePaused)
         {
-            return false;
+            goto restart;
         }
 
         m_isVideoSeekingWhilePaused = false;
@@ -712,7 +710,7 @@ bool FFmpegDecoder::handleVideoFrame(
     }
 
     current_frame.m_pts = pts;
-    current_frame.m_duration = duration_stamp;
+    current_frame.m_duration = best_effort_timestamp;
 
     if (useAsyncConversion)
     {

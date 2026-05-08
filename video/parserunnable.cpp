@@ -403,32 +403,36 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
     if (!isSeekable(formatContext))
         return true;//continue;
 
-    const bool handlingPrevFrame = m_isPaused && seekDuration == m_currentTime && packet != nullptr;
+    const int64_t currentTime = m_currentTime;
+    const bool handlingPrevFrame = m_isPaused && seekDuration == currentTime
+        && packet != nullptr && m_videoContextIndex != -1;
 
     if (handlingPrevFrame)
     {
         const auto threshold
-            = 3LL * m_videoStream->avg_frame_rate.den * m_videoStream->time_base.den
+            = m_videoStream->avg_frame_rate.den * m_videoStream->time_base.den
             / (2LL * m_videoStream->avg_frame_rate.num * m_videoStream->time_base.num);
         seekDuration -= threshold;
     }
 
-    const int64_t currentTime = m_currentTime;
     const bool backward = seekDuration < currentTime;
     const int streamNumber = (idx == m_videoContextIndex && basedOnVideoStream())
                                  ? m_videoStreamNumber
                                  : m_audioStreamNumber.load();
 
     auto convertedSeekDuration = seekDuration;
+    if (handlingPrevFrame)
+    {
+        convertedSeekDuration = (std::max)(m_startTime, 
+            convertedSeekDuration - m_videoStream->time_base.den / m_videoStream->time_base.num);
+    }
     if (idx != m_videoContextIndex && m_videoContextIndex != -1)
     {
-        convertedSeekDuration = seekDuration * av_q2d(m_videoStream->time_base) / av_q2d(m_audioStream->time_base);
+        convertedSeekDuration = av_rescale_q(convertedSeekDuration, m_videoStream->time_base, m_audioStream->time_base);
     }
 
     if (handlingPrevFrame)
     {
-        convertedSeekDuration = (std::max)(m_startTime, convertedSeekDuration - m_videoStream->time_base.den / m_videoStream->time_base.num);
-
         if (av_seek_frame(formatContext, streamNumber, convertedSeekDuration, AVSEEK_FLAG_BACKWARD) < 0)
         {
             CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
@@ -459,7 +463,7 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
                 {
                     const auto& time_base = formatContext->streams[packet->stream_index]->time_base;
                     pts = (time_base.den && time_base.num)
-                        ? pts * av_q2d(time_base) / av_q2d(m_videoStream->time_base) : 0;
+                        ? av_rescale_q(pts, time_base, m_videoStream->time_base) : 0;
                     if (handlingPrevFrame)
                         pts += m_videoStream->avg_frame_rate.den * m_videoStream->time_base.den
                         / (2LL * m_videoStream->avg_frame_rate.num * m_videoStream->time_base.num);
