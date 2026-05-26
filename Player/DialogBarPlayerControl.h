@@ -54,6 +54,8 @@ private:
     HICON m_hAudio;
     HICON m_hAudioOff;
     HICON m_hFullScreen;
+    bool m_bPaused = true;
+    bool m_bAudioOn = true;
     int m_savedVolume;
     volatile int m_oldTotalTime;
     volatile int m_oldCurrentTime;
