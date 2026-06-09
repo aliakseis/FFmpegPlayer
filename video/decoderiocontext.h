@@ -15,12 +15,12 @@ private:
     int bufferSize;
     std::unique_ptr<std::streambuf> stream;
 
+    static int IOReadFunc(void* data, uint8_t* buf, int buf_size);
+    static int64_t IOSeekFunc(void* data, int64_t pos, int whence);
+
 public:
     DecoderIOContext(std::unique_ptr<std::streambuf> s);
     ~DecoderIOContext();
 
     void initAVFormatContext(AVFormatContext * /*pCtx*/);
-
-    static int IOReadFunc(void *data, uint8_t *buf, int buf_size);
-    static int64_t IOSeekFunc(void *data, int64_t pos, int whence);
 };

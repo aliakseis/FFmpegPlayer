@@ -113,8 +113,8 @@ inline void Shutdown(const std::unique_ptr<boost::thread>& th)
 
 int ThisThreadInterruptionRequested(void* ptr)
 {
-    boost::atomic_bool* flag = static_cast<boost::atomic_bool*>(ptr);
-    return static_cast<int>(*flag || boost::this_thread::interruption_requested());
+    return static_cast<int>(ptr && static_cast<boost::atomic_bool*>(ptr)->load()
+        || boost::this_thread::interruption_requested());
 }
 
 int g_lastHttpCode = 0;
