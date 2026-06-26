@@ -83,6 +83,50 @@ std::string parse_python_exception()
     return ret;
 }
 
+std::string normalize_lang(const std::string& s) {
+    if (s.empty()) return std::string();
+    size_t i = 0;
+    while (i < s.size() && !std::isalpha((unsigned char)s[i])) ++i;
+    size_t j = i;
+    while (j < s.size() && std::isalpha((unsigned char)s[j])) ++j;
+    std::string pref = s.substr(i, j - i);
+    std::transform(pref.begin(), pref.end(), pref.begin(), [](unsigned char c) { return std::tolower(c); });
+    if (pref.size() >= 2) pref = pref.substr(0, 2);
+    return pref;
+}
+
+std::string get_system_language() {
+    WCHAR localeName[LOCALE_NAME_MAX_LENGTH] = { 0 };
+    if (GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH) > 0) {
+        char buf[LOCALE_NAME_MAX_LENGTH] = { 0 };
+        int n = WideCharToMultiByte(CP_UTF8, 0, localeName, -1, buf, (int)sizeof(buf), nullptr, nullptr);
+        if (n > 0) return normalize_lang(std::string(buf));
+    }
+    LANGID lid = GetUserDefaultLangID();
+    if (lid != 0) {
+        LCID lcid = MAKELCID(lid, SORT_DEFAULT);
+        char buf[16] = { 0 };
+        if (GetLocaleInfoA(lcid, LOCALE_SISO639LANGNAME, buf, (int)sizeof(buf)) > 0) {
+            return normalize_lang(std::string(buf));
+        }
+    }
+    std::string langEnv;
+    char* env = nullptr;
+    size_t envLen = 0;
+    if (_dupenv_s(&env, &envLen, "LANG") == 0 && env != nullptr)
+    {
+        langEnv = env;
+        free(env);
+    }
+    if (!langEnv.empty()) return normalize_lang(langEnv);
+    try {
+        std::locale loc("");
+        std::string name = loc.name();
+        if (!name.empty()) return normalize_lang(name);
+    }
+    catch (...) {}
+    return "en";
+}
 
 class LoggerStream
 {
@@ -345,9 +389,20 @@ def extract_youtube_id(url_or_id: str) -> str:
         return q.group(1)
     raise ValueError("Could not extract YouTube video id from input")
 
-def getYoutubeTranscript(url_or_id: str):
+from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound
+
+def getYoutubeTranscript(url_or_id: str, lang: str):
     video_id = extract_youtube_id(url_or_id)
-    return youtube_transcript_api.YouTubeTranscriptApi().fetch(video_id).to_raw_data()
+
+    try:
+        return YouTubeTranscriptApi().fetch(
+            video_id,
+            languages=[lang, "en"]
+        ).to_raw_data()
+    except NoTranscriptFound:
+        raise RuntimeError(
+            f"No transcript found in [{lang}] or English for video {video_id}"
+        )
 )";
 
 
@@ -828,7 +883,7 @@ bool YouTubeTranscriptDealer::getYoutubeTranscripts(const std::string& id, AddYo
 
     try
     {
-        object v = m_func(id);
+        object v = m_func(id, get_system_language());
         if (v.is_none())
             return false;
 
