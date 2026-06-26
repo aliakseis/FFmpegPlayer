@@ -118,6 +118,9 @@ def install_and_import(package, url=None):
 install_and_import("yt_dlp", "https://github.com/yt-dlp/yt-dlp/archive/refs/heads/master.zip")
 
 from urllib.parse import urlencode, urlparse, parse_qs
+import shutil
+
+node_path = shutil.which("node") or shutil.which("node.exe")
 
 def parsePlaylist(url: str, force: bool):
     # 1. Detect search query (no dots or slashes)
@@ -161,6 +164,15 @@ def _extract_flat_urls(yt_url: str):
         "skip_download": True,
         "extract_flat": True,
     }
+    if node_path:
+        # Enable Node + EJS only when Node is available
+        ydl_opts["js_runtimes"] = {
+            "node": {
+                "path": node_path,
+                "enabled": True
+            }
+        }
+        ydl_opts["remote_components"] = ["ejs:github"]
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(yt_url, download=False)
@@ -183,6 +195,16 @@ def _extract_from_video_page(video_url: str):
         "skip_download": True,
         "extract_flat": False,
     }
+    if node_path:
+        # Enable Node + EJS only when Node is available
+        ydl_opts["js_runtimes"] = {
+            "node": {
+                "path": node_path,
+                "enabled": True
+            }
+        }
+        ydl_opts["remote_components"] = ["ejs:github"]
+
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(video_url, download=False)
@@ -202,7 +224,17 @@ def _extract_from_video_page(video_url: str):
     title = info.get("title")
     if title:
         search_query = f"ytsearch10:{title}"
-        with yt_dlp.YoutubeDL({"quiet": True, "extract_flat": True}) as ydl:
+        ydl_opts = {"quiet": True, "extract_flat": True}
+        if node_path:
+            # Enable Node + EJS only when Node is available
+            ydl_opts["js_runtimes"] = {
+                "node": {
+                    "path": node_path,
+                    "enabled": True
+                }
+            }
+            ydl_opts["remote_components"] = ["ejs:github"]
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             s = ydl.extract_info(search_query, download=False)
             for e in s.get("entries", []):
                 if "url" in e and not _is_channel_url(e["url"]):
@@ -252,13 +284,22 @@ def _is_usable_audio_format(f):
 
 def getYoutubeUrl(url, adaptive):
     socket.setdefaulttimeout(10)
-    base_opts = {
+    ydl_opts = {
         'noplaylist': True,
         'quiet': True,
         'skip_download': True,
     }
-    ydl_opts = base_opts.copy()
     ydl_opts['format'] = 'bestvideo+bestaudio' if adaptive else 'best'
+    if node_path:
+        # Enable Node + EJS only when Node is available
+        ydl_opts["js_runtimes"] = {
+            "node": {
+                "path": node_path,
+                "enabled": True
+            }
+        }
+        ydl_opts["remote_components"] = ["ejs:github"]
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
     formats = _iter_formats(info)
