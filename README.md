@@ -53,6 +53,8 @@ YouTube view support is turned on by default. It can be turned off by commenting
 
 The matching Python version has to be installed for the accessory DLLs to be accessible, except for embedded Python coming with installation. In any case Pytubefix now requires Node.js installed.
 
+You may need to install Node.js and make its executable reachable through the PATH environment variable.
+
 Just in case: "In fact in boost-python, the default behavior is that even when debug boost libraries are created, these libraries are linked to the release pythonX.dll/lib - by intention, according to the docs." https://github.com/pybind/pybind11/issues/1295
 
 Tiny demos here: https://www.youtube.com/watch?v=dySA4yEGdEc https://www.youtube.com/watch?v=t5iW2ZsEzrA
