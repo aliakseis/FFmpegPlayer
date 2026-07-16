@@ -13,7 +13,7 @@ A simple FFmpeg based player. The player core is generic and made with multiplat
 - Codec Support: Compatibility with a wide range of video and audio codecs.
 - Streaming Support: Ability to stream video from online sources.
 
-[Semi transparent, click through full screen mode introduced.](https://bit.ly/2JLTbQn) It is invokable by holding ctrl+shift while pressing full screen button.
+Besides the player itself, the source code is essentially a cookbook of Windows desktop programming, showcasing techniques from several generations of the Windows API—from classic Win32 and MFC through GDI+, COM, Direct3D, Direct2D, DXVA2, Boost, and modern C++—all working together in a single, substantial application.
 
 ## Getting Started
 
