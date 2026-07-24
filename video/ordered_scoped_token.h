@@ -64,59 +64,37 @@ public:
         Token(Token&& other) noexcept = default;
         Token& operator=(Token&& other) noexcept = default;
 
-        ~Token() {
-            // If token was never claimed (locked or consumed), consume it now so it doesn't block later tokens.
-            // This destructor does NOT block; it marks the index consumed immediately so later tokens can proceed.
-            if (!state_) return;
-            bool expected = false;
-            if (!state_->claimed.compare_exchange_strong(expected, true)) {
-                // already claimed/locked; nothing to do
-                return;
-            }
-            // mark consumed and advance generator (non-blocking)
-            consume_and_advance(state_->ctrl, state_->index);
-        }
-
         // Acquire the token and enter the critical section.
         // Returns a movable LockScope that holds the critical section until destroyed.
         // Throws std::runtime_error if token is invalid or already claimed.
         LockScope lock() {
-            if (!state_) throw std::runtime_error("Invalid token");
-            bool expected = false;
-            if (!state_->claimed.compare_exchange_strong(expected, true)) {
-                throw std::runtime_error("Token already claimed");
-            }
+            if (!state_) 
+                throw std::runtime_error("Invalid token");
 
             std::unique_lock<std::mutex> lk(state_->ctrl->mtx);
             state_->ctrl->cv.wait(lk, [&] { return state_->ctrl->next_index == state_->index; });
             // Do NOT advance next_index here; LockScope destructor will advance when scope ends.
-            return LockScope(state_);
+            return LockScope(std::move(state_));
         }
 
         // Try to acquire immediately. If successful returns LockScope; otherwise returns empty optional.
         // If token already claimed, returns empty.
-        LockScope try_lock() {
-            if (!state_) return {};
-            bool expected = false;
-            if (!state_->claimed.compare_exchange_strong(expected, true)) {
-                return {}; // already claimed
-            }
-            // check if it's our turn now
-            {
-                std::lock_guard<std::mutex> lk(state_->ctrl->mtx);
-                if (state_->ctrl->next_index != state_->index) {
-                    // Not our turn; we keep claimed=true to respect one-time semantics,
-                    // but try_lock fails to enter the critical section immediately.
-                    return {};
-                }
-            }
-            // It's our turn; return LockScope (do not advance here)
-            return LockScope(state_);
+        LockScope try_lock()
+        {
+            if (!state_)
+                throw std::runtime_error("Invalid token");
+
+            std::lock_guard<std::mutex> lk(state_->ctrl->mtx);
+
+            if (state_->ctrl->next_index != state_->index)
+                return {};
+
+            return LockScope(std::move(state_));
         }
 
         // Query whether token has been claimed (locked or consumed)
         bool is_claimed() const {
-            return state_ && state_->claimed.load();
+            return !state_;
         }
 
         explicit operator bool() const noexcept { return static_cast<bool>(state_); }
@@ -126,35 +104,25 @@ public:
         struct State {
             std::shared_ptr<Control> ctrl;
             uint64_t index;
-            std::atomic<bool> claimed{ false }; // ensures token is used only once
+            ~State() {
+                consume_and_advance(ctrl, index);
+            }
         };
 
-        explicit Token(std::shared_ptr<State> s) : state_(std::move(s)) {}
-        std::shared_ptr<State> state_;
+        explicit Token(std::unique_ptr<State> s) : state_(std::move(s)) {}
+        std::unique_ptr<State> state_;
     };
 
     // RAII scope returned by Token::lock(); movable-only.
     struct LockScope {
-        LockScope() = default;
 
         // non-copyable
         LockScope(const LockScope&) = delete;
         LockScope& operator=(const LockScope&) = delete;
 
         // movable
-        LockScope(LockScope&& other) noexcept
-            : state_(std::exchange(other.state_, {})), owns_(other.owns_) {
-            other.owns_ = false;
-        }
-        LockScope& operator=(LockScope&& other) noexcept {
-            if (this != &other) {
-                release_if_needed();
-                state_ = std::exchange(other.state_, {});
-                owns_ = other.owns_;
-                other.owns_ = false;
-            }
-            return *this;
-        }
+        LockScope(LockScope&& other) noexcept = default;
+        LockScope& operator=(LockScope&& other) noexcept = default;
 
         ~LockScope() {
             release_if_needed();
@@ -165,21 +133,18 @@ public:
             release_if_needed();
         }
 
-        bool valid() const noexcept { return state_ && owns_; }
+        bool valid() const noexcept { return static_cast<bool>(state_); }
 
     private:
         friend struct Token;
-        explicit LockScope(std::shared_ptr<Token::State> s) : state_(std::move(s)), owns_(true) {}
+        LockScope() = default;
+        explicit LockScope(std::unique_ptr<Token::State> s) : state_(std::move(s)) {}
 
         void release_if_needed() {
-            if (!state_ || !owns_) return;
-            // mark consumed and advance generator
-            consume_and_advance(state_->ctrl, state_->index);
-            owns_ = false;
+            state_.reset();
         }
 
-        std::shared_ptr<Token::State> state_;
-        bool owns_{ false };
+        std::unique_ptr<Token::State> state_;
     };
 
     // generate a new movable-only token
@@ -190,10 +155,9 @@ public:
             std::lock_guard<std::mutex> lk(ctrl_->mtx);
             idx = ctrl_->alloc_index++;
         }
-        auto s = std::make_shared<Token::State>();
+        auto s = std::make_unique<Token::State>();
         s->ctrl = ctrl_;
         s->index = idx;
-        s->claimed.store(false);
-        return Token(s);
+        return Token(std::move(s));
     }
 };
