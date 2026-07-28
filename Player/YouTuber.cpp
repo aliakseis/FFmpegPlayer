@@ -920,19 +920,89 @@ std::vector<std::string> DoParsePlaylist(
 {
     std::vector<std::string> result;
 
-    auto doSearch = [pDataBegin, pDataEnd, &result](const auto& watch, const char* prefix) {
-        enum { WATCH_SIZE = sizeof(watch) / sizeof(watch[0]) - 1 };
-        auto pData = pDataBegin;
-        while ((pData = std::search(pData, pDataEnd, std::begin(watch), std::prev(std::end(watch)))) != pDataEnd)
+    auto doSearch = [pDataBegin, pDataEnd, &result](const auto& watch, const char* prefix)
         {
-            const auto localEnd = std::find_if(pData + WATCH_SIZE, pDataEnd, [](char ch) {
-                return ch == '&' || ch == '"' || ch == '\'' || ch == '\\' || std::isspace(static_cast<unsigned char>(ch));
-                });
-            auto el = prefix + std::string(pData, localEnd);
-            if (std::find(result.begin(), result.end(), el) == result.end())
-                result.push_back(std::move(el));
-            pData += WATCH_SIZE;
-        }
+            enum { WATCH_SIZE = sizeof(watch) / sizeof(watch[0]) - 1 };
+
+            auto pData = pDataBegin;
+
+            while ((pData = std::search(
+                pData,
+                pDataEnd,
+                std::begin(watch),
+                std::prev(std::end(watch)))) != pDataEnd)
+            {
+                std::string value;
+
+                auto p = pData + WATCH_SIZE;
+
+                if (pDataEnd - p < 11)
+                    break;
+
+                if (watch[WATCH_SIZE - 1] == '=')
+                {
+                    if (p[0] == '\r' &&
+                        p[1] == '\n' && p[2]== '=')
+                    {
+                        p += 3;
+                    }
+                    else if (p[0] == '\n' && p[1] == '=')
+                    {
+                        p += 2;
+                    }
+                }
+
+                while (p != pDataEnd)
+                {
+                    unsigned char ch = *p;
+
+                    // quoted-printable soft line break
+                    if (ch == '=')
+                    {
+                        if (p + 2 < pDataEnd &&
+                            p[1] == '\r' &&
+                            p[2] == '\n')
+                        {
+                            p += 3;
+                            continue;
+                        }
+
+                        if (p + 1 < pDataEnd &&
+                            p[1] == '\n')
+                        {
+                            p += 2;
+                            continue;
+                        }
+                    }
+
+                    if (ch == '&' ||
+                        ch == '"' ||
+                        ch == '\'' ||
+                        ch == '\\' ||
+                        std::isspace(ch))
+                    {
+                        break;
+                    }
+
+                    value.push_back(static_cast<char>(ch));
+                    ++p;
+                }
+
+                if (value.size() >= 11)
+                {
+                    if (value.size() >= 13 && watch[WATCH_SIZE - 1] == '='
+                        && value[0] == '3' && value[1] == 'D')
+                    {
+                        value.erase(0, 2);
+                    }
+
+                    auto el = prefix + (watch + value);
+                    if (std::find(result.begin(), result.end(), el) == result.end())
+                        result.push_back(std::move(el));
+                }
+
+                pData += WATCH_SIZE;
+            }
         };
 
     doSearch("/watch?v=", "https://www.youtube.com");
