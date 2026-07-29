@@ -915,6 +915,59 @@ bool YouTubeTranscriptDealer::getYoutubeTranscripts(const std::string& id, AddYo
     return false;
 }
 
+template<size_t N>
+const char* qp_search(const char* first,
+    const char* last,
+    const char(&pat)[N])
+{
+    constexpr size_t PAT_SIZE = N - 1;
+
+    while (first != last)
+    {
+        const char* p = first;
+        size_t i = 0;
+
+        while (i < PAT_SIZE)
+        {
+            // Skip quoted-printable soft breaks.
+            while (p < last)
+            {
+                if (*p == '=' &&
+                    p + 2 < last &&
+                    p[1] == '\r' &&
+                    p[2] == '\n')
+                {
+                    p += 3;
+                    continue;
+                }
+
+                if (*p == '=' &&
+                    p + 1 < last &&
+                    p[1] == '\n')
+                {
+                    p += 2;
+                    continue;
+                }
+
+                break;
+            }
+
+            if (p == last || *p != pat[i])
+                break;
+
+            ++p;
+            ++i;
+        }
+
+        if (i == PAT_SIZE)
+            return first;
+
+        ++first;
+    }
+
+    return last;
+}
+
 std::vector<std::string> DoParsePlaylist(
     const char* const pDataBegin, const char* const pDataEnd, bool includeLists = true)
 {
@@ -926,11 +979,7 @@ std::vector<std::string> DoParsePlaylist(
 
             auto pData = pDataBegin;
 
-            while ((pData = std::search(
-                pData,
-                pDataEnd,
-                std::begin(watch),
-                std::prev(std::end(watch)))) != pDataEnd)
+            while ((pData = qp_search(pData, pDataEnd, watch)) != pDataEnd)
             {
                 std::string value;
 
