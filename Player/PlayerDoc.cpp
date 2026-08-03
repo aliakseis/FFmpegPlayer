@@ -281,6 +281,29 @@ CString NoBreak(CString s)
     return s;
 }
 
+std::string fmt_srt_time_from_seconds(double sec) {
+    // Convert to integer milliseconds with rounding
+    int64_t total_ms = static_cast<int64_t>(std::llround(sec * 1000.0));
+
+    int64_t hours = total_ms / 3600000;
+    total_ms %= 3600000;
+
+    int64_t minutes = total_ms / 60000;
+    total_ms %= 60000;
+
+    int64_t seconds = total_ms / 1000;
+    int64_t millis = total_ms % 1000;
+
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%02lld:%02lld:%02lld,%03lld",
+        (long long)hours,
+        (long long)minutes,
+        (long long)seconds,
+        (long long)millis);
+
+    return std::string(buf);
+}
+
 std::unique_ptr<IAudioPlayer> GetAudioPlayer()
 {
     if (IsWindowsVistaOrGreater())
@@ -719,7 +742,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
     PathRemoveFileSpec(pszPath);
     CString strFile;
     CString strParams;
-    if (isFullFrameRange() && !m_separateFileDiff && !transform && m_videoFilter.IsEmpty())
+    if (isFullFrameRange() && !m_separateFileDiff && !transform && (!m_enableVideoFilter || m_videoFilter.IsEmpty()))
     {
         if (isLocalFile)
         {
@@ -783,7 +806,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
             }
         }
 
-        const bool streamcopy = (m_losslessCut || isFullFrameRange()) && !transform;
+        const bool streamcopy = (m_losslessCut || isFullFrameRange()) && !transform && (!m_enableVideoFilter || m_videoFilter.IsEmpty());
 
         if (streamcopy)
             strParams += _T(" -c copy");
@@ -791,7 +814,7 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         // rotation https://webcache.googleusercontent.com/search?q=cache:IiCyGV1Tp7oJ:https://annimon.com/article/3997+
         CString filterChain;
 
-        if (!m_videoFilter.IsEmpty())
+        if (m_enableVideoFilter && !m_videoFilter.IsEmpty())
         {
             filterChain = m_videoFilter;   // start with user filter
         }
@@ -848,7 +871,45 @@ BOOL CPlayerDoc::OnSaveDocument(LPCTSTR lpszPathName)
         TRACE(_T("FFmpeg parameters generated: %s\n"), static_cast<LPCTSTR>(strParams));
     }
     const  auto result = ShellExecute(NULL, NULL, strFile, strParams, pszPath, SW_MINIMIZE);
-    return int(result) > 32;
+    const bool ok = int(result) > 32;
+
+    if (ok && !isLocalFile && m_subtitles && m_frameDecoder->listSubtitles().empty())
+    {
+        auto ext = PathFindExtension(lpszPathName);    
+        CString outfile(lpszPathName, ext - lpszPathName);
+        outfile += ".srt";
+
+        // Check if file exists AND is empty
+        bool writeFile = true;
+
+        WIN32_FILE_ATTRIBUTE_DATA fad{};
+        if (GetFileAttributesEx(outfile, GetFileExInfoStandard, &fad))
+        {
+            // File exists, overwrite only if empty
+            writeFile = (fad.nFileSizeLow == 0 && fad.nFileSizeHigh == 0);
+        }
+
+        if (writeFile)
+        {
+            std::ofstream ofs(outfile);
+            if (ofs)
+            {
+                // UTF-8 BOM
+                ofs.write("\xEF\xBB\xBF", 3);
+
+                int idx = 1;
+                for (auto& m : *m_subtitles)
+                {
+                    ofs << idx++ << "\n";
+                    auto& b = m.first;
+                    ofs << fmt_srt_time_from_seconds(b.lower()) << " --> " << fmt_srt_time_from_seconds(b.upper()) << "\n";
+                    ofs << m.second << "\n\n";
+                }
+            }
+        }
+    }
+
+    return ok;
 }
 
 
