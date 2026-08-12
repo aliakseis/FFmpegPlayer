@@ -16,7 +16,7 @@ extern "C" {
 
 /*
 Usage:
-    FrameTransformer frameTransformer("crop=iw/2:ih:0:0,split[left][tmp];[tmp]hflip[right];[left][right] hstack");
+    FrameTransformer frameTransformer("hqdn3d=1.5:1.5:6:6,unsharp=5:5:0.5,gradfun=2.0,eq=contrast=1.05:brightness=0.02:saturation=1.05");
     auto [width, height] = m_frameDecoder->getVideoSize();
     frameTransformer.init(width, height);
     m_frameDecoder->setImageConversionFunc(frameTransformer);
