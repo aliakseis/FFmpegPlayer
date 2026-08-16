@@ -9,6 +9,13 @@
 #include <stdexcept>
 #include <unordered_set>
 
+/*
+A Token must have exclusive ownership; different tokens may be used concurrently from different threads.
+Among tokens that are successfully acquired, acquisition occurs in increasing token-index order.
+A token that is destroyed without acquisition is considered consumed
+and therefore does not participate in the acquisition order.
+*/
+
 class OrderedScopedTokenGenerator {
 public:
     OrderedScopedTokenGenerator() : ctrl_(std::make_shared<Control>()) {}
@@ -149,15 +156,14 @@ public:
 
     // generate a new movable-only token
     Token generate() {
-        uint64_t idx;
-        {
-            // allocate index under mutex to avoid ABA with consumed set (not strictly necessary but simpler)
-            std::lock_guard<std::mutex> lk(ctrl_->mtx);
-            idx = ctrl_->alloc_index++;
-        }
         auto s = std::make_unique<Token::State>();
         s->ctrl = ctrl_;
-        s->index = idx;
+
+        {
+            std::lock_guard<std::mutex> lk(ctrl_->mtx);
+            s->index = ctrl_->alloc_index++;
+        }
+
         return Token(std::move(s));
     }
 };
