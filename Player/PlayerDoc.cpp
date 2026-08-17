@@ -1053,7 +1053,16 @@ void CPlayerDoc::OnIdle()
     if (m_onEndOfStream)
     {
         m_onEndOfStream = false;
-        MoveToNextFile();
+        TRY 
+        {
+            MoveToNextFile();
+        }
+        CATCH_ALL(e)
+        {
+            if (e)
+                e->Delete();
+        }
+        END_CATCH_ALL
     }
 
     if (m_hConversionProcess != NULL && WaitForSingleObject(m_hConversionProcess, 0) == WAIT_OBJECT_0)
