@@ -718,6 +718,11 @@ bool FFmpegDecoder::resetVideoProcessing()
             m_videoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
         }
 
+        CHANNEL_LOG(ffmpeg_opening)
+            << "Decoder: "
+            << (m_videoCodec->name ? m_videoCodec->name : "?")
+            << " / "
+            << (m_videoCodec->long_name ? m_videoCodec->long_name : "?");
 
     // Open codec
         if (avcodec_open2(m_videoCodecContext, m_videoCodec, nullptr) < 0)
