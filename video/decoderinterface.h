@@ -128,6 +128,8 @@ struct IFrameDecoder
     virtual void setFrameListener(IFrameListener* listener) = 0;
     virtual void setDecoderListener(FrameDecoderListener* listener) = 0;
 
+    virtual void setNativeWindowHandle(void* handle) = 0;
+
     // Retrieve rendering data
     virtual bool getFrameRenderingData(FrameRenderingData* data) = 0;
 

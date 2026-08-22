@@ -587,7 +587,7 @@ int dxva2_retrieve_data(AVCodecContext *s, AVFrame *frame)
     return 0;
 }
 
-static int dxva2_alloc(AVCodecContext *s)
+static int dxva2_alloc(AVCodecContext *s, HWND hWnd)
 {
     InputStream *ist = (InputStream *)s->opaque;
     int loglevel = (ist->hwaccel_id == HWACCEL_AUTO) ? AV_LOG_VERBOSE : AV_LOG_ERROR;
@@ -646,6 +646,7 @@ static int dxva2_alloc(AVCodecContext *s)
     av_log(NULL, AV_LOG_INFO, "Using HWAccel device %d\n", adapter);
 
     //IDirect3D9_GetAdapterDisplayMode(ctx->d3d9, adapter, &d3ddm);
+    d3dpp.hDeviceWindow = hWnd;
     d3dpp.Windowed = TRUE;
     d3dpp.BackBufferWidth = GetSystemMetrics(SM_CXSCREEN);
     d3dpp.BackBufferHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -659,7 +660,8 @@ static int dxva2_alloc(AVCodecContext *s)
     d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
 
-    hr = IDirect3D9_CreateDevice(ctx->d3d9, adapter, D3DDEVTYPE_HAL, GetDesktopWindow(),
+    hr = IDirect3D9_CreateDevice(ctx->d3d9, adapter, D3DDEVTYPE_HAL, 
+        (hWnd != nullptr)? hWnd : GetDesktopWindow(),
         D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE,
         &d3dpp, &ctx->d3d9device);
     if (FAILED(hr)) {
@@ -920,7 +922,7 @@ static AVPixelFormat GetHwFormat(AVCodecContext* s, const AVPixelFormat* pix_fmt
     return ist->hwaccel_pix_fmt;
 }
 
-int dxva2_init(AVCodecContext *s)
+int dxva2_init(AVCodecContext *s, void* hWhd)
 {
     const int loglevel = AV_LOG_VERBOSE;
 
@@ -959,7 +961,7 @@ int dxva2_init(AVCodecContext *s)
     int ret;
 
     if (!ist->hwaccel_ctx) {
-        ret = dxva2_alloc(s);
+        ret = dxva2_alloc(s, static_cast<HWND>(hWhd));
         if (ret < 0)
         {
             s->opaque = nullptr;

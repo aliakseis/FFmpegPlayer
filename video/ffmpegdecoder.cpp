@@ -699,7 +699,7 @@ bool FFmpegDecoder::resetVideoProcessing()
 
             m_videoCodecContext->thread_count = 1;  // Multithreading is apparently not compatible with hardware decoding
 
-            if (dxva2_init(m_videoCodecContext) >= 0)
+            if (dxva2_init(m_videoCodecContext, m_nativeWindowHandle) >= 0)
             {
 #if LIBAVCODEC_VERSION_MAJOR < 59
                 m_videoCodecContext->thread_safe_callbacks = 1;

@@ -26,7 +26,7 @@ typedef struct AVFrame AVFrame;
 typedef struct IDirect3DDevice9 IDirect3DDevice9;
 typedef struct IDirect3DSurface9 IDirect3DSurface9;
 
-int dxva2_init(AVCodecContext *s);
+int dxva2_init(AVCodecContext *s, void* hWhd);
 void dxva2_uninit(void* ist);
 int dxva2_convert_data(IDirect3DSurface9* surface, AVFrame *tmp_frame, int width, int height);
 int dxva2_retrieve_data(AVCodecContext *s, AVFrame *frame);

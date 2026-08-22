@@ -117,6 +117,11 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
         m_decoderListener = listener;
     }
 
+    void setNativeWindowHandle(void* handle)
+    {
+        m_nativeWindowHandle = handle;
+    }
+
     bool getFrameRenderingData(FrameRenderingData* data) override;
 
     double getDurationSecs(int64_t duration) const override;
@@ -211,6 +216,8 @@ class FFmpegDecoder final : public IFrameDecoder, public IAudioPlayerCallback
     IFrameListener* m_frameListener;
 
     FrameDecoderListener* m_decoderListener;
+
+    void* m_nativeWindowHandle = nullptr;
 
     // Indicators
     bool m_isPlaying;

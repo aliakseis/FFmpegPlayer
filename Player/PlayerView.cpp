@@ -118,21 +118,21 @@ BOOL InitializeModule()
 
 D3DPRESENT_PARAMETERS GetD3dPresentParams(HWND hWnd)
 {
-    D3DPRESENT_PARAMETERS D3DPP = { 0 };
+    D3DPRESENT_PARAMETERS d3dpp = { 0 };
 
-    D3DPP.BackBufferWidth = GetSystemMetrics(SM_CXSCREEN);
-    D3DPP.BackBufferHeight = GetSystemMetrics(SM_CYSCREEN);
+    d3dpp.BackBufferWidth = GetSystemMetrics(SM_CXSCREEN);
+    d3dpp.BackBufferHeight = GetSystemMetrics(SM_CYSCREEN);
 
-    D3DPP.BackBufferFormat = VIDEO_RENDER_TARGET_FORMAT;
-    D3DPP.BackBufferCount = BACK_BUFFER_COUNT;
-    D3DPP.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    D3DPP.hDeviceWindow = hWnd;
-    D3DPP.Windowed = TRUE;//g_bWindowed;
-    D3DPP.Flags = D3DPRESENTFLAG_VIDEO;
-    D3DPP.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
-    D3DPP.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+    d3dpp.BackBufferFormat = VIDEO_RENDER_TARGET_FORMAT;
+    d3dpp.BackBufferCount = BACK_BUFFER_COUNT;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.hDeviceWindow = hWnd;
+    d3dpp.Windowed = TRUE;//g_bWindowed;
+    d3dpp.Flags = D3DPRESENTFLAG_VIDEO;
+    d3dpp.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
+    d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
-    return D3DPP;
+    return d3dpp;
 }
 
 #ifdef USE_DXVA2
@@ -717,6 +717,7 @@ CPlayerView::CPlayerView()
 CPlayerView::~CPlayerView()
 {
     GetDocument()->getFrameDecoder()->setFrameListener(nullptr);
+    GetDocument()->getFrameDecoder()->setNativeWindowHandle(nullptr);
 }
 
 BEGIN_MESSAGE_MAP(CPlayerView, CView)
@@ -1435,6 +1436,7 @@ int CPlayerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     }
 
     GetDocument()->getFrameDecoder()->setFrameListener(m_frameListener.get());
+    GetDocument()->getFrameDecoder()->setNativeWindowHandle(m_hWnd);
     GetDocument()->getFrameDecoder()->SetFrameFormat(IFrameDecoder::
 #ifdef CONVERT_FROM_YUV420P
         PIX_FMT_YUV420P
