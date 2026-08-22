@@ -293,6 +293,8 @@ def _extract_from_video_page(video_url: str):
 def _iter_formats(info):
     if not info:
         return []
+    if isinstance(info, dict) and 'formats' in info and info['formats']:
+        return info['formats']
     if isinstance(info, dict) and 'entries' in info and info['entries']:
         for e in info['entries']:
             if e:
@@ -300,8 +302,6 @@ def _iter_formats(info):
                 break
     if isinstance(info, dict) and 'requested_formats' in info and info['requested_formats']:
         return info['requested_formats']
-    if isinstance(info, dict) and 'formats' in info and info['formats']:
-        return info['formats']
     if isinstance(info, dict) and 'url' in info:
         return [info]
     return []
@@ -309,12 +309,23 @@ def _iter_formats(info):
 def _is_usable_video_format(f):
     vcodec = f.get('vcodec')
     proto = f.get('protocol', '')
+
+    # Must have a video codec
     if not vcodec or vcodec == 'none':
         return False
+
+    # Reject AV1 (your original rule)
     if vcodec.startswith('av01'):
         return False
-    if proto == 'm3u8_native' or proto == 'm3u8':
+
+    # Reject HLS video
+    if proto in ('m3u8_native', 'm3u8'):
         return False
+
+    # NEW: Must have a URL
+    if not f.get('url'):
+        return False
+
     return True
 
 def _is_usable_audio_format(f):
@@ -326,7 +337,7 @@ def _is_usable_audio_format(f):
         return False
     return 'audio_channels' in f and f.get('audio_channels') is not None or 'abr' in f
 
-def getYoutubeUrl(url, adaptive):
+def getYoutubeUrl(url, adaptive, max_height=None):
     socket.setdefaulttimeout(10)
     ydl_opts = {
         'noplaylist': True,
@@ -335,7 +346,6 @@ def getYoutubeUrl(url, adaptive):
     }
     ydl_opts['format'] = 'bestvideo+bestaudio' if adaptive else 'best'
     if node_path:
-        # Enable Node + EJS only when Node is available
         ydl_opts["js_runtimes"] = {
             "node": {
                 "path": node_path,
@@ -346,26 +356,64 @@ def getYoutubeUrl(url, adaptive):
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
+
     formats = _iter_formats(info)
+
     if adaptive:
         video_candidates = [f for f in formats if _is_usable_video_format(f)]
+        effective_max_height = None if (max_height == 0) else max_height
+
+        # --- NEW: optional max_height limiting ---
+        if max_height is not None and video_candidates:
+            limited = [f for f in video_candidates
+                       if (f.get("height") or 0) <= max_height]
+
+            # Only apply limit if at least one candidate remains
+            if limited:
+                video_candidates = limited
+
+        # Pick best video
         if video_candidates:
-            best_video = max(video_candidates, key=lambda f: (f.get('height') or 0, f.get('tbr') or 0))
+            best_video = max(
+                video_candidates,
+                key=lambda f: (f.get('height') or 0, f.get('tbr') or 0)
+            )
             video_url = best_video.get('url')
         else:
             video_url = info.get('url')
+
+        # Audio selection unchanged
         audio_candidates = [f for f in formats if _is_usable_audio_format(f)]
         if audio_candidates:
-            best_audio = max(audio_candidates, key=lambda f: (f.get('audio_channels') or 0, f.get('abr') or 0))
+            best_audio = max(
+                audio_candidates,
+                key=lambda f: (f.get('audio_channels') or 0, f.get('abr') or 0)
+            )
             audio_url = best_audio.get('url')
         else:
-            any_audio = next((f for f in formats if f.get('vcodec') == 'none' and f.get('url')), None)
+            any_audio = next(
+                (f for f in formats if f.get('vcodec') == 'none' and f.get('url')),
+                None
+            )
             audio_url = any_audio.get('url') if any_audio else None
+
         return (video_url, audio_url)
-    combined_candidates = [f for f in formats if f.get('vcodec') != 'none' and f.get('audio_channels') is not None and not f.get('vcodec','').startswith('av01') and f.get('protocol') not in ('m3u8_native', 'm3u8')]
+
+    # Combined mode unchanged
+    combined_candidates = [
+        f for f in formats
+        if f.get('vcodec') != 'none'
+        and f.get('audio_channels') is not None
+        and not f.get('vcodec', '').startswith('av01')
+        and f.get('protocol') not in ('m3u8_native', 'm3u8')
+    ]
     if not combined_candidates:
         combined_candidates = [f for f in formats if 'url' in f]
-    best_combined = max(combined_candidates, key=lambda f: (f.get('height') or 0, f.get('tbr') or 0, f.get('abr') or 0))
+
+    best_combined = max(
+        combined_candidates,
+        key=lambda f: (f.get('height') or 0, f.get('tbr') or 0, f.get('abr') or 0)
+    )
     return best_combined.get('url')
 
 # ---- youtube_transcript_api based getYoutubeTranscript ----
@@ -795,7 +843,7 @@ std::vector<std::string> YouTubeDealer::getYoutubeUrl(const std::string& url, bo
 
     try
     {
-        object py_result = m_func(url, adaptive);
+        object py_result = m_func(url, adaptive, GetSystemMetrics(SM_CYSCREEN));
 
         if (py_result.is_none())
             return {};
