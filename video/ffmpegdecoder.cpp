@@ -117,9 +117,14 @@ int ThisThreadInterruptionRequested(void* ptr)
         || boost::this_thread::interruption_requested());
 }
 
+#define HHO_HACK (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(61, 1, 100))
+
+#if HHO_HACK
 int g_lastHttpCode = 0;
 std::string g_lastLocationHttpHeader;
 boost::atomic_bool* g_interruptionRequestedFlag = nullptr;
+#endif
+
 void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 {
     if (level <= AV_LOG_ERROR)
@@ -135,6 +140,7 @@ void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
             CHANNEL_LOG(ffmpeg_internal) << buffer;
         }
     }
+#if HHO_HACK
     else if (const auto interruptionRequestedFlag = g_interruptionRequestedFlag)
     {
         if (strcmp(fmt, "http_code=%d\n") == 0)
@@ -152,6 +158,7 @@ void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
             }
         }
     }
+#endif
 }
 
 }  // namespace
@@ -365,9 +372,12 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
 
         auto iformat = inputFormat.empty() ? nullptr : av_find_input_format(inputFormat.c_str());
 
+#if HHO_HACK
         int redirectsLeft = 10;
-
         for (;;)
+#else
+        do
+#endif
         {
             std::vector<std::string> finalUrls{ url };
             std::string hostname;
@@ -395,10 +405,11 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
             }
 
             // Open video file
-
+#if HHO_HACK
             g_lastLocationHttpHeader.clear();
             g_lastHttpCode = 0;
             g_interruptionRequestedFlag = interruptionRequestedFlag;
+#endif
             AVFormatContext* formatContext = nullptr;
             int error = -1;
             for (const auto& finalUrl : finalUrls)
@@ -441,7 +452,9 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
                 }
             }
             auto formatContextGuard = MakeGuard(&formatContext, avformat_close_input);
+#if HHO_HACK
             g_interruptionRequestedFlag = nullptr;
+#endif
             *interruptionRequestedFlag = false;
             if (error == 0)
             {
@@ -459,18 +472,24 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
 
                 break;
             }
+#if HHO_HACK
             if (!isHttps || !useHHO || g_lastLocationHttpHeader.empty() || --redirectsLeft < 0)
             {
+#endif
                 char err_buf[AV_ERROR_MAX_STRING_SIZE + 2] = ": ";
                 BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error " << error 
                     << (av_strerror(error, err_buf + 2, sizeof(err_buf) - 2) == 0 ? err_buf : "")
                     << " url = " << url;
                 return false;
+#if HHO_HACK
             }
-
             url = g_lastLocationHttpHeader;
             CHANNEL_LOG(ffmpeg_opening) << "Redirecting to URL: " << url;
+#endif
         }
+#if !(HHO_HACK)
+        while (false);
+#endif
     }
 
     return doOpen(urls);
