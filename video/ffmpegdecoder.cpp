@@ -117,7 +117,8 @@ int ThisThreadInterruptionRequested(void* ptr)
         || boost::this_thread::interruption_requested());
 }
 
-#define HHO_HACK (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(61, 1, 100))
+// (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(61, 1, 100))
+#define HHO_HACK 1
 
 #if HHO_HACK
 int g_lastHttpCode = 0;
