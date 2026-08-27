@@ -421,12 +421,14 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
                 {
                     av_dict_set(&streamOpts, "timeout", "5000000", 0); // 5 seconds tcp timeout.
                 }
+#if HHO_HACK
                 if (useHHO && !hostname.empty())
                 {
                     CHANNEL_LOG(ffmpeg_opening) << "Opening using a HHO Host: " << hostname << " URL: " << url;
                     av_dict_set(&streamOpts, "headers", ("Host: " + hostname + "\r\n" + szUserAgent).c_str(), 0);
                 }
                 else
+#endif
                 {
                     av_dict_set(&streamOpts, "headers", szUserAgent, 0);
                 }
