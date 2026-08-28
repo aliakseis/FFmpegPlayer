@@ -54,8 +54,8 @@ jobs:
       run: |
           git clone https://github.com/microsoft/vcpkg.git
           cd vcpkg
-          # SNI stuff
-          git checkout c334a542ca3710a6da2142436ef7020abe022718
+          # Presumably working version
+          git checkout 6070d5cb2f818921c10ccdf6f35f3415a2503369
           ./bootstrap-vcpkg.bat
           ./vcpkg integrate install
 
