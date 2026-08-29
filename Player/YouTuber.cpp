@@ -397,7 +397,7 @@ def getYoutubeUrl(url, adaptive, max_height=None):
             )
             audio_url = any_audio.get('url') if any_audio else None
 
-        return (video_url, audio_url)
+        return (audio_url, video_url) # audio first, one or more videos
 
     # Combined mode unchanged
     combined_candidates = [
