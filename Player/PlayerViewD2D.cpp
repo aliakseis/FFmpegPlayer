@@ -194,9 +194,9 @@ afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
 
     CComQIPtr<ID2D1DeviceContext> spContext(*pRenderTarget);
 
-    float dpiX;
-    float dpiY;
-    spContext->GetDpi(&dpiX, &dpiY);
+    //float dpiX;
+    //float dpiY;
+    //spContext->GetDpi(&dpiX, &dpiY);
 
     auto sourceSize = m_sourceSize;
     auto aspectRatio = m_aspectRatio;
@@ -246,6 +246,8 @@ afx_msg LRESULT CPlayerViewD2D::OnDraw2D(WPARAM, LPARAM lParam)
     transform = transform *
         D2D1::Matrix3x2F::Scale(scaleW, scaleH) *
         D2D1::Matrix3x2F::Translation(offset.x, offset.y);
+
+    spContext->SetDpi(96.0f, 96.0f);
 
     spContext->SetTransform(transform);
     spContext->Clear(D2D1::ColorF(D2D1::ColorF::Black));

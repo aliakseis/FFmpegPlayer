@@ -37,7 +37,6 @@
 #define new DEBUG_NEW
 #endif
 
-//#define USE_DIRECT2D_VIEW
 
 namespace {
 
@@ -122,12 +121,20 @@ class PlayerCommandLineInfo : public CCommandLineInfo
 {
 public:
     bool m_bCheckPython = false;
+    bool m_bUseDirect2D = false;
 private:
     void ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL bLast) override
     {
-        if (bFlag && _tcsicmp(pszParam, _T("check_python")) == 0) {
-            m_bCheckPython = true;
-            return;
+        if (bFlag)
+        {
+            if (_tcsicmp(pszParam, _T("check_python")) == 0) {
+                m_bCheckPython = true;
+                return;
+            }
+            if (_tcsicmp(pszParam, _T("d2d")) == 0) {
+                m_bUseDirect2D = true;
+                return;
+            }
         }
         CCommandLineInfo::ParseParam(pszParam, bFlag, bLast);
     }
@@ -209,17 +216,17 @@ BOOL CPlayerApp::InitInstance()
         AsyncGetUrlUnderMouseCursor();
     }
 
-#ifdef USE_DIRECT2D_VIEW
-    if (AfxGetD2DState()->GetDirect2dFactory() == NULL)
+    if (cmdInfo.m_bUseDirect2D)
     {
-        return FALSE;
+        CComQIPtr<ID2D1Factory1> factory(AfxGetD2DState()->GetDirect2dFactory());
+        if (!factory)
+            return FALSE;
+        HRESULT hr_create = I420Effect::Register(factory);
+        if (FAILED(hr_create))
+        {
+            return FALSE;
+        }
     }
-    HRESULT hr_create = I420Effect::Register(static_cast<ID2D1Factory1*>(AfxGetD2DState()->GetDirect2dFactory()));
-    if (FAILED(hr_create))
-    {
-        return FALSE;
-    }
-#endif // USE_DIRECT2D_VIEW
 
     EnableTaskbarInteraction(FALSE);
 
@@ -253,11 +260,9 @@ BOOL CPlayerApp::InitInstance()
         IDR_MAINFRAME,
         RUNTIME_CLASS(CPlayerDoc),
         RUNTIME_CLASS(CMainFrame),       // main SDI frame window
-#ifdef USE_DIRECT2D_VIEW
-        RUNTIME_CLASS(CPlayerViewD2D));
-#else
-        RUNTIME_CLASS(CPlayerView));
-#endif
+        cmdInfo.m_bUseDirect2D 
+            ? RUNTIME_CLASS(CPlayerViewD2D)
+            : RUNTIME_CLASS(CPlayerView));
     if (!pDocTemplate) {
         return FALSE;
     }
