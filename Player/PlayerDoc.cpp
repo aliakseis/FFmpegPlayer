@@ -523,7 +523,7 @@ bool CPlayerDoc::openUrl(const std::string& originalUrl, const std::string& inpu
     m_originalUrl = originalUrl;
     m_url = urls.first;
 
-    if (m_maximalResolution && !urls.second.empty()) {
+    if (!urls.second.empty()) {
         m_separateFileDiff = std::make_unique<StringDifference>(
             std::basic_string<TCHAR>(urls.first.begin(), urls.first.end()),
             std::basic_string<TCHAR>(urls.second.begin(), urls.second.end()));
