@@ -344,7 +344,6 @@ def getYoutubeUrl(url, adaptive, max_height=None):
         'quiet': True,
         'skip_download': True,
     }
-    ydl_opts['format'] = 'bestvideo+bestaudio' if adaptive else 'best'
     if node_path:
         ydl_opts["js_runtimes"] = {
             "node": {
@@ -354,67 +353,76 @@ def getYoutubeUrl(url, adaptive, max_height=None):
         }
         ydl_opts["remote_components"] = ["ejs:github"]
 
+    if not adaptive:
+        ydl_opts['format'] = 'best'
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+            formats = _iter_formats(info)
+
+            combined_candidates = [
+                f for f in formats
+                if f.get('vcodec') != 'none'
+                and f.get('audio_channels') is not None
+                and not f.get('vcodec', '').startswith('av01')
+                and f.get('protocol') not in ('m3u8_native', 'm3u8')
+            ]
+            if not combined_candidates:
+                combined_candidates = [f for f in formats if 'url' in f]
+
+            best_combined = max(
+                combined_candidates,
+                key=lambda f: (f.get('height') or 0, f.get('tbr') or 0, f.get('abr') or 0)
+            )
+            return best_combined.get('url')
+        except:
+            max_height = 480
+            pass
+
+    ydl_opts['format'] = 'bestvideo+bestaudio'
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
-
     formats = _iter_formats(info)
 
-    if adaptive:
-        video_candidates = [f for f in formats if _is_usable_video_format(f)]
-        effective_max_height = None if (max_height == 0) else max_height
+    video_candidates = [f for f in formats if _is_usable_video_format(f)]
+    max_height = None if (max_height == 0) else max_height
 
-        # --- NEW: optional max_height limiting ---
-        if max_height is not None and video_candidates:
-            limited = [f for f in video_candidates
-                       if (f.get("height") or 0) <= max_height]
+    # --- NEW: optional max_height limiting ---
+    if max_height is not None and video_candidates:
+        limited = [f for f in video_candidates
+                    if (f.get("height") or 0) <= max_height]
 
-            # Only apply limit if at least one candidate remains
-            if limited:
-                video_candidates = limited
+        # Only apply limit if at least one candidate remains
+        if limited:
+            video_candidates = limited
 
-        # Pick best video
-        if video_candidates:
-            best_video = max(
-                video_candidates,
-                key=lambda f: (f.get('height') or 0, f.get('tbr') or 0)
-            )
-            video_url = best_video.get('url')
-        else:
-            video_url = info.get('url')
+    # Pick best video
+    if video_candidates:
+        best_video = max(
+            video_candidates,
+            key=lambda f: (f.get('height') or 0, f.get('tbr') or 0)
+        )
+        video_url = best_video.get('url')
+    else:
+        video_url = info.get('url')
 
-        # Audio selection unchanged
-        audio_candidates = [f for f in formats if _is_usable_audio_format(f)]
-        if audio_candidates:
-            best_audio = max(
-                audio_candidates,
-                key=lambda f: (f.get('audio_channels') or 0, f.get('abr') or 0)
-            )
-            audio_url = best_audio.get('url')
-        else:
-            any_audio = next(
-                (f for f in formats if f.get('vcodec') == 'none' and f.get('url')),
-                None
-            )
-            audio_url = any_audio.get('url') if any_audio else None
+    # Audio selection unchanged
+    audio_candidates = [f for f in formats if _is_usable_audio_format(f)]
+    if audio_candidates:
+        best_audio = max(
+            audio_candidates,
+            key=lambda f: (f.get('audio_channels') or 0, f.get('abr') or 0)
+        )
+        audio_url = best_audio.get('url')
+    else:
+        any_audio = next(
+            (f for f in formats if f.get('vcodec') == 'none' and f.get('url')),
+            None
+        )
+        audio_url = any_audio.get('url') if any_audio else None
 
-        return (audio_url, video_url) # audio first, one or more videos
+    return (audio_url, video_url) # audio first, one or more videos
 
-    # Combined mode unchanged
-    combined_candidates = [
-        f for f in formats
-        if f.get('vcodec') != 'none'
-        and f.get('audio_channels') is not None
-        and not f.get('vcodec', '').startswith('av01')
-        and f.get('protocol') not in ('m3u8_native', 'm3u8')
-    ]
-    if not combined_candidates:
-        combined_candidates = [f for f in formats if 'url' in f]
-
-    best_combined = max(
-        combined_candidates,
-        key=lambda f: (f.get('height') or 0, f.get('tbr') or 0, f.get('abr') or 0)
-    )
-    return best_combined.get('url')
 
 # ---- youtube_transcript_api based getYoutubeTranscript ----
 install_and_import("youtube_transcript_api", "https://github.com/jdepoix/youtube-transcript-api/archive/master.zip")
