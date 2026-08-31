@@ -148,6 +148,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Autoplay",                    ID_AUTOPLAY
         MENUITEM "Looping",                     ID_LOOPING
+        MENUITEM "Random",                      ID_FILE_RANDOM
         MENUITEM SEPARATOR
         MENUITEM "Recent File",                 ID_FILE_MRU_FILE1, GRAYED
         MENUITEM SEPARATOR

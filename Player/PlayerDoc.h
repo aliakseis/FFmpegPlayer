@@ -189,6 +189,8 @@ private:
 
     HANDLE m_hConversionProcess = NULL;
 
+    bool m_randomPlay = false;
+
     CString m_videoFilter;
     BOOL m_enableVideoFilter = FALSE;
 
@@ -218,4 +220,6 @@ public:
     afx_msg void OnUsingHostHeaderOverride();
     afx_msg void OnUpdateUsingHostHeaderOverride(CCmdUI* pCmdUI);
     afx_msg void OnVideoFilter();
+    afx_msg void OnFileRandom();
+    afx_msg void OnUpdateFileRandom(CCmdUI* pCmdUI);
 };

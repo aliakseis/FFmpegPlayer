@@ -42,6 +42,7 @@
 
 #include <atomic>
 #include <filesystem>
+#include <random>
 #include <regex>
 
 #include <VersionHelpers.h>
@@ -377,6 +378,8 @@ BEGIN_MESSAGE_MAP(CPlayerDoc, CDocument)
     ON_COMMAND(ID_USING_HHO, &CPlayerDoc::OnUsingHostHeaderOverride)
     ON_UPDATE_COMMAND_UI(ID_USING_HHO, &CPlayerDoc::OnUpdateUsingHostHeaderOverride)
     ON_COMMAND(ID_VIDEO_FILTER, &CPlayerDoc::OnVideoFilter)
+    ON_COMMAND(ID_FILE_RANDOM, &CPlayerDoc::OnFileRandom)
+    ON_UPDATE_COMMAND_UI(ID_FILE_RANDOM, &CPlayerDoc::OnUpdateFileRandom)
 END_MESSAGE_MAP()
 
 
@@ -559,8 +562,29 @@ bool CPlayerDoc::openUrlFromList()
 
     while (!m_playList.empty())
     {
-        auto buffer = m_playList.front();
-        m_playList.pop_front();
+        std::string buffer;
+        if (m_randomPlay && m_playList.size() > 1)
+        {
+            size_t n = m_playList.size();
+            std::mt19937 rng(std::random_device{}());
+            std::uniform_int_distribution<size_t> dist(0, n - 1);
+            size_t idx = dist(rng);
+            buffer = m_playList[idx];
+
+            if (idx < n / 2) {
+                std::swap(m_playList[idx], m_playList.front());
+                m_playList.pop_front();
+            }
+            else {
+                std::swap(m_playList[idx], m_playList.back());
+                m_playList.pop_back();
+            }
+        }
+        else
+        {
+            buffer = m_playList.front();
+            m_playList.pop_front();
+        }
 
         auto playList = ParsePlaylist(buffer, false);
         if (!playList.empty())
@@ -2015,4 +2039,14 @@ void CPlayerDoc::OnVideoFilter()
             m_frameDecoder->setImageConversionFunc({});
         m_enableVideoFilter = FALSE;
     }
+}
+
+void CPlayerDoc::OnFileRandom()
+{
+    m_randomPlay = !m_randomPlay;
+}
+
+void CPlayerDoc::OnUpdateFileRandom(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(m_randomPlay);
 }

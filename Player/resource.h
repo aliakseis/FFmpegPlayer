@@ -74,13 +74,14 @@
 #define ID_OPEN_AUDIO_FILE              32801
 #define ID_USING_HHO                    32802
 #define ID_VIDEO_FILTER                 32803
+#define ID_FILE_RANDOM                  32804
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        323
-#define _APS_NEXT_COMMAND_VALUE         32804
+#define _APS_NEXT_COMMAND_VALUE         32805
 #define _APS_NEXT_CONTROL_VALUE         1023
 #define _APS_NEXT_SYMED_VALUE           317
 #endif
