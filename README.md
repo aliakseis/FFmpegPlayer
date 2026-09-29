@@ -55,6 +55,8 @@ The matching Python version has to be installed for the accessory DLLs to be acc
 
 You may need to install Node.js and make its executable reachable through the PATH environment variable.
 
+You can also open .mhtml files to play YouTube videos included.
+
 Just in case: "In fact in boost-python, the default behavior is that even when debug boost libraries are created, these libraries are linked to the release pythonX.dll/lib - by intention, according to the docs." https://github.com/pybind/pybind11/issues/1295
 
 Tiny demos here: https://www.youtube.com/watch?v=dySA4yEGdEc https://www.youtube.com/watch?v=t5iW2ZsEzrA
