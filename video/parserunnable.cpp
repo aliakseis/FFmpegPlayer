@@ -1,6 +1,7 @@
 #include "ffmpegdecoder.h"
 #include "makeguard.h"
 #include "subtitles.h"
+#include "averror.h"
 
 #include <algorithm>
 #include <chrono>
@@ -85,6 +86,21 @@ bool RendezVous(
 void FFmpegDecoder::parseRunnable(int idx)
 {
     CHANNEL_LOG(ffmpeg_threads) << "Parse thread started";
+
+    const auto formatContext = m_formatContexts[idx];
+    const bool seekable = isSeekable(formatContext);
+
+    CHANNEL_LOG(ffmpeg_opening) << "idx=" << idx
+        << " ctx_flags=" << formatContext->ctx_flags
+#ifdef AVFMTCTX_UNSEEKABLE
+        << " AVFMTCTX_UNSEEKABLE="
+        << ((formatContext->ctx_flags & AVFMTCTX_UNSEEKABLE) != 0)
+#endif
+        //<< " pb=" << formatContext->pb
+        << " pb->seekable="
+        << (formatContext->pb ? formatContext->pb->seekable : -1)
+        << " isSeekable=" << seekable;
+
     AVPacket packet;
     enum { UNSET, SET_EOF, SET_INVALID, REPORTED } eof = UNSET;
 
@@ -106,8 +122,6 @@ void FFmpegDecoder::parseRunnable(int idx)
     int64_t lastTime = m_currentTime;
     int64_t timeLeft = 0;  // effective frame time left from packet (adjusted by start_time)
     enum { TO_RECOVER, RECOVERING, RECOVERED } recovering = RECOVERED;
-
-    const bool seekable = isSeekable(m_formatContexts[idx]);
 
     for (;;)
     {
@@ -214,9 +228,9 @@ void FFmpegDecoder::parseRunnable(int idx)
                     }
                     if (readStatus != AVERROR_EOF && readStatus != AVERROR_ECONNRESET)
                     {
-                        char err_buf[AV_ERROR_MAX_STRING_SIZE + 2] = ": ";
                         CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " End of stream caused by " << readStatus
-                            << (av_strerror(readStatus, err_buf + 2, sizeof(err_buf) - 2) == 0 ? err_buf : "") << "; index: " << idx;
+                            << AvError{ readStatus }
+                            << "; index: " << idx;
                     }
                     m_decoderListener->onEndOfStream(idx, eof == SET_INVALID);
                     eof = REPORTED;

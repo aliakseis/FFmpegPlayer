@@ -7,6 +7,7 @@
 #include "interlockedadd.h"
 #include "subtitles.h"
 #include "decoderiocontext.h"
+#include "averror.h"
 
 #include <boost/chrono.hpp>
 #include <memory>
@@ -479,9 +480,8 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
             if (!isHttps || !useHHO || g_lastLocationHttpHeader.empty() || --redirectsLeft < 0)
             {
 #endif
-                char err_buf[AV_ERROR_MAX_STRING_SIZE + 2] = ": ";
                 BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error " << error 
-                    << (av_strerror(error, err_buf + 2, sizeof(err_buf) - 2) == 0 ? err_buf : "")
+                    << AvError{ error }
                     << " url = " << url;
                 return false;
 #if HHO_HACK
@@ -518,10 +518,9 @@ bool FFmpegDecoder::openStream(std::unique_ptr<std::streambuf> stream)
     const int error = avformat_open_input(&formatContext, nullptr, nullptr, &streamOpts);
     if (error != 0)
     {
-        char err_buf[AV_ERROR_MAX_STRING_SIZE + 2] = ": ";
         BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio stream error " << error
-            << (av_strerror(error, err_buf + 2, sizeof(err_buf) - 2) == 0 ? err_buf : "");
-        return false;
+            << AvError{ error };
+            return false;
     }
     CHANNEL_LOG(ffmpeg_opening) << "Opening video/audio file...";
 

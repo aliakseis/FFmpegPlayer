@@ -146,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audioplayer.h" />
+    <ClInclude Include="averror.h" />
     <ClInclude Include="decoderiocontext.h" />
     <ClInclude Include="ffmpegdecoder.h" />
     <ClInclude Include="ffmpeg_dxva2.h" />
