@@ -228,9 +228,8 @@ void FFmpegDecoder::parseRunnable(int idx)
                     }
                     if (readStatus != AVERROR_EOF && readStatus != AVERROR_ECONNRESET)
                     {
-                        CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ << " End of stream caused by " << readStatus
-                            << AvError{ readStatus }
-                            << "; index: " << idx;
+                        CHANNEL_LOG(ffmpeg_seek) << __FUNCTION__ 
+                            << " End of stream caused by " << AvError{ readStatus } << "; index: " << idx;
                     }
                     m_decoderListener->onEndOfStream(idx, eof == SET_INVALID);
                     eof = REPORTED;
@@ -447,21 +446,26 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
 
     if (handlingPrevFrame)
     {
-        if (av_seek_frame(formatContext, streamNumber, convertedSeekDuration, AVSEEK_FLAG_BACKWARD) < 0)
+        const int ret = av_seek_frame(formatContext, streamNumber, convertedSeekDuration, AVSEEK_FLAG_BACKWARD);
+        if (ret < 0)
         {
-            CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
+            CHANNEL_LOG(ffmpeg_seek) << "Seek failed: " << AvError{ ret };
             return false;
         }
     }
     else
     {
-        if (av_seek_frame(formatContext, streamNumber, convertedSeekDuration, 0) < 0
-            && ((convertedSeekDuration >= 0
-                ? av_seek_frame(formatContext, streamNumber, convertedSeekDuration, AVSEEK_FLAG_BACKWARD)
-                : av_seek_frame(formatContext, streamNumber, 0, 0)) < 0))
+        int ret = av_seek_frame(formatContext, streamNumber, convertedSeekDuration, 0);
+        if (ret < 0)
         {
-            CHANNEL_LOG(ffmpeg_seek) << "Seek failed";
-            return false;
+            ret = convertedSeekDuration >= 0
+                ? av_seek_frame(formatContext, streamNumber, convertedSeekDuration, AVSEEK_FLAG_BACKWARD)
+                : av_seek_frame(formatContext, streamNumber, 0, 0);
+            if (ret < 0)
+            {
+                    CHANNEL_LOG(ffmpeg_seek) << "Seek failed: " << AvError{ ret };
+                    return false;
+            }
         }
     }
 
@@ -486,11 +490,15 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
                 {
                     const int flags = handlingPrevFrame ? AVSEEK_FLAG_BACKWARD : 0;
                     av_packet_unref(packet);
-                    if (av_seek_frame(formatContext, streamNumber, m_startTime, flags) < 0
-                        || av_seek_frame(formatContext, streamNumber, convertedSeekDuration, flags) < 0)
+                    int ret = av_seek_frame(formatContext, streamNumber, m_startTime, flags);
+                    if (ret < 0)
                     {
-                        CHANNEL_LOG(ffmpeg_seek) << "Seek correction failed";
-                        return false;
+                        ret = av_seek_frame(formatContext, streamNumber, convertedSeekDuration, flags);
+                        if (ret < 0)
+                        {
+                            CHANNEL_LOG(ffmpeg_seek) << "Seek correction failed: " << AvError{ ret };
+                            return false;
+                        }
                     }
                 }
             }

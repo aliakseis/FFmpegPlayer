@@ -480,9 +480,8 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
             if (!isHttps || !useHHO || g_lastLocationHttpHeader.empty() || --redirectsLeft < 0)
             {
 #endif
-                BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio file error " << error 
-                    << AvError{ error }
-                    << " url = " << url;
+                BOOST_LOG_TRIVIAL(error) 
+                    << "Couldn't open video/audio file error " << AvError{ error } << " url = " << url;
                 return false;
 #if HHO_HACK
             }
@@ -518,9 +517,9 @@ bool FFmpegDecoder::openStream(std::unique_ptr<std::streambuf> stream)
     const int error = avformat_open_input(&formatContext, nullptr, nullptr, &streamOpts);
     if (error != 0)
     {
-        BOOST_LOG_TRIVIAL(error) << "Couldn't open video/audio stream error " << error
-            << AvError{ error };
-            return false;
+        BOOST_LOG_TRIVIAL(error)
+            << "Couldn't open video/audio stream error " << AvError{ error };
+        return false;
     }
     CHANNEL_LOG(ffmpeg_opening) << "Opening video/audio file...";
 
