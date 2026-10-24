@@ -118,7 +118,6 @@ int ThisThreadInterruptionRequested(void* ptr)
         || boost::this_thread::interruption_requested());
 }
 
-// (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(61, 1, 100))
 #define HHO_HACK 1
 
 #if HHO_HACK
@@ -428,6 +427,7 @@ bool FFmpegDecoder::openUrls(std::initializer_list<std::string> urls, const std:
                 {
                     CHANNEL_LOG(ffmpeg_opening) << "Opening using a HHO Host: " << hostname << " URL: " << url;
                     av_dict_set(&streamOpts, "headers", ("Host: " + hostname + "\r\n" + szUserAgent).c_str(), 0);
+                    av_dict_set(&streamOpts, "tls_verify", "0", 0);
                 }
                 else
 #endif

@@ -1133,7 +1133,11 @@ void CheckPython()
 
     atexit(Py_Finalize);
 
+#if PY_VERSION_HEX >= 0x030D0000
+    if (!PyThreadState_GetUnchecked())
+#else
     if (!_PyThreadState_UncheckedGet())
+#endif
     {
         exit(1);
     }

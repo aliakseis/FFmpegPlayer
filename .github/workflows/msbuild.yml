@@ -22,7 +22,7 @@ env:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-latest
 
     strategy:
       matrix:
@@ -35,7 +35,7 @@ jobs:
 
     - name: Create Directory.Build.props
       run: |
-        $content = "<Project><PropertyGroup><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion><TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion><PlatformToolset>v143</PlatformToolset></PropertyGroup></Project>"
+        $content = "<Project><PropertyGroup><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion><TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion><PlatformToolset>v145</PlatformToolset></PropertyGroup></Project>"
         $filePath = "./Directory.Build.props"
         Set-Content -Path $filePath -Value $content
 
@@ -55,7 +55,7 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           cd vcpkg
           # Presumably working version
-          git checkout 6070d5cb2f818921c10ccdf6f35f3415a2503369
+          #git checkout 6070d5cb2f818921c10ccdf6f35f3415a2503369
           ./bootstrap-vcpkg.bat
           ./vcpkg integrate install
 
@@ -83,8 +83,8 @@ jobs:
 
     - name: Complete build artifacts
       run: |
-        $CRT_path = Get-ChildItem -Path "${{ steps.setup-msbuild.outputs.msbuildPath }}/../../../VC/Redist/MSVC/*/${{matrix.platform}}/Microsoft.VC143.CRT" | Select-Object -First 1 -ExpandProperty FullName
-        $MFC_path = Get-ChildItem -Path "${{ steps.setup-msbuild.outputs.msbuildPath }}/../../../VC/Redist/MSVC/*/${{matrix.platform}}/Microsoft.VC143.MFC" | Select-Object -First 1 -ExpandProperty FullName
+        $CRT_path = Get-ChildItem -Path "${{ steps.setup-msbuild.outputs.msbuildPath }}/../../../VC/Redist/MSVC/*/${{matrix.platform}}/Microsoft.VC145.CRT" | Select-Object -First 1 -ExpandProperty FullName
+        $MFC_path = Get-ChildItem -Path "${{ steps.setup-msbuild.outputs.msbuildPath }}/../../../VC/Redist/MSVC/*/${{matrix.platform}}/Microsoft.VC145.MFC" | Select-Object -First 1 -ExpandProperty FullName
         Write-Output "CRT PATH=$CRT_path"
         Write-Output "MFC PATH=$MFC_path"
         ./vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary "./${{matrix.platform == 'x64' && matrix.platform || ''}}/Release/Player.exe" -installedDir "$CRT_path" -OutVariable out
