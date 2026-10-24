@@ -491,14 +491,14 @@ bool FFmpegDecoder::doSeekFrame(int idx, int64_t seekDuration, AVPacket* packet)
                     const int flags = handlingPrevFrame ? AVSEEK_FLAG_BACKWARD : 0;
                     av_packet_unref(packet);
                     int ret = av_seek_frame(formatContext, streamNumber, m_startTime, flags);
-                    if (ret < 0)
+                    if (ret >= 0)
                     {
                         ret = av_seek_frame(formatContext, streamNumber, convertedSeekDuration, flags);
-                        if (ret < 0)
-                        {
-                            CHANNEL_LOG(ffmpeg_seek) << "Seek correction failed: " << AvError{ ret };
-                            return false;
-                        }
+                    }
+                    if (ret < 0)
+                    {
+                        CHANNEL_LOG(ffmpeg_seek) << "Seek correction failed: " << AvError{ ret };
+                        return false;
                     }
                 }
             }
