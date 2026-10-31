@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Theme.h"
+
 
 // CDialogOpenURL dialog
 
-class CDialogOpenURL : public CDialog
+class CDialogOpenURL : public CThemedDialog
 {
 	DECLARE_DYNAMIC(CDialogOpenURL)
 

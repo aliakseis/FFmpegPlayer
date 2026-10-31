@@ -1,10 +1,10 @@
 #pragma once
-#include "afxdialogex.h"
+#include "Theme.h"
 
 
 // CDialogVideoFilter dialog
 
-class CDialogVideoFilter : public CDialog
+class CDialogVideoFilter : public CThemedDialog
 {
 	DECLARE_DYNAMIC(CDialogVideoFilter)
 

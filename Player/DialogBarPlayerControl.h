@@ -1,6 +1,6 @@
 #pragma once
 
-#include "afxcmn.h"
+#include "Theme.h"
 
 class CPlayerDoc;
 
@@ -44,6 +44,9 @@ protected:
 protected:
     DECLARE_MESSAGE_MAP()
     afx_msg LRESULT HandleInitDialog(WPARAM wParam, LPARAM lParam);
+    afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* wnd, UINT ctlColor);
+    afx_msg BOOL OnEraseBkgnd(CDC* dc);
+    afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem);
     afx_msg LRESULT OnSetTime(WPARAM wParam, LPARAM lParam);
 public:
 
@@ -65,8 +68,8 @@ private:
     int m_selEnd;
 
 public:
-    CSliderCtrl m_progressSlider;
-    CSliderCtrl m_volumeSlider;
+    CThemedSliderCtrl m_progressSlider;
+    CThemedSliderCtrl m_volumeSlider;
     afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
     afx_msg void OnUpdatePlayPause(CCmdUI *pCmdUI);
     afx_msg void OnUpdateAudioOnOff(CCmdUI *pCmdUI);

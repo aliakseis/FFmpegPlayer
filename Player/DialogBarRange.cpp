@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Player.h"
 #include "DialogBarRange.h"
+#include "Theme.h"
 
 #include "PlayerDoc.h"
 
@@ -64,6 +65,9 @@ void CDialogBarRange::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CDialogBarRange, CPaneDialog)
+    ON_WM_CTLCOLOR()
+    ON_WM_ERASEBKGND()
+    ON_WM_DRAWITEM()
     ON_COMMAND(IDC_START, &CDialogBarRange::OnStart)
     ON_COMMAND(IDC_START_RESET, &CDialogBarRange::OnStartReset)
     ON_COMMAND(IDC_END, &CDialogBarRange::OnEnd)
@@ -79,13 +83,36 @@ BEGIN_MESSAGE_MAP(CDialogBarRange, CPaneDialog)
     ON_MESSAGE(WM_INITDIALOG, &CDialogBarRange::HandleInitDialog)
 END_MESSAGE_MAP()
 
+HBRUSH CDialogBarRange::OnCtlColor(CDC* dc, CWnd* wnd, UINT ctlColor)
+{
+    return CThemeManager::OnCtlColor(dc, wnd, ctlColor);
+}
+
+BOOL CDialogBarRange::OnEraseBkgnd(CDC* dc)
+{
+    if (!CThemeManager::IsDark())
+        return __super::OnEraseBkgnd(dc);
+    CRect rc;
+    GetClientRect(&rc);
+    dc->FillSolidRect(rc, CThemeManager::GetColors().window);
+    return TRUE;
+}
+
+void CDialogBarRange::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem)
+{
+    UNREFERENCED_PARAMETER(nIDCtl);
+    CThemeManager::DrawButton(this, drawItem,
+        drawItem && drawItem->CtlID == IDC_LOSSLESS_CUT, m_losslessCutChecked);
+}
+
 LRESULT CDialogBarRange::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 {
     __super::HandleInitDialog(wParam, lParam);
 
     if (auto control = static_cast<CButton*>(GetDlgItem(IDC_LOSSLESS_CUT)))
     {
-        control->SetCheck(BST_CHECKED);
+        m_losslessCutChecked = true;
+        CThemeManager::RefreshWindow(control->GetSafeHwnd());
     }
 
     CRect rect(0, 0, 12, 12);
@@ -206,6 +233,10 @@ void CDialogBarRange::OnBnClickedLosslessCut()
 {
     if (auto control = static_cast<CButton*>(GetDlgItem(IDC_LOSSLESS_CUT)))
     {
-        m_pDoc->setLosslessCut(control->GetCheck() != BST_UNCHECKED);
+        // Owner-drawn checkboxes keep their state in the owning dialog bar.
+        m_losslessCutChecked = !m_losslessCutChecked;
+        CThemeManager::RefreshWindow(control->GetSafeHwnd());
+        if (m_pDoc)
+            m_pDoc->setLosslessCut(m_losslessCutChecked);
     }
 }

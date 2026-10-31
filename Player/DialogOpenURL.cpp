@@ -9,10 +9,10 @@
 
 // CDialogOpenURL dialog
 
-IMPLEMENT_DYNAMIC(CDialogOpenURL, CDialog)
+IMPLEMENT_DYNAMIC(CDialogOpenURL, CThemedDialog)
 
 CDialogOpenURL::CDialogOpenURL(CWnd* pParent /*=NULL*/)
-	: CDialog(IDD_DIALOG_OPEN_URL, pParent)
+	: CThemedDialog(IDD_DIALOG_OPEN_URL, pParent)
     , m_URL(_T(""))
     , m_bParse(false)
     , m_inputFormt(_T(""))
@@ -26,14 +26,14 @@ CDialogOpenURL::~CDialogOpenURL()
 
 void CDialogOpenURL::DoDataExchange(CDataExchange* pDX)
 {
-    CDialog::DoDataExchange(pDX);
+    CThemedDialog::DoDataExchange(pDX);
     DDX_Text(pDX, IDC_EDIT_URL, m_URL);
     DDX_Check(pDX, IDC_PARSE, m_bParse);
     DDX_Text(pDX, IDC_EDIT_INPUT_FORMAT, m_inputFormt);
 }
 
 
-BEGIN_MESSAGE_MAP(CDialogOpenURL, CDialog)
+BEGIN_MESSAGE_MAP(CDialogOpenURL, CThemedDialog)
 END_MESSAGE_MAP()
 
 

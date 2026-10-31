@@ -86,3 +86,7 @@
 #define _APS_NEXT_SYMED_VALUE           317
 #endif
 #endif
+
+#ifndef ID_VIEW_DARK_THEME
+#define ID_VIEW_DARK_THEME             32805
+#endif

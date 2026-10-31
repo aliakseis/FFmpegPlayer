@@ -243,6 +243,7 @@
     <ClInclude Include="IEraseableArea.h" />
     <ClInclude Include="ImageUpscale.h" />
     <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="Theme.h" />
     <ClInclude Include="MakeDelegate.h" />
     <ClInclude Include="MemoryMappedFile.h" />
     <ClInclude Include="OpenSubtitlesFile.h" />
@@ -272,6 +273,7 @@
     <ClCompile Include="I420Effect.cpp" />
     <ClCompile Include="ImageUpscale.cpp" />
     <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="Theme.cpp" />
     <ClCompile Include="OpenSubtitlesFile.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerDoc.cpp" />

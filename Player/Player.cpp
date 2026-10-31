@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "Player.h"
 #include "MainFrm.h"
+#include "Theme.h"
 
 #include "PlayerDoc.h"
 #include "PlayerView.h"
@@ -301,7 +302,7 @@ BOOL CPlayerApp::InitInstance()
 
 // CAboutDlg dialog used for App About
 
-class CAboutDlg : public CDialogEx
+class CAboutDlg : public CThemedDialog
 {
 public:
     CAboutDlg();
@@ -321,7 +322,7 @@ protected:
     DECLARE_MESSAGE_MAP()
 };
 
-CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
+CAboutDlg::CAboutDlg() : CThemedDialog(CAboutDlg::IDD)
 {
 }
 
@@ -340,11 +341,11 @@ BOOL CAboutDlg::OnInitDialog()
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
-    CDialogEx::DoDataExchange(pDX);
+    CThemedDialog::DoDataExchange(pDX);
     DDX_Text(pDX, IDC_VIDEO_PROPERTIES, m_videoProperties);
 }
 
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CAboutDlg, CThemedDialog)
 END_MESSAGE_MAP()
 
 CPlayerDoc* CPlayerApp::GetPlayerDocument()

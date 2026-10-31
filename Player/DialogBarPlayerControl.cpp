@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Player.h"
 #include "DialogBarPlayerControl.h"
+#include "Theme.h"
 
 #include "MainFrm.h"
 #include "PlayerDoc.h"
@@ -114,6 +115,9 @@ void CDialogBarPlayerControl::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CDialogBarPlayerControl, CPaneDialog)
+    ON_WM_CTLCOLOR()
+    ON_WM_ERASEBKGND()
+    ON_WM_DRAWITEM()
     ON_WM_HSCROLL()
     ON_UPDATE_COMMAND_UI(IDC_PLAY_PAUSE, &CDialogBarPlayerControl::OnUpdatePlayPause)
     ON_UPDATE_COMMAND_UI(IDC_AUDIO_ON_OFF, &CDialogBarPlayerControl::OnUpdateAudioOnOff)
@@ -125,6 +129,37 @@ BEGIN_MESSAGE_MAP(CDialogBarPlayerControl, CPaneDialog)
     ON_UPDATE_COMMAND_UI(IDC_VOLUME_SLIDER, &CDialogBarPlayerControl::OnUpdateVolumeSlider)
     ON_UPDATE_COMMAND_UI(IDC_CURRENT_TIME, &CDialogBarPlayerControl::OnUpdateCurrentTime)
     END_MESSAGE_MAP()
+
+HBRUSH CDialogBarPlayerControl::OnCtlColor(CDC* dc, CWnd* wnd, UINT ctlColor)
+{
+    return CThemeManager::OnCtlColor(dc, wnd, ctlColor);
+}
+
+BOOL CDialogBarPlayerControl::OnEraseBkgnd(CDC* dc)
+{
+    if (!CThemeManager::IsDark())
+        return __super::OnEraseBkgnd(dc);
+    CRect rc;
+    GetClientRect(&rc);
+    dc->FillSolidRect(rc, CThemeManager::GetColors().window);
+    return TRUE;
+}
+
+void CDialogBarPlayerControl::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem)
+{
+    UNREFERENCED_PARAMETER(nIDCtl);
+    HICON icon = nullptr;
+    if (drawItem)
+    {
+        switch (drawItem->CtlID)
+        {
+        case IDC_PLAY_PAUSE:  icon = m_bPaused ? m_hPlay : m_hPause; break;
+        case IDC_AUDIO_ON_OFF: icon = m_bAudioOn ? m_hAudio : m_hAudioOff; break;
+        case IDC_FULL_SCREEN: icon = m_hFullScreen; break;
+        }
+    }
+    CThemeManager::DrawButton(this, drawItem, false, false, icon);
+}
 
 
 
