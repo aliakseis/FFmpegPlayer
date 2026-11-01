@@ -67,6 +67,8 @@ private:
     int m_selStart;
     int m_selEnd;
 
+    bool m_bFrameStep = false;
+
 public:
     CThemedSliderCtrl m_progressSlider;
     CThemedSliderCtrl m_volumeSlider;
@@ -75,6 +77,7 @@ public:
     afx_msg void OnUpdateAudioOnOff(CCmdUI *pCmdUI);
     afx_msg void OnClickedPlayPause();
     afx_msg void OnClickedAudioOnOff();
+    afx_msg void OnClickedFrameStep();
     afx_msg void OnUpdateFrameStep(CCmdUI *pCmdUI);
     afx_msg void OnUpdateVolumeSlider(CCmdUI *pCmdUI);
     afx_msg void OnUpdateCurrentTime(CCmdUI *pCmdUI);

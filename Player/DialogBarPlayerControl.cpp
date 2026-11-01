@@ -127,6 +127,7 @@ BEGIN_MESSAGE_MAP(CDialogBarPlayerControl, CPaneDialog)
     ON_BN_DOUBLECLICKED(IDC_AUDIO_ON_OFF, &CDialogBarPlayerControl::OnClickedAudioOnOff)
     ON_MESSAGE(WM_SET_TIME, &CDialogBarPlayerControl::OnSetTime)
     ON_MESSAGE(WM_INITDIALOG, &CDialogBarPlayerControl::HandleInitDialog)
+    ON_BN_CLICKED(IDC_FRAME_STEP, &CDialogBarPlayerControl::OnClickedFrameStep)
     ON_UPDATE_COMMAND_UI(IDC_FRAME_STEP, &CDialogBarPlayerControl::OnUpdateFrameStep)
     ON_UPDATE_COMMAND_UI(IDC_VOLUME_SLIDER, &CDialogBarPlayerControl::OnUpdateVolumeSlider)
     ON_UPDATE_COMMAND_UI(IDC_CURRENT_TIME, &CDialogBarPlayerControl::OnUpdateCurrentTime)
@@ -160,7 +161,8 @@ void CDialogBarPlayerControl::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem)
         case IDC_FULL_SCREEN: icon = m_hFullScreen; break;
         }
     }
-    CThemeManager::DrawButton(this, drawItem, false, false, icon);
+    CThemeManager::DrawButton(this, drawItem, 
+        drawItem && drawItem->CtlID == IDC_FRAME_STEP, m_bFrameStep, icon);
 }
 
 
@@ -372,7 +374,7 @@ void CDialogBarPlayerControl::OnClickedPlayPause()
 {
     if (m_pDoc)
     {
-        if (m_pDoc->isPaused() && IsDlgButtonChecked(IDC_FRAME_STEP))
+        if (m_pDoc->isPaused() && m_bFrameStep)
         {
             if (GetKeyState(VK_SHIFT) < 0)
                 m_pDoc->prevFrame();
@@ -403,6 +405,16 @@ void CDialogBarPlayerControl::OnClickedAudioOnOff()
 
     m_volumeSlider.SetPos(newVolume);
     m_pDoc->setVolume(newVolume / double(RANGE_MAX));
+}
+
+void CDialogBarPlayerControl::OnClickedFrameStep()
+{
+    if (auto control = static_cast<CButton*>(GetDlgItem(IDC_FRAME_STEP)))
+    {
+        // Owner-drawn checkboxes keep their state in the owning dialog bar.
+        m_bFrameStep = !m_bFrameStep;
+        CThemeManager::RefreshWindow(control->GetSafeHwnd());
+    }
 }
 
 
