@@ -52,11 +52,16 @@ public:
 
 private:
     CPlayerDoc* m_pDoc;
-    HICON m_hPlay;
-    HICON m_hPause;
-    HICON m_hAudio;
-    HICON m_hAudioOff;
-    HICON m_hFullScreen;
+    HICON m_hPlay = NULL;
+    HICON m_hPause = NULL;
+    HICON m_hAudio = NULL;
+    HICON m_hAudioOff = NULL;
+    HICON m_hFullScreen = NULL;
+    HICON m_hPlayNeg = NULL;
+    HICON m_hPauseNeg = NULL;
+    HICON m_hAudioNeg = NULL;
+    HICON m_hAudioOffNeg = NULL;
+    HICON m_hFullScreenNeg = NULL;
     bool m_bPaused = true;
     bool m_bAudioOn = true;
     int m_savedVolume;

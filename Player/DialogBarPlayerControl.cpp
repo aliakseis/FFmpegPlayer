@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 
 
 #ifdef _DEBUG
@@ -24,6 +25,114 @@ enum { RANGE_MAX = 0x7FFF };
 enum { WM_SET_TIME = WM_USER + 101 };
 
 namespace {
+
+
+HICON CreateNegativeIcon(HICON hIcon)
+{
+    if (!hIcon)
+        return nullptr;
+
+    ICONINFO ii{};
+    if (!GetIconInfo(hIcon, &ii))
+        return nullptr;
+
+    BITMAP bm{};
+    GetObject(ii.hbmColor, sizeof(bm), &bm);
+
+    const int width = bm.bmWidth;
+    const int height = bm.bmHeight;
+
+    DeleteObject(ii.hbmColor);
+    DeleteObject(ii.hbmMask);
+
+    BITMAPV5HEADER bi{};
+    bi.bV5Size = sizeof(bi);
+    bi.bV5Width = width;
+    bi.bV5Height = -height; // top-down
+    bi.bV5Planes = 1;
+    bi.bV5BitCount = 32;
+    bi.bV5Compression = BI_BITFIELDS;
+    bi.bV5RedMask = 0x00FF0000;
+    bi.bV5GreenMask = 0x0000FF00;
+    bi.bV5BlueMask = 0x000000FF;
+    bi.bV5AlphaMask = 0xFF000000;
+
+    HDC hdc = GetDC(nullptr);
+
+    void* bits = nullptr;
+    HBITMAP colorBmp = CreateDIBSection(
+        hdc,
+        reinterpret_cast<BITMAPINFO*>(&bi),
+        DIB_RGB_COLORS,
+        &bits,
+        nullptr,
+        0);
+
+    if (!colorBmp)
+    {
+        ReleaseDC(nullptr, hdc);
+        return nullptr;
+    }
+
+    HBITMAP maskBmp = CreateBitmap(width, height, 1, 1, nullptr);
+
+    HDC srcDC = CreateCompatibleDC(hdc);
+    HDC dstDC = CreateCompatibleDC(hdc);
+
+    HBITMAP oldSrc = nullptr;
+    HBITMAP oldDst = nullptr;
+
+    ICONINFO srcInfo{};
+    GetIconInfo(hIcon, &srcInfo);
+
+    oldSrc = (HBITMAP)SelectObject(srcDC, colorBmp);
+    oldDst = (HBITMAP)SelectObject(dstDC, srcInfo.hbmColor);
+
+    BitBlt(srcDC, 0, 0, width, height, dstDC, 0, 0, SRCCOPY);
+
+    auto* pixels = static_cast<DWORD*>(bits);
+
+    for (int i = 0; i < width * height; ++i)
+    {
+        BYTE b = (pixels[i] >> 0) & 0xFF;
+        BYTE g = (pixels[i] >> 8) & 0xFF;
+        BYTE r = (pixels[i] >> 16) & 0xFF;
+        BYTE a = (pixels[i] >> 24) & 0xFF;
+
+        r = 255 - r;
+        g = 255 - g;
+        b = 255 - b;
+
+        pixels[i] =
+            (DWORD(a) << 24) |
+            (DWORD(r) << 16) |
+            (DWORD(g) << 8) |
+            DWORD(b);
+    }
+
+    SelectObject(srcDC, oldSrc);
+    SelectObject(dstDC, oldDst);
+
+    DeleteDC(srcDC);
+    DeleteDC(dstDC);
+
+    DeleteObject(srcInfo.hbmColor);
+    DeleteObject(srcInfo.hbmMask);
+
+    ICONINFO newInfo{};
+    newInfo.fIcon = TRUE;
+    newInfo.hbmColor = colorBmp;
+    newInfo.hbmMask = maskBmp;
+
+    HICON result = CreateIconIndirect(&newInfo);
+
+    DeleteObject(colorBmp);
+    DeleteObject(maskBmp);
+
+    ReleaseDC(nullptr, hdc);
+
+    return result;
+}
 
 HICON LoadIcon(int idr, int iconSize)
 {
@@ -59,11 +168,6 @@ IMPLEMENT_DYNAMIC(CDialogBarPlayerControl, CPaneDialog)
 
 CDialogBarPlayerControl::CDialogBarPlayerControl()
 : m_pDoc(nullptr)
-, m_hPlay(NULL)
-, m_hPause(NULL)
-, m_hAudio(NULL)
-, m_hAudioOff(NULL)
-, m_hFullScreen(NULL)
 , m_savedVolume(0)
 , m_oldTotalTime(-1) // unset
 , m_oldCurrentTime(-1) // unset
@@ -154,11 +258,17 @@ void CDialogBarPlayerControl::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem)
     HICON icon = nullptr;
     if (drawItem)
     {
+        const bool dark = CThemeManager::IsDark();
+
         switch (drawItem->CtlID)
         {
-        case IDC_PLAY_PAUSE:  icon = m_bPaused ? m_hPlay : m_hPause; break;
-        case IDC_AUDIO_ON_OFF: icon = m_bAudioOn ? m_hAudio : m_hAudioOff; break;
-        case IDC_FULL_SCREEN: icon = m_hFullScreen; break;
+        case IDC_PLAY_PAUSE:  icon = m_bPaused ? (dark? m_hPlayNeg : m_hPlay) 
+            : (dark ? m_hPauseNeg : m_hPause); 
+            break;
+        case IDC_AUDIO_ON_OFF: icon = m_bAudioOn ? (dark ? m_hAudioNeg  :m_hAudio)
+            : (dark ? m_hAudioOffNeg : m_hAudioOff); 
+            break;
+        case IDC_FULL_SCREEN: icon = dark ? m_hFullScreenNeg : m_hFullScreen; break;
         }
     }
     CThemeManager::DrawButton(this, drawItem, 
@@ -181,14 +291,19 @@ LRESULT CDialogBarPlayerControl::HandleInitDialog(WPARAM wParam, LPARAM lParam)
     const int iconSize = min(iconSizeLimit & ((iconSizeLimit > 32)? ~15 : ~7), 48);
 
     m_hPlay = LoadIcon(IDI_PLAY, iconSize);
+    m_hPlayNeg = CreateNegativeIcon(m_hPlay);
     m_hPause = LoadIcon(IDI_PAUSE, iconSize);
+    m_hPauseNeg = CreateNegativeIcon(m_hPause);
     m_hAudio = LoadIcon(IDI_AUDIO, iconSize);
+    m_hAudioNeg = CreateNegativeIcon(m_hAudio);
     m_hAudioOff = LoadIcon(IDI_AUDIO_OFF, iconSize);
+    m_hAudioOffNeg = CreateNegativeIcon(m_hAudioOff);
     m_hFullScreen = LoadIcon(IDI_FULL_SCREEN, iconSize);
+    m_hFullScreenNeg = CreateNegativeIcon(m_hFullScreen);
 
-    static_cast<CButton*>(GetDlgItem(IDC_PLAY_PAUSE))->SetIcon(m_hPlay);
-    static_cast<CButton*>(GetDlgItem(IDC_AUDIO_ON_OFF))->SetIcon(m_hAudio);
-    static_cast<CButton*>(GetDlgItem(IDC_FULL_SCREEN))->SetIcon(m_hFullScreen);
+    //static_cast<CButton*>(GetDlgItem(IDC_PLAY_PAUSE))->SetIcon(m_hPlay);
+    //static_cast<CButton*>(GetDlgItem(IDC_AUDIO_ON_OFF))->SetIcon(m_hAudio);
+    //static_cast<CButton*>(GetDlgItem(IDC_FULL_SCREEN))->SetIcon(m_hFullScreen);
 
     m_progressSlider.SetRange(0, RANGE_MAX);
     m_progressSlider.SetPageSize(0);
@@ -345,8 +460,8 @@ void CDialogBarPlayerControl::OnUpdatePlayPause(CCmdUI *pCmdUI)
             if (paused != m_bPaused)
             {
                 m_bPaused = paused;
-                static_cast<CButton*>(pCmdUI->m_pOther)->SetIcon(
-                    paused ? m_hPlay : m_hPause);
+                static_cast<CButton*>(pCmdUI->m_pOther)->Invalidate();
+                    //SetIcon(paused ? m_hPlay : m_hPause);
             }
         }
     }
@@ -363,8 +478,8 @@ void CDialogBarPlayerControl::OnUpdateAudioOnOff(CCmdUI *pCmdUI)
             if (audioOn != m_bAudioOn)
             {
                 m_bAudioOn = audioOn;
-                static_cast<CButton*>(pCmdUI->m_pOther)->SetIcon(
-                    audioOn ? m_hAudio : m_hAudioOff);
+                static_cast<CButton*>(pCmdUI->m_pOther)->Invalidate();
+                    //SetIcon(audioOn ? m_hAudio : m_hAudioOff);
             }
         }
     }
