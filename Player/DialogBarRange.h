@@ -42,6 +42,7 @@ protected:
 private:
     CPlayerDoc* m_pDoc;
     CFont m_font;
+    bool m_losslessCutChecked = true;
 public:
     CEditTime m_startTime;
     CEditTime m_endTime;

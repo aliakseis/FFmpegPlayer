@@ -101,7 +101,8 @@ BOOL CDialogBarRange::OnEraseBkgnd(CDC* dc)
 void CDialogBarRange::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem)
 {
     UNREFERENCED_PARAMETER(nIDCtl);
-    CThemeManager::DrawButton(this, drawItem);
+    CThemeManager::DrawButton(this, drawItem,
+        drawItem && drawItem->CtlID == IDC_LOSSLESS_CUT, m_losslessCutChecked);
 }
 
 LRESULT CDialogBarRange::HandleInitDialog(WPARAM wParam, LPARAM lParam)
@@ -110,7 +111,8 @@ LRESULT CDialogBarRange::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 
     if (auto control = static_cast<CButton*>(GetDlgItem(IDC_LOSSLESS_CUT)))
     {
-        control->SetCheck(BST_CHECKED);
+        m_losslessCutChecked = true;
+        CThemeManager::RefreshWindow(control->GetSafeHwnd());
     }
 
     CRect rect(0, 0, 12, 12);
@@ -231,6 +233,10 @@ void CDialogBarRange::OnBnClickedLosslessCut()
 {
     if (auto control = static_cast<CButton*>(GetDlgItem(IDC_LOSSLESS_CUT)))
     {
-        m_pDoc->setLosslessCut(control->GetCheck() != BST_UNCHECKED);
+        // Owner-drawn checkboxes keep their state in the owning dialog bar.
+        m_losslessCutChecked = !m_losslessCutChecked;
+        CThemeManager::RefreshWindow(control->GetSafeHwnd());
+        if (m_pDoc)
+            m_pDoc->setLosslessCut(m_losslessCutChecked);
     }
 }
