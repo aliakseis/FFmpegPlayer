@@ -195,6 +195,8 @@ void CThemeManager::DrawButton(CWnd* parent, LPDRAWITEMSTRUCT dis, bool checkBox
     if (!dc)
         return;
 
+    const bool dark = true;
+
     const Colors& c = GetColors();
     const UINT state = dis->itemState;
     const bool disabled = (state & ODS_DISABLED) != 0;
@@ -206,7 +208,7 @@ void CThemeManager::DrawButton(CWnd* parent, LPDRAWITEMSTRUCT dis, bool checkBox
     if (!child)
         return;
 
-    if (CThemeManager::IsDark())
+    if (dark)
     {
         if (checkBox)
         {
@@ -273,7 +275,7 @@ void CThemeManager::DrawButton(CWnd* parent, LPDRAWITEMSTRUCT dis, bool checkBox
         const int boxSize = min(12, max(9, rc.Height() - 4));
         CRect box(rc.left + 3, rc.CenterPoint().y - boxSize / 2,
             rc.left + 3 + boxSize, rc.CenterPoint().y + (boxSize + 1) / 2);
-        if (CThemeManager::IsDark())
+        if (dark)
         {
             CBrush boxBrush(c.control);
             CBrush border(c.border);
@@ -296,7 +298,9 @@ void CThemeManager::DrawButton(CWnd* parent, LPDRAWITEMSTRUCT dis, bool checkBox
             {
                 BITMAP bm = {};
                 if (info.hbmColor && ::GetObject(info.hbmColor, sizeof(bm), &bm))
-                { cx = bm.bmWidth; cy = bm.bmHeight; }
+                {
+                    cx = bm.bmWidth; cy = bm.bmHeight;
+                }
                 if (info.hbmColor) ::DeleteObject(info.hbmColor);
                 if (info.hbmMask) ::DeleteObject(info.hbmMask);
             }
@@ -309,18 +313,20 @@ void CThemeManager::DrawButton(CWnd* parent, LPDRAWITEMSTRUCT dis, bool checkBox
                 x, y, cx, cy,
                 DST_ICON | (disabled ? DSS_DISABLED : DSS_NORMAL));
         }
-        else
-        {
-            CString text;
-            child->GetWindowText(text);
-            dc->SetBkMode(TRANSPARENT);
-            dc->SetTextColor(disabled ? c.disabledText : c.text);
-            CFont* font = child->GetFont();
-            CFont* oldFont = font ? dc->SelectObject(font) : nullptr;
-            dc->DrawText(text, rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
-            if (oldFont) dc->SelectObject(oldFont);
-        }
     }
+ 
+    if (!icon)
+    {
+        CString text;
+        child->GetWindowText(text);
+        dc->SetBkMode(TRANSPARENT);
+        dc->SetTextColor(disabled ? c.disabledText : c.text);
+        CFont* font = child->GetFont();
+        CFont* oldFont = font ? dc->SelectObject(font) : nullptr;
+        dc->DrawText(text, rc, (checkBox? DT_LEFT : DT_CENTER) | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+        if (oldFont) dc->SelectObject(oldFont);
+    }
+ 
 
     if (state & ODS_FOCUS)
     {

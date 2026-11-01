@@ -80,6 +80,7 @@ BEGIN_MESSAGE_MAP(CDialogBarRange, CPaneDialog)
     ON_EN_CHANGE(IDC_EDIT_START, &CDialogBarRange::OnChangeStart)
     ON_EN_CHANGE(IDC_EDIT_END, &CDialogBarRange::OnChangeEnd)
     ON_BN_CLICKED(IDC_LOSSLESS_CUT, &CDialogBarRange::OnBnClickedLosslessCut)
+    ON_UPDATE_COMMAND_UI(IDC_LOSSLESS_CUT, &CDialogBarRange::OnUpdateLosslessCut)
     ON_MESSAGE(WM_INITDIALOG, &CDialogBarRange::HandleInitDialog)
 END_MESSAGE_MAP()
 
@@ -239,4 +240,9 @@ void CDialogBarRange::OnBnClickedLosslessCut()
         if (m_pDoc)
             m_pDoc->setLosslessCut(m_losslessCutChecked);
     }
+}
+
+void CDialogBarRange::OnUpdateLosslessCut(CCmdUI* pCmdUI)
+{
+    pCmdUI->Enable(TRUE);
 }

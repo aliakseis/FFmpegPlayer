@@ -58,4 +58,5 @@ public:
     afx_msg void OnChangeStart();
     afx_msg void OnChangeEnd();
     afx_msg void OnBnClickedLosslessCut();
+    afx_msg void OnUpdateLosslessCut(CCmdUI* pCmdUI);
 };
