@@ -26,7 +26,6 @@ enum { WM_SET_TIME = WM_USER + 101 };
 
 namespace {
 
-
 HICON CreateNegativeIcon(HICON hIcon)
 {
     if (!hIcon)
@@ -36,100 +35,157 @@ HICON CreateNegativeIcon(HICON hIcon)
     if (!GetIconInfo(hIcon, &ii))
         return nullptr;
 
-    BITMAP bm{};
-    GetObject(ii.hbmColor, sizeof(bm), &bm);
+    HICON result = nullptr;
 
-    const int width = bm.bmWidth;
-    const int height = bm.bmHeight;
+    HDC hdc = nullptr;
+    HDC srcDC = nullptr;
+    HDC dstDC = nullptr;
 
-    DeleteObject(ii.hbmColor);
-    DeleteObject(ii.hbmMask);
+    HBITMAP colorBmp = nullptr;
 
-    BITMAPV5HEADER bi{};
-    bi.bV5Size = sizeof(bi);
-    bi.bV5Width = width;
-    bi.bV5Height = -height; // top-down
-    bi.bV5Planes = 1;
-    bi.bV5BitCount = 32;
-    bi.bV5Compression = BI_BITFIELDS;
-    bi.bV5RedMask = 0x00FF0000;
-    bi.bV5GreenMask = 0x0000FF00;
-    bi.bV5BlueMask = 0x000000FF;
-    bi.bV5AlphaMask = 0xFF000000;
+    HGDIOBJ oldSrc = nullptr;
+    HGDIOBJ oldDst = nullptr;
 
-    HDC hdc = GetDC(nullptr);
+    bool srcSelected = false;
+    bool dstSelected = false;
 
-    void* bits = nullptr;
-    HBITMAP colorBmp = CreateDIBSection(
-        hdc,
-        reinterpret_cast<BITMAPINFO*>(&bi),
-        DIB_RGB_COLORS,
-        &bits,
-        nullptr,
-        0);
-
-    if (!colorBmp)
+    do
     {
+        // We need a color bitmap. Monochrome icons require
+        // separate handling of their AND/XOR masks.
+        if (!ii.hbmColor || !ii.hbmMask)
+            break;
+
+        BITMAP bm{};
+        if (GetObject(ii.hbmColor, sizeof(bm), &bm) != sizeof(bm))
+            break;
+
+        const int width = bm.bmWidth;
+        const int height = bm.bmHeight;
+
+        if (width <= 0 || height <= 0)
+            break;
+
+        const size_t pixelCount =
+            static_cast<size_t>(width) * static_cast<size_t>(height);
+
+        if (pixelCount > SIZE_MAX / sizeof(DWORD))
+            break;
+
+        // Create 32-bit top-down DIB.
+        BITMAPV5HEADER bi{};
+        bi.bV5Size = sizeof(bi);
+        bi.bV5Width = width;
+        bi.bV5Height = -height;
+        bi.bV5Planes = 1;
+        bi.bV5BitCount = 32;
+        bi.bV5Compression = BI_BITFIELDS;
+        bi.bV5RedMask = 0x00FF0000;
+        bi.bV5GreenMask = 0x0000FF00;
+        bi.bV5BlueMask = 0x000000FF;
+        bi.bV5AlphaMask = 0xFF000000;
+
+        hdc = GetDC(nullptr);
+        if (!hdc)
+            break;
+
+        void* bits = nullptr;
+
+        colorBmp = CreateDIBSection(
+            hdc,
+            reinterpret_cast<BITMAPINFO*>(&bi),
+            DIB_RGB_COLORS,
+            &bits,
+            nullptr,
+            0);
+
+        if (!colorBmp || !bits)
+            break;
+
+        srcDC = CreateCompatibleDC(hdc);
+        dstDC = CreateCompatibleDC(hdc);
+
+        if (!srcDC || !dstDC)
+            break;
+
+        oldSrc = SelectObject(srcDC, colorBmp);
+        if (!oldSrc || oldSrc == HGDI_ERROR)
+        {
+            oldSrc = nullptr;
+            break;
+        }
+        srcSelected = true;
+
+        oldDst = SelectObject(dstDC, ii.hbmColor);
+        if (!oldDst || oldDst == HGDI_ERROR)
+        {
+            oldDst = nullptr;
+            break;
+        }
+        dstSelected = true;
+
+        // Copy original icon bitmap.
+        if (!BitBlt(
+            srcDC, 0, 0, width, height,
+            dstDC, 0, 0, SRCCOPY))
+        {
+            break;
+        }
+
+        // Invert RGB, preserving alpha.
+        auto* pixels = static_cast<DWORD*>(bits);
+
+        for (size_t i = 0; i < pixelCount; ++i)
+        {
+            const DWORD p = pixels[i];
+
+            const BYTE b = static_cast<BYTE>(p);
+            const BYTE g = static_cast<BYTE>(p >> 8);
+            const BYTE r = static_cast<BYTE>(p >> 16);
+            const BYTE a = static_cast<BYTE>(p >> 24);
+
+            pixels[i] =
+                (DWORD(a) << 24) |
+                (DWORD(255 - r) << 16) |
+                (DWORD(255 - g) << 8) |
+                DWORD(255 - b);
+        }
+
+        // Create resulting icon.
+        ICONINFO newInfo{};
+        newInfo.fIcon = ii.fIcon;
+        newInfo.hbmColor = colorBmp;
+        newInfo.hbmMask = ii.hbmMask;
+
+        result = CreateIconIndirect(&newInfo);
+
+    } while (false);
+
+    // Restore selected objects before deleting bitmaps/DCs.
+    if (srcSelected)
+        SelectObject(srcDC, oldSrc);
+
+    if (dstSelected)
+        SelectObject(dstDC, oldDst);
+
+    if (srcDC)
+        DeleteDC(srcDC);
+
+    if (dstDC)
+        DeleteDC(dstDC);
+
+    if (colorBmp)
+        DeleteObject(colorBmp);
+
+    if (hdc)
         ReleaseDC(nullptr, hdc);
-        return nullptr;
-    }
 
-    HBITMAP maskBmp = CreateBitmap(width, height, 1, 1, nullptr);
+    // GetIconInfo creates copies; caller still owns the original icon.
+    if (ii.hbmColor)
+        DeleteObject(ii.hbmColor);
 
-    HDC srcDC = CreateCompatibleDC(hdc);
-    HDC dstDC = CreateCompatibleDC(hdc);
-
-    HBITMAP oldSrc = nullptr;
-    HBITMAP oldDst = nullptr;
-
-    ICONINFO srcInfo{};
-    GetIconInfo(hIcon, &srcInfo);
-
-    oldSrc = (HBITMAP)SelectObject(srcDC, colorBmp);
-    oldDst = (HBITMAP)SelectObject(dstDC, srcInfo.hbmColor);
-
-    BitBlt(srcDC, 0, 0, width, height, dstDC, 0, 0, SRCCOPY);
-
-    auto* pixels = static_cast<DWORD*>(bits);
-
-    for (int i = 0; i < width * height; ++i)
-    {
-        BYTE b = (pixels[i] >> 0) & 0xFF;
-        BYTE g = (pixels[i] >> 8) & 0xFF;
-        BYTE r = (pixels[i] >> 16) & 0xFF;
-        BYTE a = (pixels[i] >> 24) & 0xFF;
-
-        r = 255 - r;
-        g = 255 - g;
-        b = 255 - b;
-
-        pixels[i] =
-            (DWORD(a) << 24) |
-            (DWORD(r) << 16) |
-            (DWORD(g) << 8) |
-            DWORD(b);
-    }
-
-    SelectObject(srcDC, oldSrc);
-    SelectObject(dstDC, oldDst);
-
-    DeleteDC(srcDC);
-    DeleteDC(dstDC);
-
-    DeleteObject(srcInfo.hbmColor);
-    DeleteObject(srcInfo.hbmMask);
-
-    ICONINFO newInfo{};
-    newInfo.fIcon = TRUE;
-    newInfo.hbmColor = colorBmp;
-    newInfo.hbmMask = maskBmp;
-
-    HICON result = CreateIconIndirect(&newInfo);
-
-    DeleteObject(colorBmp);
-    DeleteObject(maskBmp);
-
-    ReleaseDC(nullptr, hdc);
+    if (ii.hbmMask)
+        DeleteObject(ii.hbmMask);
 
     return result;
 }
@@ -261,13 +317,13 @@ void CDialogBarPlayerControl::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem)
 
         switch (drawItem->CtlID)
         {
-        case IDC_PLAY_PAUSE:  icon = m_bPaused ? (dark? m_hPlayNeg : m_hPlay) 
-            : (dark ? m_hPauseNeg : m_hPause); 
+        case IDC_PLAY_PAUSE:  icon = m_bPaused ? (dark? m_hPlayNeg : m_hPlay).get()
+            : (dark ? m_hPauseNeg : m_hPause).get();
             break;
-        case IDC_AUDIO_ON_OFF: icon = m_bAudioOn ? (dark ? m_hAudioNeg  :m_hAudio)
-            : (dark ? m_hAudioOffNeg : m_hAudioOff); 
+        case IDC_AUDIO_ON_OFF: icon = m_bAudioOn ? (dark ? m_hAudioNeg  :m_hAudio).get()
+            : (dark ? m_hAudioOffNeg : m_hAudioOff).get();
             break;
-        case IDC_FULL_SCREEN: icon = dark ? m_hFullScreenNeg : m_hFullScreen; break;
+        case IDC_FULL_SCREEN: icon = (dark ? m_hFullScreenNeg : m_hFullScreen).get(); break;
         }
     }
     CThemeManager::DrawButton(this, drawItem, false, false, icon);
@@ -288,16 +344,16 @@ LRESULT CDialogBarPlayerControl::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 
     const int iconSize = min(iconSizeLimit & ((iconSizeLimit > 32)? ~15 : ~7), 48);
 
-    m_hPlay = LoadIcon(IDI_PLAY, iconSize);
-    m_hPlayNeg = CreateNegativeIcon(m_hPlay);
-    m_hPause = LoadIcon(IDI_PAUSE, iconSize);
-    m_hPauseNeg = CreateNegativeIcon(m_hPause);
-    m_hAudio = LoadIcon(IDI_AUDIO, iconSize);
-    m_hAudioNeg = CreateNegativeIcon(m_hAudio);
-    m_hAudioOff = LoadIcon(IDI_AUDIO_OFF, iconSize);
-    m_hAudioOffNeg = CreateNegativeIcon(m_hAudioOff);
-    m_hFullScreen = LoadIcon(IDI_FULL_SCREEN, iconSize);
-    m_hFullScreenNeg = CreateNegativeIcon(m_hFullScreen);
+    m_hPlay.reset(LoadIcon(IDI_PLAY, iconSize));
+    m_hPlayNeg.reset(CreateNegativeIcon(m_hPlay.get()));
+    m_hPause.reset(LoadIcon(IDI_PAUSE, iconSize));
+    m_hPauseNeg.reset(CreateNegativeIcon(m_hPause.get()));
+    m_hAudio.reset(LoadIcon(IDI_AUDIO, iconSize));
+    m_hAudioNeg.reset(CreateNegativeIcon(m_hAudio.get()));
+    m_hAudioOff.reset(LoadIcon(IDI_AUDIO_OFF, iconSize));
+    m_hAudioOffNeg.reset(CreateNegativeIcon(m_hAudioOff.get()));
+    m_hFullScreen.reset(LoadIcon(IDI_FULL_SCREEN, iconSize));
+    m_hFullScreenNeg.reset(CreateNegativeIcon(m_hFullScreen.get()));
 
     //static_cast<CButton*>(GetDlgItem(IDC_PLAY_PAUSE))->SetIcon(m_hPlay);
     //static_cast<CButton*>(GetDlgItem(IDC_AUDIO_ON_OFF))->SetIcon(m_hAudio);

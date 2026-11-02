@@ -218,8 +218,6 @@ void CThemeManager::DrawButton(CWnd* parent, LPDRAWITEMSTRUCT dis, bool checkBox
     if (!dc)
         return;
 
-    const bool dark = true;
-
     const Colors& c = GetColors();
     const UINT state = dis->itemState;
     const bool disabled = (state & ODS_DISABLED) != 0;
@@ -231,21 +229,18 @@ void CThemeManager::DrawButton(CWnd* parent, LPDRAWITEMSTRUCT dis, bool checkBox
     if (!child)
         return;
 
-    if (dark)
+    if (checkBox)
     {
-        if (checkBox)
-        {
-            dc->FillSolidRect(rc, c.window);
-        }
-        else
-        {
-            COLORREF face = c.window;
-            if (pressed) face = c.buttonPressed;
-            else if (hot) face = c.buttonHot;
-            dc->FillSolidRect(rc, face);
-            CBrush border(c.border);
-            dc->FrameRect(rc, &border);
-        }
+        dc->FillSolidRect(rc, c.window);
+    }
+    else if (CThemeManager::IsDark())
+    {
+        COLORREF face = c.window;
+        if (pressed) face = c.buttonPressed;
+        else if (hot) face = c.buttonHot;
+        dc->FillSolidRect(rc, face);
+        CBrush border(c.border);
+        dc->FrameRect(rc, &border);
     }
     else
     {
@@ -255,16 +250,17 @@ void CThemeManager::DrawButton(CWnd* parent, LPDRAWITEMSTRUCT dis, bool checkBox
         bool themedBackground = false;
         if (theme)
         {
-            int part = checkBox ? BP_CHECKBOX : BP_PUSHBUTTON;
+            int part = //checkBox ? BP_CHECKBOX : 
+                BP_PUSHBUTTON;
             int stateId = PBS_NORMAL;
-            if (checkBox)
-            {
-                if (disabled) stateId = checked ? CBS_CHECKEDDISABLED : CBS_UNCHECKEDDISABLED;
-                else if (pressed) stateId = checked ? CBS_CHECKEDPRESSED : CBS_UNCHECKEDPRESSED;
-                else if (hot) stateId = checked ? CBS_CHECKEDHOT : CBS_UNCHECKEDHOT;
-                else stateId = checked ? CBS_CHECKEDNORMAL : CBS_UNCHECKEDNORMAL;
-            }
-            else
+            //if (checkBox)
+            //{
+            //    if (disabled) stateId = checked ? CBS_CHECKEDDISABLED : CBS_UNCHECKEDDISABLED;
+            //    else if (pressed) stateId = checked ? CBS_CHECKEDPRESSED : CBS_UNCHECKEDPRESSED;
+            //    else if (hot) stateId = checked ? CBS_CHECKEDHOT : CBS_UNCHECKEDHOT;
+            //    else stateId = checked ? CBS_CHECKEDNORMAL : CBS_UNCHECKEDNORMAL;
+            //}
+            //else
             {
                 if (disabled) stateId = PBS_DISABLED;
                 else if (pressed) stateId = PBS_PRESSED;
@@ -276,15 +272,15 @@ void CThemeManager::DrawButton(CWnd* parent, LPDRAWITEMSTRUCT dis, bool checkBox
         }
         if (!themedBackground)
         {
-            if (checkBox)
-            {
-                UINT flags = DFCS_BUTTONCHECK;
-                if (checked) flags |= DFCS_CHECKED;
-                if (disabled) flags |= DFCS_INACTIVE;
-                if (pressed) flags |= DFCS_PUSHED;
-                ::DrawFrameControl(dis->hDC, &rc, DFC_BUTTON, flags);
-            }
-            else
+            //if (checkBox)
+            //{
+            //    UINT flags = DFCS_BUTTONCHECK;
+            //    if (checked) flags |= DFCS_CHECKED;
+            //    if (disabled) flags |= DFCS_INACTIVE;
+            //    if (pressed) flags |= DFCS_PUSHED;
+            //    ::DrawFrameControl(dis->hDC, &rc, DFC_BUTTON, flags);
+            //}
+            //else
             {
                 dc->FillSolidRect(rc, c.window);
                 CBrush border(c.border);
@@ -298,7 +294,6 @@ void CThemeManager::DrawButton(CWnd* parent, LPDRAWITEMSTRUCT dis, bool checkBox
         const int boxSize = min(12, max(9, rc.Height() - 4));
         CRect box(rc.left + 3, rc.CenterPoint().y - boxSize / 2,
             rc.left + 3 + boxSize, rc.CenterPoint().y + (boxSize + 1) / 2);
-        if (dark)
         {
             CBrush boxBrush(c.control);
             CBrush border(c.border);

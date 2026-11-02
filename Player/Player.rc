@@ -154,7 +154,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
-    POPUP "Audio/Video"
+    POPUP "&Audio/Video"
     BEGIN
         POPUP "Audio Track"
         BEGIN
@@ -201,7 +201,7 @@ BEGIN
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
         MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
     END
-    POPUP "&Help"
+    POPUP "&Program"
     BEGIN
         MENUITEM "Dark Theme",                  ID_VIEW_DARK_THEME
         MENUITEM SEPARATOR
@@ -245,7 +245,7 @@ CAPTION "About FFmpeg Player"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,9,14,20,20,SS_REALSIZEIMAGE
-    DEFPUSHBUTTON   "OK",IDOK,284,158,50,14,WS_GROUP
+    DEFPUSHBUTTON   "OK",IDOK,284,158,50,14,WS_GROUP | BS_OWNERDRAW
     LTEXT           "FFmpeg Player, Version 1.0",IDC_APP_NAME_VERSION,178,14,149,8,SS_NOPREFIX
     LTEXT           "github.com/aliakseis/FFmpegPlayer",IDC_STATIC,178,22,114,8
     LTEXT           "Icons: www.danieledesantis.net",IDC_STATIC,178,36,114,8

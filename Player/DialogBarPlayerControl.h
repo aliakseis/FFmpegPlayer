@@ -2,7 +2,22 @@
 
 #include "Theme.h"
 
+#include <memory>
+
 class CPlayerDoc;
+
+struct IconDeleter
+{
+    void operator()(HICON h) const noexcept
+    {
+        if (h)
+            VERIFY(DestroyIcon(h));
+    }
+};
+
+using UniqueIcon = std::unique_ptr<
+    std::remove_pointer_t<HICON>,
+    IconDeleter>;
 
 // CDialogBarPlayerControl
 
@@ -52,16 +67,16 @@ public:
 
 private:
     CPlayerDoc* m_pDoc;
-    HICON m_hPlay = NULL;
-    HICON m_hPause = NULL;
-    HICON m_hAudio = NULL;
-    HICON m_hAudioOff = NULL;
-    HICON m_hFullScreen = NULL;
-    HICON m_hPlayNeg = NULL;
-    HICON m_hPauseNeg = NULL;
-    HICON m_hAudioNeg = NULL;
-    HICON m_hAudioOffNeg = NULL;
-    HICON m_hFullScreenNeg = NULL;
+    UniqueIcon m_hPlay;
+    UniqueIcon m_hPause;
+    UniqueIcon m_hAudio;
+    UniqueIcon m_hAudioOff;
+    UniqueIcon m_hFullScreen;
+    UniqueIcon m_hPlayNeg;
+    UniqueIcon m_hPauseNeg;
+    UniqueIcon m_hAudioNeg;
+    UniqueIcon m_hAudioOffNeg;
+    UniqueIcon m_hFullScreenNeg;
     bool m_bPaused = true;
     bool m_bAudioOn = true;
     int m_savedVolume;
