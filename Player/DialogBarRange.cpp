@@ -110,11 +110,11 @@ LRESULT CDialogBarRange::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 {
     __super::HandleInitDialog(wParam, lParam);
 
-    //if (auto control = static_cast<CButton*>(GetDlgItem(IDC_LOSSLESS_CUT)))
-    //{
-    //    m_losslessCutChecked = true;
-    //    CThemeManager::RefreshWindow(control->GetSafeHwnd());
-    //}
+    if (auto control = static_cast<CButton*>(GetDlgItem(IDC_LOSSLESS_CUT)))
+    {
+        m_losslessCutChecked = true;
+        CThemeManager::RefreshWindow(control->GetSafeHwnd());
+    }
 
     CRect rect(0, 0, 12, 12);
     MapDialogRect(*this, &rect);
