@@ -460,6 +460,7 @@ void CThemedSliderCtrl::OnCustomDraw(NMHDR* header, LRESULT* result)
 BEGIN_MESSAGE_MAP(CThemedDialog, CDialogEx)
     ON_WM_CTLCOLOR()
     ON_WM_ERASEBKGND()
+    ON_WM_DRAWITEM()
 END_MESSAGE_MAP()
 
 BOOL CThemedDialog::OnInitDialog()
@@ -489,4 +490,10 @@ BOOL CThemedDialog::OnEraseBkgnd(CDC* dc)
     GetClientRect(&rc);
     dc->FillSolidRect(&rc, CThemeManager::GetColors().window);
     return TRUE;
+}
+
+void CThemedDialog::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem)
+{
+    UNREFERENCED_PARAMETER(nIDCtl);
+    CThemeManager::DrawButton(this, drawItem);
 }

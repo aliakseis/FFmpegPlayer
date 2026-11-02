@@ -80,6 +80,7 @@ protected:
     BOOL OnInitDialog() override;
     HBRUSH OnCtlColor(CDC* dc, CWnd* wnd, UINT ctlColor);
     BOOL OnEraseBkgnd(CDC* dc);
+    afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem);
 
     DECLARE_MESSAGE_MAP()
 };
