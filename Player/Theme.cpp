@@ -38,6 +38,29 @@ namespace
         dc.LineTo(rc.right - 2, rc.top + 2);
         dc.SelectObject(oldPen);
     }
+
+    void ApplyDialogControlTheme(CWnd* pWnd)
+    {
+        if (!pWnd || !::IsWindow(pWnd->GetSafeHwnd()))
+            return;
+
+        const DWORD type = pWnd->GetStyle() & BS_TYPEMASK;
+
+        switch (type)
+        {
+        case BS_CHECKBOX:
+        case BS_AUTOCHECKBOX:
+        case BS_RADIOBUTTON:
+        case BS_AUTORADIOBUTTON:
+        //case BS_3STATE:
+        //case BS_AUTO3STATE:
+        //case BS_GROUPBOX:
+        //case BS_PUSHBUTTON:
+        //case BS_DEFPUSHBUTTON:
+            ::SetWindowTheme(pWnd->GetSafeHwnd(), L"", L"");
+            break;
+        }
+    }
 }
 
 IMPLEMENT_DYNAMIC(CThemedDialog, CDialogEx)
@@ -442,6 +465,15 @@ END_MESSAGE_MAP()
 BOOL CThemedDialog::OnInitDialog()
 {
     const BOOL result = __super::OnInitDialog();
+
+    // Apply classic rendering to selected standard controls.
+    for (CWnd* pChild = GetWindow(GW_CHILD);
+        pChild != nullptr;
+        pChild = pChild->GetNextWindow())
+    {
+        ApplyDialogControlTheme(pChild);
+    }
+
     CThemeManager::RefreshWindow(GetSafeHwnd());
     return result;
 }
