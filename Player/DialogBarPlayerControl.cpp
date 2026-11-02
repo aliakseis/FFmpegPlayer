@@ -310,6 +310,8 @@ LRESULT CDialogBarPlayerControl::HandleInitDialog(WPARAM wParam, LPARAM lParam)
     m_volumeSlider.SetPos(RANGE_MAX);
     m_volumeSlider.SetPageSize(0);
 
+    ::SetWindowTheme(GetDlgItem(IDC_FRAME_STEP)->GetSafeHwnd(), L"", L"");
+
     return TRUE;
 }
 

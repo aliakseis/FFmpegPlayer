@@ -111,6 +111,7 @@ LRESULT CDialogBarRange::HandleInitDialog(WPARAM wParam, LPARAM lParam)
 
     if (auto control = static_cast<CButton*>(GetDlgItem(IDC_LOSSLESS_CUT)))
     {
+        ::SetWindowTheme(control->GetSafeHwnd(), L"", L"");
         control->SetCheck(BST_CHECKED);
     }
 
