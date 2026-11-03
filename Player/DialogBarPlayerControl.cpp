@@ -275,6 +275,7 @@ void CDialogBarPlayerControl::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CDialogBarPlayerControl, CPaneDialog)
+    ON_WM_WINDOWPOSCHANGED()
     ON_WM_CTLCOLOR()
     ON_WM_ERASEBKGND()
     ON_WM_DRAWITEM()
@@ -291,6 +292,32 @@ BEGIN_MESSAGE_MAP(CDialogBarPlayerControl, CPaneDialog)
     ON_UPDATE_COMMAND_UI(IDC_VOLUME_SLIDER, &CDialogBarPlayerControl::OnUpdateVolumeSlider)
     ON_UPDATE_COMMAND_UI(IDC_CURRENT_TIME, &CDialogBarPlayerControl::OnUpdateCurrentTime)
     END_MESSAGE_MAP()
+
+
+void CDialogBarPlayerControl::OnWindowPosChanged(WINDOWPOS* lpwndpos)
+{
+    CPaneDialog::OnWindowPosChanged(lpwndpos);
+
+    // Check if the pane just became visible or changed its structural size
+    if ((lpwndpos->flags & SWP_SHOWWINDOW) || !(lpwndpos->flags & SWP_NOSIZE))
+    {
+        if (GetSafeHwnd() != NULL && IsWindowVisible())
+        {
+            // 1. Force the dynamic layout engine to re-evaluate the child boundaries
+            // This prevents the checkbox and owner-drawn control from physically shifting/shuffling.
+            if (IsDynamicLayoutEnabled())
+            {
+                ResizeDynamicLayout(); // Recalculate based on current layout engine state
+            }
+
+            // 2. Clear out any old background/theme textures behind the overlapping controls
+            // By calling it directly inside the CPaneDialog context, Windows invalidates 
+            // the exact inner dialog template region.
+            RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+        }
+    }
+}
+
 
 HBRUSH CDialogBarPlayerControl::OnCtlColor(CDC* dc, CWnd* wnd, UINT ctlColor)
 {

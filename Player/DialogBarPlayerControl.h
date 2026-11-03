@@ -90,6 +90,7 @@ private:
 public:
     CThemedSliderCtrl m_progressSlider;
     CThemedSliderCtrl m_volumeSlider;
+    afx_msg void OnWindowPosChanged(WINDOWPOS* lpwndpos);
     afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
     afx_msg void OnUpdatePlayPause(CCmdUI *pCmdUI);
     afx_msg void OnUpdateAudioOnOff(CCmdUI *pCmdUI);
