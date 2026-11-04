@@ -54,8 +54,8 @@ jobs:
       run: |
           git clone https://github.com/microsoft/vcpkg.git
           cd vcpkg
-          # Presumably working version
-          #git checkout 6070d5cb2f818921c10ccdf6f35f3415a2503369
+          # Fully working version before FFmpeg Update to version 8.0.1
+          git checkout 6070d5cb2f818921c10ccdf6f35f3415a2503369
           ./bootstrap-vcpkg.bat
           ./vcpkg integrate install
 
