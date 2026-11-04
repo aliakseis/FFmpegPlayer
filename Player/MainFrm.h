@@ -23,6 +23,9 @@ public:
 private:
     void pauseResume();
     void onPauseResume(bool paused);
+    void ApplyVisualTheme();
+
+    BOOL m_bDarkTheme;
 
 
 // Overrides
@@ -70,6 +73,8 @@ protected:
     afx_msg void OnClose();
     afx_msg LRESULT CreateThumbnailToolbar(WPARAM wParam, LPARAM lParam);
     afx_msg void OnFullScreen();
+    afx_msg void OnToggleDarkTheme();
+    afx_msg void OnUpdateDarkTheme(CCmdUI* pCmdUI);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnWindowPosChanged(WINDOWPOS* lpwndpos);
     afx_msg void OnNcPaint();

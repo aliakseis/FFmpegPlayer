@@ -9,10 +9,10 @@
 
 // CDialogVideoFilter dialog
 
-IMPLEMENT_DYNAMIC(CDialogVideoFilter, CDialog)
+IMPLEMENT_DYNAMIC(CDialogVideoFilter, CThemedDialog)
 
 CDialogVideoFilter::CDialogVideoFilter(CWnd* pParent /*=nullptr*/)
-	: CDialog(IDD_DIALOG_VIDEO_FILTER, pParent)
+	: CThemedDialog(IDD_DIALOG_VIDEO_FILTER, pParent)
     , m_videoFilter(_T(""))
     , m_enableVideoFilter(FALSE)
 {
@@ -25,13 +25,13 @@ CDialogVideoFilter::~CDialogVideoFilter()
 
 void CDialogVideoFilter::DoDataExchange(CDataExchange* pDX)
 {
-    CDialog::DoDataExchange(pDX);
+    CThemedDialog::DoDataExchange(pDX);
     DDX_Text(pDX, IDC_VIDEO_FILTER, m_videoFilter);
     DDX_Check(pDX, IDC_ENABLE_VIDEO_FILTER, m_enableVideoFilter);
 }
 
 
-BEGIN_MESSAGE_MAP(CDialogVideoFilter, CDialog)
+BEGIN_MESSAGE_MAP(CDialogVideoFilter, CThemedDialog)
 END_MESSAGE_MAP()
 
 

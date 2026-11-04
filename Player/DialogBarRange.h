@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EditTime.h"
+#include "Theme.h"
 
 class CPlayerDoc;
 
@@ -35,6 +36,9 @@ protected:
 protected:
 	DECLARE_MESSAGE_MAP()
     afx_msg LRESULT HandleInitDialog(WPARAM wParam, LPARAM lParam);
+    afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* wnd, UINT ctlColor);
+    afx_msg BOOL OnEraseBkgnd(CDC* dc);
+    afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem);
 private:
     CPlayerDoc* m_pDoc;
     CFont m_font;

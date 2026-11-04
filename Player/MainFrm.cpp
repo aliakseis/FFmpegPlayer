@@ -6,6 +6,7 @@
 #include "Player.h"
 
 #include "MainFrm.h"
+#include "Theme.h"
 #include "PlayerDoc.h"
 #include "IEraseableArea.h"
 #include "MakeDelegate.h"
@@ -64,6 +65,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_CREATE()
     ON_WM_CLOSE()
     ON_COMMAND(IDC_FULL_SCREEN, &CMainFrame::OnFullScreen)
+    ON_COMMAND(ID_VIEW_DARK_THEME, &CMainFrame::OnToggleDarkTheme)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_DARK_THEME, &CMainFrame::OnUpdateDarkTheme)
     ON_WM_ERASEBKGND()
     ON_WM_WINDOWPOSCHANGED()
     ON_WM_NCPAINT()
@@ -85,6 +88,7 @@ static UINT indicators[] =
 
 CMainFrame::CMainFrame()
     : m_bFullScreen(FALSE)
+    , m_bDarkTheme(FALSE)
 {
     // TODO: add member initialization code here
 }
@@ -173,8 +177,10 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     if (__super::OnCreate(lpCreateStruct) == -1)
         return -1;
 
-    CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows7));
-    //CMFCVisualManagerOffice2007::SetStyle(CMFCVisualManagerWindows7::Office2007_ObsidianBlack);
+    // Restore the user's appearance preference before creating MFC control bars.
+    m_bDarkTheme = AfxGetApp()->GetProfileInt(
+        _T("Appearance"), _T("DarkTheme"), FALSE) != 0;
+    ApplyVisualTheme();
 
     if (!m_wndMenuBar.Create(this))
     {
@@ -253,6 +259,66 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     EnableFullScreenMainMenu(FALSE);
 
     return 0;
+}
+
+void CMainFrame::ApplyVisualTheme()
+{
+    CThemeManager::SetDark(m_bDarkTheme != FALSE);
+
+    if (m_bDarkTheme)
+    {
+        CMFCVisualManagerOffice2007::SetStyle(CMFCVisualManagerOffice2007::Office2007_ObsidianBlack);
+        CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CPlayerVisualManager));
+    }
+    else
+    {
+        CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows7));
+    }
+
+    // 1. Initialize global MFC Feature Pack structures
+    CMFCVisualManager::RedrawAll();
+
+    if (GetSafeHwnd() != NULL)
+    {
+        if (CDockingManager* pDockManager = GetDockingManager())
+        {
+            pDockManager->AdjustPaneFrames();
+            pDockManager->RecalcLayout();
+        }
+        RedrawWindow(NULL, NULL, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_UPDATENOW | RDW_FRAME | RDW_ERASE);
+    }
+
+    // 2. Alert the Pane Dialog
+    if (m_wndPlayerControl.GetSafeHwnd() != NULL)
+    {
+        // Broadcast theme handles to inner controls, even if hidden
+        m_wndPlayerControl.SendMessageToDescendants(WM_THEMECHANGED, 0, 0, TRUE, TRUE);
+
+        if (m_wndPlayerControl.IsWindowVisible())
+        {
+            // If it's visible right now, force an immediate redraw
+            m_wndPlayerControl.RedrawWindow(nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+        }
+        else
+        {
+            // If hidden or auto-collapsed, just tag it dirty. 
+            // Step 1's OnWindowPosChanged hook will violently redraw it the moment it wakes up.
+            m_wndPlayerControl.Invalidate(TRUE);
+        }
+    }
+}
+
+void CMainFrame::OnToggleDarkTheme()
+{
+    m_bDarkTheme = !m_bDarkTheme;
+    AfxGetApp()->WriteProfileInt(
+        _T("Appearance"), _T("DarkTheme"), m_bDarkTheme);
+    ApplyVisualTheme();
+}
+
+void CMainFrame::OnUpdateDarkTheme(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(m_bDarkTheme);
 }
 
 void CMainFrame::OnClose()

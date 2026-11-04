@@ -1,8 +1,23 @@
 #pragma once
 
-#include "afxcmn.h"
+#include "Theme.h"
+
+#include <memory>
 
 class CPlayerDoc;
+
+struct IconDeleter
+{
+    void operator()(HICON h) const noexcept
+    {
+        if (h)
+            VERIFY(DestroyIcon(h));
+    }
+};
+
+using UniqueIcon = std::unique_ptr<
+    std::remove_pointer_t<HICON>,
+    IconDeleter>;
 
 // CDialogBarPlayerControl
 
@@ -44,16 +59,24 @@ protected:
 protected:
     DECLARE_MESSAGE_MAP()
     afx_msg LRESULT HandleInitDialog(WPARAM wParam, LPARAM lParam);
+    afx_msg HBRUSH OnCtlColor(CDC* dc, CWnd* wnd, UINT ctlColor);
+    afx_msg BOOL OnEraseBkgnd(CDC* dc);
+    afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT drawItem);
     afx_msg LRESULT OnSetTime(WPARAM wParam, LPARAM lParam);
 public:
 
 private:
     CPlayerDoc* m_pDoc;
-    HICON m_hPlay;
-    HICON m_hPause;
-    HICON m_hAudio;
-    HICON m_hAudioOff;
-    HICON m_hFullScreen;
+    UniqueIcon m_hPlay;
+    UniqueIcon m_hPause;
+    UniqueIcon m_hAudio;
+    UniqueIcon m_hAudioOff;
+    UniqueIcon m_hFullScreen;
+    UniqueIcon m_hPlayNeg;
+    UniqueIcon m_hPauseNeg;
+    UniqueIcon m_hAudioNeg;
+    UniqueIcon m_hAudioOffNeg;
+    UniqueIcon m_hFullScreenNeg;
     bool m_bPaused = true;
     bool m_bAudioOn = true;
     int m_savedVolume;
@@ -65,8 +88,9 @@ private:
     int m_selEnd;
 
 public:
-    CSliderCtrl m_progressSlider;
-    CSliderCtrl m_volumeSlider;
+    CThemedSliderCtrl m_progressSlider;
+    CThemedSliderCtrl m_volumeSlider;
+    afx_msg void OnWindowPosChanged(WINDOWPOS* lpwndpos);
     afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
     afx_msg void OnUpdatePlayPause(CCmdUI *pCmdUI);
     afx_msg void OnUpdateAudioOnOff(CCmdUI *pCmdUI);
